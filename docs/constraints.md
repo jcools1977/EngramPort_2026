@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T18:40Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.** W1-2 is assigned to agent-a. Open findings: F1, F3, F4, F5, F6. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T19:05Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2, the setup-time credential threat model, is authored by agent-a and is with agent-b for independent adversarial review as the sole active item.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -163,6 +163,34 @@ Demonstrated: taking an approved plan, flipping every step's `consequential` fro
 1. A review UI MUST NOT present `consequential`, `depends_on`, or any other uncovered field as approved content.
 2. If either field becomes execution-bearing, the action profile MUST be revised to cover it, with a version bump per specification section 5.2.
 3. The safest close is to widen `engramport-action-v3` to cover the whole step record, so the covered surface and the reviewable surface are the same set by construction rather than by discipline.
+
+## F9. Plan fields accept inline credentials
+
+**Raised:** W1-2 threat model, 2026-08-14. **Closes in:** before W2 provisioning or W4 pull-request generation, whichever comes first.
+
+`workspace-setup-v0`'s `database.target` is a free-form string with no constraint, and a plan is compiled, digest-bound, serialized, written to disk, and shown to a founder. A founder writing `postgres://user:password@host/db`, which is the natural way to write a connection string, places a live credential inside a digest-bound serializable artifact covered by `engramport-action-v3` and reproduced in the review surface.
+
+Nothing in the schema or compiler prevents it, and the obvious usage produces it.
+
+**To close:** make `database.target` a structured reference (host, port, database) plus a secret-manager reference, or validate it to reject embedded userinfo; and have the compiler refuse any plan value matching credential patterns, with a named error, failing closed.
+
+## F10. No credential-pattern detector exists
+
+**Raised:** W1-2 threat model, 2026-08-14. **Closes in:** before W3.
+
+Sections 7.2, 7.4 and 7.5 of the threat model all require secret detection before acceptance, before artifact registration, and before Re:PORT generation. `docs/security/report-authorization-and-redaction.md` already specifies the behaviour including fail-closed on detector error. No detector exists anywhere in the codebase.
+
+Every protection that depends on it is currently a requirement, not a control.
+
+**To close:** one detector, used by all three call sites, failing closed on error, with a negative control planting a credential in each sink.
+
+## F11. Runner adapters are not yet bound away from environment-variable credentials
+
+**Raised:** W1-2 threat model, 2026-08-14. **Closes in:** PW4.
+
+Threat model section 7.6 requires that credentials never reach a runner subprocess through environment variables, which are readable via `ps` and `/proc/<pid>/environ`, inherited by grandchildren, and captured in crash dumps. PW1's adapters are recording stubs, so nothing is violated yet and nothing is prevented either.
+
+**To close:** PW4 passes credentials by file descriptor, unix socket, or child-fetched short-lived token, with a negative control that reads the child's environment during a run and asserts no credential is present.
 
 ---
 

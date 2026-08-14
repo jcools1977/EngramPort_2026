@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engramport.com/schemas/capability-reference-v1.schema.json",
+  "title": "EngramPort capability reference and grant v1",
+  "description": "Normative. The structural mechanism by which EngramPort records what a participant can do without copying the credential that lets them do it, per docs/security/setup-credential-threat-model.md sections 4 and 5. A descriptor says a capability exists. A grant says a principal may use it. Neither ever carries a credential.",
+  "$defs": {
+    "credential_free": {
+      "$comment": "Deny-by-default on credential-shaped fields. Present on both descriptor and grant so that adding a field cannot silently introduce a secret. This is a schema-level backstop, not the primary control; the primary control is that no code path writes one.",
+      "not": {
+        "anyOf": [
+          { "required": ["token"] },
+          { "required": ["access_token"] },
+          { "required": ["refresh_token"] },
+          { "required": ["secret"] },
+          { "required": ["client_secret"] },
+          { "required": ["password"] },
+          { "required": ["private_key"] },
+          { "required": ["api_key"] },
+          { "required": ["credential"] },
+          { "required": ["authorization"] },
+          { "required": ["bearer"] },
+          { "required": ["session_token"] },
+          { "required": ["connection_string"] }
+        ]
+      }
+    },
+    "secret_ref": {
+      "$comment": "How a credential is pointed at, never carried. The value is a locator in a secret manager, resolvable only by an authorized consumer at use time.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manager", "locator"],
+      "properties": {
+        "manager": { "type": "string", "description": "Secret manager identifier, e.g. 1password, aws-secrets-manager, env-file-local." },
+        "locator": { "type": "string", "description": "Opaque reference within that manager. MUST NOT be the secret itself." },
+        "version": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind"],
+  "oneOf": [
+    { "required": ["descriptor"] },
+    { "required": ["grant"] }
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": {
+      "type": "string",
+      "enum": ["capability_descriptor", "capability_grant"],
+      "description": "A record is one or the other, never both. Merging them is the conflation this schema exists to prevent."
+    },
+
+    "descriptor": {
+      "$comment": "What a connector advertises. Attacker-influenced input per threat actor A6. Carries nothing invocable: no handle, no session id, no credential. Discovering this confers no authority whatsoever.",
+      "allOf": [{ "$ref": "#/$defs/credential_free" }],
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "provider", "discovered_at", "trust"],
+      "properties": {
+        "capability": { "type": "string", "minLength": 1, "description": "Provider-declared capability name. Untrusted text. Never matched against an allowlist to imply permission." },
+        "provider": { "type": "string", "minLength": 1 },
+        "provider_installation_ref": { "type": ["string", "null"], "description": "Opaque installation identifier. Not a credential and not sufficient to invoke." },
+        "display_name": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"], "maxLength": 2000, "description": "Provider-supplied prose. Untrusted, quoted evidence. Never an instruction." },
+        "input_shape": { "type": ["object", "null"], "description": "Declared parameter shape, for rendering and validation only." },
+        "discovered_at": { "type": "string", "format": "date-time" },
+        "trust": {
+          "type": "string",
+          "enum": ["untrusted_agent", "imported"],
+          "description": "A descriptor is never more trusted than this. It came from outside."
+        }
+      }
+    },
+
+    "grant": {
+      "$comment": "The authorization decision. This, and only this, permits invocation. Resolved server-side at call time; possession of a grant record is not itself authority.",
+      "allOf": [{ "$ref": "#/$defs/credential_free" }],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_id", "capability", "provider", "granted_to_principal_id",
+        "granted_by_principal_id", "granting_event_id", "scopes", "expires_at", "status"
+      ],
+      "properties": {
+        "grant_id": { "type": "string", "format": "uuid" },
+        "capability": { "type": "string", "minLength": 1 },
+        "provider": { "type": "string", "minLength": 1 },
+        "granted_to_principal_id": { "type": "string", "format": "uuid" },
+        "granted_to_actor_id": { "type": ["string", "null"], "format": "uuid", "description": "Present when the grant is narrowed to one actor. An actor grant never exceeds or outlives its owning principal's." },
+        "granted_by_principal_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "A grant never exceeds the granting principal's own authority."
+        },
+        "granting_event_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The event that created this grant. Makes 'why does this participant hold this right' a traversal rather than an investigation."
+        },
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" },
+          "description": "Authority. Distinct from capabilities, which are routing labels only."
+        },
+        "credential_ref": {
+          "anyOf": [{ "$ref": "#/$defs/secret_ref" }, { "type": "null" }],
+          "description": "Optional pointer to the credential held elsewhere, resolvable only by the authorized consumer at use time. EngramPort stores the reference; it never stores, transits, or logs the value. Null when the consumer holds its own authorization, which is the normal case for participant connectors."
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Absolute and required. Unbounded grants are not expressible. Enforced by the datastore per constraint C6, not only by application sweeps."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "revoked", "expired"],
+          "description": "Revocation makes the reference inert without touching the provider, and provider-side revocation works independently. Both MUST work alone."
+        },
+        "revoked_by_event_id": { "type": ["string", "null"], "format": "uuid" }
+      }
+    }
+  }
+}
