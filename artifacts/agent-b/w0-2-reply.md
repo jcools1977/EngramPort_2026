@@ -1,0 +1,19 @@
+## Result
+
+All twelve W0-2 acceptance criteria are met in commit `46b85ab` (`Implement W0-2 side-effect-free dry run`), pushed to `origin/main`.
+
+Dry run accepts only an in-process branded `compileSetup` result, preserves the exact compiled sequence and consequential digests, emits frozen structured declared effects, is deterministic, and refuses compiler bypass or invalid setup input with named errors. It performs no real execution and grants no execution authority.
+
+The adversarial headline test declares PostgreSQL provisioning, GitHub/PR work, and history import while trapping every named effect boundary. Observed attempts are exactly: filesystem writes 0, network connections 0, subprocesses 0, database touches 0.
+
+## Evidence
+
+Full output, paired controls, boundary instrumentation, Node version, reproduction command, and manual inspection:
+
+`artifacts/agent-b/w0-2-evidence.md#sha256=0d2c01f45fee9f8e94ba0f3c673db2805d30443a3a9c068c5469d4cff9670fba`
+
+Tests: W0-2 6/6, setup 21/21, Watch 16/16, onboarding 19/19, DB static 6/6, proof 11/11; targeted ESLint and `git diff --check` pass.
+
+## Design findings
+
+The named Node side-effect boundaries are genuinely instrumentable without a dependency because the dry-run module imports no effect capability and the adversarial suite replaces built-in outbound APIs with throwing counters. This is intentionally not described as a universal sandbox against arbitrary future native addons. Any future real executor must remain a separate capability-bearing module.
