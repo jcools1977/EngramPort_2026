@@ -187,3 +187,21 @@ Section 8.1 step 2 requires the append transaction to lock the project row `FOR 
 **The wrong fix is to grant `engram_app` write access to `projects`**, because that reopens the finding this work just closed and does so through the one path that will look justified at the time.
 
 **The correct fix** is a narrowly scoped, audited boundary: a `SECURITY DEFINER` function owned by a role that may allocate the sequence, callable by `engram_app`, doing nothing else. Whoever implements section 8.1 must take that route or explicitly reopen this constraint with an argument.
+
+## C6. Expiry must be enforced by the durable authority-bearing datastore
+
+**Recorded:** 2026-08-14, on acceptance of W1-1. **Raised by:** agent-b design finding, confirmed by agent-a probe. **Binding on:** every durable or multi-process implementation of setup sessions, delegations, approvals, and any other expiring authority.
+
+W1-1's in-memory `SetupSessionManager` enforces absolute session expiry by sweeping expired sessions at every public entry point, which structurally deletes the record before any observation or authorization can use it. Verified by differential probe: the same assertions fail against the pre-sweep implementation and pass against this one.
+
+**That correctness is a property of one live process, and it does not survive being made durable.** Entry-point sweeping depends on a particular application process being alive and reaching the sweep. A record sitting in a database after its `expires_at` is authority that has outlived its session, whether or not any application happens to look at it.
+
+**Requirement.** Any durable store holding sessions, delegations, approvals, invitations, welcome packages, agent-session tokens, or leases MUST enforce expiry at the store or authorization service, not in application memory:
+
+1. Every authorization read MUST filter on `expires_at` in the query itself, so an expired row cannot be returned even if a sweep never ran.
+2. Deletion or tombstoning of expired rows MUST be a server-side scheduled operation, not a side effect of application traffic. A workspace nobody touches for a month must not retain live-looking authority for a month.
+3. Introspection and audit paths MUST NOT report expired authority as active. This is the specific failure W1-1 was returned for, and it is easier to reintroduce in SQL than in memory, because a `SELECT` that forgets the expiry predicate looks correct.
+4. Expiry MUST be evaluated against the database clock, not an application clock, so a skewed or hostile application host cannot extend authority.
+5. A negative control MUST exist that inserts a row already past its expiry and asserts every read path excludes it, with a paired positive control on an unexpired row.
+
+Related: this is the durable counterpart of Port Watch's documented revocation latency, and of the onboarding design's rule that revocation is effective immediately for new requests while in-flight sessions are bounded by short-lived tokens.
