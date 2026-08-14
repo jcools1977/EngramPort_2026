@@ -19,6 +19,7 @@
     ,"db:test": "bash scripts/run-db-tests"
     ,"welcome:test": "node --test tests/welcome-package.test.mjs"
     ,"setup:test": "node --test tests/workspace-setup*.test.mjs"
+    ,"watch:test": "node --test tests/port-watch.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
