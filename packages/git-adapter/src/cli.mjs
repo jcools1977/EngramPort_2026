@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { hashBody, verifyLog } from "./verify-log.mjs";
+import { hashBody, parseEvent, verifyLog } from "./verify-log.mjs";
 
 function args(argv) {
   const out = { _: [] };
@@ -36,11 +36,10 @@ export async function run(argv, cwd = process.cwd()) {
     const { readdir } = await import("node:fs/promises");
     const files = [];
     for (const actor of await readdir(path.join(cwd, "events"))) for (const name of await readdir(path.join(cwd, "events", actor))) if (name.endsWith(".md")) files.push(path.join(cwd, "events", actor, name));
+    const parsed = await Promise.all(files.sort().map(async (file) => ({ file, event: parseEvent(await readFile(file, "utf8"), path.relative(cwd, file)) })));
+    const answered = new Set(parsed.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
     let found = 0;
-    for (const file of files.sort()) {
-      const source = await readFile(file, "utf8");
-      if (source.match(new RegExp(`^next:\\s*${options.actor}\\s*$`, "m"))) { console.log(path.relative(cwd, file)); found++; }
-    }
+    for (const { file, event } of parsed) if (event.meta.next === options.actor && !answered.has(event.meta.id)) { console.log(path.relative(cwd, file)); found++; }
     if (!found) console.log(`No open events addressed to ${options.actor}.`);
     return result.ok ? 0 : 1;
   }
@@ -62,4 +61,3 @@ export async function run(argv, cwd = process.cwd()) {
   console.log("EngramPort Git v0\n\nCommands:\n  verify\n  inbox --actor SLUG\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--reply UUID] [--next SLUG] [--artifacts REF,...]");
   return command ? 1 : 0;
 }
-
