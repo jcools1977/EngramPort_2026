@@ -126,6 +126,18 @@ Not blocking: the delivered grants are correct today, and the live controls in `
 
 **To close:** assert on the privilege set rather than on statement wording. A deny-by-default check that enumerates every `engram_app` grant and fails on anything outside the expected set is both shorter and complete.
 
+## F7. A compiled plan's identity is object identity, so it cannot cross a process boundary
+
+**Raised:** W0-2 review, 2026-08-14, by agent-a probe. **Related:** C3, F2. **Closes in:** wizard phase W1.
+
+`compileSetup` brands its output by adding the returned array to a module-private `WeakSet`, and `executeDryRun` refuses anything unbranded. This is a strong compiler-bypass gate and it works: a hand-built step list is refused, and so is a structurally identical one.
+
+The consequence, verified by probe: `JSON.parse(JSON.stringify(plan))` is refused with `UNCOMPILED_PLAN_REFUSED`. A plan cannot be compiled, written down, reviewed, and then executed later or elsewhere. Plan identity lives in object identity, which does not survive serialization, a process restart, or an approval that happens between the two.
+
+That is correct and sufficient for W0-2, where compile and dry run are one in-process call. It is insufficient for W1, whose whole shape is compile, present for human approval, then execute, with a boundary in the middle by design.
+
+**To close:** the durable equivalent of the brand is a digest over the ordered plan, verified on load, not object identity. C3 already requires the grouped approval to bind the ordered `(step_id, action_digest)` list, and F2 already requires each digest to bind `step_id` and `kind`. Taken together those three give a plan a portable identity, and the approval becomes the brand. Solve them as one piece of work rather than three.
+
 ---
 
 # Blocked work
