@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engramport.dev/schemas/welcome-package-v0.schema.json",
+  "type":"object", "additionalProperties":false,
+  "required":["package_version","package_id","issued_at","expires_at","issuer","subject","checkpoint","grant_digest","parts","signature"],
+  "properties": {
+    "package_version":{"const":1}, "package_id":{"type":"string","pattern":"^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "issued_at":{"type":"string","format":"date-time"}, "expires_at":{"type":"string","format":"date-time"},
+    "issuer":{"type":"object","additionalProperties":false,"required":["tenant","project","principal"],"properties":{"tenant":{"type":"string","format":"uuid"},"project":{"type":"string","format":"uuid"},"principal":{"type":"string","format":"uuid"}}},
+    "subject":{"type":"object","additionalProperties":false,"required":["invitation_id","actor","actor_slug"],"properties":{"invitation_id":{"type":"string"},"actor":{"type":"string","format":"uuid"},"actor_slug":{"type":"string"}}},
+    "checkpoint":{"type":"object","additionalProperties":false,"required":["event_id","project_seq","chain_hash"],"properties":{"event_id":{"type":"string"},"project_seq":{"type":"integer","minimum":1},"chain_hash":{"type":"string","pattern":"^[0-9a-f]{64}$"}}},
+    "grant_digest":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "parts":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["name","media_type","sha256"],"properties":{"name":{"type":"string","pattern":"^[a-z0-9][a-z0-9._-]*$"},"media_type":{"type":"string"},"sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}}}},
+    "signature":{"type":"object","additionalProperties":false,"required":["algorithm","key_id","value"],"properties":{"algorithm":{"const":"ed25519"},"key_id":{"type":"string"},"value":{"type":"string","minLength":1}}}
+  }
+}

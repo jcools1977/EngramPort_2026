@@ -80,7 +80,6 @@ function validateShape(event, relative, errors) {
 export async function verifyLog(root, options = {}) {
   const errors = [];
   const actors = await readActors(root);
-  const eventRoot = path.join(root, "events");
   const events = [];
   for (const actor of actors.values()) {
     const directory = path.join(root, actor.eventDirectory);
@@ -141,7 +140,8 @@ export async function verifyLog(root, options = {}) {
       const match = reference.match(/^([^#]+)#sha256=([0-9a-f]{64})$/);
       if (!match) { errors.push(`${event.relative}: invalid artifact reference ${reference}`); continue; }
       const artifactPath = path.resolve(root, match[1]);
-      if (!artifactPath.startsWith(path.resolve(root, "artifacts") + path.sep)) { errors.push(`${event.relative}: artifact escapes artifact root`); continue; }
+      const authorPrefix = path.resolve(root, actors.get(event.meta.from)?.artifactPrefix ?? "");
+      if (!artifactPath.startsWith(authorPrefix + path.sep)) { errors.push(`${event.relative}: artifact-prefix ownership violation for ${match[1]}`); continue; }
       try {
         if (!(await stat(artifactPath)).isFile()) throw new Error("not a file");
         const digest = createHash("sha256").update(await readFile(artifactPath)).digest("hex");
@@ -154,4 +154,3 @@ export async function verifyLog(root, options = {}) {
   if (!result.ok && options.throwOnError) throw new Error(errors.join("\n"));
   return result;
 }
-

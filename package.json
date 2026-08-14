@@ -17,6 +17,7 @@
     "proof:test": "node --test tests/git-v0.test.mjs",
     "proof": "npm run proof:verify && npm run proof:test"
     ,"db:test": "bash scripts/run-db-tests"
+    ,"welcome:test": "node --test tests/welcome-package.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

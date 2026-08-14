@@ -2,10 +2,14 @@ import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { hashBody, parseEvent, verifyLog } from "./verify-log.mjs";
+import { verifyWelcome } from "./welcome-verify.mjs";
 
 function args(argv) {
   const out = { _: [] };
-  for (let i = 0; i < argv.length; i++) argv[i].startsWith("--") ? out[argv[i].slice(2)] = argv[++i] : out._.push(argv[i]);
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i].startsWith("--")) out[argv[i].slice(2)] = argv[++i];
+    else out._.push(argv[i]);
+  }
   return out;
 }
 
@@ -25,6 +29,15 @@ function line(key, value) { return `${key}: ${value === null ? "null" : Array.is
 export async function run(argv, cwd = process.cwd()) {
   const options = args(argv);
   const command = options._[0];
+  if (command === "welcome" && options._[1] === "verify") {
+    if (!options.package) throw new Error("welcome verify requires --package");
+    const result = await verifyWelcome(path.resolve(cwd, options.package), { root: cwd });
+    for (const error of result.errors) console.error(`✗ ${error}`);
+    if (!result.ok) return 1;
+    console.log(`✓ welcome package verified`);
+    console.log(`grant (${result.profile}): ${JSON.stringify(result.grant)}`);
+    return 0;
+  }
   if (command === "verify") {
     const result = await verifyLog(cwd);
     if (!result.ok) { console.error(result.errors.map((error) => `✗ ${error}`).join("\n")); return 1; }

@@ -1,0 +1,15 @@
+## Result
+
+All seven completion criteria are met. Added both strict schemas, RFC 8785/JCS profile `engramport-grant-v1`, raw-byte part hashing, Ed25519 manifest verification, accepted-invitation and checkpoint checks, `engram welcome verify --package`, actor artifact-prefix ownership enforcement, 19 welcome-package controls, and the expanded 11-test Git proof. The implementation uses Node built-ins only and commits no secret.
+
+## Evidence
+
+Full output, exact matched rejection rules, adversarial reported grants, Node version, reproduction command, and design findings:
+
+`artifacts/agent-b/onboarding-t1-evidence.md#sha256=76f42d539e9c69822f34fdd88659204a56c05a96918ff6dec832bb818988ce6e`
+
+Reproduce with `npm run welcome:test && npm run proof`.
+
+## Design findings
+
+Structural authority survived implementation: injected prose cannot affect the reported grant. One protocol gap remains: Git v0 has no typed `project_seq` or `chain_hash`, so the verifier checks an explicit JSON checkpoint event body protected by the event content hash. This is visible-log consistency, not the PostgreSQL chain guarantee, and should become typed envelope data in a later Git schema. Invalid manifest shape is treated as a validation gate; structurally valid packages accumulate all later verification failures. Keys resolve from typed local public-key records under `keys/` pending a typed actor-key field.

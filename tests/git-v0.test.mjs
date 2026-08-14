@@ -49,7 +49,7 @@ await rejects("reply cycles are rejected", async (d) => {
 }, /reply cycle/);
 await rejects("missing artifacts are rejected", (d) => rm(path.join(d, "artifacts/agent-b/postgres-schema-review.md")), /missing artifact/);
 await rejects("artifact modification is rejected", (d) => mutate(d, "artifacts/agent-b/postgres-schema-review.md", (s) => `${s}\nmutation\n`), /artifact hash mismatch/);
+await rejects("artifact references must remain in author prefix", (d) => mutate(d, "events/agent-b/20260814T143844Z_0198f2a1-1000-7000-8000-000000000002.md", (s) => s.replaceAll("artifacts/agent-b/postgres-schema-review.md", "artifacts/agent-a/onboarding-welcome-protocol-design.md")), /artifact-prefix ownership violation/);
 await rejects("filename identity is enforced", async (d) => {
   await rename(path.join(d, "events/agent-a/20260814T143901Z_0198f2a1-1000-7000-8000-000000000003.md"), path.join(d, "events/agent-a/20260814T143902Z_0198f2a1-1000-7000-8000-000000000003.md"));
 }, /filename timestamp/);
-

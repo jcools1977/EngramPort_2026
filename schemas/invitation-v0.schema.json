@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engramport.dev/schemas/invitation-v0.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","invitation_id","tenant","project","issuer_principal","issuer_actor","intended_subject","grant","grant_digest","token_sha256","single_use","issued_at","expires_at","status"],
+  "properties": {
+    "schema_version": {"const": 0},
+    "invitation_id": {"type":"string","pattern":"^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "tenant": {"type":"string","format":"uuid"}, "project": {"type":"string","format":"uuid"},
+    "issuer_principal": {"type":"string","format":"uuid"}, "issuer_actor": {"type":"string","format":"uuid"},
+    "intended_subject": {"type":"string","minLength":1},
+    "grant": {"type":"object","additionalProperties":false,"required":["role","scopes","capabilities","groups","trust_ceiling"],"properties":{"role":{"type":"string"},"scopes":{"type":"array","items":{"type":"string"}},"capabilities":{"type":"array","items":{"type":"string"}},"groups":{"type":"array","items":{"type":"string"}},"trust_ceiling":{"type":"string"}}},
+    "grant_digest": {"type":"string","pattern":"^[0-9a-f]{64}$"}, "token_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "single_use": {"type":"boolean"}, "issued_at": {"type":"string","format":"date-time"}, "expires_at": {"type":"string","format":"date-time"},
+    "status": {"enum":["open","accepted","declined","revoked","expired"]}
+  }
+}
