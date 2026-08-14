@@ -104,23 +104,20 @@ It is recorded loudly because the store *looks* durable and atomic. It writes to
 
 ---
 
-# Milestone register
+# Task status
 
-## Port Watch milestone: remaining work after PW1
+## Port Watch
 
-**Recorded:** 2026-08-14, on acceptance of PW1.
+The Port Watch task plan is `docs/design/port-watch.md` section 6, PW1 through PW8. **That document is the single source of truth for what remains.** This register records status and findings only, and deliberately does not restate the plan.
 
-No artifact in this repository is named `M1`; the operator's reference to "M1's remaining work" is recorded here against the Port Watch milestone, which is the only milestone PW1 belongs to. If `M1` denotes something else, this entry should be renamed rather than duplicated.
+**PW1 is complete and accepted**, 2026-08-14. It delivered the decision core only: the wake or skip decision, durable per-agent cursors, opt-in with pause and stop state, WIP=1, and a recording adapter stub. Accepting PW1 does not mean any later PW item exists. PW2 through PW8 remain as written in the design document, unchanged and unrenamed.
 
-PW1 delivered the decision core only. Accepting it does **not** mean any of the following exists:
+Open findings assigned into that plan: **F4 closes in PW5**, **F5 closes in PW3**.
 
-| Remaining | Task | Note |
-|---|---|---|
-| Server-side authorized inbox predicate | PW2, PW3 | PW1's branded interface prevents local filtering but cannot prove a future server truthfully applies authorization. agent-b stated this; it is correct. |
-| Webhook receipt and signature verification | PW2 | Polling recovery exists only as a decision function today |
-| Database-backed atomic claims, lease expiry scheduling, fencing tokens | PW3 | See F5 |
-| Real provider adapters, worktree and branch isolation, no-default-branch-push control | PW4 | Adapters are recording stubs |
-| Concurrency caps, retry, backoff, dead letter, schedules, budgets | PW5 | See F4 |
-| Approval gates, blocking rather than defaulting | PW6 | |
-| Cooperation-free termination and documented revocation latency | PW7 | PW1 models lease revocation in state only; no process is terminated because none is started |
-| Metrics and the adversarial suite | PW8 | |
+## On "M1"
+
+`M1` is external roadmap shorthand for a future end-to-end unattended fleet proof. It is **not** a repository artifact, not an authoritative milestone identifier, and not a container for existing work.
+
+**No canonical work may be renamed, duplicated, or re-filed under it.** The eight remaining Port Watch items stay under the existing PW plan. If a formal milestone document is later accepted, this entry should be replaced by a reference to it rather than grown in place.
+
+Recorded because an earlier version of this file created a parallel milestone table restating the PW plan. Two registers describing one set of work is how they start disagreeing, which is the same failure the Re:PORT design forbids for event taxonomies.

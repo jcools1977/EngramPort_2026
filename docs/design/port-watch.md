@@ -100,11 +100,13 @@ Metrics per section 19: poll count, skip rate, wake count, time to claim, lease 
 
 ## 6. Bounded tasks
 
-- **PW1. Watch decision loop, durable cursors, and the unchanged-inbox guarantee.** Runnable now with stubbed adapters. This is the first handoff.
-- **PW2. Webhook receiver with signature verification and polling recovery**, including a silently broken webhook path detected by polling.
-- **PW3. Atomic claims, leases, and fencing tokens.** Blocked on a database host.
+This plan is the single source of truth for Port Watch scope. Status and open findings are tracked in `docs/constraints.md`; that register does not restate this list.
+
+- **PW1. Watch decision loop, durable cursors, and the unchanged-inbox guarantee.** Runnable now with stubbed adapters. **Complete and accepted 2026-08-14.** Delivered the decision core only; every item below remains outstanding.
+- **PW2. Webhook receiver with signature verification and polling recovery**, including a silently broken webhook path detected by polling. Also owns the server-side authorized-inbox predicate that PW1's branded interface cannot itself guarantee.
+- **PW3. Atomic claims, leases, and fencing tokens.** Blocked on a database host. Closes finding F5, the single-process-only store.
 - **PW4. Runner adapters and worktree isolation**, including the no-default-branch-push control.
-- **PW5. Concurrency, retry, dead-letter, schedules, and budgets.**
+- **PW5. Concurrency, retry, dead-letter, schedules, and budgets.** Closes finding F4, the cursor advancing past failed work with no retry.
 - **PW6. Approval gates and the blocking-not-defaulting behavior.**
 - **PW7. Pause and emergency stop, with cooperation-free termination.**
 - **PW8. Audit events, metrics, and the adversarial suite**: an attacker-appended event that must not cause a privileged action, and an unauthorized event that must not cause a wake.
