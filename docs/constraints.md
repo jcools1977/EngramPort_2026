@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T13:35Z: **W0-1 is closed and accepted.** **PW1 is the sole eligible implementation item.** The three executable v0.1 code findings are queued behind PW1; their live run stays blocked by C1. Re:PORT R1 and onboarding T1.5 are specified and undispatched.
+Current state as of 2026-08-14T15:31Z: W0-1, W0-2, PW1 and W1-1 are closed and accepted. **W1-3, grouped approval with digest scope and portable plan identity, is the sole eligible implementation item.** It closes C3, F2 and F7 as one unit. W1-2 is assigned to agent-a. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 

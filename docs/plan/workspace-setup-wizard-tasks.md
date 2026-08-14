@@ -54,6 +54,22 @@ Phase W1. Document, not code. Prerequisite for W3 per ADR 0012.
 
 Acceptance criteria: covers provisioning credentials, GitHub App private key, and webhook secret; states storage, lifetime, encryption, and revocation for each; names what an attacker gains at each compromise point; reviewed and accepted through an EngramPort event before W3 begins.
 
+## W1-3: Grouped approval, digest scope, and portable plan identity
+
+Phase W1. Runnable now. Resolves C3, F2 and F7 as one unit, because they are one problem seen from three angles.
+
+Bind a grouped approval to the ordered `(step_id, action_digest)` sequence, widen each action digest to cover `step_id`, `kind` and `parameters`, and give a compiled plan a deterministic identity that survives serialization so the approval can be the plan's durable brand.
+
+Acceptance criteria:
+1. Every `action_digest` covers `step_id`, `kind` and `parameters` under a canonicalization whose profile name reflects the changed field list.
+2. A compiled plan carries a `plan_digest` over its ordered `(step_id, kind, action_digest)` sequence, identical across processes and serialization round-trips.
+3. A serialized plan can be reloaded, and reloading verifies the digest rather than trusting it.
+4. A grouped approval records the ordered `(step_id, action_digest)` list and the `plan_digest`.
+5. Approval and execution both verify the presented plan's identity against the approval's, and refuse on mismatch. Self-consistency of a plan is never accepted as verification.
+6. Per-step parameter differences are surfaced between an approved plan and a presented one.
+7. Adversarial controls for reordered, inserted, removed, substituted and modified steps, each refused with a specific error, each with a paired positive control.
+8. A hand-built step list still cannot be approved or executed.
+
 ## W2-1: PostgreSQL and pgvector provisioning driver
 
 Phase W2. Blocked on a Docker-capable host.
