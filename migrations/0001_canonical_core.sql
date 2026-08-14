@@ -160,8 +160,9 @@ CREATE POLICY project_member_read ON threads AS RESTRICTIVE FOR SELECT USING (EX
 ));
 
 GRANT USAGE ON SCHEMA public TO engram_app, engram_maintenance;
-GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO engram_app;
-REVOKE UPDATE, DELETE ON events, event_recipients FROM engram_app;
+GRANT SELECT ON tenants, principals, projects, project_memberships, actors,
+  actor_delegations, agent_sessions, threads, events, event_recipients TO engram_app;
+GRANT INSERT ON events, event_recipients TO engram_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO engram_maintenance;
 
 CREATE TABLE schema_migrations (
