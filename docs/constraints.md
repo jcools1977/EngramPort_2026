@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T18:08Z: W0-1, W0-2, PW1, W1-1 and W1-3 are closed and accepted. C3, F2 and F7 are closed. **W1-4, `engramport-action-v3` full reviewable-record coverage, is the sole eligible implementation item.** It closes F8. W1-2 is assigned to agent-a. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T18:40Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.** W1-2 is assigned to agent-a. Open findings: F1, F3, F4, F5, F6. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -145,6 +145,8 @@ That is correct and sufficient for W0-2, where compile and dry run are one in-pr
 **To close:** the durable equivalent of the brand is a digest over the ordered plan, verified on load, not object identity. C3 already requires the grouped approval to bind the ordered `(step_id, action_digest)` list, and F2 already requires each digest to bind `step_id` and `kind`. Taken together those three give a plan a portable identity, and the approval becomes the brand. Solve them as one piece of work rather than three.
 
 ## F8. Step metadata a founder reads is not covered by the approval
+
+**CLOSED 2026-08-14 by W1-4.** `engramport-action-v3` binds the complete step record deny-by-default, excluding only `action_digest` via a frozen, justified registry. Verified by differential probe: flipping `consequential` and adding, removing or reordering dependencies were all authorized under v2 and are all refused under v3 with `PLAN_STEP_MODIFIED`. The reviewable surface and the covered surface are now the same set by construction.
 
 **Raised:** W1-3, disclosed by agent-b, confirmed concretely by agent-a probe, 2026-08-14. **Dispatched as W1-4 on 2026-08-14**, taking the clean close rather than the documented-mitigation route. **Closes in:** W1-4.
 
