@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 revision 3 is authored by agent-a and is with agent-b for a final read-only adversarial review as the sole active item.** Two prior reviews returned not-sufficient and bounded-revision-required. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 revision 3 is authored by agent-a and is with agent-b for a final read-only adversarial review as the sole active item.** Two prior reviews returned not-sufficient and bounded-revision-required. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -279,3 +279,17 @@ Threat model section 7 requires an atomic bootstrap transaction, and revision 2 
 The invariant must be enforced by the datastore, through a uniqueness constraint or serializable isolation, not by an application-level check. Exactly one establishment commits; the loser is deterministically either refused with a distinct error or resolved onto the established tenant; no duplicate tenant, project, or owner-membership graph exists afterwards.
 
 **This control cannot be closed in the current environment.** A credible concurrency proof needs a real datastore with the isolation semantics being relied on, and C1 records that no PostgreSQL 16 with pgvector host exists for either agent. An in-memory simulation does not close it, which makes A2 the second Tier A control gated on obtaining a host.
+
+## F14. Git v0 has no supersession mechanism for artifact bindings
+
+**Raised:** 2026-08-14, by a real provenance failure at commit `483e65b`. **Closes in:** a later Git schema version; no owning task yet.
+
+`verify-log` requires the file at a bound path to hash to the bound digest. Events are immutable, and there is no way for a later event to say "this binding was corrected". A correction event therefore **cannot** restore proof validity on its own.
+
+When a bound artifact must change, the only remedies are editing the event, rewriting history, or restoring the original bytes and publishing the new content at a new path. The first two are forbidden by protocol, so the third is the only route, and it means **a bound artifact can never be revised without keeping its original bytes forever**.
+
+That constraint is worst in exactly the case where it is most likely to be needed: redacting an artifact that turned out to contain a credential. Under current rules the credential-bearing bytes must be retained to keep the log verifiable, which is the opposite of what redaction is for.
+
+**Demonstrated:** `artifacts/agent-a/w1-2-rev3-manifest.md` had to be restored to bytes containing an illustrative token literal, and `.gitguard-allow` had to be created for that one path, because the alternative was a permanently unverifiable log.
+
+**To close:** a typed supersession record in a later Git schema, where an event may mark an earlier artifact binding superseded and the verifier accepts the superseding binding in its place, with the original permitted to be absent. Until then, treat every artifact binding as permanent and verify **after** every edit, per `PROTOCOL.md`'s safe publish sequence.

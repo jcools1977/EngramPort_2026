@@ -1,0 +1,134 @@
+# W1-2 revision 2 — second adversarial review
+
+## Result
+
+**Tightly bounded revision required; not yet accepted.** Revision 2 resolves the original P0 architecture errors and gives W3 a workable staged shape, but four remaining boundary defects prevent acceptance: Tier A does not test concurrent founder establishment or authorized grant creation, locator validation still accepts bearer-shaped values, Tier C does not gate every inventoried real credential, and the synthetic custody evidence is not yet falsifiable enough to prove plaintext confinement.
+
+If Tier A passed **with the concurrency and grant-authorization clarifications below**, I would permit W3-1 to begin using synthetic, non-production credentials. I would not permit W3-1 to touch a real credential.
+
+As written, **yes, a real credential can exist before its Tier C gate**, because several credential classes have no Tier C gate at all and Tier B does not define how KMS/service identities remain synthetic.
+
+The ingestion-requirements section imposes normative prose, but only part of it is presently testable. It needs an executable ingest interface and named negative controls; `$defs.ingest_requirements` is an unreferenced annotation that a validator never evaluates.
+
+There are additional schema/locator bypasses: a JWT and a GitHub-token-shaped string both pass `grant.installation_locator`; a GitHub-token-shaped string also passes `credential_ref.locator`. The future recursive detector might catch them, but the canonical schema and current repository do not.
+
+I would **not yet trust the resulting boundary with a real GitHub App private key after the currently written Tier C controls pass**. I would after the bounded corrections below pass with synthetic credentials, including a falsifiable KMS/HSM harness and a per-class Tier C gate.
+
+## Findings
+
+### P0 — A2 does not prove concurrent founder establishment is safe
+
+Section 6 requires an atomic bootstrap transaction and A2 tests partial failure. Neither requires the adversarial race that matters: two authenticated principals (or two requests for one principal) concurrently observe “no tenant” and both attempt founder establishment. Transactionality alone does not prevent a check-then-insert race or two owner memberships.
+
+Also, Tier A names the owner only as “W1 auth work”; no such task is present in the current task plan, and the repository's recorded C1 environment lacks the PostgreSQL 16/pgvector runtime needed for a credible datastore concurrency proof. Tier A is conceptually executable before W3, but not presently dispatchable or realistically verifiable in this environment.
+
+Close by naming a bounded task/environment dependency and adding a simultaneous-bootstrap control backed by a datastore uniqueness/serialization invariant: exactly one founder establishment commits, the loser is deterministically refused or resolves the established tenant, and no duplicate tenant/project/owner graph exists.
+
+### P0 — An installation locator is grant-shaped, not proven authorized
+
+The schema correctly removes locators from descriptors and structurally permits `installation_locator` only inside a grant payload. That is necessary but not sufficient for “authorized grants.” No Tier A control requires grant ingestion to resolve the granting principal's authority, bind tenant/project/provider/capability, or reject a forged but schema-valid grant. A5 is worded as a **descriptor** ingest contract; B9 begins from a grant store and tests no-grant versus grant, but does not prove the grant was authorized when stored.
+
+A forged grant carrying an attacker-chosen locator can therefore satisfy the documented invocation shape once B9 exists unless the unimplemented grant-write authorization is supplied elsewhere.
+
+Close by extending A5 or adding a gate for both descriptor and grant ingest: grant creation derives granter authority from the trusted resolver, enforces scope/tenant/project/provider/capability ceilings and C6 expiry, and never trusts caller-supplied `granted_by_principal_id` as proof.
+
+### P0 — Locator validation has another bearer bypass
+
+The revised `credential_ref.locator` grammar excludes dots and therefore rejects the JWT case that agent-a found. But `grant.installation_locator` still references the broader `$defs.identifier`, which allows dots. An actual JWT-shaped triple validates there. Both locator grammars also accept plausible opaque bearer tokens such as `ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd`.
+
+Independent draft-2020-12 validation produced:
+
+- JWT in `installation_locator`: **accepted**
+- GitHub token shape in `installation_locator`: **accepted**
+- GitHub token shape in `credential_ref.locator`: **accepted**
+- userinfo URL in `installation_locator`: rejected
+- PEM in `credential_ref.locator`: rejected
+- kind/payload mismatch: rejected
+- `invocable: true`: rejected
+
+Nested secret text in descriptor `description` also passes the schema, intentionally, so safety depends on the nonexistent F10 ingest detector. The document must not characterize locator validation as complete until that detector is implemented at descriptor **and grant** ingest.
+
+Close by giving installation locators their own structural type, treating every locator as opaque data that must pass the recursive credential detector, and retaining probes for JWT, PAT/App tokens, high-entropy opaque bearer strings, percent/base64-encoded credentials, userinfo URLs, PEM, and nested secret text. The plausible fifth bypass is an opaque provider token with no punctuation forbidden by the regex; syntax alone cannot distinguish it from a locator.
+
+### P1 — Tier C does not gate each real credential before first existence
+
+C1 gates only the real GitHub App private key. There is no explicit first-real-credential transition for:
+
+- GitHub webhook secret;
+- KMS/HSM authorization or workload identity;
+- welcome-package signing key;
+- OIDC client secret and OIDC protocol transients;
+- participant connector authorization;
+- model-provider token;
+- setup-session delegation.
+
+The inventory also remains incomplete despite having eleven numbered sections:
+
+1. **GitHub App installation access token** is mentioned inside the private-key row but has no owner/storage/consumer/destruction lifecycle of its own. It is the actual bearer credential used for GitHub API calls.
+2. **Welcome invitation/acceptance bearer token** is a real existing design credential: `schemas/invitation-v0.schema.json` requires `token_sha256`, and `docs/welcome-package-v0.md` says the token itself is never stored. Setup issues welcome packages, so issuance, one-time presentation, expiry, and teardown belong in this inventory.
+3. The authorization used to write/read the database runtime credential in the secret manager is another resolving-service credential unless it is explicitly subsumed under a workload-identity row.
+
+Close by inventorying these or explicitly and defensibly subsuming them, then mapping every row to a Tier C transition. C5 gates package contents but not the first real welcome signing or invitation token; B8 uses a synthetic webhook secret but no C gate authorizes creation of a real one.
+
+### P1 — Tier B can be synthetic, but the custody test does not yet prove its claims
+
+Tier B can in principle run entirely with non-production keys, webhook secrets, installations, and identities. The text must require an emulator/test tenant or isolated non-production KMS/HSM account so the authorization used for B2–B4 is itself non-production and cannot reach a real key.
+
+B5's instruction to “inspect logs, error paths, core dumps, backups and process environment” is not sufficient evidence of absence:
+
+- no core dump means there are no bytes to inspect;
+- a non-exportable HSM-generated private key has unknown plaintext bytes, so a string search cannot prove it absent;
+- a backup not taken during the operation cannot test the backup path;
+- only success-path inspection misses exception serialization and crash handling.
+
+Close with a falsifiable harness: a synthetic canary secret whose exposure is observable, instrumented signing API responses, forced export/decrypt denials, injected logging/error/crash/backup/environment faults that make the control fail, and IAM-policy evidence showing four distinct denied identities plus the connector allow. Also bind the connector identity to the exact tenant/key/purpose and signing algorithm so it is not a general cross-tenant signing oracle.
+
+### P1 — `shape_ref` local resolution and ingest obligations need an executable contract
+
+The descriptor schema is now structurally closed, every branch pins `kind`, `shape_ref` replaces inline shape, and no descriptor locator exists. Those corrections are sound. But nothing in JSON Schema or current code makes the registry local or trusted. `$defs.ingest_requirements` is never referenced by an applicator keyword and repository search found no registry or resolver.
+
+The prose is directionally testable, but it lacks the interface and evidence needed for A5: registry provenance, immutable/versioned registry entries, collision behavior, tenant applicability, unknown-reference refusal, time-of-check/time-of-use behavior, and proof that provider bytes cannot register or shadow a local shape. A byte/depth ceiling also needs exact numeric limits.
+
+Close by making A5 name an ingest entry point and tests for unknown `shape_ref`, provider attempted registration/shadowing, resolver error, detector error, oversized/deep input, nested secret, and successful resolution to a pinned local schema revision.
+
+### P2 — Status-label discipline is improved but not complete
+
+The explicit `[IMPLEMENTED]` claims match current code within their narrowed scopes:
+
+- authenticated identity is reduced to `principal_id` inside the session object;
+- PW1 separates actor scopes from supervisor scopes, with no claim of a real token;
+- the in-memory setup session enforces scope/expiry narrowing relative to caller-supplied authority and tears down delegation/approvals.
+
+The `[TEST-GATED]` and `[FUTURE]` claims are correctly not presented as implemented. F9/F10 remain reproduced, F11 remains confirmed but unexercisable, and F12 accurately describes the caller-asserted trust anchor.
+
+However, section 0 says every protection carries exactly one label, while many normative protections in sections 3–10 have no adjacent label. The document defines `[FUTURE]`, not the `[REQUIRED]` label named in the review request. “W3-adjacent auth work” and “W1 auth work” are not named tasks despite `[FUTURE]` requiring an owning task. Close by either labeling each normative block consistently or narrowing section 0's claim, and assign concrete task IDs.
+
+## Tier disposition
+
+### Tier A
+
+The six categories are sufficient to let synthetic-only W3-1 implementation begin **after** adding concurrent bootstrap and authorized-grant-ingest evidence. A3/A4 are deliberately broader than W3, but are feasible precursors and prevent W3 from creating new irreversible sinks. Current execution is blocked by missing implementations F9/F10/F12, absent descriptor/grant ingest, an unnamed auth task, and the repository's durable datastore environment constraint.
+
+### Tier B
+
+All nine can use synthetic/non-production credential material. B6/B7 need a fake or isolated GitHub installation/provider boundary with controllable rotation/uninstall state. B2–B5 need a synthetic custody environment and explicit fault injection; prose-only sink inspection is not proof.
+
+### Tier C
+
+The per-use placement of C2–C7 is materially better than revision 1. It is incomplete because the mapping is not one row per credential class and C1 covers only the App private key. No real credential may be introduced merely because a related synthetic B control passed.
+
+## Independent evidence
+
+- Commit verified: `80931e8bee7d389d3a3090700f4731ae2abc5a24`.
+- Revision manifest digests match: threat model `9c0db519b29a18e193de159ed858d30e404d724adde5d2a92cb4b71872874136`; schema `3811331dbb55742eed7eac4e3fa1742cdf76e1e7cab49e49a562df6ea2c074fc`.
+- EngramPort proof passed before review: 41 events, 13 threads, 2 actors.
+- F9 re-reproduced: compiler accepted the credential-bearing PostgreSQL URL and serialization retained `REAL_SECRET`.
+- F10 re-confirmed by implementation census: no detector or quarantine call site exists in packages/scripts/app/worker/db.
+- F11 re-confirmed unexercisable: no production subprocess runner adapter exists; PW1 remains in-process.
+- F12 re-confirmed from `SetupSessionManager.start`: caller supplies `founder_authority`; authenticated output supplies only `principal_id`; subset/expiry checks trust the caller's authority object.
+- Schema probed with an actual draft-2020-12 validator. Original kind and `invocable` bypasses are closed; locator bypasses above remain.
+- Existing invitation schema and welcome protocol confirm the omitted hashed bearer invitation-token lifecycle.
+
+## Recommendation
+
+Return revision 2 for one tightly bounded revision limited to: (1) concurrent bootstrap and named Tier A ownership/environment; (2) authorized grant-ingest requirements; (3) common detector-backed locator validation including `installation_locator`; (4) complete inventory-to-Tier-C mapping; and (5) a falsifiable synthetic custody harness. Preserve the three-tier structure and all corrected implementation labels. Do not implement any control or begin queued work under W1-2.

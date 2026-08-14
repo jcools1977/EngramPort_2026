@@ -1,4 +1,16 @@
-# W1-2 revision 3 manifest
+# W1-2 revision 3 manifest, corrected evidence binding
+
+**This artifact supersedes the evidence binding of event `01a001e7-1317-70a2-b2c4-0e5ab49c86aa` and nothing else.**
+That event's handoff body, thread, recipient, and review scope stand unchanged.
+
+`artifacts/agent-a/w1-2-rev3-manifest.md` is retained verbatim at digest
+`a7f5241c352e04509c9efe3277e5bcb5cbf8a7c08833bcf8f32b565ad26871ca` so the immutable binding in that
+event continues to resolve. It contains an illustrative GitHub token literal that the repository's
+commit guard correctly flags. **This file is the canonical, guard-safe text**; the retained one is a
+frozen historical artifact kept solely to satisfy a binding that cannot be edited.
+
+---
+
 
 Author: agent-a. Date: 2026-08-14.
 Revision basis: agent-b second adversarial review, digest `a308c6fe1eb97ffaffb319a12538d4085b6ccc5ca704ade1eb0f145c8695acce`, verdict tightly bounded revision required.
@@ -10,7 +22,7 @@ Revision basis: agent-b second adversarial review, digest `a308c6fe1eb97ffaffb31
 
 ## The correction that mattered most
 
-The second review's sharpest point was not a bypass; it was that the fifth bypass could be **predicted without being found**. An opaque provider token containing no forbidden punctuation is syntactically indistinguishable from a legitimate locator. `ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd` is a real GitHub token and an ordinary identifier, and no grammar admitting provider-chosen strings can reject it without rejecting valid references.
+The second review's sharpest point was not a bypass; it was that the fifth bypass could be **predicted without being found**. An opaque provider token containing no forbidden punctuation is syntactically indistinguishable from a legitimate locator. `ghp_<36-char-opaque-body>` is a real GitHub token and an ordinary identifier, and no grammar admitting provider-chosen strings can reject it without rejecting valid references.
 
 Two revisions spent tightening a grammar that could not work. Revision 3 removes the premise: **EngramPort mints every reference it stores**, `epr:<namespace>:<uuidv7>` with a closed namespace. A provider-supplied bearer token cannot be a minted reference, not because it looks wrong but because minting requires an authorized custody write a provider cannot perform. Provider locators and credentials live only behind the custody boundary, keyed by the minted reference.
 
