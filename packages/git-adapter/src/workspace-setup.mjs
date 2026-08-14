@@ -12,7 +12,7 @@ const exact=(object,keys,label)=>{if(!object||typeof object!=="object"||Array.is
 const stringArray=(o,k,label)=>{if(!Array.isArray(o[k])||o[k].some(v=>typeof v!=="string"))throw new SetupPlanError("SETUP_SCHEMA_INVALID",`${label}.${k} must be a string array`);};
 export function validateSetup(p){
  exact(p,["schema_version","created_at","founder","repository","database","participants","groups","import","welcome"],"setup");if(p.schema_version!==0)throw new SetupPlanError("SETUP_SCHEMA_INVALID","schema_version must be 0");if(!Number.isFinite(Date.parse(p.created_at)))throw new SetupPlanError("SETUP_SCHEMA_INVALID","created_at must be date-time");
- exact(p.founder,["principal_id","scopes","expires_at"],"founder");stringArray(p.founder,"scopes","founder");
+ exact(p.founder,["principal_id","scopes","assignable_trust","expires_at"],"founder");stringArray(p.founder,"scopes","founder");stringArray(p.founder,"assignable_trust","founder");
  exact(p.repository,["provider","owner","name","default_branch","permissions","depends_on"],"repository");stringArray(p.repository,"permissions","repository");stringArray(p.repository,"depends_on","repository");
  exact(p.database,["mode","target","depends_on"],"database");stringArray(p.database,"depends_on","database");
  if(!Array.isArray(p.participants)||!Array.isArray(p.groups))throw new SetupPlanError("SETUP_SCHEMA_INVALID","participants and groups must be arrays");
@@ -21,11 +21,14 @@ export function validateSetup(p){
  exact(p.import,["paths","include_history","depends_on"],"import");stringArray(p.import,"paths","import");stringArray(p.import,"depends_on","import");
  exact(p.welcome,["expiry_days","depends_on"],"welcome");stringArray(p.welcome,"depends_on","welcome");return p;
 }
-const later=(a,b)=>a!==null&&b!==null&&Date.parse(a)>Date.parse(b);
+const outlives=(grantExpiry,granterExpiry)=>granterExpiry!==null&&(grantExpiry===null||Date.parse(grantExpiry)>Date.parse(granterExpiry));
+const compatibleTrust={human:new Set(["verified_human","untrusted_agent"]),guest:new Set(["untrusted_agent"]),agent:new Set(["trusted_agent","untrusted_agent","imported"])};
 function authority(p){const founder=new Set(p.founder.scopes);for(const permission of p.repository.permissions)if(!allowedGitHub.has(permission))throw new SetupPlanError("GITHUB_PERMISSION_REFUSED",permission);
- for(const x of p.participants){for(const scope of x.scopes)if(!founder.has(scope))throw new SetupPlanError("SCOPE_EXCEEDS_FOUNDER",`${x.id}: ${scope}`);if(later(x.expires_at,p.founder.expires_at))throw new SetupPlanError("GRANT_OUTLIVES_GRANTER",x.id);if(x.trust!=="untrusted_agent")throw new SetupPlanError("SELF_ASSERTED_TRUST_REFUSED",`${x.id}: ${x.trust}`);
+ const assignableTrust=new Set(p.founder.assignable_trust);
+ for(const x of p.participants){for(const scope of x.scopes)if(!founder.has(scope))throw new SetupPlanError("SCOPE_EXCEEDS_FOUNDER",`${x.id}: ${scope}`);if(!assignableTrust.has(x.trust))throw new SetupPlanError("SELF_ASSERTED_TRUST_REFUSED",`${x.id}: ${x.trust}`);if(!compatibleTrust[x.kind]?.has(x.trust))throw new SetupPlanError("TRUST_KIND_INCOMPATIBLE",`${x.id}: ${x.kind} cannot receive ${x.trust}`);
   if(x.kind==="guest"){const max=Date.parse(p.created_at)+14*86400000;if(x.projects.length!==1||x.trust!=="untrusted_agent"||x.expires_at===null||Date.parse(x.expires_at)>max)throw new SetupPlanError("GUEST_GRANT_EXCEEDS_DEFAULTS",x.id);}
-  if(x.kind==="agent"){const owner=p.participants.find(o=>o.id===x.owner_id);if(!owner||x.scopes.some(s=>!owner.scopes.includes(s))||later(x.expires_at,owner.expires_at))throw new SetupPlanError("AGENT_GRANT_EXCEEDS_OWNER",x.id);}
+  if(x.kind==="agent"){const owner=p.participants.find(o=>o.id===x.owner_id);if(!owner||x.scopes.some(s=>!owner.scopes.includes(s))||outlives(x.expires_at,owner.expires_at))throw new SetupPlanError("AGENT_GRANT_EXCEEDS_OWNER",x.id);}
+  if(outlives(x.expires_at,p.founder.expires_at))throw new SetupPlanError("GRANT_OUTLIVES_GRANTER",x.id);
  }}
 const digest=params=>createHash("sha256").update(canonicalJson(params)).digest("hex");
 function rawSteps(p){return [
