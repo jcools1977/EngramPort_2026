@@ -21,6 +21,7 @@
     ,"setup:test": "node --test tests/workspace-setup*.test.mjs"
     ,"watch:test": "node --test tests/port-watch.test.mjs"
     ,"db:static-test": "node --test tests/app-role-grants-static.test.mjs"
+    ,"dry-run:test": "node --test tests/workspace-dry-run.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

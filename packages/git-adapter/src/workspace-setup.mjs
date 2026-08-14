@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { canonicalJson } from "./welcome-verify.mjs";
 
 const allowedGitHub=new Set(["contents:read","pull_requests:write_non_default","webhooks:receive"]);
+const compiledPlans=new WeakSet();
 export class SetupPlanError extends Error { constructor(code,message){super(`${code}: ${message}`);this.code=code;} }
 export function parseSetup(source){
   const clean=source.split(/\r?\n/).filter(line=>!line.trimStart().startsWith("#")).join("\n");
@@ -40,6 +41,8 @@ function rawSteps(p){return [
  {step_id:"welcome.defaults",kind:"welcome.defaults",parameters:{expiry_days:p.welcome.expiry_days},consequential:true,depends_on:p.welcome.depends_on}
  ];}
 function order(steps){const by=new Map(steps.map(s=>[s.step_id,s]));for(const s of steps)for(const d of s.depends_on)if(!by.has(d))throw new SetupPlanError("UNSATISFIABLE_DEPENDENCY",`${s.step_id} -> ${d}`);const result=[],remaining=new Set(by.keys());while(remaining.size){const ready=[...remaining].filter(id=>by.get(id).depends_on.every(d=>!remaining.has(d))).sort();if(!ready.length)throw new SetupPlanError("CYCLIC_DEPENDENCY",[...remaining].sort().join(","));for(const id of ready){result.push(by.get(id));remaining.delete(id);}}return result;}
-export function compileSetup(input){const p=validateSetup(typeof input==="string"?parseSetup(input):structuredClone(input));authority(p);return order(rawSteps(p)).map(s=>{const params=JSON.parse(JSON.stringify(s.parameters));const out={step_id:s.step_id,kind:s.kind,parameters:params,consequential:s.consequential,depends_on:[...s.depends_on].sort()};if(s.consequential)out.action_digest=digest(params);return out;});}
+export function compileSetup(input){const p=validateSetup(typeof input==="string"?parseSetup(input):structuredClone(input));authority(p);const plan=order(rawSteps(p)).map(s=>{const params=JSON.parse(JSON.stringify(s.parameters));const out={step_id:s.step_id,kind:s.kind,parameters:params,consequential:s.consequential,depends_on:[...s.depends_on].sort()};if(s.consequential)out.action_digest=digest(params);return Object.freeze(out);});compiledPlans.add(plan);return Object.freeze(plan);}
+export function compiledStepSequence(plan){if(!compiledPlans.has(plan))throw new SetupPlanError("UNCOMPILED_PLAN_REFUSED","step list was not produced by compileSetup");return plan.map(step=>step.step_id);}
+export function isCompiledSetup(plan){return compiledPlans.has(plan);}
 export async function compileSetupFile(file){return compileSetup(await readFile(file,"utf8"));}
 export const ACTION_PROFILE="engramport-action-v1";
