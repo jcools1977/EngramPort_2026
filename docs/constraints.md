@@ -26,7 +26,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state: W0-1 is active and under revision. PW1 is queued and **not eligible**. The v0.1 code findings are queued behind PW1. Re:PORT R1 and onboarding T1.5 are specified and undispatched.
+Current state as of 2026-08-14T13:35Z: **W0-1 is closed and accepted.** **PW1 is the sole eligible implementation item.** The three executable v0.1 code findings are queued behind PW1; their live run stays blocked by C1. Re:PORT R1 and onboarding T1.5 are specified and undispatched.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -45,3 +45,35 @@ This is now binding on wizard phase W1 and is not an open question.
 The Re:PORT design is complete and committed. No R-task may be handed to agent-b until the queue above clears and capacity is confirmed. R1 is fully specified so that dispatch requires no further design work.
 
 **No Re:PORT feasibility or cost finding exists.** agent-b stated on thread `priority` that it has not inspected the Re:PORT design, because R1 is not dispatched and it will not work from repository design artifacts alone. That is correct behavior under C2 and should not be mistaken for a finding. Any future Re:PORT cost consideration must originate from agent-b reviewing bound inputs under an eligible handoff.
+
+---
+
+# Open follow-up findings
+
+Findings that are real, accepted as non-blocking, and deliberately not fixed in the task that surfaced them. Each names the task that must close it, so it cannot be lost by being merely mentioned once.
+
+## F1. The workspace-setup JSON Schema is not used at runtime
+
+**Raised:** W0-1 review, 2026-08-14. **Confirmed by:** agent-a and agent-b independently. **Closes in:** wizard phase W1.
+
+`schemas/workspace-setup-v0.schema.json` is referenced by no code path. The shipped validation is the hand-rolled `validateSetup` in `packages/git-adapter/src/workspace-setup.mjs`. The two can drift and nothing will fail.
+
+Partially mitigated, and worth recording so the mitigation is not mistaken for a fix: the kind-compatibility table is a genuine second gate. A founder who lists a trust value the schema enum would have rejected, such as `superuser`, in `assignable_trust` still has that participant refused with `TRUST_KIND_INCOMPATIBLE`. Verified by probe. So the unwired schema is a drift risk rather than an open hole today.
+
+**To close:** either validate against the schema at runtime, or state in the file that the hand-rolled validator is normative and the schema is documentation. The current ambiguity is the defect.
+
+## F2. `action_digest` does not bind `step_id` or `kind`
+
+**Raised:** W0-1 review, 2026-08-14. **Related:** C3. **Closes in:** wizard phase W1, alongside grouped approval.
+
+`action_digest` is computed over step `parameters` only. Two steps with identical parameters would carry identical digests, so a digest alone does not say which step an approval authorizes.
+
+Not exploitable in the current step set, since each consequential step's parameters differ in practice, and step digests are correctly isolated: changing one participant leaves every other step's digest untouched, verified by probe. It becomes load-bearing the moment grouped approval exists, which is exactly what C3 constrains.
+
+**To close:** digest `{step_id, kind, parameters}` rather than `parameters`, and have grouped approval bind the ordered `(step_id, action_digest)` list with per-step parameter diffs.
+
+## F3. `founder.assignable_trust` is a breaking change to the setup document format
+
+**Raised:** W0-1 revision review, 2026-08-14. **Closes in:** no action required before W1.
+
+The authority-ceiling fix made `founder.assignable_trust` a required field. Any `workspace.setup.yaml` written against the earlier shape now fails validation. Correct and acceptable at v0 pre-release, recorded so it is not rediscovered as a surprise once documents exist in the wild. A `schema_version` bump is required if the format changes again after first external use.
