@@ -30,11 +30,13 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T15:31Z: W0-1, W0-2, PW1 and W1-1 are closed and accepted. **W1-3, grouped approval with digest scope and portable plan identity, is the sole eligible implementation item.** It closes C3, F2 and F7 as one unit. W1-2 is assigned to agent-a. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T15:50Z: W0-1, W0-2, PW1, W1-1 and W1-3 are closed and accepted. C3, F2 and F7 are closed. **No implementation item is currently eligible; the WIP slot is free.** W1-2 is assigned to agent-a. Open: F8. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
 ## C3. Approval digests must bind the step list, not a summary
+
+**CLOSED 2026-08-14 by W1-3.** Grouped approval now records the `plan_digest` and the ordered `(step_id, action_digest)` list, and execution verifies the presented plan against the session-stored approval. Verified by probe. Retained for the reasoning.
 
 **Recorded:** 2026-08-14, raised by agent-b as a W0-1 design finding, promoted to a constraint on ADR 0012 decision 5.
 
@@ -67,6 +69,8 @@ Partially mitigated, and worth recording so the mitigation is not mistaken for a
 **To close:** either validate against the schema at runtime, or state in the file that the hand-rolled validator is normative and the schema is documentation. The current ambiguity is the defect.
 
 ## F2. `action_digest` does not bind `step_id` or `kind`
+
+**CLOSED 2026-08-14 by W1-3.** `engramport-action-v2` covers `step_id`, `kind` and `parameters`. Verified by probe: identical parameters under a different `step_id` or `kind` now produce different digests.
 
 **Raised:** W0-1 review, 2026-08-14. **Related:** C3. **Closes in:** wizard phase W1, alongside grouped approval.
 
@@ -128,6 +132,8 @@ Not blocking: the delivered grants are correct today, and the live controls in `
 
 ## F7. A compiled plan's identity is object identity, so it cannot cross a process boundary
 
+**CLOSED 2026-08-14 by W1-3.** `engramport-plan-v1` gives a plan a content-derived `plan_digest`; `serializeSetupPlan` and `loadSetupPlan` round-trip it with full recomputation. Verified by probe: a reloaded plan executes against an approval issued before serialization.
+
 **Raised:** W0-2 review, 2026-08-14, by agent-a probe. **Related:** C3, F2. **Closes in:** wizard phase W1.
 
 `compileSetup` brands its output by adding the returned array to a module-private `WeakSet`, and `executeDryRun` refuses anything unbranded. This is a strong compiler-bypass gate and it works: a hand-built step list is refused, and so is a structurally identical one.
@@ -137,6 +143,24 @@ The consequence, verified by probe: `JSON.parse(JSON.stringify(plan))` is refuse
 That is correct and sufficient for W0-2, where compile and dry run are one in-process call. It is insufficient for W1, whose whole shape is compile, present for human approval, then execute, with a boundary in the middle by design.
 
 **To close:** the durable equivalent of the brand is a digest over the ordered plan, verified on load, not object identity. C3 already requires the grouped approval to bind the ordered `(step_id, action_digest)` list, and F2 already requires each digest to bind `step_id` and `kind`. Taken together those three give a plan a portable identity, and the approval becomes the brand. Solve them as one piece of work rather than three.
+
+## F8. Step metadata a founder reads is not covered by the approval
+
+**Raised:** W1-3, disclosed by agent-b, confirmed concretely by agent-a probe, 2026-08-14. **Closes in:** before any review UI ships, and no later than W4.
+
+`engramport-action-v2` covers `step_id`, `kind` and `parameters`. It does **not** cover `consequential` or `depends_on`.
+
+Demonstrated: taking an approved plan, flipping every step's `consequential` from `true` to `false`, and changing nothing else leaves every action digest and the `plan_digest` unchanged, and the modified plan executes as `authorized`. A founder who approved a plan presenting four consequential steps can have a plan executed that presents zero.
+
+**Currently inert.** `consequential` drives only the dry-run transcript label and nothing execution-bearing. `depends_on` determines compiled order, and order *is* covered by `plan_digest`, so a dependency change that alters ordering is caught; one that does not alter ordering has no execution consequence today.
+
+**Why it still matters.** `consequential` is precisely the field a review surface would render as "these are the dangerous ones." ADR 0012 decision 5 rests on a founder reviewing a grouped plan; a label inside that review which the approval does not bind is a gap between what was read and what was authorized. That is the same class of defect as approving a prose summary, which C3 exists to forbid.
+
+**Requirements until closed:**
+
+1. A review UI MUST NOT present `consequential`, `depends_on`, or any other uncovered field as approved content.
+2. If either field becomes execution-bearing, the action profile MUST be revised to cover it, with a version bump per specification section 5.2.
+3. The safest close is to widen `engramport-action-v3` to cover the whole step record, so the covered surface and the reviewable surface are the same set by construction rather than by discipline.
 
 ---
 
