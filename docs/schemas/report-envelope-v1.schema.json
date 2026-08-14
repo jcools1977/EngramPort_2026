@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engramport.com/schemas/report-envelope-v1.schema.json",
+  "title": "Re:PORT generated report envelope v1",
+  "description": "Normative envelope for every Re:PORT generated report. Authored by agent-a as specification. Reports are derived, labeled generated, and never canonical project facts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "tenant_id",
+    "project_id",
+    "audience",
+    "view_mode",
+    "headline",
+    "narrative",
+    "why_it_matters",
+    "responsible_actors",
+    "verified_facts",
+    "inferences",
+    "status",
+    "blockers",
+    "risks",
+    "next_expected_action",
+    "source_event_ids",
+    "confidence",
+    "sensitivity",
+    "visibility",
+    "generated_at",
+    "generator",
+    "as_of_seq",
+    "generated"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "report_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "description": "UUIDv7."
+    },
+    "generated": {
+      "const": true,
+      "description": "Always true. Present so no consumer can mistake a report for a canonical fact, per ADR 0013 decision 2."
+    },
+    "tenant_id": { "type": "string", "format": "uuid" },
+    "project_id": { "type": "string", "format": "uuid" },
+    "thread_id": { "type": ["string", "null"], "format": "uuid" },
+    "audience": {
+      "type": "string",
+      "enum": ["team", "executive", "technical", "public", "collaborator", "agent"],
+      "description": "The authorization context the report was generated under, not a display preference."
+    },
+    "view_mode": {
+      "type": "string",
+      "enum": ["live_feed", "terminal_ticker", "daily_briefing", "executive_view", "technical_view", "public_view", "collaborator_briefing"]
+    },
+    "headline": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "narrative": { "type": "string", "minLength": 1, "maxLength": 8000 },
+    "why_it_matters": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "responsible_actors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["actor_id", "display_name", "kind"],
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "display_name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["human", "agent", "service"] }
+        }
+      }
+    },
+    "verified_facts": {
+      "type": "array",
+      "description": "Each entry restates what its supporting events say. At least one supporting event id is required and MUST be readable by this audience.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "event_ids"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "event_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "format": "uuid" }
+          }
+        }
+      }
+    },
+    "inferences": {
+      "type": "array",
+      "description": "Anything not directly supported by an event. Always labeled. MUST NOT be promoted into verified_facts by a later report.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "basis", "confidence"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "basis": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+          "event_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["on_track", "at_risk", "blocked", "delivered", "paused", "unknown"]
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "event_ids"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1 },
+          "event_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
+          "owner_actor_id": { "type": ["string", "null"], "format": "uuid" }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "severity", "event_ids"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1 },
+          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "event_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
+        }
+      }
+    },
+    "next_expected_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description"],
+      "description": "A statement of what is expected next. Carries no assignment authority; naming an actor here does not assign work.",
+      "properties": {
+        "description": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "expected_actor_id": { "type": ["string", "null"], "format": "uuid" },
+        "handoff_event_id": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "source_event_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Complete evidence set supplied to the generator, per specification section 14.9.",
+      "items": { "type": "string", "format": "uuid" }
+    },
+    "artifact_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "artifact_id": { "type": ["string", "null"], "format": "uuid" }
+        }
+      }
+    },
+    "commit_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repository", "sha"],
+        "properties": {
+          "repository": { "type": "string" },
+          "sha": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+          "url": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "test_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["suite", "event_id"],
+        "properties": {
+          "suite": { "type": "string" },
+          "event_id": { "type": "string", "format": "uuid" },
+          "passed": { "type": "integer", "minimum": 0 },
+          "failed": { "type": "integer", "minimum": 0 },
+          "negative_controls_ran": { "type": "boolean" }
+        }
+      }
+    },
+    "decision_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision_key", "event_id"],
+        "properties": {
+          "decision_key": { "type": "string" },
+          "event_id": { "type": "string", "format": "uuid" },
+          "active": { "type": "boolean" }
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "rationale"],
+      "properties": {
+        "level": { "type": "string", "enum": ["low", "medium", "high"] },
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "uncertainties": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "sensitivity": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "restricted"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["private", "thread", "project", "public"]
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "revision"],
+      "properties": {
+        "model": { "type": "string" },
+        "revision": { "type": "string" },
+        "prompt_profile": { "type": "string" },
+        "policy_version": { "type": "string" }
+      }
+    },
+    "as_of_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Project sequence the report was generated against."
+    },
+    "publication": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Present only for public_view. Records the human approval that authorized external publication, per ADR 0013 decision 6.",
+      "required": ["approval_event_id", "action_digest", "approved_by_principal_id"],
+      "properties": {
+        "approval_event_id": { "type": "string", "format": "uuid" },
+        "action_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "approved_by_principal_id": { "type": "string", "format": "uuid" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "view_mode": { "const": "public_view" } }, "required": ["view_mode"] },
+      "then": {
+        "required": ["publication"],
+        "properties": {
+          "publication": { "type": "object" },
+          "sensitivity": { "const": "public" },
+          "visibility": { "const": "public" }
+        }
+      }
+    }
+  ]
+}
