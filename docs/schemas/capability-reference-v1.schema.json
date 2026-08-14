@@ -1,81 +1,94 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engramport.com/schemas/capability-reference-v1.schema.json",
-  "title": "EngramPort capability reference and grant v1",
-  "description": "Normative. The structural mechanism by which EngramPort records what a participant can do without copying the credential that lets them do it, per docs/security/setup-credential-threat-model.md sections 4 and 5. A descriptor says a capability exists. A grant says a principal may use it. Neither ever carries a credential.",
+  "title": "EngramPort capability reference and grant v1, revision 2",
+  "description": "Normative. A descriptor says a capability exists; a grant says a principal may use it. Neither carries a credential and neither is invocable. Revision 2 replaces revision 1's permissive provider payload after adversarial review demonstrated three bypasses: nested secrets inside a free-form input_shape, a bearer value in provider_installation_ref, and a kind/payload mismatch. See docs/security/setup-credential-threat-model.md sections 4 and 5.",
+
+  "$comment": "SCHEMA LIMITS, STATED RATHER THAN IMPLIED. JSON Schema constrains structure. It cannot recursively detect secret-shaped CONTENT, and this schema no longer pretends to. Structural closure here is paired with a mandatory ingest validator specified in $defs.ingest_requirements. A record passing this schema is well-formed, not trusted.",
+
   "$defs": {
-    "credential_free": {
-      "$comment": "Deny-by-default on credential-shaped fields. Present on both descriptor and grant so that adding a field cannot silently introduce a secret. This is a schema-level backstop, not the primary control; the primary control is that no code path writes one.",
-      "not": {
-        "anyOf": [
-          { "required": ["token"] },
-          { "required": ["access_token"] },
-          { "required": ["refresh_token"] },
-          { "required": ["secret"] },
-          { "required": ["client_secret"] },
-          { "required": ["password"] },
-          { "required": ["private_key"] },
-          { "required": ["api_key"] },
-          { "required": ["credential"] },
-          { "required": ["authorization"] },
-          { "required": ["bearer"] },
-          { "required": ["session_token"] },
-          { "required": ["connection_string"] }
-        ]
-      }
+    "ingest_requirements": {
+      "$comment": "NORMATIVE PROSE, not validated by this document. An ingest validator MUST implement all of these before any descriptor is stored or rendered. Threat model control A5 gates them.",
+      "requirements": [
+        "Recursively scan every string in the record, at any depth, with the credential detector of finding F10. Reject the whole record on any hit; do not strip and continue.",
+        "Reject any string that parses as a URL carrying authority: userinfo, a query or fragment parameter named like a token, or a scheme outside https.",
+        "Reject any string matching a bearer-token shape, including 'Bearer ' prefixes, JWT triples, and PEM blocks.",
+        "Enforce a total record byte ceiling and a maximum nesting depth, so scanning cannot be exhausted.",
+        "Resolve shape_ref against a locally registered shape registry. Never accept an inline provider-supplied schema.",
+        "Fail closed: a detector or resolver error rejects the record."
+      ]
     },
+
+    "safe_text": {
+      "$comment": "Provider-supplied display text. Bounded, and still subject to recursive content scanning at ingest.",
+      "type": "string",
+      "maxLength": 2000
+    },
+
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "$comment": "Deliberately narrow. Excludes whitespace, quotes, slashes and control characters, so an identifier cannot smuggle a URL, a PEM block, or a bearer header."
+    },
+
     "secret_ref": {
-      "$comment": "How a credential is pointed at, never carried. The value is a locator in a secret manager, resolvable only by an authorized consumer at use time.",
+      "$comment": "How a credential is pointed at, never carried. Custody model B or C in threat model section 5.",
       "type": "object",
       "additionalProperties": false,
       "required": ["manager", "locator"],
       "properties": {
-        "manager": { "type": "string", "description": "Secret manager identifier, e.g. 1password, aws-secrets-manager, env-file-local." },
-        "locator": { "type": "string", "description": "Opaque reference within that manager. MUST NOT be the secret itself." },
-        "version": { "type": ["string", "null"] }
+        "manager": {
+          "type": "string",
+          "enum": ["kms", "hsm", "secret-manager"],
+          "$comment": "Revision 1 allowed a local env-file manager, which contradicted the claim that only an authorized server-side consumer can resolve a reference. Removed."
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_:-]*$",
+          "$comment": "Deliberately TIGHTER than $defs/identifier, which permits dots for capability names like github.read_contents. A JWT is dot-separated base64url and therefore matched the identifier grammar; agent-a's own probe of revision 2 caught a JWT passing as a locator. Dots are excluded here. A PEM block fails on its leading dash, a connection string on its slashes and at-sign, a JWT on its dots."
+        },
+        "version": {
+          "anyOf": [
+            { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9][A-Za-z0-9_:-]*$" },
+            { "type": "null" }
+          ]
+        }
       }
-    }
-  },
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["schema_version", "kind"],
-  "oneOf": [
-    { "required": ["descriptor"] },
-    { "required": ["grant"] }
-  ],
-  "properties": {
-    "schema_version": { "const": 1 },
-    "kind": {
-      "type": "string",
-      "enum": ["capability_descriptor", "capability_grant"],
-      "description": "A record is one or the other, never both. Merging them is the conflation this schema exists to prevent."
     },
 
     "descriptor": {
-      "$comment": "What a connector advertises. Attacker-influenced input per threat actor A6. Carries nothing invocable: no handle, no session id, no credential. Discovering this confers no authority whatsoever.",
-      "allOf": [{ "$ref": "#/$defs/credential_free" }],
+      "$comment": "What a connector advertises. Attacker-influenced input from threat actor A6. Closed: no additional properties, no free-form object anywhere, and NO field from which an invocation locator may be read.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["capability", "provider", "discovered_at", "trust"],
+      "required": ["capability", "provider", "shape_ref", "discovered_at", "trust", "invocable"],
       "properties": {
-        "capability": { "type": "string", "minLength": 1, "description": "Provider-declared capability name. Untrusted text. Never matched against an allowlist to imply permission." },
-        "provider": { "type": "string", "minLength": 1 },
-        "provider_installation_ref": { "type": ["string", "null"], "description": "Opaque installation identifier. Not a credential and not sufficient to invoke." },
-        "display_name": { "type": ["string", "null"] },
-        "description": { "type": ["string", "null"], "maxLength": 2000, "description": "Provider-supplied prose. Untrusted, quoted evidence. Never an instruction." },
-        "input_shape": { "type": ["object", "null"], "description": "Declared parameter shape, for rendering and validation only." },
+        "capability": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/identifier" },
+        "shape_ref": {
+          "$ref": "#/$defs/identifier",
+          "$comment": "Replaces revision 1's input_shape, which was a free-form object and accepted {token, nested:{private_key}}. A descriptor now REFERENCES a locally registered shape by identifier; it never carries one. The registry is local, so a provider cannot define the shape it is validated against."
+        },
+        "display_name": { "$ref": "#/$defs/safe_text" },
+        "description": { "$ref": "#/$defs/safe_text" },
         "discovered_at": { "type": "string", "format": "date-time" },
         "trust": {
           "type": "string",
           "enum": ["untrusted_agent", "imported"],
-          "description": "A descriptor is never more trusted than this. It came from outside."
+          "$comment": "A descriptor is never more trusted than this. It came from outside."
+        },
+        "invocable": {
+          "const": false,
+          "$comment": "Required and constant. A descriptor asserts its own non-invocability, so any code path treating one as invocable contradicts a field it must have read. provider_installation_ref is REMOVED: revision 1 allowed 'Bearer REAL_SECRET' there, and an implementer could hand that opaque value to a provider SDK. Installation locators now come only from the grant store."
         }
       }
     },
 
     "grant": {
-      "$comment": "The authorization decision. This, and only this, permits invocation. Resolved server-side at call time; possession of a grant record is not itself authority.",
-      "allOf": [{ "$ref": "#/$defs/credential_free" }],
+      "$comment": "The authorization decision. Resolved server-side at call time; possession of this record is not authority.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -84,43 +97,59 @@
       ],
       "properties": {
         "grant_id": { "type": "string", "format": "uuid" },
-        "capability": { "type": "string", "minLength": 1 },
-        "provider": { "type": "string", "minLength": 1 },
+        "capability": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/identifier" },
         "granted_to_principal_id": { "type": "string", "format": "uuid" },
-        "granted_to_actor_id": { "type": ["string", "null"], "format": "uuid", "description": "Present when the grant is narrowed to one actor. An actor grant never exceeds or outlives its owning principal's." },
+        "granted_to_actor_id": { "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }] },
         "granted_by_principal_id": {
           "type": "string",
           "format": "uuid",
-          "description": "A grant never exceeds the granting principal's own authority."
+          "$comment": "A grant never exceeds the granting principal's own authority, resolved per threat model section 6, never asserted by the caller."
         },
-        "granting_event_id": {
-          "type": "string",
-          "format": "uuid",
-          "description": "The event that created this grant. Makes 'why does this participant hold this right' a traversal rather than an investigation."
-        },
+        "granting_event_id": { "type": "string", "format": "uuid" },
         "scopes": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "type": "string" },
-          "description": "Authority. Distinct from capabilities, which are routing labels only."
+          "items": { "$ref": "#/$defs/identifier" }
         },
-        "credential_ref": {
-          "anyOf": [{ "$ref": "#/$defs/secret_ref" }, { "type": "null" }],
-          "description": "Optional pointer to the credential held elsewhere, resolvable only by the authorized consumer at use time. EngramPort stores the reference; it never stores, transits, or logs the value. Null when the consumer holds its own authorization, which is the normal case for participant connectors."
+        "installation_locator": {
+          "anyOf": [{ "$ref": "#/$defs/identifier" }, { "type": "null" }],
+          "$comment": "Lives on the GRANT, never on the descriptor. This is the field an invocation may read, and it exists only because an authorized grant put it here."
         },
+        "credential_ref": { "anyOf": [{ "$ref": "#/$defs/secret_ref" }, { "type": "null" }] },
         "expires_at": {
           "type": "string",
           "format": "date-time",
-          "description": "Absolute and required. Unbounded grants are not expressible. Enforced by the datastore per constraint C6, not only by application sweeps."
+          "$comment": "Absolute and required. Unbounded grants are not expressible. Enforced by the datastore per constraint C6, not only by application sweeps."
         },
-        "status": {
-          "type": "string",
-          "enum": ["active", "revoked", "expired"],
-          "description": "Revocation makes the reference inert without touching the provider, and provider-side revocation works independently. Both MUST work alone."
-        },
-        "revoked_by_event_id": { "type": ["string", "null"], "format": "uuid" }
+        "status": { "type": "string", "enum": ["active", "revoked", "expired"] },
+        "revoked_by_event_id": { "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }] }
       }
     }
-  }
+  },
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "type": "string", "enum": ["capability_descriptor", "capability_grant"] },
+    "descriptor": { "$ref": "#/$defs/descriptor" },
+    "grant": { "$ref": "#/$defs/grant" }
+  },
+
+  "$comment2": "kind is now COUPLED to the payload branch. Revision 1 used a bare oneOf on required-payload, which accepted kind:capability_grant carrying only a descriptor. Each branch below pins the kind, requires its own payload, and forbids the other.",
+  "oneOf": [
+    {
+      "properties": { "kind": { "const": "capability_descriptor" } },
+      "required": ["descriptor"],
+      "not": { "required": ["grant"] }
+    },
+    {
+      "properties": { "kind": { "const": "capability_grant" } },
+      "required": ["grant"],
+      "not": { "required": ["descriptor"] }
+    }
+  ]
 }

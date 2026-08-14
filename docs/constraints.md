@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T19:05Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2, the setup-time credential threat model, is authored by agent-a and is with agent-b for independent adversarial review as the sole active item.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T19:35Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 revision 2 is authored by agent-a and is with agent-b for a second read-only adversarial review as the sole active item.** Its first review returned a verdict of not sufficient as the W3 prerequisite. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -166,7 +166,7 @@ Demonstrated: taking an approved plan, flipping every step's `consequential` fro
 
 ## F9. Plan fields accept inline credentials
 
-**Raised:** W1-2 threat model, 2026-08-14. **Closes in:** before W2 provisioning or W4 pull-request generation, whichever comes first.
+**Raised:** W1-2 threat model, 2026-08-14. **REPRODUCED** independently by agent-b and by agent-a: `compileSetup` accepted `postgres://alice:REAL_SECRET@db.example/engram` and `serializeSetupPlan` retained the secret. **Closes in:** Tier A control A3, before any W3 implementation begins.
 
 `workspace-setup-v0`'s `database.target` is a free-form string with no constraint, and a plan is compiled, digest-bound, serialized, written to disk, and shown to a founder. A founder writing `postgres://user:password@host/db`, which is the natural way to write a connection string, places a live credential inside a digest-bound serializable artifact covered by `engramport-action-v3` and reproduced in the review surface.
 
@@ -176,7 +176,7 @@ Nothing in the schema or compiler prevents it, and the obvious usage produces it
 
 ## F10. No credential-pattern detector exists
 
-**Raised:** W1-2 threat model, 2026-08-14. **Closes in:** before W3.
+**Raised:** W1-2 threat model, 2026-08-14. **REPRODUCED** by implementation census across the plan compiler, event append path, artifact registration, logging, welcome verification and Re:PORT: no detector, no quarantine, no call site. Neither agent planted a secret into the accepted log, because that would create the irreversible incident the model warns about. **Closes in:** Tier A control A4.
 
 Sections 7.2, 7.4 and 7.5 of the threat model all require secret detection before acceptance, before artifact registration, and before Re:PORT generation. `docs/security/report-authorization-and-redaction.md` already specifies the behaviour including fail-closed on detector error. No detector exists anywhere in the codebase.
 
@@ -186,7 +186,7 @@ Every protection that depends on it is currently a requirement, not a control.
 
 ## F11. Runner adapters are not yet bound away from environment-variable credentials
 
-**Raised:** W1-2 threat model, 2026-08-14. **Closes in:** PW4.
+**Raised:** W1-2 threat model, 2026-08-14. **CONFIRMED BUT NOT EXERCISABLE.** No subprocess runner adapter exists to attack; PW1's `RecordingRunner` takes an in-process argument and no production `spawn` or `exec` adapter exists. This is unprevented design scope, not a reproduced leak, and the distinction is deliberate. **Closes in:** PW4, gating Tier C control C4, the first credential-bearing subprocess. It does not gate W3.
 
 Threat model section 7.6 requires that credentials never reach a runner subprocess through environment variables, which are readable via `ps` and `/proc/<pid>/environ`, inherited by grandchildren, and captured in crash dumps. PW1's adapters are recording stubs, so nothing is violated yet and nothing is prevented either.
 
@@ -259,3 +259,13 @@ W1-1's in-memory `SetupSessionManager` enforces absolute session expiry by sweep
 5. A negative control MUST exist that inserts a row already past its expiry and asserts every read path excludes it, with a paired positive control on an unexpired row.
 
 Related: this is the durable counterpart of Port Watch's documented revocation latency, and of the onboarding design's rule that revocation is effective immediately for new requests while in-flight sessions are bounded by short-lived tokens.
+
+## F12. Bootstrap authority is caller-asserted, not resolved
+
+**Raised:** agent-b adversarial review of W1-2, 2026-08-14, confirmed by agent-a. **Closes in:** Tier A controls A1 and A2, before any W3 implementation begins.
+
+`SetupSessionManager.start` authenticates a credential down to a `principal_id`, then accepts a caller-supplied `founder_authority` object and checks only that its id matches and that requested scopes and expiry are subsets **of that supplied object**. Anyone able to call `start` can assert arbitrary founder scopes for an authenticated identity. The subset check is real; the set it checks against is attacker-chosen.
+
+ADR 0012 decision 3's root-of-authority chain is therefore a requirement, not a property. Revision 1 of the threat model wrongly labelled it enforced, which is the most damaging error that document can contain, because it would have let W3 proceed on a protection that does not exist.
+
+**To close:** an authenticated authority resolver that derives held authority from a trusted store given only the authenticated `principal_id`; an atomic bootstrap transaction creating the first tenant, project, principal and owner membership; resolver output uninfluenceable by the setup payload; and differential controls for a forged `founder_authority` and for partial bootstrap failure.
