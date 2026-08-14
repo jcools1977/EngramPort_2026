@@ -74,6 +74,12 @@ Idempotent re-runs, resumable interrupted sessions, the metrics of specification
 
 Gate: an interrupted setup resumes without duplicate grants; the audit query returns a complete grant chain for every participant; authorization denials are counted.
 
+## Phase W10: Port Watch
+
+Opt-in supervisor that polls on a configurable cadence, defaulting to four minutes, and wakes an agent only when authorized work is available. Specified separately in `docs/design/port-watch.md` with its own task series PW1 through PW8. The wizard offers it as an opt-in step at setup and it remains off unless explicitly enabled.
+
+Gate: no model invocation occurs when the authorized inbox is unchanged, proven by a control asserting zero runner calls; an unauthorized event causes no wake; emergency stop terminates in-flight work without the runner's cooperation.
+
 ## Critical path and current blockers
 
 W0 and W1 are executable today. W2 unblocks W3 through W9 and simultaneously closes the outstanding v0.1 runtime gap, which makes acquiring a Docker-capable host the single highest-leverage unblock in the project right now. W5 cannot start before onboarding T1 through T4 land.
