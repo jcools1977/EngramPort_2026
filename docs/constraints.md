@@ -77,3 +77,50 @@ Not exploitable in the current step set, since each consequential step's paramet
 **Raised:** W0-1 revision review, 2026-08-14. **Closes in:** no action required before W1.
 
 The authority-ceiling fix made `founder.assignable_trust` a required field. Any `workspace.setup.yaml` written against the earlier shape now fails validation. Correct and acceptable at v0 pre-release, recorded so it is not rediscovered as a surprise once documents exist in the wild. A `schema_version` bump is required if the format changes again after first external use.
+
+## F4. A failed run advances the cursor past its work, with no retry or dead letter
+
+**Raised:** PW1 review, 2026-08-14, by agent-a probe. **Closes in:** PW5.
+
+`complete(status:"failed")` advances the cursor by `Math.max(cursor, run.project_seq)`, identically to `status:"completed"`. The failed work is therefore never re-delivered.
+
+This is consistent with the letter of the PW1 criterion, since `run.failed` is a terminal state, and the failure is recorded rather than silent: a `run.failed` event is emitted and a `{run_id, event_id, status}` entry is appended to `completions`. It is nonetheless a gap between recorded and retried. Port Watch design section 4.7 places retry, backoff, and dead-lettering in PW5, so nothing is lost provided PW5 consumes those completion records.
+
+**To close:** PW5 must retry failed runs with backoff and dead-letter the poisonous ones, using the recorded `completions` entries. Until then, a failed run is skipped permanently.
+
+Distinct from a crash: a crash before durable completion correctly leaves the cursor unmoved and re-delivers. Verified by probe.
+
+## F5. `FileWatchStore` serializes within one process only
+
+**Raised:** PW1 review, 2026-08-14, by agent-a probe. **Closes in:** PW3.
+
+`FileWatchStore.transaction` serializes through a per-instance `this.pending` promise chain. Two `PortWatch` instances sharing one store file do not serialize against each other. Probed directly: two instances ticking concurrently on the same file both woke on the same handoff, producing two owners of one unit of work.
+
+**This is deferred scope, not a defect in PW1.** The handoff placed real claims, leases, and fencing in PW3, and `docs/port-watch-pw1.md` states the same. Within a single process, WIP=1 and single-claim both hold correctly, verified by probe.
+
+It is recorded loudly because the store *looks* durable and atomic. It writes to a temp file and renames, which is exactly the shape that invites someone to point two supervisors at one file and assume it holds.
+
+**To close:** PW3 supplies database-backed atomic claims with fencing tokens. Until then, `FileWatchStore` should refuse or detect concurrent writers rather than silently interleaving.
+
+---
+
+# Milestone register
+
+## Port Watch milestone: remaining work after PW1
+
+**Recorded:** 2026-08-14, on acceptance of PW1.
+
+No artifact in this repository is named `M1`; the operator's reference to "M1's remaining work" is recorded here against the Port Watch milestone, which is the only milestone PW1 belongs to. If `M1` denotes something else, this entry should be renamed rather than duplicated.
+
+PW1 delivered the decision core only. Accepting it does **not** mean any of the following exists:
+
+| Remaining | Task | Note |
+|---|---|---|
+| Server-side authorized inbox predicate | PW2, PW3 | PW1's branded interface prevents local filtering but cannot prove a future server truthfully applies authorization. agent-b stated this; it is correct. |
+| Webhook receipt and signature verification | PW2 | Polling recovery exists only as a decision function today |
+| Database-backed atomic claims, lease expiry scheduling, fencing tokens | PW3 | See F5 |
+| Real provider adapters, worktree and branch isolation, no-default-branch-push control | PW4 | Adapters are recording stubs |
+| Concurrency caps, retry, backoff, dead letter, schedules, budgets | PW5 | See F4 |
+| Approval gates, blocking rather than defaulting | PW6 | |
+| Cooperation-free termination and documented revocation latency | PW7 | PW1 models lease revocation in state only; no process is terminated because none is started |
+| Metrics and the adversarial suite | PW8 | |
