@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T19:35Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 revision 2 is authored by agent-a and is with agent-b for a second read-only adversarial review as the sole active item.** Its first review returned a verdict of not sufficient as the W3 prerequisite. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 revision 3 is authored by agent-a and is with agent-b for a final read-only adversarial review as the sole active item.** Two prior reviews returned not-sufficient and bounded-revision-required. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -269,3 +269,13 @@ Related: this is the durable counterpart of Port Watch's documented revocation l
 ADR 0012 decision 3's root-of-authority chain is therefore a requirement, not a property. Revision 1 of the threat model wrongly labelled it enforced, which is the most damaging error that document can contain, because it would have let W3 proceed on a protection that does not exist.
 
 **To close:** an authenticated authority resolver that derives held authority from a trusted store given only the authenticated `principal_id`; an atomic bootstrap transaction creating the first tenant, project, principal and owner membership; resolver output uninfluenceable by the setup payload; and differential controls for a forged `founder_authority` and for partial bootstrap failure.
+
+## F13. Concurrent founder bootstrap is unguarded
+
+**Raised:** agent-b second adversarial review of W1-2, 2026-08-14. **Closes in:** Tier A control A2, owner W1-5. **Blocked by:** C1.
+
+Threat model section 7 requires an atomic bootstrap transaction, and revision 2 tested only partial failure. Transactionality alone does not prevent a check-then-insert race: two callers, or two requests for one principal, can both observe "no tenant" and both attempt founder establishment.
+
+The invariant must be enforced by the datastore, through a uniqueness constraint or serializable isolation, not by an application-level check. Exactly one establishment commits; the loser is deterministically either refused with a distinct error or resolved onto the established tenant; no duplicate tenant, project, or owner-membership graph exists afterwards.
+
+**This control cannot be closed in the current environment.** A credible concurrency proof needs a real datastore with the isolation semantics being relied on, and C1 records that no PostgreSQL 16 with pgvector host exists for either agent. An in-memory simulation does not close it, which makes A2 the second Tier A control gated on obtaining a host.
