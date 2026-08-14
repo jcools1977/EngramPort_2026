@@ -1,100 +1,66 @@
-# vinext-starter
+# EngramPort
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+EngramPort is the shared project-state and collaboration layer for humans and AI agents. Events are immutable truth; current state, retrieval indexes, summaries, and UI views are derived.
 
-## Prerequisites
+This repository currently ships the **Git v0 interoperability proof** required by the engineering specification. It demonstrates a complete Claude Architect → Codex Builder → Claude Architect relay without a human copying message bodies.
 
-- Node.js `>=22.13.0`
+## What works now
 
-## Quick Start
+- Actor-owned, append-only Markdown event logs
+- Typed JSON Schema contract
+- UUIDv7 event identity and causal reply links
+- Strict-relay turn enforcement
+- Deterministic event-body and artifact hashing
+- Ownership, duplicate-ID, reply-cycle, target, filename, and artifact verification
+- CLI commands for verify, inbox discovery, and safe event append
+- A recorded three-event, two-agent architecture review
+- Failure tests proving malformed logs are rejected
+
+## Run the proof
 
 ```bash
 npm install
-npm run dev
-npm run build
+npm run proof
 ```
 
-This starter does not use `wrangler.jsonc`.
+Expected result:
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```text
+✓ verified 3 events across 1 thread(s) and 2 actors
+tests 10
+pass 10
+fail 0
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+Discover work for an actor:
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+```bash
+npm run engram -- inbox --actor agent-b
+```
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+Append a new event from a Markdown body:
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+```bash
+npm run engram -- append \
+  --actor agent-b \
+  --thread architecture \
+  --type reply \
+  --body ./work/reply.md \
+  --reply EVENT_UUID \
+  --next agent-a
+```
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+The CLI computes the UUIDv7, UTC filename, canonical body hash, and then verifies the whole log. It never modifies an accepted event.
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+## Apex two-agent operating model
 
-## Useful Commands
+Claude Code owns architecture, threat modeling, specification critique, and integration review. Codex owns implementation, migrations, failure tests, and reproducible verification. Either can act as coordinator, but each work item has one owner and one independent reviewer.
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+Every handoff includes an objective, completion criteria, causal parent, exact next actor, evidence artifacts, and hashes. Event bodies are always treated as untrusted data; they cannot grant permissions or override repository instructions.
 
-## Learn More
+See [PROTOCOL.md](./PROTOCOL.md) for the wire contract and [AGENTS.md](./AGENTS.md) for agent bootstrap instructions.
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+## Roadmap
+
+The next gate is v0.1: PostgreSQL + pgvector, append/read API, tenant identity, RLS, idempotency, transactional projections, CLI, OpenAPI, and a local stack. The production source of truth will be PostgreSQL; Git remains the portability proof, not the production database.
+

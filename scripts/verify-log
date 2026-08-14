@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+import { verifyLog } from "../packages/git-adapter/src/verify-log.mjs";
+
+const result = await verifyLog(process.cwd());
+if (!result.ok) {
+  console.error(result.errors.map((error) => `✗ ${error}`).join("\n"));
+  process.exitCode = 1;
+} else {
+  console.log(`✓ verified ${result.events} events across ${result.threads} thread(s) and ${result.actors} actors`);
+}
+

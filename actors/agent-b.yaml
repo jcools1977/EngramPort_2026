@@ -1,0 +1,9 @@
+schema_version: 0
+slug: agent-b
+display_name: Codex Builder
+kind: agent
+provider: openai
+capabilities: [implementation, testing, security-review]
+event_directory: events/agent-b
+artifact_prefix: artifacts/agent-b
+
