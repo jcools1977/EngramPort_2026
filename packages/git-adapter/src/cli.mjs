@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { hashBody, parseEvent, verifyLog } from "./verify-log.mjs";
 import { verifyWelcome } from "./welcome-verify.mjs";
-import { ACTION_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
+import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
 
 function args(argv) {
@@ -43,7 +43,7 @@ export async function run(argv, cwd = process.cwd()) {
   if (command === "setup" && options._[1] === "compile") {
     if (!options.file) throw new Error("setup compile requires --file");
     const steps = await compileSetupFile(path.resolve(cwd, options.file));
-    console.log(JSON.stringify({ profile: ACTION_PROFILE, steps }, null, 2));
+    console.log(JSON.stringify({ profile: ACTION_PROFILE, plan_profile: PLAN_PROFILE, plan_digest: steps.plan_digest, steps }, null, 2));
     return 0;
   }
   if (command === "setup" && options._[1] === "dry-run") {

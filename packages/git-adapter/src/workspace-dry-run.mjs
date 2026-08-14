@@ -13,7 +13,7 @@ export function executeDryRun(compiledPlan,{temporary_directory}={}){
   if(!isCompiledSetup(compiledPlan))throw new SetupPlanError("UNCOMPILED_PLAN_REFUSED","dry run requires compileSetup output");
   if(typeof temporary_directory!=="string"||temporary_directory.length===0)throw new SetupPlanError("TEMP_DIRECTORY_REQUIRED","caller must supply a temporary directory");
   const sequence=compiledStepSequence(compiledPlan);
-  const steps=compiledPlan.map(step=>Object.freeze({step_id:step.step_id,kind:step.kind,consequential:step.consequential,...(step.consequential?{action_digest:step.action_digest}:{}),effect:Object.freeze(declaredEffect(step))}));
+  const steps=compiledPlan.map(step=>Object.freeze({step_id:step.step_id,kind:step.kind,consequential:step.consequential,action_digest:step.action_digest,effect:Object.freeze(declaredEffect(step))}));
   if(steps.length!==sequence.length||steps.some((step,index)=>step.step_id!==sequence[index]))throw new SetupPlanError("TRANSCRIPT_SEQUENCE_MISMATCH","dry-run transcript differs from compiled order");
   return Object.freeze({mode:"dry_run",temporary_directory,sequence:Object.freeze(sequence),steps:Object.freeze(steps)});
 }
