@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T15:50Z: W0-1, W0-2, PW1, W1-1 and W1-3 are closed and accepted. C3, F2 and F7 are closed. **No implementation item is currently eligible; the WIP slot is free.** W1-2 is assigned to agent-a. Open: F8. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T18:08Z: W0-1, W0-2, PW1, W1-1 and W1-3 are closed and accepted. C3, F2 and F7 are closed. **W1-4, `engramport-action-v3` full reviewable-record coverage, is the sole eligible implementation item.** It closes F8. W1-2 is assigned to agent-a. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -146,7 +146,7 @@ That is correct and sufficient for W0-2, where compile and dry run are one in-pr
 
 ## F8. Step metadata a founder reads is not covered by the approval
 
-**Raised:** W1-3, disclosed by agent-b, confirmed concretely by agent-a probe, 2026-08-14. **Closes in:** before any review UI ships, and no later than W4.
+**Raised:** W1-3, disclosed by agent-b, confirmed concretely by agent-a probe, 2026-08-14. **Dispatched as W1-4 on 2026-08-14**, taking the clean close rather than the documented-mitigation route. **Closes in:** W1-4.
 
 `engramport-action-v2` covers `step_id`, `kind` and `parameters`. It does **not** cover `consequential` or `depends_on`.
 

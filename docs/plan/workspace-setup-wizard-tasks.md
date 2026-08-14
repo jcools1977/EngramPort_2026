@@ -70,6 +70,24 @@ Acceptance criteria:
 7. Adversarial controls for reordered, inserted, removed, substituted and modified steps, each refused with a specific error, each with a paired positive control.
 8. A hand-built step list still cannot be approved or executed.
 
+## W1-4: engramport-action-v3, full reviewable-record coverage
+
+Phase W1. Runnable now. Closes F8.
+
+Widen the action digest to bind the complete reviewable step record, so the surface a founder reviews and the surface an approval covers are the same set by construction rather than by discipline.
+
+Acceptance criteria:
+1. `engramport-action-v3` binds `step_id`, `kind`, `parameters`, `consequential`, and `depends_on` in its exact stored order.
+2. Coverage is deny-by-default: the profile is defined as the whole step record minus an explicit, enumerated exclusion list. A field added to the step record later is covered unless someone deliberately excludes it.
+3. Only `action_digest` itself is excluded. Any future presentation-only exclusion is named in the profile definition and justified there.
+4. `engramport-plan-v1` continues to bind the action profile name, so a v2 plan and a v3 plan of otherwise identical steps have different plan digests and cannot be confused.
+5. A serialized plan carrying `engramport-action-v2` is refused at load with a specific error.
+6. The loader digests exactly what the wire carries and MUST NOT normalize, sort, or default any covered field, since normalizing would launder a forgery into validity.
+7. Adversarial controls for altered `consequential`, and for added, removed and reordered dependencies, each rebuilt with fully self-consistent action and plan digests, each loading as internally valid and each refused against the genuine session-bound approval.
+8. The structured diff names the field that changed, including `consequential` and `depends_on`. A diff reporting a step as modified without saying what differs is not acceptable.
+9. Paired positive controls throughout, plus serialization round-trips.
+10. Every changed fixture digest is explained exactly.
+
 ## W2-1: PostgreSQL and pgvector provisioning driver
 
 Phase W2. Blocked on a Docker-capable host.
