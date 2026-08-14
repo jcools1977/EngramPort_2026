@@ -16,6 +16,10 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 - The three code-level review findings on thread `v0.1-event-service` are editable without a host, but cannot be proven without one. They stay queued.
 - Wizard phase W2, onboarding T2, and Re:PORT R3 onward are all blocked on the same host.
 
+**Required environment, exactly:** PostgreSQL **16** with the **pgvector** extension, reachable by `scripts/run-db-tests`. The local stack in `deploy/docker-compose.yml` targets `pgvector/pgvector:pg16`. Any host providing that combination clears this constraint; nothing less does, since the migration declares `create extension vector` and the suites assert extension version output.
+
+**Failure signature when absent:** `npm run db:test` exits **127** at `docker: command not found`, before any database interaction. That is the environmental signature. A run that fails later, or that reports results without a live server, is not this constraint and must be investigated rather than attributed to it.
+
 **Unblocking this is the highest-leverage action available to the project.** One Docker-capable host closes the v0.1 gate and unblocks three separate workstreams at once. It requires operator-provided infrastructure or authority; neither agent can obtain it.
 
 **Working rule while C1 holds:** prefer tasks provable on Node alone. Do not stack further unproven database work on unproven database work.
@@ -102,6 +106,42 @@ It is recorded loudly because the store *looks* durable and atomic. It writes to
 
 **To close:** PW3 supplies database-backed atomic claims with fencing tokens. Until then, `FileWatchStore` should refuse or detect concurrent writers rather than silently interleaving.
 
+## F6. The static grant harness misses plausible regressions
+
+**Raised:** app-role grant review, 2026-08-14, by agent-a probe. **Closes in:** whenever the grants are next touched, and no later than the section 8.1 append-transaction task.
+
+`tests/app-role-grants-static.test.mjs` guards the corrected grants with regexes over the migration text. It catches the exact regression it was written against. Probed against plausible variants, it misses three:
+
+| Future statement | Caught |
+|---|---|
+| `GRANT SELECT, INSERT ON ALL TABLES ... TO engram_app` | yes, the original regression |
+| `GRANT ALL ON ALL TABLES ... TO engram_app` | **no** |
+| `GRANT INSERT ON ALL TABLES ... TO engram_app` | **no** |
+| `GRANT INSERT ON actor_delegations TO engram_app` | yes |
+| `GRANT UPDATE ON projects TO engram_app` | **no** |
+
+The last is the one that matters. Constraint C5 records that the append transaction will need `projects.next_seq`, so `GRANT UPDATE ON projects TO engram_app` is the single most likely future regression, and it is exactly what this guard does not see.
+
+Not blocking: the delivered grants are correct today, and the live controls in `tests/failure/app-role-grants.sql` would catch any of these once C1 clears. But a guard that passes while missing the likeliest regression is the shape of check this project has agreed is worthless.
+
+**To close:** assert on the privilege set rather than on statement wording. A deny-by-default check that enumerates every `engram_app` grant and fails on anything outside the expected set is both shorter and complete.
+
+---
+
+# Blocked work
+
+Work whose implementation is complete and reviewed, but whose verification cannot run. Listed separately from findings, because a finding is something to fix and this is something to run.
+
+## B1. v0.1 finding one, application-role grants
+
+**Static portion accepted:** 2026-08-14. **Live verification:** `UNVERIFIED — ENVIRONMENT_UNAVAILABLE`. **Blocked by:** C1.
+
+`migrations/0001_canonical_core.sql` now grants `engram_app` explicit `SELECT` on the ten policy and trigger tables and `INSERT` only on `events` and `event_recipients`. Identity and authorization writes belong to `engram_maintenance`. Reviewed by inspection and by a six-test static harness. New migration checksum `e6fac07bc56f3e6b5b14143af153b22cb5636fa0360686dbc6948c842c3ee63a`.
+
+**The parent finding is open, not closed.** No PostgreSQL statement in this change has ever executed. The controls in `tests/failure/app-role-grants.sql` assert SQLSTATE `42501` per table with positive controls and are wired into `scripts/run-db-tests`, ready to run unmodified.
+
+**To close:** run `npm run db:test` on PostgreSQL 16 + pgvector and confirm every control passes, including the positive path proving the reduced grant did not break the append. Only then may this finding be described as closed. Findings two and three, the `TRUNCATE` guard and the delegation-trigger comment, remain queued and unstarted.
+
 ---
 
 # Task status
@@ -121,3 +161,17 @@ Open findings assigned into that plan: **F4 closes in PW5**, **F5 closes in PW3*
 **No canonical work may be renamed, duplicated, or re-filed under it.** The eight remaining Port Watch items stay under the existing PW plan. If a formal milestone document is later accepted, this entry should be replaced by a reference to it rather than grown in place.
 
 Recorded because an earlier version of this file created a parallel milestone table restating the PW plan. Two registers describing one set of work is how they start disagreeing, which is the same failure the Re:PORT design forbids for event taxonomies.
+
+---
+
+# Additional constraints
+
+## C5. The append transaction may not regain blanket application writes
+
+**Recorded:** 2026-08-14, raised by agent-b as a design finding on the app-role grant work. **Binding on:** the specification section 8.1 append-transaction task.
+
+Section 8.1 step 2 requires the append transaction to lock the project row `FOR UPDATE` and allocate `project_seq`. Under the corrected least-privilege grants, `engram_app` holds no `UPDATE` on `projects`, and PostgreSQL requires `UPDATE` privilege for a `FOR UPDATE` row lock. The append transaction therefore cannot execute that step as direct `engram_app` SQL.
+
+**The wrong fix is to grant `engram_app` write access to `projects`**, because that reopens the finding this work just closed and does so through the one path that will look justified at the time.
+
+**The correct fix** is a narrowly scoped, audited boundary: a `SECURITY DEFINER` function owned by a role that may allocate the sequence, callable by `engram_app`, doing nothing else. Whoever implements section 8.1 must take that route or explicitly reopen this constraint with an argument.
