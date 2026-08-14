@@ -22,14 +22,15 @@ export function validateSetup(p){
  exact(p.import,["paths","include_history","depends_on"],"import");stringArray(p.import,"paths","import");stringArray(p.import,"depends_on","import");
  exact(p.welcome,["expiry_days","depends_on"],"welcome");stringArray(p.welcome,"depends_on","welcome");return p;
 }
-const outlives=(grantExpiry,granterExpiry)=>granterExpiry!==null&&(grantExpiry===null||Date.parse(grantExpiry)>Date.parse(granterExpiry));
+export const grantOutlives=(grantExpiry,granterExpiry)=>granterExpiry!==null&&(grantExpiry===null||Date.parse(grantExpiry)>Date.parse(granterExpiry));
+export const scopesExceed=(grantScopes,granterScopes)=>grantScopes.some(scope=>!new Set(granterScopes).has(scope));
 const compatibleTrust={human:new Set(["verified_human","untrusted_agent"]),guest:new Set(["untrusted_agent"]),agent:new Set(["trusted_agent","untrusted_agent","imported"])};
-function authority(p){const founder=new Set(p.founder.scopes);for(const permission of p.repository.permissions)if(!allowedGitHub.has(permission))throw new SetupPlanError("GITHUB_PERMISSION_REFUSED",permission);
+function authority(p){for(const permission of p.repository.permissions)if(!allowedGitHub.has(permission))throw new SetupPlanError("GITHUB_PERMISSION_REFUSED",permission);
  const assignableTrust=new Set(p.founder.assignable_trust);
- for(const x of p.participants){for(const scope of x.scopes)if(!founder.has(scope))throw new SetupPlanError("SCOPE_EXCEEDS_FOUNDER",`${x.id}: ${scope}`);if(!assignableTrust.has(x.trust))throw new SetupPlanError("SELF_ASSERTED_TRUST_REFUSED",`${x.id}: ${x.trust}`);if(!compatibleTrust[x.kind]?.has(x.trust))throw new SetupPlanError("TRUST_KIND_INCOMPATIBLE",`${x.id}: ${x.kind} cannot receive ${x.trust}`);
+ for(const x of p.participants){if(scopesExceed(x.scopes,p.founder.scopes))throw new SetupPlanError("SCOPE_EXCEEDS_FOUNDER",x.id);if(!assignableTrust.has(x.trust))throw new SetupPlanError("SELF_ASSERTED_TRUST_REFUSED",`${x.id}: ${x.trust}`);if(!compatibleTrust[x.kind]?.has(x.trust))throw new SetupPlanError("TRUST_KIND_INCOMPATIBLE",`${x.id}: ${x.kind} cannot receive ${x.trust}`);
   if(x.kind==="guest"){const max=Date.parse(p.created_at)+14*86400000;if(x.projects.length!==1||x.trust!=="untrusted_agent"||x.expires_at===null||Date.parse(x.expires_at)>max)throw new SetupPlanError("GUEST_GRANT_EXCEEDS_DEFAULTS",x.id);}
-  if(x.kind==="agent"){const owner=p.participants.find(o=>o.id===x.owner_id);if(!owner||x.scopes.some(s=>!owner.scopes.includes(s))||outlives(x.expires_at,owner.expires_at))throw new SetupPlanError("AGENT_GRANT_EXCEEDS_OWNER",x.id);}
-  if(outlives(x.expires_at,p.founder.expires_at))throw new SetupPlanError("GRANT_OUTLIVES_GRANTER",x.id);
+  if(x.kind==="agent"){const owner=p.participants.find(o=>o.id===x.owner_id);if(!owner||scopesExceed(x.scopes,owner.scopes)||grantOutlives(x.expires_at,owner.expires_at))throw new SetupPlanError("AGENT_GRANT_EXCEEDS_OWNER",x.id);}
+  if(grantOutlives(x.expires_at,p.founder.expires_at))throw new SetupPlanError("GRANT_OUTLIVES_GRANTER",x.id);
  }}
 const digest=params=>createHash("sha256").update(canonicalJson(params)).digest("hex");
 function rawSteps(p){return [
