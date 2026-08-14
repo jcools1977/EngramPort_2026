@@ -1,10 +1,10 @@
 # Setup-time credential threat model
 
-Status: revision 3, pending final read-only adversarial review
+Status: revision 4, pending final read-only confirmation review
 Owner: agent-a (architecture)
 Date: 2026-08-14
 Task: W1-2
-Revision basis: agent-b second adversarial review, `artifacts/agent-b/w1-2-rev2-adversarial-review.md`, digest `a308c6fe1eb97ffaffb319a12538d4085b6ccc5ca704ade1eb0f145c8695acce`. Verdict: tightly bounded revision required, not yet accepted.
+Revision basis: agent-b final adversarial review, event `01a00207-b777-7056-9493-2a8ffa393fa0`. Verdict: one precisely bounded blocker set remains, revision 3 not yet accepted. Its six recommendations are addressed here.
 Related: `docs/adr/0012-workspace-setup-wizard.md`, `docs/constraints.md` C6, `docs/schemas/capability-reference-v1.schema.json`
 
 ## 0. Status language
@@ -42,7 +42,7 @@ Not defended against: an attacker controlling the founder's authenticated sessio
 
 ## 3. Credential inventory
 
-Fourteen classes. Every row maps to a Tier C gate in section 11. A credential absent from this table has no sanctioned path through setup.
+Sixteen classes. Every row maps to a Tier C gate in section 11. A credential absent from this table has no sanctioned path through setup.
 
 | # | Credential | Owner | Custody | Consumer | Status | Tier C gate |
 |---|---|---|---|---|---|---|
@@ -58,8 +58,10 @@ Fourteen classes. Every row maps to a Tier C gate in section 11. A credential ab
 | 3.10 | Database provisioning credential | Founder's provider | Model C, one step | Provisioning driver | **[FUTURE]** W2-1 | C2 |
 | 3.11 | Database runtime credential | Tenant | Model B, secret manager | Application runtime | **[FUTURE]** W2-1 | C3 |
 | 3.12 | Connector authorization (Composio/MCP) | Granting participant | Model A, reference only | Connector runtime | **[FUTURE]** W3-1 | C14 |
-| 3.13 | Model provider token | Participant or tenant | Model A | Process making the call | **[FUTURE]** | C15 |
+| 3.13 | Model provider token | Participant or tenant | Model A | Process making the call | **[FUTURE]** runtime config, **outside setup** | C15 |
 | 3.14 | Temporary agent credential | Agent's owning principal | Model C | Runner adapter, one run | **[IMPLEMENTED]** narrowly, see below | C4 |
+| 3.15 | **GitHub App authentication JWT** | Tenant, signed by 3.3 | Model C, never at rest | Token-exchange caller only | **[FUTURE]** W3-1 | C16 |
+| 3.16 | **Setup-session delegation authority** | Founder, derived | Model C, in-memory today | The setup session itself | **[IMPLEMENTED]** narrowly, see 3.11 detail | C17 |
 
 ### 3.1 detail
 
@@ -99,6 +101,40 @@ A real credential already in the design: `schemas/invitation-v0.schema.json` req
 | Revocation | `invitation.revoked` flips projected status; redemption checks status, so a leaked token fails even though its bytes remain valid |
 | Teardown | Offboarding the issuer expires every invitation they issued that is still open |
 
+### 3.15 detail: GitHub App authentication JWT
+
+Distinct from the installation access token of 3.4, and unnamed until revision 4. This is the short-lived JWT **signed with the App private key** and exchanged for an installation token. It is the credential that proves possession of the key, so compromising it is closer to compromising the key than to compromising a token.
+
+| Property | Value |
+|---|---|
+| Issuer | The custody signing service, using 3.3. **The application never signs it itself**, because signing it is exactly the operation the key is confined behind |
+| Owner | Tenant |
+| Custody | **Model C.** Exists only in memory, only between minting and exchange |
+| Consumer | The token-exchange caller only. Never a plan, event, log, artifact, argv, or environment |
+| Claims | `iss` the App id, `iat` backdated no more than 60 seconds, `exp` at most 10 minutes and preferably shorter, `aud` pinned to the exchange endpoint |
+| Expiry | At most 10 minutes; never extended, never reused after exchange |
+| Replay | Single use. A JWT is discarded at exchange whether or not the exchange succeeded, so a captured one cannot be replayed within its window |
+| Rotation | Not rotated; re-minted per exchange |
+| Revocation | No independent revocation exists, which is why the window is minutes. Revoking 3.3 stops future minting but cannot recall an outstanding JWT |
+| Teardown | Destroyed at exchange completion, before the calling frame returns |
+
+### 3.16 detail: setup-session delegation authority
+
+Inventoried in revision 2, dropped in revision 3, restored here. It is the wizard's own derived authority and is distinct from the temporary agent credential of 3.14: that one authorizes a runner, this one authorizes the setup session itself.
+
+| Property | Value |
+|---|---|
+| Issuer | Derived from the founder's resolved authority, per section 7 |
+| Owner | The founder principal |
+| Custody | **Model C.** In-memory today; durable form gated by C7 and constraint C6 |
+| Consumer | The setup session manager only |
+| Scope | `setup:`-prefixed scopes contained in the founder's resolved authority. Never broader, never non-setup |
+| Issuance | At `start`, after the resolver returns held authority. **[TEST-GATED]** on A1, because today it derives from a caller-supplied assertion |
+| Expiry | Absolute and required, never exceeding the founder's own |
+| Rotation | None. A new session is a new delegation |
+| Revocation | Completion, abandonment, expiry, or explicit teardown; all destroy the authority record |
+| Teardown | **[IMPLEMENTED]** narrowly, verified by probe, for the in-memory manager only. The durable form must satisfy constraint C6 before first use |
+
 ### 3.14 detail
 
 **[IMPLEMENTED], narrowly.** PW1 passes the runner an object carrying exactly the actor's scopes; supervisor scopes structurally cannot reach it, verified by probe. **What does not exist:** a token value, minting, expiry, an authorized-call check, or revocation. The property is **scope separation**, nothing more. The rest is **[FUTURE]** PW4 and PW7.
@@ -107,7 +143,8 @@ A real credential already in the design: `schemas/invitation-v0.schema.json` req
 
 A connector advertises what it can do. Those are bytes from A6.
 
-1. **Discovery returns descriptors.** A descriptor carries no credential, no provider locator, and no reference of any kind. It cannot address anything.
+1. **Discovery returns descriptors.** A descriptor carries no credential, no provider locator, and **no custody or authority-bearing reference**. Revision 3 said "no reference of any kind", which was literally false because a descriptor carries `shape_ref`; the intended property is the narrower one, and `shape_ref` is now derived by ingest rather than supplied. A descriptor cannot address anything.
+1a. **Shape selection belongs to the trusted registry.** A provider declares `provider`, `capability` and `protocol_version`. Ingest looks up the pinned shape revision from the trusted integration binding and derives `shape_ref` itself. Provider bytes are validated **against** the selected schema and may not **select** which valid schema applies. Revision 3 prevented registering or shadowing a shape but still let attacker-controlled bytes choose among existing valid ones.
 2. **Authority is a separate grant.**
 3. **Invocation resolves the grant server-side at call time** and derives every locator from the custody store, never from descriptor bytes.
 4. **An empty grant set beside a full capability list is the normal state.**
@@ -126,17 +163,97 @@ Verified: the revised schema rejects the JWT, the GitHub token shape in both fie
 
 **A minted reference is not proof of resolution.** Structural validity says only that EngramPort could have minted it. Section 6 covers what makes it authority.
 
+## 5A. The custody mint contract
+
+Revision 3 claimed a provider cannot forge a reference because minting requires an authorized custody write, then never specified that write. The final review is right that this moved the risk to the correct boundary without making it testable. **[TEST-GATED]** before W3, control **A8**, owner W1-7.
+
+**The caller supplies no reference id.** Minting is the service's exclusive act, and the caller supplies none of: reference id, UUID, namespace binding, `tenant_id`, `project_id`, `principal_id`, or `actor_id`. Every one of those is derived.
+
+**Who may mint, per namespace:**
+
+| Namespace | Sole authorized minter |
+|---|---|
+| `shape` | The trusted registry administration path |
+| `installation` | The authorized installation path |
+| `credential` | The custody service |
+
+**Never permitted to mint:** providers, plans, callers, agents, runners, and the general application identity.
+
+**One transaction, all of it or none of it:**
+
+1. Resolve tenant and project membership for the authenticated principal, from the trusted store.
+2. Resolve the authenticated principal and, where delegated, the delegated actor.
+3. Resolve a **live authorized grant** covering this mint.
+4. Verify the requested scopes are contained in that grant, including the namespace-specific mint scope.
+5. Verify the credential class and that its applicable gate has passed for the current revision.
+6. Write the sealed custody row.
+7. Mint the namespaced UUIDv7 reference.
+8. Bind the reference to the custody row with tenant, project, and namespace.
+9. Write the audit record.
+
+**Commit both or neither.** A reference is never minted first and populated later, and a custody row never exists without its binding.
+
+**Controls for A8**, each a negative with a paired positive:
+
+| # | Attempt | Expected |
+|---|---|---|
+| M1 | Caller supplies a chosen reference id | Refused; callers cannot name references |
+| M2 | Mint bound to a foreign tenant | Refused |
+| M3 | Mint bound to a foreign project within the right tenant | Refused |
+| M4 | Mint under an expired grant | Refused |
+| M5 | Mint under a revoked grant | Refused |
+| M6 | Mint against a revoked custody row | Refused |
+| M7 | Requested scope exceeds the grant | Refused, not narrowed |
+| M8 | Wrong namespace for the minting identity, for example an agent minting `credential` | Refused |
+| M9 | Duplicate UUID collision | Refused deterministically |
+| M10 | Two concurrent mints racing for one logical row | Exactly one commits; the loser is deterministic |
+| M11 | Fault injected between custody-row write and reference bind | Neither survives; no orphan row, no orphan reference |
+| M12 | Fault injected after reference mint, before commit | Reference does not exist afterwards |
+| M13 | Credential class whose applicable gate has not passed | Refused |
+| **MP** | Fully authorized mint | Succeeds, returns a reference that resolves, with an audit record |
+
+**Orphan resistance is the point of M11 and M12.** The schema accepts a syntactically valid but unresolvable reference, correctly, because structure cannot prove resolution. The custody API is what must guarantee that a valid-looking reference either resolves or was never minted.
+
 ## 6. Grant resolution: a grant-shaped document is not authority
 
 Revision 2 permitted a forged but schema-valid grant to satisfy the documented invocation shape. Structural placement of a locator inside a grant payload is necessary and not sufficient.
 
-**Required, [TEST-GATED] before W3, owner W1-6:**
+**Required at every invocation, [TEST-GATED] before W3, owner W1-6.** Revision 3 said "authorized consumer only", which names a property rather than a comparison. These are comparisons:
 
-1. A presented grant MUST resolve to a **live server-side record** by `grant_id`. The presented document is compared to the stored record and never trusted in its place.
-2. The stored record MUST be `active`, unexpired against the **database clock** per C6, and bound to the invoking tenant, project, provider, and capability.
-3. `granted_by_principal_id` is **never** accepted as proof. At grant creation the granting principal's authority is derived from the resolver of section 7, and the grant MUST NOT exceed or outlive it.
-4. `installation_ref` and `credential_ref` resolve through the custody service at call time, for the authorized consumer only.
-5. A grant-shaped document with no live stored record is refused with a distinct error, and the refusal is audited.
+1. Resolve to a **live server-side record** by `grant_id`; compare the presented document against it and never trust it in its place.
+2. **Invoking authenticated principal** equals `granted_to_principal_id`.
+3. **Invoking delegated actor** equals `granted_to_actor_id` where present; where absent, no actor delegation is implied.
+4. **Invoking tenant** equals stored `tenant_id`; **invoking project** equals stored `project_id`.
+5. **Requested action and scopes** are contained in the stored grant scopes. A superset request is refused, never silently narrowed.
+6. Stored **provider** and **capability** equal those of the requested operation.
+7. **Unexpired** against the database clock per C6.
+8. **Grant not revoked** at use time, re-read within the invocation rather than cached from an earlier check.
+9. **Setup session not revoked**, expired, or torn down, where the invocation occurs inside one.
+10. **Referenced custody rows not revoked** at use time, for both `installation_ref` and `credential_ref`.
+11. `granted_by_principal_id` is **never** accepted as proof; grant creation derives granter authority from the resolver of section 7 and may not exceed or outlive it.
+12. `installation_ref` and `credential_ref` resolve through the custody service at call time; the invoking code never receives the provider locator or the credential.
+
+**Existence of a valid reference or a live custody row never suffices.** Every comparison above is required, and any failure is refused with a distinct error and audited.
+
+**Controls for A6 and B9**, each with a paired positive:
+
+| # | Attempt | Expected |
+|---|---|---|
+| G1 | Forged grant document, no stored record | Refused |
+| G2 | Already-expired stored grant | Refused |
+| G3 | Revoked stored grant | Refused |
+| G4 | Cross-tenant invocation | Refused |
+| G5 | Cross-project invocation | Refused |
+| G6 | Wrong provider | Refused |
+| G7 | Wrong capability | Refused |
+| G8 | Principal other than `granted_to_principal_id` | Refused |
+| G9 | Actor mismatch where `granted_to_actor_id` is set | Refused |
+| G10 | Requested scope exceeding stored scopes | Refused, not narrowed |
+| G11 | Grantor exceeded own authority at creation time | Refused at creation |
+| G12 | Grant revoked between check and use | Refused, proving the re-read |
+| G13 | Setup session revoked mid-invocation | Refused |
+| G14 | Custody row revoked while grant remains active | Refused |
+| **GP** | Fully authorized invocation | Succeeds |
 
 ## 7. Bootstrap authority: resolver and the concurrent race
 
@@ -224,20 +341,24 @@ Revision 2 required "inspect logs, error paths, core dumps, backups and process 
 
 1. Generate a synthetic key material whose plaintext contains a unique high-entropy canary string, chosen by the harness so it is searchable.
 2. Perform a permitted signing operation through the custody service, and **prove it succeeds**: a valid signature over a known digest, verifiable with the public key. A confinement test that also breaks the signer proves nothing useful.
-3. **Prove absence** of the canary from every sink, each with a fault injected so the check could fail:
+3. **Prove absence of the canary from every sink, differentially.** Revision 3 listed faults that create a searchable artifact without proving the observer can see a leak. Raising the log level does not put the canary in a log; reading `argv` observes but does not make the checker fail; forcing a crash produces a dump without proving detection.
 
-| Sink | Fault injected to prove the check can fail |
-|---|---|
-| Logs | Raise log level to trace during the operation |
-| Events | Attempt an append carrying the canary; must be refused by section 8 |
-| Artifacts | Attempt registration carrying the canary |
-| Plans | Attempt compilation with the canary in a plan field |
-| Re:PORT output | Generate over an evidence set seeded with the canary |
-| Process arguments | Enumerate `argv` of the signing process during the operation |
-| Process environment | Read `/proc/<pid>/environ` during the operation |
-| Core dumps | **Force a crash** during a signing operation and search the dump |
-| Backups | **Take a backup during** the operation and search it |
-| Error surfaces | **Force an exception** inside the signing path and search the serialized error and stack |
+**Every sink runs twice.** First an **isolated vulnerable variant** deliberately routes the known canary into that sink, and the observer MUST detect it. Only then does the **protected variant** run, and the observer MUST find the sink clean while signing still succeeds. A sink that has never been observed dirty is a sink whose observer is unproven.
+
+| Sink | Vulnerable variant must be DETECTED | Protected variant must be CLEAN |
+|---|---|---|
+| Logs | Variant logs the canary at the operation's log level | No canary at trace level |
+| Events | Variant appends an event body carrying the canary, with the detector disabled | Append carrying the canary is refused by section 8 |
+| Artifacts | Variant registers an artifact containing the canary | Registration refused |
+| Plans | Variant compiles a plan with the canary in a field | Compilation refused |
+| Re:PORT output | Variant generates over an evidence set seeded with the canary, detector disabled | Canary excluded and an incident raised |
+| Process arguments | Variant passes the canary in `argv`; observer reads it live | `argv` clean during a live signing operation |
+| Process environment | Variant passes the canary in the environment; observer reads `/proc/<pid>/environ` live | Environment clean |
+| Core dumps | Variant holds the canary in a buffer and crashes; observer finds it in the dump | Forced crash during signing yields a dump with no canary |
+| Backups | Variant writes the canary to a backed-up store; backup taken during the operation contains it | Backup taken during signing contains no canary |
+| Error surfaces | Variant raises an exception carrying the canary in its message and stack | Forced exception during signing serializes no canary |
+
+**Isolation requirement.** The canary import path used by vulnerable variants MUST be structurally separate from the production non-exportable-key path, so a vulnerable variant can never place real key material anywhere. Vulnerable variants run only against the synthetic tenant and synthetic key.
 
 4. **Prove denial** for four identities: the wizard, an agent, a runner, and the application's general identity each attempt to sign and each is denied, with IAM policy evidence showing the deny and the connector's allow.
 5. **Prove export denial:** an export attempt on the synthetic key fails.
@@ -250,6 +371,18 @@ Revision 2 required "inspect logs, error paths, core dumps, backups and process 
 
 **W3-1 may begin after Tier A, using synthetic and non-production credentials only.** Tier B gates W3-1 completion, also synthetic. **No real credential of any class may exist before its own Tier C gate passes, and no real credential of any class may exist before the section 10 falsifiable custody evidence passes**, because every class either lives behind the custody boundary or is protected by controls the harness is what verifies. Passing a synthetic Tier B control never authorizes a real credential.
 
+### The dispatch gate is mechanical, not documentary
+
+Revision 3 recorded that A2 is blocked on C1 and left W3 blocked only by prose. The final review is right that nothing executable prevented a paper waiver, and that C1 is honest only if a missing host **blocks progress** rather than authorizing an exception.
+
+**Required before Tier A may be dispatched, [TEST-GATED], owner W1-5:**
+
+1. **Register W1-5, W1-6 and W1-7** in `docs/plan/workspace-setup-wizard-tasks.md`. Requirements owned by unregistered tasks are unenforceable. Registration is not part of W1-2.
+2. **An evidence registry** records, per control, the revision of this document it was demonstrated against, the commit, and the outcome.
+3. **W3-1 dispatch fails closed** unless the registry reports **every** Tier A control passed **for the exact current revision** of this document. Not "for some revision": a revision that adds a control invalidates a prior all-clear, which is why the registry keys on revision.
+4. **While C1 blocks any applicable Tier A control, W3-1 is mechanically ineligible.** A2 cannot be satisfied without a live PostgreSQL host, so W3-1 cannot be dispatched, and no note, waiver, or judgment call may override it. The absence of a host is a hard stop, which is what makes recording C1 honest rather than decorative.
+5. The gate is enforced by the dispatcher, CI, or task state, and a test proves that **removing a passing Tier A entry makes W3-1 dispatch fail**.
+
 ### Tier A: before any W3 implementation begins
 
 | # | Control | Owner |
@@ -261,6 +394,8 @@ Revision 2 required "inspect logs, error paths, core dumps, backups and process 
 | A5 | Ingest interface of section 8 implemented for **descriptor and grant**, with controls N1–N14 and P | W1-6 |
 | A6 | Grant-write authorization: granter authority from the resolver, ceilings and C6 expiry enforced, caller-asserted `granted_by_principal_id` never trusted | W1-6 |
 | A7 | Custody model declared per inventory row, with resolving service, tenant binding, and revocation atomicity | W1-7 |
+| A8 | **Custody mint contract of section 5A**, atomic and namespace-authorized, with controls M1–M13 and MP | W1-7 |
+| A9 | **Shape selection derived from the trusted registry**, not provider bytes: a descriptor carrying `shape_ref` on the wire is refused, and a provider naming a different valid local shape is refused on mismatch | W1-6 |
 
 ### Tier B: W3 acceptance, synthetic non-production credentials only
 
@@ -284,7 +419,9 @@ B1 signing boundary, application never receives key bytes. B2 export disabled, e
 | C12 | Signing key never in wizard memory as plaintext; verification reports `revoked_after_signing` honestly | Package signing key | 3.8 |
 | C13 | Invitation token high-entropy, hashed at rest, shown once, never re-sent; revoked status refuses redemption | Invitation token | 3.9 |
 | C14 | Participant connector authorization stored as reference and grant only; provider revocation and grant revocation each work alone | Connector authorization | 3.12 |
-| C15 | Model provider token by secret-manager reference; setup holds none | Provider token | 3.13 |
+| C15 | Model provider token by secret-manager reference; setup holds none. **Outside setup**; owned by runtime configuration | Provider token | 3.13 |
+| C16 | App authentication JWT signed only by the custody service, `aud` pinned, `exp` at most 10 minutes, single use, destroyed at exchange | App JWT | 3.15 |
+| C17 | Setup-session delegation derived from resolved authority, never caller-asserted; durable form satisfies constraint C6 before first durable delegation | Session delegation | 3.16 |
 
 ## 12. Traceability matrix
 
@@ -300,6 +437,14 @@ B1 signing boundary, application never receives key bytes. B2 export disabled, e
 | Grant-write authorization | 6.3 | W1-6 | A6 | W3 start | [TEST-GATED] |
 | Grant resolution at invocation | 6.1, 6.2 | W1-6 | B9 | W3 completion | [TEST-GATED] |
 | Minted references | 5 | W1-7 | A7 | W3 start | [TEST-GATED] |
+| Custody mint contract, M1–M13 | 5A | W1-7 | A8 | W3 start | [TEST-GATED] |
+| Registry-derived shape selection | 4.1a | W1-6 | A9 | W3 start | [TEST-GATED] |
+| Invocation comparisons, G1–G14 | 6 | W1-6 | A6, B9 | W3 completion | [TEST-GATED] |
+| Mechanical dispatch gate | 11 | W1-5 | gate items 1–5 | Tier A dispatch | [TEST-GATED] |
+| Differential canary variants | 10 | W1-7 | B5 | first real key | [TEST-GATED] |
+| App JWT lifecycle | 3.15 | W3-1 | C16 | first real JWT | [FUTURE] |
+| Setup delegation lifecycle | 3.16 | W1-5 | C17 | first durable delegation | [TEST-GATED] |
+| Artifact binding eligibility | 14 | none yet | F14 rule | any credential-bearing binding | [FUTURE] |
 | Custody models declared | 3, 5 | W1-7 | A7 | W3 start | [TEST-GATED] |
 | Isolated signing boundary | 10 | W3-1, W1-7 | B1–B4 | W3 completion | [TEST-GATED] |
 | Canary confinement harness | 10 | W1-7 | B5 | first real key, C1 | [TEST-GATED] |
@@ -312,6 +457,7 @@ B1 signing boundary, application never receives key bytes. B2 export disabled, e
 | Runtime credential delivery | 3.11 | W2-1 | C3 | first real runtime credential | [FUTURE] |
 | Subprocess argv and env exclusion | 9, F11 | PW4 | C4 | first credential-bearing subprocess | [FUTURE] |
 | Re:PORT secret exclusion | 9 | R-phase | C6 | first generation over real events | [FUTURE] |
+| Model provider token | 3.13 | runtime configuration, outside setup | C15 | first real provider token | [FUTURE] |
 | Durable expiry, C6 constraint | 3, 6.2 | W2-1 | C7 | first durable grant | [FUTURE] |
 | Founder identity minimisation | 3.1 | W1-1 | verified by probe | done | **[IMPLEMENTED]** narrowly |
 | Agent scope separation | 3.14 | PW1 | verified by probe | done | **[IMPLEMENTED]** narrowly |
@@ -332,6 +478,12 @@ B1 signing boundary, application never receives key bytes. B2 export disabled, e
 **Confirmed:** F12, bootstrap authority is caller-asserted.
 
 **New in revision 3:** **F13**, concurrent founder bootstrap is unguarded, and its control A2 is blocked on constraint C1 because a credible proof needs a real datastore.
+
+**F14, kept separate and stated as a mechanical rule.** Git v0 cannot supersede an artifact binding, so bound bytes can never be redacted. F14 does not broaden W1-2 and does not block synthetic W3 work, because A4 refuses credential-bearing artifacts before binding.
+
+**The binding rule, until F14 closes:** *credential-bearing or externally supplied artifacts are structurally ineligible for Git-v0 artifact binding.* Not discouraged, ineligible. An artifact is eligible only if it is authored inside this repository and has passed the credential detector; anything received from a provider, a participant, or any external source, and anything the detector has not cleared, may be stored in a deletable quarantine but MUST NOT be referenced by an event's `artifacts` field.
+
+The reason is demonstrated rather than theoretical: an illustrative token literal in one of my own documents propagated into agent-b's review of it and from there into an immutable event whose body hash binds it. It cannot be removed. Had it been a live credential, rotation would have been the only remedy. Until typed supersession exists, **every detector miss on a bound artifact is a permanent proof obligation**.
 
 ## 15. What this model does not claim
 

@@ -69,28 +69,87 @@
       ]
     },
 
+    "custody_mint_contract": {
+      "$comment": "REVISION 4, NORMATIVE PROSE. Revision 3 claimed a provider cannot forge a reference because minting requires an authorized custody write, and then never specified that write. This is the contract, gated by threat model control A8. The caller supplies NO reference id: minting one is the service's exclusive act.",
+      "entry_point": "mintCustodyReference({namespace, class, payload}, authContext) -> {ok: true, ref} | {ok: false, code}",
+      "caller_supplies_no_identity": [
+        "reference id", "uuid", "namespace binding", "tenant_id", "project_id", "principal_id", "actor_id"
+      ],
+      "who_may_mint_by_namespace": {
+        "shape": "the trusted registry administration path only",
+        "installation": "the authorized installation path only",
+        "credential": "the custody service only"
+      },
+      "never_may_mint": ["providers", "plans", "callers", "agents", "runners", "the general application identity"],
+      "single_transaction_steps": [
+        "1. Resolve tenant and project membership for the authenticated principal from the trusted store.",
+        "2. Resolve the authenticated principal and, where delegated, the delegated actor.",
+        "3. Resolve a LIVE authorized grant covering this mint.",
+        "4. Verify the requested scopes are contained in that grant, including the namespace-specific mint scope.",
+        "5. Verify the credential class and that its applicable gate has passed for the current revision.",
+        "6. Write the sealed custody row.",
+        "7. Mint the namespaced UUIDv7 reference.",
+        "8. Bind the reference to the custody row, with tenant, project and namespace.",
+        "9. Write the audit record.",
+        "COMMIT ALL OR NONE. A reference is never minted first and populated later, and a custody row never exists without its binding."
+      ]
+    },
     "grant_resolution_requirements": {
       "$comment": "NORMATIVE PROSE. A grant document is a CLAIM, never authority. Revision 2 permitted a forged but schema-valid grant to satisfy the documented invocation shape.",
       "obligations": [
-        "A grant document presented at invocation MUST resolve to a live server-side grant record by grant_id; the presented document is compared to the stored record and never trusted in its place.",
-        "The stored record MUST be active, unexpired against the database clock per constraint C6, and bound to the invoking tenant, project, provider, and capability.",
-        "granted_by_principal_id is NEVER accepted as proof. At grant creation the granting principal's authority is derived from the trusted resolver of threat model section 6, and the grant MUST NOT exceed or outlive it.",
-        "installation_ref and credential_ref are resolved through the custody boundary at call time, by the custody service, for the authorized consumer only. The invoking code never receives the provider locator or the credential.",
-        "A grant-shaped document with no corresponding live stored record is refused with a distinct error, and the refusal is audited."
+        "Resolve to a live server-side grant record by grant_id; compare the presented document against the stored record and never trust it in its place.",
+        "The INVOKING AUTHENTICATED PRINCIPAL equals granted_to_principal_id. Revision 3 said 'authorized consumer only', which is not a comparison.",
+        "When granted_to_actor_id is present, the INVOKING DELEGATED ACTOR equals it. When absent, no actor delegation is implied.",
+        "The invoking TENANT equals the stored tenant_id, and the invoking PROJECT equals the stored project_id.",
+        "The REQUESTED ACTION AND SCOPES are contained in the stored grant scopes. A superset request is refused rather than narrowed.",
+        "The stored PROVIDER and CAPABILITY equal those of the requested operation.",
+        "The grant is UNEXPIRED against the database clock per constraint C6.",
+        "The grant is NOT REVOKED at use time, re-read within the invocation, not cached from an earlier check.",
+        "The SETUP SESSION, where the invocation occurs inside one, is not revoked, expired, or torn down.",
+        "The referenced CUSTODY ROWS for installation_ref and credential_ref are themselves NOT REVOKED at use time.",
+        "granted_by_principal_id is NEVER accepted as proof; grant creation derives granter authority from the trusted resolver and may not exceed or outlive it.",
+        "installation_ref and credential_ref resolve through the custody boundary at call time; the invoking code never receives the provider locator or the credential.",
+        "Existence of a valid reference or a live custody row NEVER suffices. Every comparison above is required.",
+        "Any failure is refused with a distinct error and audited."
       ]
     },
 
-    "descriptor": {
-      "$comment": "What a connector advertises. Attacker-influenced bytes from threat actor A6. Closed, non-invocable, and carrying NO reference of any kind: a descriptor cannot name an installation, a credential, or a minted reference, because discovery must not be able to address anything.",
+    "descriptor_wire": {
+      "$comment": "REVISION 4. What a provider actually sends. It carries NO custody or authority-bearing reference and, critically, NO shape_ref: revision 3 required the provider to supply one, which let attacker-controlled bytes SELECT among valid local shapes even though they could not register one. Selection is now the trusted registry's job. A provider declares only what it is and which protocol version it speaks; ingest derives the shape.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["capability", "provider", "shape_ref", "discovered_at", "trust", "invocable"],
+      "required": ["capability", "provider", "protocol_version", "discovered_at", "trust", "invocable"],
       "properties": {
         "capability": { "$ref": "#/$defs/capability_name" },
         "provider": { "$ref": "#/$defs/capability_name" },
+        "protocol_version": {
+          "$ref": "#/$defs/capability_name",
+          "$comment": "Declared, not trusted. Ingest uses (integration binding, provider, capability, protocol_version) to LOOK UP the pinned shape revision. A value that does not map is refused; it never widens the candidate set."
+        },
+        "display_name": { "$ref": "#/$defs/safe_text" },
+        "description": { "$ref": "#/$defs/safe_text" },
+        "discovered_at": { "type": "string", "format": "date-time" },
+        "trust": { "type": "string", "enum": ["untrusted_agent", "imported"] },
+        "invocable": { "const": false }
+      }
+    },
+
+    "descriptor": {
+      "$comment": "The STORED descriptor, after ingest. shape_ref is present because ingest DERIVED it from the trusted integration/registry binding, never because a provider supplied it. Provider bytes are validated AGAINST the selected schema; they do not select which valid schema applies.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "provider", "protocol_version", "shape_ref", "shape_revision", "discovered_at", "trust", "invocable"],
+      "properties": {
+        "capability": { "$ref": "#/$defs/capability_name" },
+        "provider": { "$ref": "#/$defs/capability_name" },
+        "protocol_version": { "$ref": "#/$defs/capability_name" },
         "shape_ref": {
           "$ref": "#/$defs/shape_ref",
-          "$comment": "A minted reference into the LOCAL shape registry, not a provider-chosen name. A provider cannot reference a shape it did not get registered, and cannot register one."
+          "$comment": "DERIVED BY INGEST. If this field arrives on the wire, the record is refused; see descriptor_wire."
+        },
+        "shape_revision": {
+          "$ref": "#/$defs/capability_name",
+          "$comment": "The pinned registry revision the bytes were validated against, recorded so a later registry change cannot retroactively reinterpret a stored descriptor."
         },
         "display_name": { "$ref": "#/$defs/safe_text" },
         "description": { "$ref": "#/$defs/safe_text" },
