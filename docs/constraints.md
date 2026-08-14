@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 revision 4 is authored by agent-a and is with agent-b for a final read-only confirmation review as the sole active item.** Three prior reviews returned not-sufficient, bounded-revision-required, and one-final-bounded-blocker-set. Tasks W1-5, W1-6 and W1-7 must be registered before Tier A can be dispatched, and the revision 4 dispatch gate makes W3-1 mechanically ineligible until every Tier A control passes for the exact revision. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 5**, accepted after four adversarial review rounds. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -297,3 +297,15 @@ That constraint is worst in exactly the case where it is most likely to be neede
 **Binding rule in force until F14 closes, stated mechanically:** *credential-bearing or externally supplied artifacts are structurally ineligible for Git-v0 artifact binding.* Not discouraged, ineligible. An artifact may be bound only if it was authored inside this repository and has passed the credential detector. Anything received from a provider, a participant, or any external source, and anything the detector has not cleared, may be held in a deletable quarantine but MUST NOT appear in an event's `artifacts` field. Every detector miss on a bound artifact is a permanent proof obligation.
 
 Also: verify **after** every edit, per `PROTOCOL.md`'s safe publish sequence. Skipping the second verification is what caused this finding to be discovered the hard way.
+
+---
+
+# Required before Tier A dispatch
+
+**Recorded 2026-08-14 on closure of W1-2. These three tasks are NOT yet registered in `docs/plan/workspace-setup-wizard-tasks.md`.** Registering them is a task-plan change outside W1-2's scope and has deliberately not been done. Their absence is not a waiver: the revision 5 dispatch gate makes their absence a reason Tier A cannot be dispatched.
+
+- **W1-5** — Trusted authority resolver, atomic founder bootstrap, concurrent-founder datastore proof, and revision-bound mechanical dispatch and evidence gate. Owns Tier A controls A1 and A2. **Blocked by C1** for the concurrency proof.
+- **W1-6** — Credential detector; descriptor and grant ingest; trusted registry-derived shape selection; grant-write authorization; and invocation-resolution controls. Owns A3, A4, A5, A6, A9. Closes F9 and F10.
+- **W1-7** — Custody service; namespace-specific atomic minting; custody models and revocation; synthetic KMS/HSM signing boundary; and differential canary harness. Owns A7 and A8.
+
+W3-1 must then depend on accepted A1 through A9 evidence **for the exact current revision** of the threat model. C1 continues to block W1-5's A2 and therefore W3-1.

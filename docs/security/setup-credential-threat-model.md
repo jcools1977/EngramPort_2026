@@ -1,10 +1,10 @@
 # Setup-time credential threat model
 
-Status: revision 4, pending final read-only confirmation review
+Status: revision 5, lifecycle matrix complete
 Owner: agent-a (architecture)
 Date: 2026-08-14
 Task: W1-2
-Revision basis: agent-b final adversarial review, event `01a00207-b777-7056-9493-2a8ffa393fa0`. Verdict: one precisely bounded blocker set remains, revision 3 not yet accepted. Its six recommendations are addressed here.
+Revision basis: agent-b final confirmation review, event `01a00215-b700-713a-8365-5dbd32a524e9`. Verdict: revision 4 accepted at the contract level, with one documentation-only blocker, the incomplete lifecycle matrix, plus two editorial defects. All three are corrected in revision 5. No architecture changed: A1–A9, B1–B9, C1–C17, F14 scope and task ownership are unchanged.
 Related: `docs/adr/0012-workspace-setup-wizard.md`, `docs/constraints.md` C6, `docs/schemas/capability-reference-v1.schema.json`
 
 ## 0. Status language
@@ -27,16 +27,18 @@ This document is that model, and its purpose is to be falsifiable.
 
 ## 2. Threat actors
 
+**Identifiers are `TA1`–`TA8`.** Revision 4 numbered them `A1`–`A8`, colliding with the Tier A controls `A1`–`A9`, so `A6` meant both a compromised provider and a shape-selection control. Renamed in revision 5; control identifiers are unchanged.
+
 | Actor | Capability |
 |---|---|
-| **A1** Curious insider | Reads the repository, event log, CI output, backups, Re:PORT |
-| **A2** Compromised agent | Executes as a registered actor, reads its context, appends events |
-| **A3** Malicious plan author | Writes or edits `workspace.setup.yaml` |
-| **A4** Host-local observer | Process environment and arguments, `ps`, `/proc`, dumps, shell history, editor state, temp files |
-| **A5** Repository reader | Clones the repo, including a guest holding a welcome package |
-| **A6** Compromised provider | Controls a connector endpoint or MCP server. Supplies descriptor bytes |
-| **A7** Caller of the setup API | Invokes setup entry points with chosen arguments |
-| **A8** Concurrent caller | Races another caller through an unguarded check-then-act. Added in revision 3 |
+| **TA1** Curious insider | Reads the repository, event log, CI output, backups, Re:PORT |
+| **TA2** Compromised agent | Executes as a registered actor, reads its context, appends events |
+| **TA3** Malicious plan author | Writes or edits `workspace.setup.yaml` |
+| **TA4** Host-local observer | Process environment and arguments, `ps`, `/proc`, dumps, shell history, editor state, temp files |
+| **TA5** Repository reader | Clones the repo, including a guest holding a welcome package |
+| **TA6** Compromised provider | Controls a connector endpoint or MCP server. Supplies descriptor bytes |
+| **TA7** Caller of the setup API | Invokes setup entry points with chosen arguments |
+| **TA8** Concurrent caller | Races another caller through an unguarded check-then-act. Added in revision 3 |
 
 Not defended against: an attacker controlling the founder's authenticated session at setup time, or the host kernel.
 
@@ -61,7 +63,33 @@ Sixteen classes. Every row maps to a Tier C gate in section 11. A credential abs
 | 3.13 | Model provider token | Participant or tenant | Model A | Process making the call | **[FUTURE]** runtime config, **outside setup** | C15 |
 | 3.14 | Temporary agent credential | Agent's owning principal | Model C | Runner adapter, one run | **[IMPLEMENTED]** narrowly, see below | C4 |
 | 3.15 | **GitHub App authentication JWT** | Tenant, signed by 3.3 | Model C, never at rest | Token-exchange caller only | **[FUTURE]** W3-1 | C16 |
-| 3.16 | **Setup-session delegation authority** | Founder, derived | Model C, in-memory today | The setup session itself | **[IMPLEMENTED]** narrowly, see 3.11 detail | C17 |
+| 3.16 | **Setup-session delegation authority** | Founder, derived | Model C, in-memory today | The setup session itself | **[IMPLEMENTED]** narrowly, see 3.16 detail | C17 |
+
+
+### 3.0 Lifecycle matrix, all sixteen classes
+
+Revision 4's inventory gave owner, custody, consumer, status and gate, and stated issuance, lifetime, rotation, revocation and teardown for only four rows. An inventory claiming complete lifecycles must state every field for every row, so here they are. Rows with a fuller narrative below are cross-referenced; the fields here are normative regardless.
+
+| # | Issuer / issuance | Lifetime / expiry | Rotation / reissue | Revocation | Teardown |
+|---|---|---|---|---|---|
+| 3.1 OIDC transients | Founder's IdP, at the authorization request | Auth code and PKCE verifier seconds; ID token minutes | Not rotated; a new flow issues new ones | IdP session revocation | Code and verifier destroyed at exchange; ID token discarded after `principal_id` extraction. No refresh token is requested |
+| 3.2 OIDC client secret | Tenant, at IdP client registration | Long-lived; no absolute ceiling imposed by us | Rotated at the IdP with an overlap window during which both authenticate | Delete at the IdP; local reference becomes inert | Outlives setup by design; setup's access ends at session teardown |
+| 3.3 App private key | Tenant, generated inside the KMS/HSM boundary, never imported in plaintext | Long-lived; the highest-value secret in the product | Rotated without reinstallation, both valid during a bounded overlap, old destroyed at overlap end | Uninstall **plus** key destruction. Uninstall alone leaves a resurrection path | Never held by the wizard, so nothing to tear down; the signing identity's authorization is revoked at teardown |
+| 3.4 Installation access token | GitHub, minted per operation from a 3.15 JWT | GitHub-defined, at most one hour; **never cached across operations** | Not rotated; re-minted per operation | Uninstall invalidates outstanding tokens | Destroyed at operation completion, before the calling frame returns |
+| 3.5 Webhook secret | Tenant, at App configuration | Long-lived until rotated | Rotated independently of 3.3, with an overlap during which both verify | Rotate at GitHub and locally; a stale secret **fails closed**, never falls back to accepting unsigned | Outlives setup; setup's access ends at teardown |
+| 3.6 KMS workload identity | Cloud platform, at service provisioning | Platform-managed, short-lived assertions | Platform-native rotation, no application involvement | Revoke the platform binding; must render existing ciphertext unusable by that identity immediately | Never held as a durable secret by the application |
+| 3.7 Key-encryption key | Tenant, generated in the KMS | Long-lived | KMS-native rotation with re-encryption of dependent material | Revoke the custody service's KMS authorization | Never in the application, so nothing to destroy |
+| 3.8 Package signing key | Tenant, generated inside the signing boundary | Long-lived, with a registered validity interval | New key registered with its interval before first use; overlap while both are valid | Key revocation; prior packages report `revoked_after_signing`, not `invalid` | Plaintext never in wizard memory; the issuer's authorization ends at teardown |
+| 3.9 Invitation token | Inviting principal through EngramPort, at package generation | Absolute; at most fourteen days for guests | A new invitation with a new token. **Never re-sent**, because re-sending implies retention | `invitation.revoked` flips projected status; redemption checks status, so leaked bytes still fail | Plaintext shown once and never persisted; offboarding the issuer expires every open invitation they issued |
+| 3.10 Provisioning credential | Founder's provider, supplied at the approved step rather than at session start | The shorter of the step and the session; destroyed at step completion | Provider-native; the wizard never rotates what it does not own | Founder revokes at the provider | Destroyed at step completion or session end, whichever is first |
+| 3.11 DB runtime credential | Generated by the provisioning step | Long-lived until rotated | Rotated at the database with the secret manager updated in the same operation | Drop or alter the role; the secret manager entry is invalidated in the same operation | Never traverses plan, log, artifact, argv or environment; delivered directly to the secret manager |
+| 3.12 Connector authorization | The granting participant, through their own provider flow | The provider's, with the EngramPort grant carrying its own shorter absolute expiry | The participant's concern; the reference survives rotation because it references rather than copies | Grant revocation makes the reference inert; provider revocation is independent. **Both must work alone** | EngramPort holds no credential to destroy; the grant is revoked and the custody row sealed |
+| 3.13 Model provider token | Participant or tenant, outside setup | The provider's | The provider's | Provider-side revocation; the secret manager reference becomes inert | Setup holds none, so nothing to tear down. Owned by runtime configuration |
+| 3.14 Temporary agent credential | Minted per run by the supervisor | Short-lived; **the token lifetime is the true revocation latency** and must be documented as such | Per run; never renewed in place | Stop revokes the lease and the token; in-flight work fails at its next authorized call | Destroyed at run completion or lease expiry |
+| 3.15 App authentication JWT | The custody signing service, signed with 3.3. The application never signs it itself | At most ten minutes; `iat` backdated no more than sixty seconds | Not rotated; re-minted per exchange | No independent revocation exists, which is why the window is minutes. Revoking 3.3 stops future minting but cannot recall an outstanding JWT | Single use; destroyed at exchange whether or not the exchange succeeded |
+| 3.16 Session delegation | Derived from the founder's resolved authority at `start` | Absolute and required, never exceeding the founder's own | None. A new session is a new delegation | Completion, abandonment, expiry, or explicit teardown | Authority record destroyed; approvals revoked so replay is refused |
+
+**Two rules that apply to every row above.** Nothing in this matrix is enforced by being written here; the status column of the inventory and the section 12 matrix carry that. And every expiry becomes a datastore obligation under constraint C6 the moment the credential is stored durably, not an application sweep.
 
 ### 3.1 detail
 
@@ -257,7 +285,7 @@ Revision 2 permitted a forged but schema-valid grant to satisfy the documented i
 
 ## 7. Bootstrap authority: resolver and the concurrent race
 
-`SetupSessionManager.start` authenticates down to a `principal_id`, then accepts a caller-supplied `founder_authority` object and checks only that its id matches and that requested scopes and expiry are subsets **of that supplied object**. A7 can assert arbitrary founder scopes. Recorded as **F12**.
+`SetupSessionManager.start` authenticates down to a `principal_id`, then accepts a caller-supplied `founder_authority` object and checks only that its id matches and that requested scopes and expiry are subsets **of that supplied object**. TA7 can assert arbitrary founder scopes. Recorded as **F12**.
 
 **Required, [TEST-GATED] before W3, owner W1-5:**
 
@@ -430,7 +458,7 @@ B1 signing boundary, application never receives key bytes. B2 export disabled, e
 | Authority resolver | 7.1 | W1-5 | A1 | W3 start | [TEST-GATED] |
 | Atomic bootstrap | 7.2 | W1-5 | A2 | W3 start | [TEST-GATED] |
 | Concurrent bootstrap race | 7.3 | W1-5 | A2, blocked on C1 | W3 start | [TEST-GATED] |
-| Resolver independence | 7.4 | W1-5 | A1 | W3 start | [TEST-GATED] |
+| Resolver independence | 7.4 | W1-5 | A1, second assertion of the same control | W3 start | [TEST-GATED] |
 | Plan credential refusal | 9, F9 | W1-6 | A3 | W3 start | [TEST-GATED] |
 | Credential detector | 9, F10 | W1-6 | A4 | W3 start | [TEST-GATED] |
 | Ingest interface, N1–N14 | 8 | W1-6 | A5 | W3 start | [TEST-GATED] |
