@@ -33,7 +33,10 @@ async function rejects(name, mutation, pattern) {
 
 test("valid two-agent relay verifies", async () => {
   const result = await verifyLog(root);
-  assert.deepEqual({ ok: result.ok, actors: result.actors, events: result.events, threads: result.threads }, { ok: true, actors: 2, events: 3, threads: 1 });
+  assert.deepEqual({ ok: result.ok, actors: result.actors }, { ok: true, actors: 2 });
+  // The log is append-only, so counts grow. Assert the floor set by the v0 relay, not a frozen census.
+  assert.ok(result.events >= 3, `expected at least the 3 v0 relay events, saw ${result.events}`);
+  assert.ok(result.threads >= 1, `expected at least the v0 architecture thread, saw ${result.threads}`);
 });
 
 await rejects("modified content is rejected", (d) => mutate(d, "events/agent-a/20260814T141000Z_0198f2a1-1000-7000-8000-000000000001.md", (s) => `${s}\nchanged\n`), /content hash mismatch/);
