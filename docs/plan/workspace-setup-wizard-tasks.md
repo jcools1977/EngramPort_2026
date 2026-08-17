@@ -128,11 +128,28 @@ Owns, as narrowed: Tier A controls **A3**, **A4**, **A5**, **A9**, and findings 
 
 Phase W1. **Not dispatched.** Split out of W1-6 on 2026-08-17 because it requires a live datastore that W1-6's Node boundary does not provide.
 
+**Sequenced after W1-7, decided 2026-08-17.** W1-8 binds the live resolver to grant and custody rows, and W1-7 is what defines the canonical custody boundary: the custody service, namespace-specific atomic minting, and custody-row revocation semantics. Running W1-8 first would bind the resolver to a temporary custody store and then require rebinding once W1-7 lands, which is rework and, worse, would let an interim custody shape harden into the thing the resolver was proven against. **W1-7 before W1-8.**
+
 Scope: back the injected `deps.store` of `packages/git-adapter/src/credential-boundary.mjs` with real PostgreSQL grant and custody tables; derive `serverNow()` from the **database** clock rather than a constant; and prove, against live rows under `npm run db:test`, grant existence, tenant and project ownership, principal, actor and scope comparison, expiry, revocation with an invocation-time re-read, and custody-row state.
 
 Owns Tier A control **A6** and Tier B control **B9**, both re-homed from W1-6. Depends on: W1-5's resolver, available; and a live PostgreSQL path, available since C1 closed.
 
 **The logic already exists and is tested against synthetic stores.** What is missing is the datastore behind it, so this is an integration task rather than a design task. `resolveInvocation` already performs an invocation-time re-read and calls a `serverNow()` abstraction, which is the correct shape to bind to a real store.
+
+## W1-6a: Genuine guard-removal mutations for the 28 N/G controls
+
+Phase W1. Runnable now, Node only. **ELIGIBLE and DISPATCHED 2026-08-17.** Closes **F17**.
+
+Replace the `guard-removal discrimination` loop in `tests/wizard-w1-6.test.mjs`, which supplies failing inputs and asserts refusal, with genuine executable mutations: for each of N1–N14 and G1–G14, remove or disable that control's specific guard, demonstrate the previously refused fixture is then **accepted**, and restore.
+
+**Evidence-integrity task, not a security-behaviour task.** It changes no accepted production behaviour and reopens nothing. It is sequenced first because W1-7 and W1-8 will add security controls whose evidence rests on this suite's discrimination pattern, and a pattern that does not discriminate should not be inherited.
+
+Acceptance criteria:
+1. Each of the 28 controls has a mutation naming the specific guard removed.
+2. Each mutation demonstrates the fixture is **accepted** with the guard gone, not merely refused with it present.
+3. Every mutation is reverted, and a post-suite assertion proves the shipped module is unmutated.
+4. Where a control cannot be mutated in isolation, that is stated per control with the reason, rather than counted as demonstrated.
+5. Production behaviour is unchanged: A3, A4, A5, A9, F9 and F10 stay closed and are not reopened.
 
 ## W1-7: Custody service, atomic minting, signing boundary, canary harness, and retention
 
