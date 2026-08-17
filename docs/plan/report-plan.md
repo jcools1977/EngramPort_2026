@@ -1,13 +1,23 @@
 # Re:PORT implementation plan, bounded tasks, and acceptance tests
 
-Status: proposed. **No task in this document is dispatched.** See section "Dispatch status".
+Status: in progress. **R1 is complete and accepted; R2 is dispatched.** See section "Dispatch status" for current state.
 Owner: agent-a (architecture)
 Date: 2026-08-14
 Related: `docs/product/report-prd.md`, `docs/adr/0013-report-correspondent.md`, `docs/security/report-authorization-and-redaction.md`, `docs/security/report-threat-cases.md`, `docs/schemas/report-envelope-v1.schema.json`, `docs/schemas/report-inputs-v1.schema.json`
 
 ## Dispatch status
 
-Re:PORT is specified and **not scheduled**. No R-task may be handed to agent-b until the open workstreams have an authoritative priority order and agent-b has confirmed capacity. The priority decision is thread `priority` in the event log. R1 below is fully specified so that it can be dispatched without further design work once that gate clears, not so that it can be started now.
+Reconciled against verified history on 2026-08-17.
+
+| Task | State |
+|---|---|
+| **R1** | **Complete and accepted.** Implementation `95eebe3`, result `30061a2`, result event `01a00fd3-900e-7372-84ec-3bf4e1e4ad77`, acceptance event `01a00fd7-fe76-71ac-96a9-7146fc864760` on thread `report-r1`. Evidence `artifacts/agent-b/report-r1-results.md` at `17d2fc65431242b9348e4488691bb2872681e0dfd995660fb996cb1ab0379df6`. R1 tests 54 of 54 |
+| **R2** | **Dispatched, and the next eligible Node-only task.** Its canonical scope below is unchanged |
+| R3 onward | Not dispatched. R3 is blocked by constraint C1, since datastore-level authorization requires a datastore |
+
+The earlier statement that no R-task was dispatched and that Re:PORT was "specified and not scheduled" described the position on 2026-08-14 and is superseded. It is removed rather than annotated, because a stale dispatch claim in a plan is the kind of thing a later reader trusts.
+
+**R1 was dispatched by the operator directly**, not by the coordinator: handoff event `01a00fc5-79f4-7a46-be04-ca99003d8b0a`, thread `report-r1`, declared `free_form`. Recorded so the queue history is accurate about who dispatched.
 
 ## Sequencing constraints
 
@@ -19,7 +29,7 @@ Re:PORT is specified and **not scheduled**. No R-task may be handed to agent-b u
 
 ### R1. Report envelope schema, validator, and non-canonicity enforcement
 
-Runnable now. **This is the first task, and it is not yet dispatched.**
+Runnable now. **COMPLETE AND ACCEPTED, 2026-08-17.** Scope below is retained as the acceptance contract it was judged against.
 
 Install `report-envelope-v1` and `report-inputs-v1` from `docs/schemas/` verbatim into `schemas/`, implement a validator, and enforce the two properties most likely to erode: fact and inference separation, and the exclusion of generated output from evidence.
 
@@ -48,7 +58,7 @@ Additional criteria: Node only, no new dependency, no network; state the Node ve
 
 ### R2. Deterministic evidence assembly and the unchanged-state gate
 
-Runnable now, with retrieval behind an interface.
+Runnable now, with retrieval behind an interface. **DISPATCHED 2026-08-17 as the next eligible Node-only task.** Canonical scope unchanged.
 
 Assemble an evidence set from an authorized source, compute an `as_of_seq`, and decide whether anything changed. Shares the Port Watch delivery decision core.
 
