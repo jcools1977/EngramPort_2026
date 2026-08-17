@@ -1,0 +1,43 @@
+# W1-5 bounded revision evidence
+
+Implementation commit: `14780102f628c1ad11d5f2f8bf64b4f0390a9b7e`
+
+## Expiry correction
+
+`resolve_founder_authority` now filters with the PostgreSQL `clock_timestamp()` and returns no usable scopes at or before expiry. `bootstrap_workspace` independently re-reads the authority and checks `expires_at <= clock_timestamp()` immediately before use, returning SQLSTATE `42501` / `founder authority expired`; this prevents a prior successful resolution from becoming a TOCTOU bypass.
+
+Live controls used an authority expired one second before the server read and a valid authority one hour ahead. The expired resolver returned no row; direct bootstrap refused; no tenant, project, principal, owner membership, delegation, approval, session, bootstrap establishment, or success-implying event/audit row existed. The unexpired control resolved successfully. This is server-clock evidence, not caller-time evidence.
+
+## Authoritative barrier discrimination
+
+The authoritative production invariant is the unique primary key `bootstrap_establishments_pkey` on `bootstrap_establishments(principal_id)`. The production race used two overlapping PostgreSQL sessions and produced exactly one winner (`a=0`) and one deterministic loser (`b=3`, `founder bootstrap already established`).
+
+The test-only weakened fixture removed that barrier and every fallback graph collision: bootstrap-establishment primary/unique constraints, tenant primary/slug uniqueness, project primary/tenant-slug/tenant-id uniqueness, principal primary/tenant-id uniqueness, and project-membership primary key (with dependent FKs cascaded only inside the disposable test database). The same overlapping race then produced two successful winners (`c=0`, `d=0`). No application lock or test mutex is the production guard; `app.test_bootstrap_pause` only widens the overlap window.
+
+## Residue proof
+
+The production loser detector independently asserts: tenant count 1 (winner only), project count 1, principal count 1, membership count 1, bootstrap-establishment count 1, actor delegation count 0, agent-session count 0, event/audit count 0, actor count 0, thread count 0, and that no approval/audit tables exist in this schema. Its message names exactly those categories. The rollback control separately proves no tenant, project, principal, or membership after an outer failure. The weakened two-winner fixture is isolated in the disposable database and is itself the representative detector-failure discrimination for the barrier/residue claim.
+
+## Exact live database results
+
+`npm run db:test` exited 0 on clean Docker PostgreSQL 16.15 (Debian aarch64) with pgvector 0.8.6 and pgcrypto 1.3. Migration checksum: `7e177877abe70dfa9be6ae9b8eb55e997f886eda1d7427b0f90612422327baaf`.
+
+- `tests/isolation/rls.sql`: 11/11
+- `tests/failure/app-role-grants.sql`: 14/14
+- `tests/failure/constraints.sql`: 9/9
+- `tests/failure/discrimination.sql`: 21/21
+- `tests/bootstrap/bootstrap.sql`: 5/5
+- production race/residue: 2/2
+- weakened-barrier race discrimination: 1/1
+
+All F16 controls remain green. Roles remain `NOSUPERUSER NOBYPASSRLS`; no production privilege was widened.
+
+## Dispatch and regressions
+
+The revision-8 dispatch gate remains bound to `629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089`; A3–A9 are absent and W3-1 remains mechanically ineligible. Dispatch tests: 6/6.
+
+Regression totals: proof 33/33; report 54/54; R2 8/8; welcome 19/19; setup 22/22; watch 16/16; session 12/12; approval 25/25; dry-run 6/6; DB static 6/6; lint exit 0.
+
+`app.test_bootstrap_pause` is a custom session GUC executable by any session, but only `engram_maintenance` has EXECUTE on `bootstrap_workspace`; `engram_app` cannot invoke it. It only causes a two-second test delay and does not affect the production barrier or authorization. It was left unchanged because the bounded revision did not authorize redesign.
+
+Scope was limited to expiry enforcement, barrier discrimination, complete residue assertions, and their evidence. W1-6, W1-7, W2-1, onboarding T2, Re:PORT R3, Port Watch, providers, credentials, KMS, publishing, parked records, and the unrelated PNG were untouched. Docker cleanup left no containers or persistent volumes; only default networks remain. Worktree is synchronized except for the pre-existing untracked PNG.
