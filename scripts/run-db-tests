@@ -53,5 +53,49 @@ fi
 if ! grep -q 'founder bootstrap already established' "$race_dir/a.out" "$race_dir/b.out"; then
   echo "concurrent bootstrap loser error was not deterministic" >&2; exit 1
 fi
-"${db[@]}" -U postgres -d engramport -c "DO \$\$ BEGIN IF (SELECT count(*) FROM bootstrap_establishments WHERE principal_id='31000000-0000-0000-0000-000000000001') <> 1 OR (SELECT count(*) FROM project_memberships WHERE principal_id='31000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'winner graph is not singular'; END IF; RAISE NOTICE 'PASS concurrent loser residue inventory: tenant/project/principal/membership/delegation/approval/session/audit residues are absent for loser graph'; END \$\$;"
+"${db[@]}" -U postgres -d engramport -c "DO \$\$
+DECLARE n bigint;
+BEGIN
+ SELECT count(*) INTO n FROM tenants WHERE id='32000000-0000-0000-0000-000000000001'; IF n<>1 THEN RAISE EXCEPTION 'tenant residue assertion expected 1, got %',n; END IF;
+ SELECT count(*) INTO n FROM projects WHERE id='33000000-0000-0000-0000-000000000001'; IF n<>1 THEN RAISE EXCEPTION 'project residue assertion expected 1, got %',n; END IF;
+ SELECT count(*) INTO n FROM principals WHERE id='31000000-0000-0000-0000-000000000001'; IF n<>1 THEN RAISE EXCEPTION 'principal residue assertion expected 1, got %',n; END IF;
+ SELECT count(*) INTO n FROM project_memberships WHERE project_id='33000000-0000-0000-0000-000000000001'; IF n<>1 THEN RAISE EXCEPTION 'membership residue assertion expected 1, got %',n; END IF;
+ SELECT count(*) INTO n FROM bootstrap_establishments WHERE principal_id='31000000-0000-0000-0000-000000000001'; IF n<>1 THEN RAISE EXCEPTION 'establishment residue assertion expected 1, got %',n; END IF;
+ SELECT count(*) INTO n FROM actor_delegations WHERE principal_id='31000000-0000-0000-0000-000000000001'; IF n<>0 THEN RAISE EXCEPTION 'delegation loser residue expected 0, got %',n; END IF;
+ SELECT count(*) INTO n FROM agent_sessions WHERE project_id='33000000-0000-0000-0000-000000000001'; IF n<>0 THEN RAISE EXCEPTION 'session loser residue expected 0, got %',n; END IF;
+ SELECT count(*) INTO n FROM events WHERE project_id='33000000-0000-0000-0000-000000000001'; IF n<>0 THEN RAISE EXCEPTION 'event/audit loser residue expected 0, got %',n; END IF;
+ SELECT count(*) INTO n FROM actors WHERE project_id='33000000-0000-0000-0000-000000000001'; IF n<>0 THEN RAISE EXCEPTION 'actor loser residue expected 0, got %',n; END IF;
+ SELECT count(*) INTO n FROM threads WHERE project_id='33000000-0000-0000-0000-000000000001'; IF n<>0 THEN RAISE EXCEPTION 'thread loser residue expected 0, got %',n; END IF;
+ IF to_regclass('public.approvals') IS NOT NULL OR to_regclass('public.audit_records') IS NOT NULL THEN RAISE EXCEPTION 'untracked approval/audit tables present'; END IF;
+ RAISE NOTICE 'PASS complete loser residue inventory: tenant, project, principal, membership, delegation, approval, session, establishment, event/audit, actor, and thread categories independently asserted';
+END \$\$;"
+
+# Discrimination: remove the complete set of colliding graph constraints in a
+# fresh test database state. The production barrier and every fallback identity
+# constraint are gone here; the same overlapping race must therefore yield two.
+"${db[@]}" -U postgres -d engramport -c "ALTER TABLE bootstrap_establishments DROP CONSTRAINT bootstrap_establishments_pkey, DROP CONSTRAINT bootstrap_establishments_tenant_id_key, DROP CONSTRAINT bootstrap_establishments_project_id_key; ALTER TABLE principals DROP CONSTRAINT principals_pkey CASCADE; ALTER TABLE principals DROP CONSTRAINT principals_tenant_id_id_key CASCADE; ALTER TABLE tenants DROP CONSTRAINT tenants_pkey CASCADE; ALTER TABLE tenants DROP CONSTRAINT tenants_slug_key CASCADE; ALTER TABLE projects DROP CONSTRAINT projects_pkey CASCADE; ALTER TABLE projects DROP CONSTRAINT projects_tenant_id_slug_key CASCADE, DROP CONSTRAINT projects_tenant_id_id_key CASCADE; ALTER TABLE project_memberships DROP CONSTRAINT project_memberships_pkey; INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('41000000-0000-0000-0000-000000000001',ARRAY['setup:bootstrap'],clock_timestamp()+interval '1 hour');"
+cat > "$race_dir/c.sql" <<'SQL'
+\set ON_ERROR_STOP on
+SELECT set_config('app.test_bootstrap_pause','true',false);
+SELECT * FROM bootstrap_workspace('41000000-0000-0000-0000-000000000001','42000000-0000-0000-0000-000000000001','43000000-0000-0000-0000-000000000001','weak-a','Weak A');
+SQL
+cat > "$race_dir/d.sql" <<'SQL'
+\set ON_ERROR_STOP on
+SELECT set_config('app.test_bootstrap_pause','true',false);
+SELECT * FROM bootstrap_workspace('41000000-0000-0000-0000-000000000001','42000000-0000-0000-0000-000000000002','43000000-0000-0000-0000-000000000002','weak-b','Weak B');
+SQL
+set +e
+"${db[@]}" -U postgres -d engramport < "$race_dir/c.sql" >"$race_dir/c.out" 2>&1 & pid_c=$!
+sleep 0.2
+"${db[@]}" -U postgres -d engramport < "$race_dir/d.sql" >"$race_dir/d.out" 2>&1 & pid_d=$!
+wait "$pid_c"; status_c=$?
+wait "$pid_d"; status_d=$?
+set -e
+if [[ $status_c -eq 0 && $status_d -eq 0 ]]; then
+  echo "PASS weakened barrier discrimination produced two winners"
+else
+  echo "weakened barrier discrimination expected two winners (c=$status_c d=$status_d)" >&2
+  cat "$race_dir/c.out" "$race_dir/d.out" >&2
+  exit 1
+fi
 "${db[@]}" -U postgres -d engramport -Atc "SELECT version(); SELECT extversion FROM pg_extension WHERE extname='vector';"

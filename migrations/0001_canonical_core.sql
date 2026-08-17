@@ -190,7 +190,7 @@ RETURNS TABLE(principal_id uuid, scopes text[], expires_at timestamptz)
 LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
   SELECT f.principal_id, f.scopes, f.expires_at
   FROM founder_authorities f
-  WHERE f.principal_id = p_principal_id
+  WHERE f.principal_id = p_principal_id AND f.expires_at > clock_timestamp()
 $$;
 
 CREATE OR REPLACE FUNCTION bootstrap_workspace(
@@ -201,6 +201,7 @@ DECLARE authority founder_authorities%ROWTYPE;
 BEGIN
   SELECT * INTO authority FROM founder_authorities WHERE founder_authorities.principal_id = p_principal_id FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE='42501', MESSAGE='founder authority not found'; END IF;
+  IF authority.expires_at <= clock_timestamp() THEN RAISE EXCEPTION USING ERRCODE='42501', MESSAGE='founder authority expired'; END IF;
   PERFORM set_config('app.tenant_id', p_tenant_id::text, true);
   INSERT INTO bootstrap_establishments(principal_id, tenant_id, project_id)
     VALUES (p_principal_id, p_tenant_id, p_project_id);

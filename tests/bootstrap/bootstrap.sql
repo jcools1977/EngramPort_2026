@@ -26,3 +26,21 @@ END $$;
 DO $$ BEGIN
  IF (SELECT scopes FROM resolve_founder_authority('30000000-0000-0000-0000-000000000001')) <> ARRAY['setup:bootstrap','setup:session'] THEN RAISE EXCEPTION 'resolver changed by payload'; END IF;
  RAISE NOTICE 'PASS resolver depends only on authenticated principal id'; END $$;
+INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES
+ ('30000000-0000-0000-0000-000000000003',ARRAY['setup:bootstrap'],clock_timestamp()-interval '1 second'),
+ ('30000000-0000-0000-0000-000000000004',ARRAY['setup:bootstrap'],clock_timestamp()+interval '1 hour');
+DO $$
+BEGIN
+ IF EXISTS (SELECT 1 FROM resolve_founder_authority('30000000-0000-0000-0000-000000000003')) THEN RAISE EXCEPTION 'expired authority resolved'; END IF;
+ BEGIN
+  PERFORM bootstrap_workspace('30000000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000031','30000000-0000-0000-0000-000000000032','expired','Expired');
+  RAISE EXCEPTION 'expired bootstrap succeeded';
+ EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM <> 'founder authority expired' THEN RAISE; END IF;
+ END;
+ IF EXISTS (SELECT 1 FROM tenants WHERE id='30000000-0000-0000-0000-000000000031') OR EXISTS (SELECT 1 FROM projects WHERE id='30000000-0000-0000-0000-000000000032') OR EXISTS (SELECT 1 FROM principals WHERE id='30000000-0000-0000-0000-000000000003') OR EXISTS (SELECT 1 FROM project_memberships WHERE project_id='30000000-0000-0000-0000-000000000032') OR EXISTS (SELECT 1 FROM bootstrap_establishments WHERE principal_id='30000000-0000-0000-0000-000000000003') THEN RAISE EXCEPTION 'expired authority residue'; END IF;
+ RAISE NOTICE 'PASS expired authority refused at resolver and bootstrap with zero residue';
+END $$;
+DO $$ BEGIN
+ IF EXISTS (SELECT 1 FROM resolve_founder_authority('30000000-0000-0000-0000-000000000004')) THEN RAISE NOTICE 'PASS unexpired boundary control'; ELSE RAISE EXCEPTION 'valid authority refused'; END IF;
+END $$;
