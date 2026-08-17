@@ -42,9 +42,9 @@ agent-b holds **one** active implementation item at a time. Further items may si
 
 Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
 
-**W1-5 is complete and accepted, closing A1, A2, F12 and F13. No implementation item is eligible; the WIP slot is free and nothing is dispatched.**
+**W1-5 is complete and accepted, closing A1, A2, F12 and F13. W1-6 is the sole eligible implementation item**, dispatched 2026-08-17. It owns A3, A4, A5, A6 and A9, five of the seven outstanding Tier A controls, and closes F9 and F10 only if independently proven.
 
-**Tier A remains incomplete: A3 through A9 are absent, so W3-1 is mechanically ineligible.** A3–A6 and A9 belong to W1-6, A7 and A8 to W1-7; neither is dispatched. The remaining queue — v0.1 findings two and three, W1-6, W1-7, W2-1, onboarding T2, Re:PORT R3 — awaits reprioritization.
+**Tier A remains incomplete: A3 through A9 are absent, so W3-1 is mechanically ineligible.** A3–A6 and A9 belong to W1-6, now dispatched; A7 and A8 to W1-7, not dispatched. Deferred and unchanged: v0.1 findings two and three, W1-7, W2-1, onboarding T2, Re:PORT R3. The v0.1 end-to-end gate stays open. MIT release work is tracked separately and is untouched here.
 
 The superseded prioritization record follows. **W1-5 was the sole eligible implementation item**, chosen as the dependency root: W1-6 needs its resolver, W1-7 needs both, Tier A cannot complete without A1 and A2, W3-1 is mechanically ineligible until Tier A passes, and it establishes the trusted bootstrap authority boundary that F12 records as currently caller-asserted.
 

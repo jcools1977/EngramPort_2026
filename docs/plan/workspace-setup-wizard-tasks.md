@@ -114,11 +114,13 @@ The alternatives were ranked and deferred deliberately: **v0.1 findings two and 
 
 ## W1-6: Credential detector, ingest boundary, shape selection, and grant authorization
 
-Phase W1. Runnable on Node for the detector and ingest layer; grant resolution against a live store is **blocked by C1**. **Not dispatched.**
+Phase W1. **ELIGIBLE and DISPATCHED 2026-08-17.** Both former blockers are gone: C1 is closed, so grant resolution can run against a live store, and W1-5 is accepted, so the resolver A6 depends on now exists. **Registered scope is unchanged.**
 
 Scope, established by W1-2 and unchanged here: the credential detector; the executable ingest boundary `ingestCredentialBearingRecord` with its fail-closed points and controls N1–N14 plus P; trusted registry-derived shape selection; grant-write authorization; and the twelve invocation-resolution comparisons with controls G1–G14 plus GP.
 
-Owns Tier A controls **A3**, **A4**, **A5**, **A6**, **A9**, and Tier B control **B9**. Closes findings **F9** and **F10**. Depends on: W1-5's resolver for A6, since granter authority must be derived rather than asserted.
+Owns Tier A controls **A3**, **A4**, **A5**, **A6**, **A9**, and Tier B control **B9**. Closes findings **F9** and **F10** **only if independently proven**. Depends on: W1-5's resolver for A6, now available.
+
+**Why W1-6 is next.** It owns five of the seven outstanding Tier A controls, so it is the largest single step toward Tier A completion and therefore toward W3-1 becoming eligible at all. Only W1-7's A7 and A8 remain behind it. It is also where F9 and F10 close, the two reproduced findings that have been open longest: a plan field accepting an inline credential, and the absence of any credential detector despite three specifications assuming one.
 
 ## W1-7: Custody service, atomic minting, signing boundary, canary harness, and retention
 
