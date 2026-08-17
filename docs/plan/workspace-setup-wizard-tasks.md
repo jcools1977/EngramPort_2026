@@ -153,11 +153,18 @@ Acceptance criteria:
 
 ## W1-7: Custody service, atomic minting, signing boundary, canary harness, and retention
 
-Phase W1. The custody service and mint contract are specifiable on Node; the KMS/HSM signing boundary and canary harness require a non-production KMS or HSM account. **Not dispatched.**
+Phase W1. **DISPATCHED 2026-08-17** as the sole eligible item, after the section 10 KMS prerequisite was verified reachable under **C7**. Sequenced before W1-8 so the live resolver binds to the canonical custody boundary.
 
-Scope, established by W1-2 and unchanged here: the custody service and its three custody models; namespace-specific atomic reference minting per the section 5A contract with controls M1–M13 plus MP; the synthetic KMS or HSM signing boundary; the differential canary harness with a vulnerable variant per sink; and retention enforcement for the five named policies RET-SESSION, RET-OPS-90, RET-AUDIT-400, RET-GRANT-400 and RET-CONFIG-400, plus RET-VERIFY-104.
+Scope, established by W1-2 and unchanged here: the custody service and its three custody models; namespace-specific atomic reference minting per the section 5A contract with controls M1–M13 plus MP; the synthetic KMS or HSM signing boundary; the differential canary harness with a vulnerable variant per sink; and retention enforcement for the **six** named policies RET-SESSION, RET-OPS-90, RET-AUDIT-400, RET-GRANT-400, RET-CONFIG-400 and RET-VERIFY-104.
 
-Owns Tier A controls **A7** and **A8**, and Tier B controls **B1** through **B5**. Depends on: W1-5's resolver and W1-6's detector, since minting resolves authority and sealed rows must be detector-clean.
+**Control ownership, corrected 2026-08-17 under F18.** This entry previously read "Owns Tier A controls A7 and A8, and Tier B controls B1 through B5", which overclaims.
+
+- **Closes A7 and A8**, the two remaining Tier A controls not owned by W1-5 or W1-8.
+- **Closes B5**, the section 10 canary harness, shared with W3-1 and demonstrable now on synthetic material.
+- **Builds, but does not close, B1 through B4.** Section 11 assigns them to W3-1 and their gate column reads "W3 completion". W1-7 produces the boundary they are later asserted against, against a real key, in W3-1. Demonstrating them on a synthetic key is evidence the boundary behaves, not closure of the control.
+- **Does not touch A6 or B9**, which belong to W1-8. The Tier A table still records A6's owner as W1-6; that row is stale and is carried in F18 rather than corrected, because revision 8 is digest-pinned.
+
+Depends on: W1-5's resolver and W1-6's detector, since minting resolves authority and sealed rows must be detector-clean. Both available and accepted.
 
 ---
 

@@ -401,3 +401,36 @@ The claim is nonetheless true, and agent-a established it independently on a pat
 Recorded rather than blocked because the underlying controls are real and each fails by construction if its guard is removed. It is a labelling defect, the same class as the W1-5 loser-residue message and B1's `application UPDATE denied`, and the repository already contains three correct examples: F16's `discrimination.sql`, W1-5's weakened barrier, and W1-5's ACL discrimination.
 
 **To close:** for each control, remove or stub the guard, assert the fixture is then accepted, and restore. **Registered and dispatched as W1-6a on 2026-08-17.**
+
+## C7. The non-production KMS boundary required by section 10
+
+**Raised:** W1-7 dispatch evaluation, 2026-08-17, by agent-a. **Status: SATISFIED, verified by execution.**
+
+Section 10 of the threat model requires "an isolated non-production KMS/HSM account or emulator" before B1 through B5 can be demonstrated, and requires that the authorization used be "structurally unable to reach a real key, proven by attempting to address a production key path and being denied."
+
+**Verified reachable on the shared host**, not merely assumed:
+
+| Property | Evidence |
+|---|---|
+| Emulator runs locally | `hashicorp/vault:1.17` pulled and started, dev mode, `initialized:true sealed:false` |
+| Signing works inside the boundary | Non-exportable `rsa-2048` transit key signed a known input, `vault:v1:...` returned |
+| Export refused | `private key material is not exportable`, a specific named error |
+| **The refusal discriminates** | An `exportable:true` key at the same endpoint returned **1907 bytes of real PEM private key**. Without this control the refusal would prove nothing |
+| Authorization cannot reach a production path | A policy-scoped token signed `synth-a` successfully and was **denied** on sign, read and export of `prod-real`, each `permission denied` |
+
+**SoftHSM2 was evaluated first and rejected as the boundary.** It initialises and signs correctly, but `pkcs11-tool --read-object --type privkey` returns `sorry, reading private keys not (yet) supported`. That is a **tool limitation, not a token refusal**, so an export-denied result obtained that way is a false negative. Two of these were produced during evaluation before the discrimination control caught them, which is the F17 defect class appearing in the prerequisite check itself. Proving B2 on PKCS#11 would require a native binding; Vault transit proves the same property over HTTP with no new dependency.
+
+**Not a substitute for a real KMS.** This closes the prerequisite for *demonstrating* B1 through B5 on synthetic material. Tier C gate C1 still requires a real KMS or HSM before the first real GitHub App private key.
+
+## F18. Revision 8 assigns B1–B4 and A6 inconsistently
+
+**Raised:** W1-7 dispatch evaluation, 2026-08-17, by agent-a. **Not blocking. Documentation-only.**
+
+Two ownership rows in `docs/security/setup-credential-threat-model.md` disagree with the current plan and with each other.
+
+1. **B1–B4.** Section 11's Tier B paragraph says "All owned by W3-1 except B5, shared with W1-7." The section 12 traceability row `Isolated signing boundary | 10 | W3-1, W1-7 | B1–B4 | W3 completion` lists W1-7 as a co-implementer. `docs/plan/workspace-setup-wizard-tasks.md` said W1-7 "Owns ... Tier B controls B1 through B5", which overclaims against both.
+2. **A6.** The Tier A table still records owner `W1-6`. A6 was re-homed to W1-8 on 2026-08-17 when W1-6 was narrowed.
+
+**Resolved in favour of the narrower reading**, recorded in the task plan rather than the threat model: W1-7 **closes A7, A8 and B5**; W1-7 **builds** the boundary B1–B4 are later asserted against, and those four **close at W3 completion against a real key**, which is what their own gate column says.
+
+**The threat model is deliberately not edited.** Revision 8 is pinned at digest `629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089`, and the W1-2 dispatch gate binds every Tier A evidence claim to that exact revision and digest. Editing it to fix a documentation inconsistency would invalidate the accepted W1-5, W1-6 and W1-6a bindings to buy nothing behavioural. **Correcting a pinned document is more expensive than annotating it**, so this is carried here and folded into the next revision that changes a contract for another reason.
