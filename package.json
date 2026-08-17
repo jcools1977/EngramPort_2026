@@ -25,6 +25,7 @@
     ,"session:test": "node --test tests/workspace-session.test.mjs"
     ,"approval:test": "node --test tests/workspace-approval.test.mjs"
     ,"report:test": "node --test tests/report-boundary.test.mjs"
+    ,"report:r2:test": "node --test tests/report-r2.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

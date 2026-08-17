@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { decideDelivery } from "../../port-watch/src/index.mjs";
 
 const envelopeSchema = JSON.parse(await readFile(new URL("../../../schemas/report-envelope-v1.schema.json", import.meta.url), "utf8"));
 const inputsSchema = JSON.parse(await readFile(new URL("../../../schemas/report-inputs-v1.schema.json", import.meta.url), "utf8"));
@@ -179,7 +180,8 @@ function validateEvidenceRecord(record, authorization, asOfSeq) {
 export async function assembleAuthorizedReportInput(request, source) {
   exactKeys(request, new Set(["authorization", "as_of_seq", "model_identity", "reporter_revision"]), "request");
   const authorization = validateAuthorizationContext(request.authorization);
-  if (!Number.isInteger(request.as_of_seq) || request.as_of_seq < 0) throw new ReportBoundaryError("INPUT_MALFORMED", "as_of_seq must be a non-negative integer", "$.request.as_of_seq");
+  const deriveAsOfSeq = request.as_of_seq === null;
+  if (!deriveAsOfSeq && (!Number.isInteger(request.as_of_seq) || request.as_of_seq < 0)) throw new ReportBoundaryError("INPUT_MALFORMED", "as_of_seq must be a non-negative integer or null for authorized-state derivation", "$.request.as_of_seq");
   if (typeof request.model_identity !== "string" || !request.model_identity) throw new ReportBoundaryError("INPUT_MALFORMED", "model_identity is required", "$.request.model_identity");
   if (typeof request.reporter_revision !== "string" || !request.reporter_revision) throw new ReportBoundaryError("INPUT_MALFORMED", "reporter_revision is required", "$.request.reporter_revision");
   if (!source || typeof source !== "object" || Array.isArray(source) || Object.keys(source).some((key) => key !== "retrieveAuthorized") || typeof source.retrieveAuthorized !== "function") throw new ReportBoundaryError("AUTHORIZED_SOURCE_REQUIRED", "source must expose retrieveAuthorized only");
@@ -187,10 +189,11 @@ export async function assembleAuthorizedReportInput(request, source) {
   const authorization_context_sha256 = authorizationContextDigest(authorization);
   const retrieved = await source.retrieveAuthorized(Object.freeze({ ...authorization, as_of_seq: request.as_of_seq, authorization_context_sha256 }));
   if (!Array.isArray(retrieved)) throw new ReportBoundaryError("AUTHORIZED_SOURCE_INVALID", "retrieveAuthorized must return an array");
-  for (const record of retrieved) validateEvidenceRecord(record, authorization, request.as_of_seq);
+  const asOfSeq = deriveAsOfSeq ? retrieved.reduce((maximum, record) => Math.max(maximum, Number.isInteger(record?.project_seq) ? record.project_seq : 0), 0) : request.as_of_seq;
+  for (const record of retrieved) validateEvidenceRecord(record, authorization, asOfSeq);
   const ordered = [...retrieved].sort((left, right) => left.project_seq - right.project_seq || left.event_id.localeCompare(right.event_id));
   if (new Set(ordered.map((record) => record.event_id)).size !== ordered.length) throw new ReportBoundaryError("EVIDENCE_DUPLICATE", "source returned a duplicate event id");
-  if (authorization.view_mode === "public_view" && authorization.publication_approval.action_digest !== publicationActionDigest(authorization, request.as_of_seq, ordered)) {
+  if (authorization.view_mode === "public_view" && authorization.publication_approval.action_digest !== publicationActionDigest(authorization, asOfSeq, ordered)) {
     throw new ReportBoundaryError("PUBLIC_APPROVAL_DIGEST_MISMATCH", "public_view approval is not bound to the exact authorized evidence set and as_of_seq");
   }
 
@@ -208,7 +211,7 @@ export async function assembleAuthorizedReportInput(request, source) {
     history_start_seq: authorization.history_start_seq,
     policy_revision: authorization.policy_revision,
     authorization_context_sha256,
-    as_of_seq: request.as_of_seq,
+    as_of_seq: asOfSeq,
     model_identity: request.model_identity,
     reporter_revision: request.reporter_revision,
     publication_approval: authorization.publication_approval,
@@ -217,6 +220,20 @@ export async function assembleAuthorizedReportInput(request, source) {
     evidence_digests: ordered.map((record) => record.content_sha256)
   };
   return Object.freeze({ ...input, input_identity_sha256: sha256(input) });
+}
+
+export async function assembleDeterministicEvidence(request, source) {
+  exactKeys(request, new Set(["authorization", "model_identity", "reporter_revision"]), "request");
+  return assembleAuthorizedReportInput({ ...request, as_of_seq: null }, source);
+}
+
+export async function runReportIfChanged({ request, source, previous_as_of_seq, generator }) {
+  if (!Number.isInteger(previous_as_of_seq) || previous_as_of_seq < 0) throw new ReportBoundaryError("INPUT_MALFORMED", "previous_as_of_seq must be a non-negative integer", "$.previous_as_of_seq");
+  if (typeof generator !== "function") throw new ReportBoundaryError("INPUT_MALFORMED", "generator must be a function", "$.generator");
+  const input = await assembleDeterministicEvidence(request, source);
+  const decision = decideDelivery({ cursor: previous_as_of_seq, events: input.source_events });
+  if (decision.action === "skip") return Object.freeze({ ...decision, input });
+  return Object.freeze({ ...decision, input, generated: await generator(input) });
 }
 
 function citedEventIds(envelope) {

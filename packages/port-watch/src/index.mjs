@@ -18,14 +18,18 @@ export class FileWatchStore {
 }
 const key=(agent,project)=>`${agent}:${project}`;
 const initial=()=>({enabled:false,status:"disabled",cursor:0,scopes:[],cadence_seconds:240,jitter_fraction:0.1,active_run:null,completions:[]});
+export function decideDelivery({cursor,events}){
+  const delta=events.filter(event=>event.project_seq>cursor).sort((a,b)=>a.project_seq-b.project_seq||a.event_id.localeCompare(b.event_id));
+  return delta.length?{action:"wake",events:delta}:{action:"skip",reason:"unchanged"};
+}
 export function decideWatch({watch,cursor,events}){
   if(!watch.enabled)return {action:"skip",reason:"disabled"};
   if(watch.status==="paused")return {action:"skip",reason:"paused"};
   if(watch.status==="stopped")return {action:"skip",reason:"stopped"};
   if(watch.active_run)return {action:"skip",reason:"wip_limit"};
-  const delta=events.filter(event=>event.project_seq>cursor).sort((a,b)=>a.project_seq-b.project_seq||a.event_id.localeCompare(b.event_id));
-  if(!delta.length)return {action:"skip",reason:"unchanged"};
-  const handoff=delta.find(event=>event.kind==="handoff"&&event.implementation_authority===true);
+  const delivery=decideDelivery({cursor,events});
+  if(delivery.action==="skip")return delivery;
+  const handoff=delivery.events.find(event=>event.kind==="handoff"&&event.implementation_authority===true);
   if(!handoff)return {action:"skip",reason:"no_eligible_handoff"};
   return {action:"wake",event:handoff};
 }
