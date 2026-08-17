@@ -42,15 +42,15 @@ agent-b holds **one** active implementation item at a time. Further items may si
 
 Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
 
-**W1-5 is complete and accepted, closing A1, A2, F12 and F13. W1-6 is the sole eligible implementation item**, dispatched 2026-08-17. It owns A3, A4, A5, A6 and A9, five of the seven outstanding Tier A controls, and closes F9 and F10 only if independently proven.
+**W1-6 is closed for its Node boundary, closing A3, A4, A5, A9, F9 and F10.** **A6 and B9 are re-homed to W1-8**, a named task for live grant and custody tables, not dispatched. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.**
 
-**Tier A remains incomplete: A3 through A9 are absent, so W3-1 is mechanically ineligible.** A3–A6 and A9 belong to W1-6, now dispatched; A7 and A8 to W1-7, not dispatched. Deferred and unchanged: v0.1 findings two and three, W1-7, W2-1, onboarding T2, Re:PORT R3. The v0.1 end-to-end gate stays open. MIT release work is tracked separately and is untouched here.
+**Tier A remains incomplete: A6, A7 and A8 are absent, so W3-1 is mechanically ineligible.** A6 belongs to W1-8, A7 and A8 to W1-7; neither is dispatched. Deferred and unchanged: v0.1 findings two and three, W1-7, W2-1, onboarding T2, Re:PORT R3. The v0.1 end-to-end gate stays open. MIT release work is tracked separately and is untouched here.
 
 The superseded prioritization record follows. **W1-5 was the sole eligible implementation item**, chosen as the dependency root: W1-6 needs its resolver, W1-7 needs both, Tier A cannot complete without A1 and A2, W3-1 is mechanically ineligible until Tier A passes, and it establishes the trusted bootstrap authority boundary that F12 records as currently caller-asserted.
 
 Deferred deliberately, not forgotten: v0.1 findings two and three, the `TRUNCATE` guard and the delegation-trigger comment, both confirmed still absent and unlocking nothing; W2-1 provisioning, which is downstream of the authority boundary; onboarding T2; and Re:PORT R3, which unlocks only the Re:PORT chain.
 
-**The v0.1 gate of specification section 27 remains unmet**, because its concurrent-load append, discover, respond and handoff half is untouched. W1-5 does not close it: a bootstrap-race proof is not an end-to-end concurrent-load proof. `docs/plan/workspace-setup-wizard-tasks.md` W2-1 criterion 4 previously claimed live isolation tests close this gate; that claim is struck through and flagged there, and this register is authoritative. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14, F15. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+**The v0.1 gate of specification section 27 remains unmet**, because its concurrent-load append, discover, respond and handoff half is untouched. W1-5 does not close it: a bootstrap-race proof is not an end-to-end concurrent-load proof. `docs/plan/workspace-setup-wizard-tasks.md` W2-1 criterion 4 previously claimed live isolation tests close this gate; that claim is struck through and flagged there, and this register is authoritative. Open findings: F1, F3, F4, F5, F6, F11, F14, F15, F17. Closed: F9, F10, F12, F13, F16. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -188,6 +188,8 @@ Demonstrated: taking an approved plan, flipping every step's `consequential` fro
 
 ## F9. Plan fields accept inline credentials
 
+> **CLOSED 2026-08-17 by W1-6.** `compileSetup` now invokes the credential detector and refuses a credential-bearing value with `CREDENTIAL_INPUT_REFUSED` **before serialization**. Verified against the original reproduction: `postgres://alice:REAL_SECRET@db.example/engram` is refused, the secret appears in no error message, stack, or serialized error, and the structured-reference form still compiles. Guard removal confirmed load-bearing: stripping the detector call makes the original fixture accepted again.
+
 **Raised:** W1-2 threat model, 2026-08-14. **REPRODUCED** independently by agent-b and by agent-a: `compileSetup` accepted `postgres://alice:REAL_SECRET@db.example/engram` and `serializeSetupPlan` retained the secret. **Closes in:** Tier A control A3, before any W3 implementation begins.
 
 `workspace-setup-v0`'s `database.target` is a free-form string with no constraint, and a plan is compiled, digest-bound, serialized, written to disk, and shown to a founder. A founder writing `postgres://user:password@host/db`, which is the natural way to write a connection string, places a live credential inside a digest-bound serializable artifact covered by `engramport-action-v3` and reproduced in the review surface.
@@ -197,6 +199,8 @@ Nothing in the schema or compiler prevents it, and the obvious usage produces it
 **To close:** make `database.target` a structured reference (host, port, database) plus a secret-manager reference, or validate it to reject embedded userinfo; and have the compiler refuse any plan value matching credential patterns, with a named error, failing closed.
 
 ## F10. No credential-pattern detector exists
+
+> **CLOSED 2026-08-17 by W1-6.** One detector, `detectCredential`, is now invoked from all three required call sites: the plan compiler (`workspace-setup.mjs`), the event append path, and artifact registration (`cli.mjs`). Verified live: an event body carrying a synthetic token is refused with `CREDENTIAL_INPUT_REFUSED`, a clean body is accepted, and the detector fails closed on error.
 
 **Raised:** W1-2 threat model, 2026-08-14. **REPRODUCED** by implementation census across the plan compiler, event append path, artifact registration, logging, welcome verification and Re:PORT: no detector, no quarantine, no call site. Neither agent planted a secret into the accepted log, because that would create the irreversible incident the model warns about. **Closes in:** Tier A control A4.
 
@@ -375,3 +379,15 @@ The environment is correct and is not the problem: Docker Engine 29.7.2, Compose
 **Diagnostic totals**, obtained on a clean container by installing extensions as superuser and correcting the seed in a scratchpad copy, with the repository untouched: isolation **11 pass, 1 error**; app-role grants **14 pass, 0 errors**; constraints **9 pass, 1 error**. The app-role grant controls of B1 do pass on a live database, which is genuine good news and is not acceptance, because the canonical path still fails.
 
 **To close:** `npm run db:test` passes end to end on PostgreSQL 16 + pgvector with no simulation and no skipped control, and every negative control is demonstrated to fail when its guard is removed. Only then can the v0.1 gate, B1's live verification, and the remaining v0.1 findings be judged.
+
+## F17. The W1-6 guard-removal test does not remove any guard
+
+**Raised:** W1-6 review, 2026-08-17, by agent-a. **Not blocking.** **Closes in:** W1-8, or sooner if the suite is touched.
+
+`tests/wizard-w1-6.test.mjs` contains `guard-removal discrimination: every N/G guard is load-bearing`, which asserts twenty-eight entries are refused. Every entry supplies a failing input to the shipped code path and asserts refusal. **That is the negative control restated and counted, not a demonstration that the guard caused the refusal.**
+
+The claim is nonetheless true, and agent-a established it independently on a patched copy: stripping the `detectCredential` call from the plan compiler makes the original F9 fixture accepted, and stripping the principal comparison from `resolveInvocation` makes a wrong-principal invocation accepted. Both guards are load-bearing.
+
+Recorded rather than blocked because the underlying controls are real and each fails by construction if its guard is removed. It is a labelling defect, the same class as the W1-5 loser-residue message and B1's `application UPDATE denied`, and the repository already contains three correct examples: F16's `discrimination.sql`, W1-5's weakened barrier, and W1-5's ACL discrimination.
+
+**To close:** for each control, remove or stub the guard, assert the fixture is then accepted, and restore. Or rename the test to what it actually asserts.

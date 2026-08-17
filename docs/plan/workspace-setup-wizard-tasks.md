@@ -114,13 +114,25 @@ The alternatives were ranked and deferred deliberately: **v0.1 findings two and 
 
 ## W1-6: Credential detector, ingest boundary, shape selection, and grant authorization
 
-Phase W1. **ELIGIBLE and DISPATCHED 2026-08-17.** Both former blockers are gone: C1 is closed, so grant resolution can run against a live store, and W1-5 is accepted, so the resolver A6 depends on now exists. **Registered scope is unchanged.**
+Phase W1. **NARROWED AND CLOSED 2026-08-17 for its Node boundary.** Implementation `58c48e2` plus revision, result event `01a010cb-a942-75c1-a662-ea14f9924f4e`, evidence `artifacts/agent-b/w1-6-revision-results.md` at `9d547253e24dbee9b03cd9c5f6c4b18ca189dc81e4705517bc7e9149c12fe1e0`.
+
+**Closes A3, A4, A5, A9, F9 and F10**, each independently verified. **A6 and B9 are NOT closed** and are re-homed to **W1-8** below, because they require live grant and custody tables that this work does not provide. W1-6's registered scope is therefore **not** complete as originally written; it is narrowed, and the remainder is named and owned rather than quietly dropped.
 
 Scope, established by W1-2 and unchanged here: the credential detector; the executable ingest boundary `ingestCredentialBearingRecord` with its fail-closed points and controls N1–N14 plus P; trusted registry-derived shape selection; grant-write authorization; and the twelve invocation-resolution comparisons with controls G1–G14 plus GP.
 
-Owns Tier A controls **A3**, **A4**, **A5**, **A6**, **A9**, and Tier B control **B9**. Closes findings **F9** and **F10** **only if independently proven**. Depends on: W1-5's resolver for A6, now available.
+Owns, as narrowed: Tier A controls **A3**, **A4**, **A5**, **A9**, and findings **F9** and **F10**, all closed. **A6 and Tier B control B9 moved to W1-8.**
 
 **Why W1-6 is next.** It owns five of the seven outstanding Tier A controls, so it is the largest single step toward Tier A completion and therefore toward W3-1 becoming eligible at all. Only W1-7's A7 and A8 remain behind it. It is also where F9 and F10 close, the two reproduced findings that have been open longest: a plan field accepting an inline credential, and the absence of any credential detector despite three specifications assuming one.
+
+## W1-8: Live grant authorization and invocation resolution
+
+Phase W1. **Not dispatched.** Split out of W1-6 on 2026-08-17 because it requires a live datastore that W1-6's Node boundary does not provide.
+
+Scope: back the injected `deps.store` of `packages/git-adapter/src/credential-boundary.mjs` with real PostgreSQL grant and custody tables; derive `serverNow()` from the **database** clock rather than a constant; and prove, against live rows under `npm run db:test`, grant existence, tenant and project ownership, principal, actor and scope comparison, expiry, revocation with an invocation-time re-read, and custody-row state.
+
+Owns Tier A control **A6** and Tier B control **B9**, both re-homed from W1-6. Depends on: W1-5's resolver, available; and a live PostgreSQL path, available since C1 closed.
+
+**The logic already exists and is tested against synthetic stores.** What is missing is the datastore behind it, so this is an integration task rather than a design task. `resolveInvocation` already performs an invocation-time re-read and calls a `serverNow()` abstraction, which is the correct shape to bind to a real store.
 
 ## W1-7: Custody service, atomic minting, signing boundary, canary harness, and retention
 
