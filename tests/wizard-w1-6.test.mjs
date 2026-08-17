@@ -45,13 +45,20 @@ test("genuine guard-removal mutations accept fixtures and restore shipped module
     const grantCopy=path.join(temp,"grant.mjs");
     await writeFile(grantCopy,source.replace('if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");','if (false && request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");'));
     const g=await import(`${grantCopy}?g8`); const r2=await g.resolveInvocation(grant(),{principal_id:"u2",tenant_id:"t1",project_id:"p1",provider:"github",capability:"repo.read",scopes:["read"]},{store:store()}); assert.equal(r2.ok,true);
+    for (const [id,needle,replacement,fixture,deps] of [
+      ["N7",'} catch { return reject("REGISTRY_ERROR"); }', '} catch { shape = { shape_ref: "epr:shape:12345678-1234-7123-8123-123456789abc", revision: "r8" }; }',base,{registry:{resolve:async()=>{throw Error("x")},validate:async()=>true},custody:custody()}],
+      ["N8",'  if (bytes > maxBytes) return { hit: true, code: "RECORD_TOO_LARGE" };',"  if (false && bytes > maxBytes) return { hit: true, code: \"RECORD_TOO_LARGE\" };",{...base,blob:"x".repeat(70000)},{registry:registry(),custody:custody()}],
+      ["N9",'    if (depth > maxDepth) return "NESTING_TOO_DEEP";',"    if (false && depth > maxDepth) return \"NESTING_TOO_DEEP\";",(()=>{let x=base;for(let i=0;i<17;i++)x={nested:x};return x;})(),{registry:registry(),custody:custody()}]
+    ]) { const file=path.join(temp,`${id}.mjs`); await writeFile(file,source.replace(needle,replacement)); const mod=await import(`${file}?${id}`); const out=await mod.ingestCredentialBearingRecord(fixture,ctx,deps); assert.equal(out.ok,true,id); }
     const cases=[
       ["G2",'if (Date.parse(g.expires_at) <= await deps.store.serverNow()) return fail("GRANT_EXPIRED");',"if (false) return fail(\"GRANT_EXPIRED\");",grant({expires_at:"2020-01-01T00:00:00Z"}),{}],
       ["G4",'if (request.tenant_id !== g.tenant_id) return fail("TENANT_MISMATCH");',"if (false) return fail(\"TENANT_MISMATCH\");",grant(),{tenant_id:"t2"}],
       ["G5",'if (request.project_id !== g.project_id) return fail("PROJECT_MISMATCH");',"if (false) return fail(\"PROJECT_MISMATCH\");",grant(),{project_id:"p2"}],
       ["G6",'if (request.provider !== g.provider) return fail("PROVIDER_MISMATCH");',"if (false) return fail(\"PROVIDER_MISMATCH\");",grant(),{provider:"gitlab"}],
+      ["G7",'if (request.capability !== g.capability) return fail("CAPABILITY_MISMATCH");',"if (false) return fail(\"CAPABILITY_MISMATCH\");",grant(),{capability:"repo.write"}],
       ["G9",'if ((g.granted_to_actor_id ?? null) !== (request.actor_id ?? null)) return fail("ACTOR_MISMATCH");',"if (false) return fail(\"ACTOR_MISMATCH\");",grant({granted_to_actor_id:"a1"}),{actor_id:"a2"}],
-      ["G10",'if (!has(new Set(g.scopes), request.scopes ?? [])) return fail("SCOPE_EXCEEDED");',"if (false) return fail(\"SCOPE_EXCEEDED\");",grant(),{scopes:["read","write"]}]
+      ["G10",'if (!has(new Set(g.scopes), request.scopes ?? [])) return fail("SCOPE_EXCEEDED");',"if (false) return fail(\"SCOPE_EXCEEDED\");",grant(),{scopes:["read","write"]}],
+      ["G3",'if (!fresh || fresh.status !== "active") return fail("GRANT_REVOKED");',"if (false) return fail(\"GRANT_REVOKED\");",grant({status:"revoked"}),{}]
     ];
     for (const [id,needle,replacement,fixture,request] of cases) { const file=path.join(temp,`${id}.mjs`); await writeFile(file,source.replace(needle,replacement)); const mod=await import(`${file}?${id}`); const out=await mod.resolveInvocation(fixture,{principal_id:"u1",actor_id:null,tenant_id:"t1",project_id:"p1",provider:"github",capability:"repo.read",scopes:["read"],...request},{store:store({getGrant:async()=>fixture})}); assert.equal(out.ok,true,id); }
     assert.equal(source.includes('if (SECRET.test(v)) return "CREDENTIAL_DETECTED";'),true); assert.equal(source.includes('if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");'),true);
