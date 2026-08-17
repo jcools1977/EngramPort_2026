@@ -1,9 +1,9 @@
 protocol: engramport-git-v0
 project: engramport-proof
 mode: strict_relay
+default_thread_mode: strict_relay
 event_root: events
 actor_root: actors
 artifact_root: artifacts
 schema: schemas/event-v0.schema.json
 hash_profile: engramport-git-body-v0
-

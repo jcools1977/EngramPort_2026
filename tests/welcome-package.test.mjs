@@ -12,7 +12,7 @@ const eventRel="events/agent-a/20260814T141000Z_0198f2a1-1000-7000-8000-00000000
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const grant={role:"contributor",scopes:["events:write"],capabilities:["security-review"],groups:["friends"],trust_ceiling:"untrusted_agent"};
 async function json(file,value){await writeFile(file,JSON.stringify(value,null,2)+"\n");}
-async function setup(){const root=await mkdtemp(path.join(os.tmpdir(),"engram-welcome-"));for(const s of ["actors","events","artifacts","schemas"])await cp(path.join(source,s),path.join(root,s),{recursive:true});
+async function setup(){const root=await mkdtemp(path.join(os.tmpdir(),"engram-welcome-"));for(const s of ["actors","events","artifacts","schemas","threads","engramport.yaml"])await cp(path.join(source,s),path.join(root,s),{recursive:true});
  const checkpoint={project_seq:1,chain_hash:"ab".repeat(32)};let ev=await readFile(path.join(root,eventRel),"utf8");const body=JSON.stringify(checkpoint)+"\n";ev=ev.replace(/content_sha256: [0-9a-f]{64}/,`content_sha256: ${sha(body)}`).replace(/---\n## Objective[\s\S]*$/,`---\n${body}`);await writeFile(path.join(root,eventRel),ev);
  await mkdir(path.join(root,"keys"));await mkdir(path.join(root,"invitations"));const packageDir=path.join(root,"package");await mkdir(packageDir);
  const {privateKey,publicKey}=generateKeyPairSync("ed25519");const keyId="0198f2a1-2000-7000-8000-000000000001";await json(path.join(root,"keys",`${keyId}.json`),{algorithm:"ed25519",status:"active",public_key:publicKey.export({type:"spki",format:"pem"})});

@@ -6,7 +6,8 @@ const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 const SHA256 = /^[0-9a-f]{64}$/;
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 const TYPES = new Set(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"]);
-const KEYS = new Set(["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256", "artifacts"]);
+const KEYS = new Set(["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256", "thread_config_sha256", "artifacts"]);
+const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
 
 function scalar(raw) {
   const value = raw.trim();
@@ -43,6 +44,72 @@ export function hashBody(body) {
   return createHash("sha256").update(body.replace(/\r\n/g, "\n").trimEnd() + "\n", "utf8").digest("hex");
 }
 
+export function hashThreadConfig(config) {
+  return createHash("sha256")
+    .update(JSON.stringify({ schema_version: 0, thread: config.thread, mode: config.mode, coordinator: config.coordinator ?? null }), "utf8")
+    .digest("hex");
+}
+
+export function parseRecord(source, file) {
+  const record = {};
+  for (const [index, line] of source.replace(/\r\n/g, "\n").split("\n").entries()) {
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const colon = line.indexOf(":");
+    if (colon < 1) throw new Error(`${file}: invalid line ${index + 1}`);
+    const key = line.slice(0, colon).trim();
+    if (Object.hasOwn(record, key)) throw new Error(`${file}: duplicate field ${key}`);
+    record[key] = scalar(line.slice(colon + 1));
+  }
+  return record;
+}
+
+async function readProjectConfig(root, errors) {
+  try {
+    const config = parseRecord(await readFile(path.join(root, "engramport.yaml"), "utf8"), "engramport.yaml");
+    const legacyMode = config.mode;
+    const defaultMode = config.default_thread_mode ?? legacyMode;
+    if (!THREAD_MODES.has(legacyMode)) errors.push(`engramport.yaml: unknown project mode ${legacyMode}`);
+    if (!THREAD_MODES.has(defaultMode)) errors.push(`engramport.yaml: unknown default_thread_mode ${defaultMode}`);
+    return { legacyMode, defaultMode };
+  } catch (error) {
+    errors.push(error.message);
+    return { legacyMode: null, defaultMode: null };
+  }
+}
+
+async function readThreadConfigs(root, actors, errors) {
+  const configs = new Map();
+  const directory = path.join(root, "threads");
+  let names = [];
+  try { names = await readdir(directory); }
+  catch (error) {
+    if (error.code === "ENOENT") return configs;
+    errors.push(`threads: ${error.message}`);
+    return configs;
+  }
+  for (const name of names.filter((item) => item.endsWith(".yaml"))) {
+    const relative = path.join("threads", name);
+    try {
+      const config = parseRecord(await readFile(path.join(directory, name), "utf8"), relative);
+      const allowed = new Set(["schema_version", "thread", "mode", "coordinator"]);
+      for (const key of Object.keys(config)) if (!allowed.has(key)) errors.push(`${relative}: unknown field ${key}`);
+      if (config.schema_version !== 0) errors.push(`${relative}: schema_version must be 0`);
+      if (!SLUG.test(config.thread ?? "")) errors.push(`${relative}: invalid thread slug`);
+      if (name !== `${config.thread}.yaml`) errors.push(`${relative}: filename must match thread ${config.thread}`);
+      if (!THREAD_MODES.has(config.mode)) errors.push(`${relative}: unknown thread mode ${config.mode}`);
+      if (config.mode === "coordinator_led") {
+        if (!config.coordinator) errors.push(`${relative}: coordinator_led mode requires a coordinator`);
+        else if (!actors.has(config.coordinator)) errors.push(`${relative}: coordinator_led mode has unknown coordinator ${config.coordinator}`);
+      } else if (config.coordinator !== null) {
+        errors.push(`${relative}: ${config.mode} mode requires coordinator: null`);
+      }
+      if (configs.has(config.thread)) errors.push(`${relative}: duplicate thread declaration for ${config.thread}`);
+      else configs.set(config.thread, { ...config, relative, digest: hashThreadConfig(config) });
+    } catch (error) { errors.push(error.message); }
+  }
+  return configs;
+}
+
 async function readActors(root) {
   const actorDir = path.join(root, "actors");
   const actors = new Map();
@@ -74,12 +141,15 @@ function validateShape(event, relative, errors) {
   if (m.in_reply_to !== null && !UUID_V7.test(m.in_reply_to ?? "")) errors.push(`${relative}: invalid in_reply_to`);
   if (m.next !== null && !SLUG.test(m.next ?? "")) errors.push(`${relative}: invalid next actor`);
   if (!SHA256.test(m.content_sha256 ?? "")) errors.push(`${relative}: invalid content_sha256`);
+  if (m.thread_config_sha256 !== undefined && !SHA256.test(m.thread_config_sha256)) errors.push(`${relative}: invalid thread_config_sha256`);
   if (m.artifacts !== undefined && (!Array.isArray(m.artifacts) || m.artifacts.some((item) => typeof item !== "string"))) errors.push(`${relative}: artifacts must be an array of strings`);
 }
 
 export async function verifyLog(root, options = {}) {
   const errors = [];
   const actors = await readActors(root);
+  const projectConfig = await readProjectConfig(root, errors);
+  const threadConfigs = await readThreadConfigs(root, actors, errors);
   const events = [];
   for (const actor of actors.values()) {
     const directory = path.join(root, actor.eventDirectory);
@@ -109,31 +179,83 @@ export async function verifyLog(root, options = {}) {
     if (!actors.has(event.meta.next) && event.meta.next !== null) errors.push(`${event.relative}: unknown next actor ${event.meta.next}`);
   }
 
+  const eventsByThread = new Map();
+  for (const event of events) {
+    const list = eventsByThread.get(event.meta.thread) ?? [];
+    list.push(event);
+    eventsByThread.set(event.meta.thread, list);
+  }
+
+  const roots = new Map();
+  for (const [thread, threadEvents] of eventsByThread) {
+    const threadRoots = threadEvents.filter((event) => event.meta.in_reply_to === null);
+    if (threadRoots.length > 1) errors.push(`thread ${thread}: mode ${threadConfigs.get(thread)?.mode ?? projectConfig.defaultMode} violation; thread already has a root`);
+    if (threadRoots.length === 1) roots.set(thread, threadRoots[0]);
+    const declaration = threadConfigs.get(thread);
+    const root = threadRoots[0];
+    if (declaration && root?.meta.thread_config_sha256 !== declaration.digest) {
+      errors.push(`${declaration.relative}: mode immutability violation; declaration for non-empty thread ${thread} does not match its first-event binding`);
+    }
+    if (!declaration && root?.meta.thread_config_sha256 !== undefined) {
+      errors.push(`${root.relative}: thread config binding has no declaration for ${thread}`);
+    }
+    for (const event of threadEvents) {
+      if (event !== root && event.meta.thread_config_sha256 !== undefined) errors.push(`${event.relative}: thread_config_sha256 is permitted only on the first event`);
+    }
+  }
+
   const replies = new Map();
   for (const event of events) {
     const parentId = event.meta.in_reply_to;
     if (parentId === null) continue;
     const parent = byId.get(parentId);
-    if (!parent) { errors.push(`${event.relative}: unknown reply target ${parentId}`); continue; }
-    if (parent.meta.thread !== event.meta.thread) errors.push(`${event.relative}: reply crosses threads`);
-    if (parent.meta.next !== event.meta.from) errors.push(`${event.relative}: strict-relay violation; expected ${parent.meta.next}`);
+    const declaration = threadConfigs.get(event.meta.thread);
+    const mode = declaration?.mode ?? projectConfig.defaultMode;
+    if (!parent) { errors.push(`${event.relative}: mode ${mode} violation; unknown reply target ${parentId}`); continue; }
+    if (parent.meta.thread !== event.meta.thread) { errors.push(`${event.relative}: reply crosses threads`); continue; }
+    if (!THREAD_MODES.has(mode)) {
+      errors.push(`${event.relative}: unknown thread mode ${mode}`);
+    } else if (mode === "strict_relay") {
+      if (parent.meta.next !== event.meta.from) errors.push(`${event.relative}: mode strict_relay violation; expected next actor ${parent.meta.next}`);
+      if (parent.meta.from === event.meta.from) errors.push(`${event.relative}: mode strict_relay violation; an actor may not reply to itself`);
+    } else if (mode === "coordinator_led") {
+      const coordinator = declaration?.coordinator;
+      if (event.meta.from !== coordinator && parent.meta.from !== coordinator) {
+        errors.push(`${event.relative}: mode coordinator_led violation; worker ${event.meta.from} must reply to coordinator ${coordinator}`);
+      }
+    }
     replies.set(parentId, (replies.get(parentId) ?? 0) + 1);
   }
-  for (const [parentId, count] of replies) if (count > 1) errors.push(`${byId.get(parentId)?.relative}: strict-relay branch has ${count} replies`);
+  for (const [parentId, count] of replies) {
+    const parent = byId.get(parentId);
+    const mode = threadConfigs.get(parent?.meta.thread)?.mode ?? projectConfig.defaultMode;
+    if (mode === "strict_relay" && count > 1) errors.push(`${parent?.relative}: mode strict_relay violation; parent has ${count} replies`);
+  }
+
+  for (const [thread, threadEvents] of eventsByThread) {
+    const declaration = threadConfigs.get(thread);
+    const mode = declaration?.mode ?? projectConfig.defaultMode;
+    if (!THREAD_MODES.has(mode)) errors.push(`thread ${thread}: unknown thread mode ${mode}`);
+    if (mode === "coordinator_led") {
+      for (const event of threadEvents.filter((item) => item.meta.in_reply_to === null && item.meta.from !== declaration?.coordinator)) {
+        errors.push(`${event.relative}: mode coordinator_led violation; root must be authored by coordinator ${declaration?.coordinator}`);
+      }
+    }
+  }
 
   for (const event of events) {
     const seen = new Set();
     let cursor = event;
     while (cursor?.meta.in_reply_to) {
-      if (seen.has(cursor.meta.id)) { errors.push(`${event.relative}: reply cycle detected`); break; }
+      if (seen.has(cursor.meta.id)) {
+        const mode = threadConfigs.get(event.meta.thread)?.mode ?? projectConfig.defaultMode;
+        errors.push(`${event.relative}: mode ${mode} violation; reply cycle detected`);
+        break;
+      }
       seen.add(cursor.meta.id);
       cursor = byId.get(cursor.meta.in_reply_to);
     }
   }
-
-  const rootsByThread = new Map();
-  for (const event of events.filter((item) => item.meta.in_reply_to === null)) rootsByThread.set(event.meta.thread, (rootsByThread.get(event.meta.thread) ?? 0) + 1);
-  for (const [thread, count] of rootsByThread) if (count > 1) errors.push(`thread ${thread}: expected one root event, found ${count}`);
 
   for (const event of events) {
     for (const reference of event.meta.artifacts ?? []) {
@@ -150,7 +272,7 @@ export async function verifyLog(root, options = {}) {
     }
   }
 
-  const result = { ok: errors.length === 0, errors, events: events.length, actors: actors.size, threads: new Set(events.map((event) => event.meta.thread)).size };
+  const result = { ok: errors.length === 0, errors, events: events.length, actors: actors.size, threads: eventsByThread.size };
   if (!result.ok && options.throwOnError) throw new Error(errors.join("\n"));
   return result;
 }

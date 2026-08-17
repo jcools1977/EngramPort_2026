@@ -15,7 +15,7 @@
     "in_reply_to": { "type": ["string", "null"] },
     "next": { "type": ["string", "null"] },
     "content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "thread_config_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "artifacts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
   }
 }
-

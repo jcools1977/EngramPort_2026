@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { hashBody, parseEvent, verifyLog } from "./verify-log.mjs";
+import { hashBody, hashThreadConfig, parseEvent, parseRecord, verifyLog } from "./verify-log.mjs";
 import { verifyWelcome } from "./welcome-verify.mjs";
 import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
@@ -27,6 +27,30 @@ function uuidv7(now = Date.now()) {
 
 function compact(iso) { return iso.replace(/[-:]/g, "").replace(".000", ""); }
 function line(key, value) { return `${key}: ${value === null ? "null" : Array.isArray(value) ? `[${value.join(", ")}]` : value}`; }
+
+const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
+
+async function threadHasEvents(cwd, thread) {
+  const actorDirectories = await readdir(path.join(cwd, "events"));
+  for (const actor of actorDirectories) {
+    for (const name of await readdir(path.join(cwd, "events", actor))) {
+      if (!name.endsWith(".md")) continue;
+      const event = parseEvent(await readFile(path.join(cwd, "events", actor, name), "utf8"), name);
+      if (event.meta.thread === thread) return true;
+    }
+  }
+  return false;
+}
+
+async function readThreadDeclaration(cwd, thread) {
+  try {
+    const file = path.join(cwd, "threads", `${thread}.yaml`);
+    return parseRecord(await readFile(file, "utf8"), path.relative(cwd, file));
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+}
 
 export async function run(argv, cwd = process.cwd()) {
   const options = args(argv);
@@ -58,6 +82,27 @@ export async function run(argv, cwd = process.cwd()) {
     if (!result.ok) { console.error(result.errors.map((error) => `✗ ${error}`).join("\n")); return 1; }
     console.log(`✓ verified ${result.events} events across ${result.threads} thread(s) and ${result.actors} actors`); return 0;
   }
+  if (command === "thread" && options._[1] === "declare") {
+    for (const required of ["thread", "mode"]) if (!options[required]) throw new Error(`thread declare requires --${required}`);
+    if (!THREAD_MODES.has(options.mode)) throw new Error(`thread declare refuses unknown mode ${options.mode}`);
+    if (options.mode === "coordinator_led" && !options.coordinator) throw new Error("thread declare requires --coordinator for coordinator_led mode");
+    if (options.mode !== "coordinator_led" && options.coordinator) throw new Error(`thread declare refuses --coordinator for ${options.mode} mode`);
+    if (await threadHasEvents(cwd, options.thread)) throw new Error(`mode immutability violation; thread ${options.thread} already has events`);
+    const coordinator = options.coordinator ?? null;
+    if (coordinator) {
+      try { await readFile(path.join(cwd, "actors", `${coordinator}.yaml`), "utf8"); }
+      catch { throw new Error(`thread declare refuses unknown coordinator ${coordinator}`); }
+    }
+    const directory = path.join(cwd, "threads");
+    await mkdir(directory, { recursive: true });
+    const file = path.join(directory, `${options.thread}.yaml`);
+    const source = `${line("schema_version", 0)}\n${line("thread", options.thread)}\n${line("mode", options.mode)}\n${line("coordinator", coordinator)}\n`;
+    await writeFile(file, source, { flag: "wx" });
+    const result = await verifyLog(cwd);
+    if (!result.ok) throw new Error(`thread declaration invalid:\n${result.errors.join("\n")}`);
+    console.log(path.relative(cwd, file));
+    return 0;
+  }
   if (command === "inbox") {
     if (!options.actor) throw new Error("inbox requires --actor");
     const result = await verifyLog(cwd, { throwOnError: true });
@@ -77,6 +122,10 @@ export async function run(argv, cwd = process.cwd()) {
     const occurredAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
     const id = uuidv7();
     const meta = [line("schema_version", 0), line("id", id), line("thread", options.thread), line("from", options.actor), line("type", options.type), line("occurred_at", occurredAt), line("in_reply_to", options.reply ?? null), line("next", options.next ?? null), line("content_sha256", hashBody(body))];
+    if (!options.reply) {
+      const declaration = await readThreadDeclaration(cwd, options.thread);
+      if (declaration) meta.push(line("thread_config_sha256", hashThreadConfig(declaration)));
+    }
     if (options.artifacts) meta.push(line("artifacts", options.artifacts.split(",")));
     const directory = path.join(cwd, "events", options.actor);
     await mkdir(directory, { recursive: true });
@@ -86,6 +135,6 @@ export async function run(argv, cwd = process.cwd()) {
     if (!result.ok) { console.error(`Event written but log is invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(path.relative(cwd, file)); return 0;
   }
-  console.log("EngramPort Git v0\n\nCommands:\n  verify\n  inbox --actor SLUG\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--reply UUID] [--next SLUG] [--artifacts REF,...]");
+  console.log("EngramPort Git v0\n\nCommands:\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--reply UUID] [--next SLUG] [--artifacts REF,...]");
   return command ? 1 : 0;
 }
