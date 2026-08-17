@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engramport.com/schemas/report-inputs-v1.schema.json",
+  "title": "Re:PORT structured input event payloads v1",
+  "description": "Normative payload schemas for the event kinds Re:PORT adds. Existing kinds from ENGRAMPORT_ENGINEERING_SPEC.md section 5.4 (decision.*, task.*, handoff.*, artifact.*, approval.*, checkpoint.created, message.published) are reused unchanged and are NOT redefined here, per ADR 0013 decision 7. Each kind below requires a schema registry entry.",
+  "$defs": {
+    "event_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "format": "uuid" }
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "commit_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "sha"],
+      "properties": {
+        "repository": { "type": "string" },
+        "sha": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" }
+      }
+    },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+    "sensitivity": { "type": "string", "enum": ["public", "internal", "confidential", "restricted"] },
+    "publishable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicit allowlist marking for Public view, per ADR 0013 decision 5. Absent or false means not publishable. Publication never infers this from sensitivity."
+    }
+  },
+  "properties": {
+    "progress.published": {
+      "$comment": "The intentional structured progress update. Deliberately has NO free-form notes or body field: that absence is the structural control against publishing hidden reasoning or raw deliberation, per ADR 0013 decision 8.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "what_changed", "why_it_matters", "status", "next", "confidence"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "what_changed": { "type": "array", "minItems": 1, "items": { "type": "string", "maxLength": 500 } },
+        "why_it_matters": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["on_track", "at_risk", "blocked", "delivered", "paused"] },
+        "next": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" },
+        "artifact_refs": { "type": "array", "items": { "$ref": "#/$defs/artifact_ref" } },
+        "commit_refs": { "type": "array", "items": { "$ref": "#/$defs/commit_ref" } },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "sensitivity": { "$ref": "#/$defs/sensitivity" },
+        "publishable": { "$ref": "#/$defs/publishable" }
+      }
+    },
+    "risk.raised": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk_key", "statement", "severity", "likelihood"],
+      "properties": {
+        "risk_key": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+        "mitigation": { "type": ["string", "null"], "maxLength": 1000 },
+        "owner_actor_id": { "type": ["string", "null"], "format": "uuid" },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" },
+        "sensitivity": { "$ref": "#/$defs/sensitivity" },
+        "publishable": { "$ref": "#/$defs/publishable" }
+      }
+    },
+    "risk.retired": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk_key", "reason", "supersedes_event_id"],
+      "properties": {
+        "risk_key": { "type": "string" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "supersedes_event_id": { "type": "string", "format": "uuid" },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" }
+      }
+    },
+    "blocker.raised": {
+      "$comment": "Distinct from task.blocked, which is one task's state. A blocker may span tasks or exist with no task at all.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_key", "statement", "blocking"],
+      "properties": {
+        "blocker_key": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "blocking": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Task keys, thread slugs, or free identifiers of what is blocked." },
+        "needed_from_actor_id": { "type": ["string", "null"], "format": "uuid" },
+        "needed_from_human": { "type": ["string", "null"], "description": "Set when the blocker requires a human action outside the system." },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" },
+        "sensitivity": { "$ref": "#/$defs/sensitivity" },
+        "publishable": { "$ref": "#/$defs/publishable" }
+      }
+    },
+    "blocker.cleared": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_key", "resolution", "supersedes_event_id"],
+      "properties": {
+        "blocker_key": { "type": "string" },
+        "resolution": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "supersedes_event_id": { "type": "string", "format": "uuid" },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" }
+      }
+    },
+    "test.recorded": {
+      "$comment": "negative_controls_ran is required and not optional. A suite that only demonstrates success is not evidence, so a report must be able to say whether failure was ever proven.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suite", "passed", "failed", "negative_controls_ran", "command"],
+      "properties": {
+        "suite": { "type": "string", "minLength": 1 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "negative_controls_ran": { "type": "boolean" },
+        "negative_control_count": { "type": "integer", "minimum": 0 },
+        "command": { "type": "string", "minLength": 1 },
+        "runtime": { "type": "string", "description": "Node or database version the run used." },
+        "failures": { "type": "array", "items": { "type": "string", "maxLength": 1000 } },
+        "artifact_refs": { "type": "array", "items": { "$ref": "#/$defs/artifact_ref" } },
+        "commit_refs": { "type": "array", "items": { "$ref": "#/$defs/commit_ref" } },
+        "publishable": { "$ref": "#/$defs/publishable" }
+      }
+    },
+    "incident.opened": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incident_key", "summary", "severity", "detected_at"],
+      "properties": {
+        "incident_key": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "detected_at": { "type": "string", "format": "date-time" },
+        "impact": { "type": ["string", "null"], "maxLength": 1000 },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" },
+        "sensitivity": { "$ref": "#/$defs/sensitivity", "default": "confidential" },
+        "publishable": { "$ref": "#/$defs/publishable" }
+      }
+    },
+    "incident.resolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incident_key", "resolution", "supersedes_event_id"],
+      "properties": {
+        "incident_key": { "type": "string" },
+        "resolution": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "supersedes_event_id": { "type": "string", "format": "uuid" },
+        "root_cause": { "type": ["string", "null"], "maxLength": 2000 },
+        "evidence_event_ids": { "$ref": "#/$defs/event_ids" }
+      }
+    },
+    "report.generated": {
+      "$comment": "Re:PORT's own output record. Non-canonical by construction. Retrieval MUST exclude this kind from evidence sets and memory extraction by default, per ADR 0013 decision 2.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["report_id", "view_mode", "audience", "envelope_sha256", "as_of_seq", "generator", "generated"],
+      "properties": {
+        "report_id": { "type": "string", "format": "uuid" },
+        "generated": { "const": true },
+        "view_mode": { "type": "string", "enum": ["live_feed", "terminal_ticker", "daily_briefing", "executive_view", "technical_view", "public_view", "collaborator_briefing"] },
+        "audience": { "type": "string", "enum": ["team", "executive", "technical", "public", "collaborator", "agent"] },
+        "envelope_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "artifact_ref": { "$ref": "#/$defs/artifact_ref" },
+        "as_of_seq": { "type": "integer", "minimum": 0 },
+        "source_event_ids": { "$ref": "#/$defs/event_ids" },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model", "revision"],
+          "properties": {
+            "model": { "type": "string" },
+            "revision": { "type": "string" },
+            "prompt_profile": { "type": "string" },
+            "policy_version": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
