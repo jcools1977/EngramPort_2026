@@ -336,11 +336,14 @@ Also: verify **after** every edit, per `PROTOCOL.md`'s safe publish sequence. Sk
 
 **Registered in `docs/plan/workspace-setup-wizard-tasks.md` on 2026-08-17.** Registration satisfies no control, closes no finding, and authorizes no dispatch; it makes the dispatch gate enforceable by giving each Tier A control a named owner. None of the three is dispatched.
 
-- **W1-5** — Trusted authority resolver, atomic founder bootstrap, concurrent-founder datastore proof, and revision-bound mechanical dispatch and evidence gate. Owns Tier A controls A1 and A2. **Blocked by C1** for the concurrency proof.
-- **W1-6** — Credential detector; descriptor and grant ingest; trusted registry-derived shape selection; grant-write authorization; and invocation-resolution controls. Owns A3, A4, A5, A6, A9. Closes F9 and F10.
-- **W1-7** — Custody service; namespace-specific atomic minting; custody models and revocation; synthetic KMS/HSM signing boundary; and differential canary harness. Owns A7 and A8.
+- **W1-5** — Trusted authority resolver, atomic founder bootstrap, concurrent-founder datastore proof, and revision-bound mechanical dispatch and evidence gate. Owns Tier A controls A1 and A2. ~~**Blocked by C1** for the concurrency proof.~~ **A1 and A2 both CLOSED 2026-08-17** with accepted W1-5, once C1 closed and the concurrency proof ran against a live datastore.
+- **W1-6** — Credential detector; descriptor and grant ingest; trusted registry-derived shape selection; grant-write authorization; and invocation-resolution controls. ~~Owns A3, A4, A5, A6, A9.~~ **Narrowed 2026-08-17: owns and closed A3, A4, A5, A9. A6 re-homed to W1-8.** Closes F9 and F10.
+- **W1-7** — Custody service; namespace-specific atomic minting; custody models and revocation; synthetic KMS/HSM signing boundary; and differential canary harness. Owns A7 and A8. **Dispatched 2026-08-17.**
+- **W1-8** — Live grant authorization and invocation resolution. Owns **A6** and B9, re-homed from W1-6. Registered, not dispatched, sequenced after W1-7.
 
-W3-1 must then depend on accepted A1 through A9 evidence **for the exact current revision** of the threat model. C1 continues to block W1-5's A2 and therefore W3-1.
+W3-1 must then depend on accepted A1 through A9 evidence **for the exact current revision** of the threat model.
+
+~~C1 continues to block W1-5's A2 and therefore W3-1.~~ **STALE, corrected 2026-08-17.** C1 closed under F16, and A2 closed with accepted W1-5. **W3-1 remains mechanically ineligible for a different reason**: A6, A7 and A8 are outstanding. Verified by running the gate against the true current control set, with A1, A2, A3, A4, A5 and A9 recorded as passed at revision 8: it refuses at `DISPATCH_TIER_A_INCOMPLETE:A6`, A6 being the first outstanding control in iteration order. The struck sentence is retained rather than deleted so the superseded reason stays visible.
 
 ## F15. Git v0 mode immutability is snapshot-integrity, not tamper-proof immutability
 

@@ -168,7 +168,7 @@ Depends on: W1-5's resolver and W1-6's detector, since minting resolves authorit
 
 ---
 
-**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`, and while C1 blocks A2 that condition cannot be met. The gate treats their absence, and their unmet controls, as reasons Tier A cannot be dispatched rather than as waivers.
+**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`. ~~while C1 blocks A2 that condition cannot be met.~~ **Corrected 2026-08-17: C1 closed and A2 closed with accepted W1-5.** The condition still cannot be met, because **A6, A7 and A8 are outstanding**; the gate refuses at `DISPATCH_TIER_A_INCOMPLETE:A6`. The gate treats their absence, and their unmet controls, as reasons Tier A cannot be dispatched rather than as waivers.
 
 ---
 
