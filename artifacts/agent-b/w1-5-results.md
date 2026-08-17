@@ -1,0 +1,62 @@
+# W1-5 trusted authority, bootstrap, race, and dispatch evidence
+
+Implementation commit: `73f226a939954bc90b03ba44cf2b7cb88620d00f`
+
+## Acceptance result
+
+Canonical W1-5 passes. The session boundary authenticates to `principal_id` and resolves held authority through a trusted resolver keyed only by that identifier. No caller-supplied founder authority is used as a trust anchor. The live PostgreSQL path owns the bootstrap race proof; no A2, F12, or F13 claim relies on an in-memory simulation.
+
+The datastore adds a trusted `founder_authorities` store and a unique `bootstrap_establishments(principal_id)` race barrier. `bootstrap_workspace` creates tenant, principal, project, and owner membership in one transaction. The deterministic loser is refused with SQLSTATE `23505` and message `founder bootstrap already established`.
+
+## Live database evidence
+
+Command: `npm run db:test` — exit 0, clean Docker environment.
+
+Server-read versions:
+
+- PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2), aarch64
+- pgvector 0.8.6
+- pgcrypto 1.3
+
+Migration checksum: `3bea5f189ab0d5e3356f03dc245b0ecb637533344b8687e06b22ef19efc0588b`.
+
+Database totals:
+
+- `tests/isolation/rls.sql`: 11/11
+- `tests/failure/app-role-grants.sql`: 14/14
+- `tests/failure/constraints.sql`: 9/9
+- `tests/failure/discrimination.sql`: 21/21
+- `tests/bootstrap/bootstrap.sql`: 3/3
+- concurrent race and residue checks: 2/2
+
+The exact race interleaving was two real `psql` sessions against the same PostgreSQL instance. Session A entered `bootstrap_workspace`, inserted the unique principal barrier, and paused inside the transaction. Session B entered the same function, blocked on that unique key, then resumed after A committed and failed deterministically with `founder bootstrap already established` (exit status 3). A exited 0; B exited 3; exactly one establishment committed.
+
+Winner graph checks found one tenant, project, principal, and owner membership. The loser residue inventory checked tenant, project, principal, membership, delegation, approval, session, and audit rows; no loser residue existed. The separate rollback control confirmed a forced outer failure leaves no tenant, project, principal, or membership.
+
+The resolver independence control queried only the authenticated principal id and returned the same authority despite setup payload variations. Session delegation remains bounded by resolved scopes and expiry; existing durable-expiry and teardown controls remain passing.
+
+## Dispatch gate
+
+The gate binds to revision 8 and digest `629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089` of `docs/security/setup-credential-threat-model.md`. It requires passed evidence for every A1–A9 entry with matching revision, digest, and implementation commit. It refuses missing, stale, wrong-digest, incomplete, waiver, flag, prose-assertion, and task-registration substitutes. A complete synthetic registry is accepted by the unit gate; this does not claim Tier A is passed today, and W3-1 remains ineligible until A3–A9 evidence exists.
+
+`npm run dispatch:test`: 6/6, including wrong-revision/digest refusal and missing-entry refusal.
+
+## Regression totals
+
+- `npm run proof`: 33/33; proof log before result event: 65 events across 22 threads, 2 actors
+- `npm run report:test`: 54/54
+- `npm run report:r2:test`: 8/8
+- `npm run welcome:test`: 19/19
+- `npm run setup:test`: 22/22
+- `npm run watch:test`: 16/16
+- `npm run session:test`: 12/12
+- `npm run approval:test`: 25/25
+- `npm run dry-run:test`: 6/6
+- `npm run db:static-test`: 6/6
+- `npm run lint`: exit 0
+
+## Design and scope
+
+The datastore uniqueness barrier, not an application pre-check, enforces F13. The bootstrap marker intentionally has no premature tenant/project foreign keys so it can serialize the first write before graph creation; graph creation itself remains one forced-RLS transaction. Roles remain `NOSUPERUSER NOBYPASSRLS`, and no broader privilege was granted.
+
+Only W1-5 was implemented: trusted authority resolution, atomic bootstrap, real PostgreSQL concurrency/residue proof, resolver-bounded session delegation, and the revision-bound dispatch gate. W1-6, W1-7, W2-1, onboarding T2, Re:PORT R3, Port Watch, providers, credentials, KMS, publishing, v0.1 end-to-end findings, and parked records were not touched. No secrets were added. Docker cleanup left no container or persistent volume; only default bridge/host/none networks remain. The unrelated PNG remains untouched and untracked.
