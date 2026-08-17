@@ -2,10 +2,10 @@
 INSERT INTO tenants(id,slug,name) VALUES
  ('10000000-0000-0000-0000-000000000001','tenant-a','Tenant A'),
  ('20000000-0000-0000-0000-000000000002','tenant-b','Tenant B');
-INSERT INTO principals(id,tenant_id,kind,display_name) VALUES
- ('11000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','human','Principal A'),
- ('22000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002','human','Principal B'),
- ('11000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000001','human','Disabled A');
+INSERT INTO principals(id,tenant_id,kind,external_issuer,external_subject,display_name) VALUES
+ ('11000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','human','https://synthetic.invalid','tenant-a-owner','Principal A'),
+ ('22000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002','human','https://synthetic.invalid','tenant-b-owner','Principal B'),
+ ('11000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000001','human','https://synthetic.invalid','tenant-a-disabled','Disabled A');
 UPDATE principals SET disabled_at=now() WHERE id='11000000-0000-0000-0000-000000000099';
 INSERT INTO projects(id,tenant_id,slug,name) VALUES
  ('12000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','project-a','Project A'),

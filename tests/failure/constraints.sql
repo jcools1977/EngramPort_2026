@@ -45,6 +45,12 @@ SELECT pg_temp.expect_error('short chain_hash rejected', $q$
 
 RESET ROLE;
 SET ROLE engram_migrator;
+DO $$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_roles r ON r.oid=c.relowner WHERE c.oid='events'::regclass AND r.rolname=current_user)
+ THEN RAISE EXCEPTION 'migration owner control requires engram_migrator to own events'; END IF;
+ RAISE NOTICE 'PASS migration owner owns events and reaches append-only triggers without an UPDATE/DELETE grant';
+END $$;
 SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
 SELECT pg_temp.expect_error('migration owner UPDATE trigger', $$UPDATE events SET payload='{"changed":true}' WHERE id='14000000-0000-0000-0000-000000000001'$$, '55000','events is append-only');

@@ -16,3 +16,4 @@ services:
       - /var/lib/postgresql/data
     volumes:
       - ./init-roles.sql:/docker-entrypoint-initdb.d/00-roles.sql:ro
+      - ./init-extensions.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro

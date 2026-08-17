@@ -29,8 +29,9 @@ RESET ROLE;
 DO $$ BEGIN
  IF (SELECT rolbypassrls FROM pg_roles WHERE rolname='engram_app') THEN RAISE EXCEPTION 'engram_app has BYPASSRLS'; END IF;
  IF (SELECT rolsuper FROM pg_roles WHERE rolname='engram_app') THEN RAISE EXCEPTION 'engram_app is superuser'; END IF;
- IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename IN
+ IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+   WHERE n.nspname='public' AND c.relname IN
    ('tenants','principals','projects','project_memberships','actors','actor_delegations','agent_sessions','threads','events','event_recipients')
-   AND NOT (rowsecurity AND forcerowsecurity)) THEN RAISE EXCEPTION 'tenant table lacks forced RLS'; END IF;
+   AND c.relkind='r' AND NOT (c.relrowsecurity AND c.relforcerowsecurity)) THEN RAISE EXCEPTION 'tenant table lacks forced RLS'; END IF;
  RAISE NOTICE 'PASS application role is NOSUPERUSER NOBYPASSRLS and all tenant tables have forced RLS';
 END $$;
