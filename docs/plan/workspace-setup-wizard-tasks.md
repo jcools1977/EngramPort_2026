@@ -90,7 +90,11 @@ Acceptance criteria:
 
 ## W1-5: Trusted authority resolver, atomic bootstrap, concurrency proof, and dispatch gate
 
-Phase W1. **ELIGIBLE and DISPATCHED 2026-08-17.** C1 is closed: the live PostgreSQL 16 + pgvector path passes, so the concurrency proof this task requires is now executable. The former "blocked by C1" status is superseded. **Canonical scope is unchanged.**
+Phase W1. **COMPLETE AND ACCEPTED 2026-08-17**, after three bounded revisions. Implementation `f8a8b86` plus residue correction `4683345`, result event `01a01098-1570-7af5-b9df-7e1838c917d8`, evidence `artifacts/agent-b/w1-5-acl-transaction-results.md` at `67abf71a8cc864d0bd9533a8b9cd0a8610ece99f7fe4ad17ab1594417e9ff2c5`. `npm run db:test` exits 0 twice from clean state with **77 assertions, 0 errors**.
+
+**Closes A1, A2, F12 and F13.** **A3 through A9 remain absent**, so Tier A is incomplete and **W3-1 stays mechanically ineligible**, verified: today's registry refuses at `DISPATCH_TIER_A_INCOMPLETE:A3`.
+
+Scope below is retained as the acceptance contract it was judged against.
 
 Scope, established by W1-2 and unchanged here: trusted authority resolver deriving held authority from a trusted store given only an authenticated `principal_id`; atomic founder bootstrap creating tenant, project, principal and owner membership in one transaction; a concurrent-founder datastore proof; and the revision-bound mechanical dispatch and evidence gate.
 

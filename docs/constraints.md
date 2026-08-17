@@ -42,7 +42,11 @@ agent-b holds **one** active implementation item at a time. Further items may si
 
 Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
 
-**The queue unblocked by C1 has been prioritized. W1-5 is the sole eligible implementation item**, chosen as the dependency root: W1-6 needs its resolver, W1-7 needs both, Tier A cannot complete without A1 and A2, W3-1 is mechanically ineligible until Tier A passes, and it establishes the trusted bootstrap authority boundary that F12 records as currently caller-asserted.
+**W1-5 is complete and accepted, closing A1, A2, F12 and F13. No implementation item is eligible; the WIP slot is free and nothing is dispatched.**
+
+**Tier A remains incomplete: A3 through A9 are absent, so W3-1 is mechanically ineligible.** A3–A6 and A9 belong to W1-6, A7 and A8 to W1-7; neither is dispatched. The remaining queue — v0.1 findings two and three, W1-6, W1-7, W2-1, onboarding T2, Re:PORT R3 — awaits reprioritization.
+
+The superseded prioritization record follows. **W1-5 was the sole eligible implementation item**, chosen as the dependency root: W1-6 needs its resolver, W1-7 needs both, Tier A cannot complete without A1 and A2, W3-1 is mechanically ineligible until Tier A passes, and it establishes the trusted bootstrap authority boundary that F12 records as currently caller-asserted.
 
 Deferred deliberately, not forgotten: v0.1 findings two and three, the `TRUNCATE` guard and the delegation-trigger comment, both confirmed still absent and unlocking nothing; W2-1 provisioning, which is downstream of the authority boundary; onboarding T2; and Re:PORT R3, which unlocks only the Re:PORT chain.
 
@@ -280,6 +284,8 @@ Related: this is the durable counterpart of Port Watch's documented revocation l
 
 ## F12. Bootstrap authority is caller-asserted, not resolved
 
+> **CLOSED 2026-08-17 by W1-5.** `resolve_founder_authority(p_principal_id)` derives held authority from trusted datastore state given only the authenticated principal id, and `start` no longer accepts a caller-supplied `founder_authority`. Expiry is enforced in the resolver and again inside `bootstrap_workspace`, both against the database clock per C6. Verified live: an authority expiring one day in the past is refused at both, with zero residue.
+
 **Raised:** agent-b adversarial review of W1-2, 2026-08-14, confirmed by agent-a. **Closes in:** Tier A controls A1 and A2, before any W3 implementation begins.
 
 `SetupSessionManager.start` authenticates a credential down to a `principal_id`, then accepts a caller-supplied `founder_authority` object and checks only that its id matches and that requested scopes and expiry are subsets **of that supplied object**. Anyone able to call `start` can assert arbitrary founder scopes for an authenticated identity. The subset check is real; the set it checks against is attacker-chosen.
@@ -289,6 +295,8 @@ ADR 0012 decision 3's root-of-authority chain is therefore a requirement, not a 
 **To close:** an authenticated authority resolver that derives held authority from a trusted store given only the authenticated `principal_id`; an atomic bootstrap transaction creating the first tenant, project, principal and owner membership; resolver output uninfluenceable by the setup payload; and differential controls for a forged `founder_authority` and for partial bootstrap failure.
 
 ## F13. Concurrent founder bootstrap is unguarded
+
+> **CLOSED 2026-08-17 by W1-5.** Two genuinely overlapping PostgreSQL sessions yield exactly one winner and one deterministic loser refused with `founder bootstrap already established`. The barrier is datastore uniqueness, never an application pre-check, and the discrimination control removes the complete colliding constraint set and demonstrates **two winners**, proving the guard is load-bearing. Loser residue verified zero across eleven categories, asserted independently.
 
 **Raised:** agent-b second adversarial review of W1-2, 2026-08-14. **Closes in:** Tier A control A2, owner W1-5. **Blocked by:** C1.
 
