@@ -1,6 +1,6 @@
 # Re:PORT implementation plan, bounded tasks, and acceptance tests
 
-Status: in progress. **R1 is complete and accepted; R2 is dispatched.** See section "Dispatch status" for current state.
+Status: in progress. **R1 and R2 are complete and accepted.** See section "Dispatch status" for current state.
 Owner: agent-a (architecture)
 Date: 2026-08-14
 Related: `docs/product/report-prd.md`, `docs/adr/0013-report-correspondent.md`, `docs/security/report-authorization-and-redaction.md`, `docs/security/report-threat-cases.md`, `docs/schemas/report-envelope-v1.schema.json`, `docs/schemas/report-inputs-v1.schema.json`
@@ -12,8 +12,8 @@ Reconciled against verified history on 2026-08-17.
 | Task | State |
 |---|---|
 | **R1** | **Complete and accepted.** Implementation `95eebe3`, result `30061a2`, result event `01a00fd3-900e-7372-84ec-3bf4e1e4ad77`, acceptance event `01a00fd7-fe76-71ac-96a9-7146fc864760` on thread `report-r1`. Evidence `artifacts/agent-b/report-r1-results.md` at `17d2fc65431242b9348e4488691bb2872681e0dfd995660fb996cb1ab0379df6`. R1 tests 54 of 54 |
-| **R2** | **Dispatched, and the next eligible Node-only task.** Its canonical scope below is unchanged |
-| R3 onward | Not dispatched. R3 is blocked by constraint C1, since datastore-level authorization requires a datastore |
+| **R2** | **Complete and accepted.** Implementation `b04fa3d`, result `b03433f`, result event `01a00fe6-3d11-7827-9dc3-12ef7cc626cc` on thread `report-r2`. Evidence `artifacts/agent-b/report-r2-results.md` at `c72eaea7c00ad9081ea3d47bb3314e11325ed715fb88cf68b9b6b5593469a26e`. R2 tests 8 of 8. Extracted `decideDelivery` from Port Watch's `decideWatch` and shares it, rather than duplicating the unchanged-state decision |
+| R3 onward | Not dispatched. R3 is blocked by constraint C1, since datastore-level authorization requires a datastore. **No task is currently eligible; the WIP slot is free** |
 
 The earlier statement that no R-task was dispatched and that Re:PORT was "specified and not scheduled" described the position on 2026-08-14 and is superseded. It is removed rather than annotated, because a stale dispatch claim in a plan is the kind of thing a later reader trusts.
 
@@ -58,7 +58,7 @@ Additional criteria: Node only, no new dependency, no network; state the Node ve
 
 ### R2. Deterministic evidence assembly and the unchanged-state gate
 
-Runnable now, with retrieval behind an interface. **DISPATCHED 2026-08-17 as the next eligible Node-only task.** Canonical scope unchanged.
+Runnable now, with retrieval behind an interface. **COMPLETE AND ACCEPTED, 2026-08-17.** Scope below is retained as the acceptance contract it was judged against.
 
 Assemble an evidence set from an authorized source, compute an `as_of_seq`, and decide whether anything changed. Shares the Port Watch delivery decision core.
 
