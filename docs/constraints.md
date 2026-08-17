@@ -6,6 +6,12 @@ Purpose: record standing constraints that shape sequencing, so they are decided 
 
 ## C1. No Docker or PostgreSQL host is available to either agent
 
+> **SUPERSEDED BY VERIFICATION, 2026-08-17.** A Docker-capable host now exists and was verified from this repository: Docker Engine 29.7.2, Compose v5.4.0, PostgreSQL **16.15** aarch64, pgvector **0.8.6** available. C1's premise is therefore false and it is no longer the reason database work is blocked.
+>
+> **The gate it guarded has not opened.** `npm run db:test` fails at **exit 3** and zero database controls execute. The blocker is now **F16**, four defects that only execution could reveal. B1 and the queued v0.1 findings remain unverified, for a new and better-understood reason.
+>
+> The text below is retained as the historical record of why work was sequenced as it was.
+
 **Recorded:** 2026-08-14, confirmed independently by both actors.
 
 Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. agent-b confirmed this on thread `priority`; agent-a confirmed the same absence on this machine while reviewing migration `0001_canonical_core`.
@@ -30,7 +36,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1 and Re:PORT R2 are closed and accepted. No implementation item is eligible; the WIP slot is free and nothing is dispatched.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14, F15. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1 and Re:PORT R2 are closed and accepted. C1 is superseded by verification: a Docker host exists, but the canonical live database path fails, recorded as F16. The sole eligible implementation item is the F16 live-path repair.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14, F15. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -321,3 +327,25 @@ What it does not give is immutability against an actor who can rewrite Git histo
 **This is correctly scoped rather than overstated.** `PROTOCOL.md`, `threads/README.md`, and agent-b's result event each state the boundary explicitly, so the implementation claims exactly what it delivers. Recording it as a finding rather than a defect.
 
 **To close:** thread creation and the first append become one transaction in an append-only store whose application roles cannot update thread mode after the first event, per constraint C6's discipline; **or** Git history is signed and anchored outside the rewriting actor's control, per specification section 5.2's checkpoint anchoring. Either satisfies it; neither exists yet.
+
+---
+
+## F16. The canonical live database path fails; four defects invisible to static review
+
+**Raised:** 2026-08-17, by agent-a running `npm run db:test` on a verified Docker host. **Supersedes C1 as the blocker for all database work.** **Owner:** unassigned until dispatched.
+
+The environment is correct and is not the problem: Docker Engine 29.7.2, Compose v5.4.0, PostgreSQL 16.15 on `aarch64-unknown-linux-gnu`, pgvector 0.8.6 available, `pgcrypto` 1.3 available, image `pgvector/pgvector:pg16` pulled arm64-native. **No architecture or platform incompatibility.** The three `engram_*` roles are created correctly, all `NOSUPERUSER NOBYPASSRLS`.
+
+`npm run db:test` was run unmodified and exits **3**, reaching real database interaction (container healthy, `psql` connected, `BEGIN` executed) before failing. **Zero database tests ran in the canonical path.**
+
+**Defect 1, blocking.** `CREATE EXTENSION IF NOT EXISTS vector` requires superuser, and the migration runs as `engram_migrator`, which is deliberately `NOSUPERUSER` per B1. Verified directly: `permission denied to create extension "vector" / Must be superuser`. The migration body is otherwise sound and reaches `COMMIT` when run as superuser, so this is the only defect inside the migration. The correct fix installs extensions as the superuser in `docker-entrypoint-initdb.d`, matching managed-Postgres reality where the platform owns extensions; **granting the migrator superuser is the wrong fix** and would reopen B1.
+
+**Defect 2, blocking.** `deploy/seed.sql` violates the schema's own `UNIQUE NULLS NOT DISTINCT (tenant_id, external_issuer, external_subject)` on `principals`. It inserts two tenant-A principals, `Principal A` and `Disabled A`, both leaving issuer and subject NULL; under `NULLS NOT DISTINCT` those compare equal and collide. The multi-row `INSERT` is atomic, so **zero** principals land and everything downstream fails. `Disabled A` is required by the `missing delegation rejected` control, so it cannot simply be dropped.
+
+**Defect 3, blocking, and the most serious.** `tests/isolation/rls.sql` asserts forced RLS with `NOT (rowsecurity AND forcerowsecurity)` against `pg_tables`, but **`pg_tables` has no `forcerowsecurity` column**; forced RLS is `relforcerowsecurity` on `pg_class`. The assertion errors rather than evaluating. **The control that the entire "forced RLS" claim rests on has never been capable of passing.** Eleven isolation assertions pass and this one errors. This is the project's own principle exactly: a check that has never been executed is not evidence.
+
+**Defect 4, blocking.** In `tests/failure/constraints.sql`, the `migration owner UPDATE trigger` control expects SQLSTATE `55000` "events is append-only" and receives `42501` "permission denied for table events". After B1 narrowed grants, the privilege check fires before the immutability trigger, so the control that existed to prove *the trigger and not merely a grant* is the control now proves the opposite. This is the same class of defect flagged during B1 review for the application-role control, now reaching the migration-owner control.
+
+**Diagnostic totals**, obtained on a clean container by installing extensions as superuser and correcting the seed in a scratchpad copy, with the repository untouched: isolation **11 pass, 1 error**; app-role grants **14 pass, 0 errors**; constraints **9 pass, 1 error**. The app-role grant controls of B1 do pass on a live database, which is genuine good news and is not acceptance, because the canonical path still fails.
+
+**To close:** `npm run db:test` passes end to end on PostgreSQL 16 + pgvector with no simulation and no skipped control, and every negative control is demonstrated to fail when its guard is removed. Only then can the v0.1 gate, B1's live verification, and the remaining v0.1 findings be judged.
