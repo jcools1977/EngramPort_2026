@@ -171,4 +171,52 @@ CREATE TABLE schema_migrations (
 );
 REVOKE ALL ON schema_migrations FROM engram_app;
 
+-- Trusted founder authority is keyed only by the authenticated principal. It is
+-- deliberately separate from caller-supplied setup payloads.
+CREATE TABLE founder_authorities (
+  principal_id uuid PRIMARY KEY,
+  scopes text[] NOT NULL CHECK (cardinality(scopes) > 0),
+  expires_at timestamptz NOT NULL
+);
+CREATE TABLE bootstrap_establishments (
+  principal_id uuid PRIMARY KEY REFERENCES founder_authorities(principal_id),
+  tenant_id uuid NOT NULL UNIQUE,
+  project_id uuid NOT NULL UNIQUE,
+  established_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+
+CREATE OR REPLACE FUNCTION resolve_founder_authority(p_principal_id uuid)
+RETURNS TABLE(principal_id uuid, scopes text[], expires_at timestamptz)
+LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+  SELECT f.principal_id, f.scopes, f.expires_at
+  FROM founder_authorities f
+  WHERE f.principal_id = p_principal_id
+$$;
+
+CREATE OR REPLACE FUNCTION bootstrap_workspace(
+  p_principal_id uuid, p_tenant_id uuid, p_project_id uuid, p_slug text, p_name text
+) RETURNS TABLE(tenant_id uuid, project_id uuid)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE authority founder_authorities%ROWTYPE;
+BEGIN
+  SELECT * INTO authority FROM founder_authorities WHERE founder_authorities.principal_id = p_principal_id FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE='42501', MESSAGE='founder authority not found'; END IF;
+  PERFORM set_config('app.tenant_id', p_tenant_id::text, true);
+  INSERT INTO bootstrap_establishments(principal_id, tenant_id, project_id)
+    VALUES (p_principal_id, p_tenant_id, p_project_id);
+  IF current_setting('app.test_bootstrap_pause', true) = 'true' THEN PERFORM pg_sleep(2); END IF;
+  INSERT INTO tenants(id, slug, name) VALUES (p_tenant_id, p_slug, p_name);
+  INSERT INTO principals(id, tenant_id, kind, external_issuer, external_subject, display_name)
+    VALUES (p_principal_id, p_tenant_id, 'human', 'bootstrap', p_principal_id::text, p_name);
+  INSERT INTO projects(id, tenant_id, slug, name) VALUES (p_project_id, p_tenant_id, p_slug, p_name);
+  INSERT INTO project_memberships(tenant_id, project_id, principal_id, role)
+    VALUES (p_tenant_id, p_project_id, p_principal_id, 'owner');
+  RETURN QUERY SELECT p_tenant_id, p_project_id;
+EXCEPTION WHEN unique_violation THEN
+  RAISE EXCEPTION USING ERRCODE='23505', MESSAGE='founder bootstrap already established';
+END $$;
+
+REVOKE ALL ON founder_authorities, bootstrap_establishments FROM PUBLIC, engram_app;
+GRANT EXECUTE ON FUNCTION resolve_founder_authority(uuid), bootstrap_workspace(uuid, uuid, uuid, text, text) TO engram_maintenance;
+
 COMMIT;

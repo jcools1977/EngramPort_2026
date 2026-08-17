@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { compileSetup } from "../packages/git-adapter/src/workspace-setup.mjs";
-import { SetupSessionManager, founderAuthenticator } from "../packages/git-adapter/src/workspace-session.mjs";
+import { SetupSessionManager, founderAuthenticator, founderAuthorityResolver } from "../packages/git-adapter/src/workspace-session.mjs";
 
 const plan=()=>compileSetup({schema_version:0,created_at:"2026-08-14T12:00:00Z",founder:{principal_id:"founder",scopes:["events:write"],assignable_trust:["untrusted_agent"],expires_at:null},repository:{provider:"github",owner:"acme",name:"engram",default_branch:"main",permissions:["contents:read"],depends_on:[]},database:{mode:"connect_existing",target:"postgresql",depends_on:[]},participants:[],groups:[],import:{paths:[],include_history:false,depends_on:[]},welcome:{expiry_days:14,depends_on:[]}});
-function fixture(now="2026-08-14T12:00:00Z"){let current=new Date(now),sequence=0;const manager=new SetupSessionManager({authenticator:founderAuthenticator(async credential=>{assert.equal(credential,"fixture-only-founder-credential");return {principal_id:"founder"};}),clock:()=>new Date(current),idFactory:kind=>`${kind}-${++sequence}`});return {manager,setTime:value=>current=new Date(value)};}
-const start=(manager,overrides={})=>manager.start({credential:"fixture-only-founder-credential",founder_authority:{principal_id:"founder",scopes:["setup:plan:execute","setup:repository"],expires_at:"2026-08-20T00:00:00Z"},scopes:["setup:plan:execute"],expires_at:"2026-08-15T00:00:00Z",...overrides});
+function fixture(now="2026-08-14T12:00:00Z"){let current=new Date(now),sequence=0;const manager=new SetupSessionManager({authenticator:founderAuthenticator(async credential=>{assert.equal(credential,"fixture-only-founder-credential");return {principal_id:"founder"};}),authorityResolver:founderAuthorityResolver(async principal_id=>({principal_id,scopes:["setup:plan:execute","setup:repository"],expires_at:"2026-08-20T00:00:00Z"})),clock:()=>new Date(current),idFactory:kind=>`${kind}-${++sequence}`});return {manager,setTime:value=>current=new Date(value)};}
+const start=(manager,overrides={})=>manager.start({credential:"fixture-only-founder-credential",scopes:["setup:plan:execute"],expires_at:"2026-08-15T00:00:00Z",...overrides});
 const approve=(manager,session_id)=>{const compiled=plan();return {compiled,approval:manager.approvePlan(session_id,compiled)};};
 
 test("session binds authenticated founder with narrowed scopes and absolute expiry",async()=>{const {manager}=fixture(),session=await start(manager);assert.deepEqual(session,{session_id:"session-1",status:"active",founder_principal_id:"founder",scopes:["setup:plan:execute"],expires_at:"2026-08-15T00:00:00Z"});assert.deepEqual(manager.identityInventory(),{wizard_principals:0,wizard_actors:0,session_principal_bindings:1,delegations:1,credentials:0});});

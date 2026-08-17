@@ -21,4 +21,37 @@ echo "migration checksum verified: $recorded_checksum"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/app-role-grants.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/constraints.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/discrimination.sql"
+"${db[@]}" -U postgres -d engramport < "$root_dir/tests/bootstrap/bootstrap.sql"
+race_dir="$(mktemp -d)"
+race_cleanup() { rm -rf "$race_dir"; }
+trap 'race_cleanup; cleanup' EXIT
+cat > "$race_dir/a.sql" <<'SQL'
+\set ON_ERROR_STOP on
+SELECT set_config('app.test_bootstrap_pause','true',false);
+SELECT * FROM bootstrap_workspace('31000000-0000-0000-0000-000000000001','32000000-0000-0000-0000-000000000001','33000000-0000-0000-0000-000000000001','race-a','Race A');
+SQL
+cat > "$race_dir/b.sql" <<'SQL'
+\set ON_ERROR_STOP on
+SELECT set_config('app.test_bootstrap_pause','true',false);
+SELECT * FROM bootstrap_workspace('31000000-0000-0000-0000-000000000001','32000000-0000-0000-0000-000000000002','33000000-0000-0000-0000-000000000002','race-b','Race B');
+SQL
+"${db[@]}" -U postgres -d engramport -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('31000000-0000-0000-0000-000000000001',ARRAY['setup:bootstrap'],clock_timestamp()+interval '1 hour');"
+set +e
+"${db[@]}" -U postgres -d engramport < "$race_dir/a.sql" >"$race_dir/a.out" 2>&1 & pid_a=$!
+sleep 0.2
+"${db[@]}" -U postgres -d engramport < "$race_dir/b.sql" >"$race_dir/b.out" 2>&1 & pid_b=$!
+wait "$pid_a"; status_a=$?
+wait "$pid_b"; status_b=$?
+set -e
+if [[ $status_a -eq 0 && $status_b -ne 0 ]] || [[ $status_b -eq 0 && $status_a -ne 0 ]]; then
+  echo "PASS concurrent bootstrap exactly one winner (a=$status_a b=$status_b)"
+else
+  echo "concurrent bootstrap expected exactly one winner (a=$status_a b=$status_b)" >&2
+  cat "$race_dir/a.out" "$race_dir/b.out" >&2
+  exit 1
+fi
+if ! grep -q 'founder bootstrap already established' "$race_dir/a.out" "$race_dir/b.out"; then
+  echo "concurrent bootstrap loser error was not deterministic" >&2; exit 1
+fi
+"${db[@]}" -U postgres -d engramport -c "DO \$\$ BEGIN IF (SELECT count(*) FROM bootstrap_establishments WHERE principal_id='31000000-0000-0000-0000-000000000001') <> 1 OR (SELECT count(*) FROM project_memberships WHERE principal_id='31000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'winner graph is not singular'; END IF; RAISE NOTICE 'PASS concurrent loser residue inventory: tenant/project/principal/membership/delegation/approval/session/audit residues are absent for loser graph'; END \$\$;"
 "${db[@]}" -U postgres -d engramport -Atc "SELECT version(); SELECT extversion FROM pg_extension WHERE extname='vector';"
