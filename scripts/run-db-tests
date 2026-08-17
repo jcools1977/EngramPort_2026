@@ -37,9 +37,9 @@ SELECT * FROM bootstrap_workspace('31000000-0000-0000-0000-000000000001','320000
 SQL
 "${db[@]}" -U postgres -d engramport -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('31000000-0000-0000-0000-000000000001',ARRAY['setup:bootstrap'],clock_timestamp()+interval '1 hour');"
 set +e
-"${db[@]}" -U postgres -d engramport < "$race_dir/a.sql" >"$race_dir/a.out" 2>&1 & pid_a=$!
+"${db[@]}" -U engram_maintenance -d engramport < "$race_dir/a.sql" >"$race_dir/a.out" 2>&1 & pid_a=$!
 sleep 0.2
-"${db[@]}" -U postgres -d engramport < "$race_dir/b.sql" >"$race_dir/b.out" 2>&1 & pid_b=$!
+"${db[@]}" -U engram_maintenance -d engramport < "$race_dir/b.sql" >"$race_dir/b.out" 2>&1 & pid_b=$!
 wait "$pid_a"; status_a=$?
 wait "$pid_b"; status_b=$?
 set -e
@@ -85,9 +85,9 @@ SELECT set_config('app.test_bootstrap_pause','true',false);
 SELECT * FROM bootstrap_workspace('41000000-0000-0000-0000-000000000001','42000000-0000-0000-0000-000000000002','43000000-0000-0000-0000-000000000002','weak-b','Weak B');
 SQL
 set +e
-"${db[@]}" -U postgres -d engramport < "$race_dir/c.sql" >"$race_dir/c.out" 2>&1 & pid_c=$!
+"${db[@]}" -U engram_maintenance -d engramport < "$race_dir/c.sql" >"$race_dir/c.out" 2>&1 & pid_c=$!
 sleep 0.2
-"${db[@]}" -U postgres -d engramport < "$race_dir/d.sql" >"$race_dir/d.out" 2>&1 & pid_d=$!
+"${db[@]}" -U engram_maintenance -d engramport < "$race_dir/d.sql" >"$race_dir/d.out" 2>&1 & pid_d=$!
 wait "$pid_c"; status_c=$?
 wait "$pid_d"; status_d=$?
 set -e

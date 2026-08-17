@@ -205,7 +205,7 @@ BEGIN
   PERFORM set_config('app.tenant_id', p_tenant_id::text, true);
   INSERT INTO bootstrap_establishments(principal_id, tenant_id, project_id)
     VALUES (p_principal_id, p_tenant_id, p_project_id);
-  IF current_setting('app.test_bootstrap_pause', true) = 'true' THEN PERFORM pg_sleep(2); END IF;
+  IF session_user = 'engram_maintenance' AND current_setting('app.test_bootstrap_pause', true) = 'true' THEN PERFORM pg_sleep(2); END IF;
   INSERT INTO tenants(id, slug, name) VALUES (p_tenant_id, p_slug, p_name);
   INSERT INTO principals(id, tenant_id, kind, external_issuer, external_subject, display_name)
     VALUES (p_principal_id, p_tenant_id, 'human', 'bootstrap', p_principal_id::text, p_name);
@@ -218,6 +218,8 @@ EXCEPTION WHEN unique_violation THEN
 END $$;
 
 REVOKE ALL ON founder_authorities, bootstrap_establishments FROM PUBLIC, engram_app;
+REVOKE EXECUTE ON FUNCTION resolve_founder_authority(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION bootstrap_workspace(uuid, uuid, uuid, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION resolve_founder_authority(uuid), bootstrap_workspace(uuid, uuid, uuid, text, text) TO engram_maintenance;
 
 COMMIT;
