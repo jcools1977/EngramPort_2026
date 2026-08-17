@@ -45,22 +45,15 @@ test("genuine guard-removal mutations accept fixtures and restore shipped module
     const grantCopy=path.join(temp,"grant.mjs");
     await writeFile(grantCopy,source.replace('if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");','if (false && request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");'));
     const g=await import(`${grantCopy}?g8`); const r2=await g.resolveInvocation(grant(),{principal_id:"u2",tenant_id:"t1",project_id:"p1",provider:"github",capability:"repo.read",scopes:["read"]},{store:store()}); assert.equal(r2.ok,true);
+    const cases=[
+      ["G2",'if (Date.parse(g.expires_at) <= await deps.store.serverNow()) return fail("GRANT_EXPIRED");',"if (false) return fail(\"GRANT_EXPIRED\");",grant({expires_at:"2020-01-01T00:00:00Z"}),{}],
+      ["G4",'if (request.tenant_id !== g.tenant_id) return fail("TENANT_MISMATCH");',"if (false) return fail(\"TENANT_MISMATCH\");",grant(),{tenant_id:"t2"}],
+      ["G5",'if (request.project_id !== g.project_id) return fail("PROJECT_MISMATCH");',"if (false) return fail(\"PROJECT_MISMATCH\");",grant(),{project_id:"p2"}],
+      ["G6",'if (request.provider !== g.provider) return fail("PROVIDER_MISMATCH");',"if (false) return fail(\"PROVIDER_MISMATCH\");",grant(),{provider:"gitlab"}],
+      ["G9",'if ((g.granted_to_actor_id ?? null) !== (request.actor_id ?? null)) return fail("ACTOR_MISMATCH");',"if (false) return fail(\"ACTOR_MISMATCH\");",grant({granted_to_actor_id:"a1"}),{actor_id:"a2"}],
+      ["G10",'if (!has(new Set(g.scopes), request.scopes ?? [])) return fail("SCOPE_EXCEEDED");',"if (false) return fail(\"SCOPE_EXCEEDED\");",grant(),{scopes:["read","write"]}]
+    ];
+    for (const [id,needle,replacement,fixture,request] of cases) { const file=path.join(temp,`${id}.mjs`); await writeFile(file,source.replace(needle,replacement)); const mod=await import(`${file}?${id}`); const out=await mod.resolveInvocation(fixture,{principal_id:"u1",actor_id:null,tenant_id:"t1",project_id:"p1",provider:"github",capability:"repo.read",scopes:["read"],...request},{store:store({getGrant:async()=>fixture})}); assert.equal(out.ok,true,id); }
     assert.equal(source.includes('if (SECRET.test(v)) return "CREDENTIAL_DETECTED";'),true); assert.equal(source.includes('if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");'),true);
   } finally { await rm(temp,{recursive:true,force:true}); }
 });
-/*
-  const discriminations=[
-    ["N1",(await ingest({...base,description:"Bearer synthetic_secret_value_12345"})).ok], ["N2",(await ingest({...base,future:{token:"ghp_SYNTHETIC_NOT_REAL_1234567890"}})).ok],
-    ["N3",(await ingest(base,{registry:registry({resolve:async()=>null})})).ok], ["N4",(await ingest(base,{registry:registry({isProviderRegistration:()=>true})})).ok],
-    ["N5",(await ingest({...base,provider_shape_ref:"epr:shape:aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa"})).ok], ["N6",(await ingest({...base,description:"api_key=synthetic-secret-12345"})).ok],
-    ["N7",(await ingest(base,{registry:registry({resolve:async()=>{throw Error("x")}})})).ok], ["N8",(await ingest({...base,blob:"x".repeat(70000)})).ok],
-    ["N9",(await ingest((()=>{let x=base;for(let i=0;i<17;i++)x={nested:x};return x;})())).ok], ["N10",(await ingest({...base,description:"https://user:pass@example.test/x"})).ok],
-    ["N11",(await ingest({...base,credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"},{custody:{resolve:async()=>({tenant_id:"other",project_id:"p1",revoked:false})}})).ok],
-    ["N12",(await ingest({...base,credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"},{custody:{resolve:async()=>({tenant_id:"t1",project_id:"p1",revoked:true})}})).ok],
-    ["N13",JSON.stringify(await ingest({...base,description:"password=synthetic-never-log-12345"})).includes("synthetic-never-log")],["N14",false],
-    ["G1",(await invoke(grant(),{}, {getGrant:async()=>null})).ok],["G2",(await invoke(grant({expires_at:"2020-01-01T00:00:00Z"}))).ok],["G3",(await invoke(grant({status:"revoked"}))).ok],
-    ["G4",(await invoke(grant(),{tenant_id:"t2"})).ok],["G5",(await invoke(grant(),{project_id:"p2"})).ok],["G6",(await invoke(grant(),{provider:"gitlab"})).ok],["G7",(await invoke(grant(),{capability:"repo.write"})).ok],["G8",(await invoke(grant(),{principal_id:"u2"})).ok],["G9",(await invoke(grant({granted_to_actor_id:"a1"}),{actor_id:"a2"})).ok],["G10",(await invoke(grant(),{scopes:["read","write"]})).ok],["G11",(await invoke(grant(),{}, {granterAuthorized:async()=>false})).ok],["G12",(await invoke(grant(),{}, {getGrant:async()=>grant({status:"revoked"})})).ok],["G13",(await invoke(grant(),{session_id:"s1"},{sessionLive:async()=>false})).ok],["G14",(await invoke(grant({credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"}),{}, {getCustody:async()=>({revoked:true})})).ok]
-  ];
-  assert.equal(discriminations.length,28); for(const [control,guardedSuccess] of discriminations) assert.equal(guardedSuccess,false,`${control} guard removal fixture would be accepted only if guard were removed`);
-});
-*/
