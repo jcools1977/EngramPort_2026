@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 5**, accepted after four adversarial review rounds. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **The sole eligible implementation item is onboarding T1.5, per-thread modes in the Git substrate.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -302,7 +302,7 @@ Also: verify **after** every edit, per `PROTOCOL.md`'s safe publish sequence. Sk
 
 # Required before Tier A dispatch
 
-**Recorded 2026-08-14 on closure of W1-2. These three tasks are NOT yet registered in `docs/plan/workspace-setup-wizard-tasks.md`.** Registering them is a task-plan change outside W1-2's scope and has deliberately not been done. Their absence is not a waiver: the revision 5 dispatch gate makes their absence a reason Tier A cannot be dispatched.
+**Registered in `docs/plan/workspace-setup-wizard-tasks.md` on 2026-08-17.** Registration satisfies no control, closes no finding, and authorizes no dispatch; it makes the dispatch gate enforceable by giving each Tier A control a named owner. None of the three is dispatched.
 
 - **W1-5** — Trusted authority resolver, atomic founder bootstrap, concurrent-founder datastore proof, and revision-bound mechanical dispatch and evidence gate. Owns Tier A controls A1 and A2. **Blocked by C1** for the concurrency proof.
 - **W1-6** — Credential detector; descriptor and grant ingest; trusted registry-derived shape selection; grant-write authorization; and invocation-resolution controls. Owns A3, A4, A5, A6, A9. Closes F9 and F10.

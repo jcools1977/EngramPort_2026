@@ -88,6 +88,36 @@ Acceptance criteria:
 9. Paired positive controls throughout, plus serialization round-trips.
 10. Every changed fixture digest is explained exactly.
 
+## W1-5: Trusted authority resolver, atomic bootstrap, concurrency proof, and dispatch gate
+
+Phase W1. **Blocked by C1** for its concurrency proof: a credible datastore race proof requires PostgreSQL 16 with pgvector, which no agent environment has. **Not dispatched.**
+
+Scope, established by W1-2 and unchanged here: trusted authority resolver deriving held authority from a trusted store given only an authenticated `principal_id`; atomic founder bootstrap creating tenant, project, principal and owner membership in one transaction; a concurrent-founder datastore proof; and the revision-bound mechanical dispatch and evidence gate.
+
+Owns Tier A controls **A1** and **A2**. Closes finding **F12**; **F13** closes with A2. Depends on: a PostgreSQL 16 + pgvector host (C1).
+
+## W1-6: Credential detector, ingest boundary, shape selection, and grant authorization
+
+Phase W1. Runnable on Node for the detector and ingest layer; grant resolution against a live store is **blocked by C1**. **Not dispatched.**
+
+Scope, established by W1-2 and unchanged here: the credential detector; the executable ingest boundary `ingestCredentialBearingRecord` with its fail-closed points and controls N1–N14 plus P; trusted registry-derived shape selection; grant-write authorization; and the twelve invocation-resolution comparisons with controls G1–G14 plus GP.
+
+Owns Tier A controls **A3**, **A4**, **A5**, **A6**, **A9**, and Tier B control **B9**. Closes findings **F9** and **F10**. Depends on: W1-5's resolver for A6, since granter authority must be derived rather than asserted.
+
+## W1-7: Custody service, atomic minting, signing boundary, canary harness, and retention
+
+Phase W1. The custody service and mint contract are specifiable on Node; the KMS/HSM signing boundary and canary harness require a non-production KMS or HSM account. **Not dispatched.**
+
+Scope, established by W1-2 and unchanged here: the custody service and its three custody models; namespace-specific atomic reference minting per the section 5A contract with controls M1–M13 plus MP; the synthetic KMS or HSM signing boundary; the differential canary harness with a vulnerable variant per sink; and retention enforcement for the five named policies RET-SESSION, RET-OPS-90, RET-AUDIT-400, RET-GRANT-400 and RET-CONFIG-400, plus RET-VERIFY-104.
+
+Owns Tier A controls **A7** and **A8**, and Tier B controls **B1** through **B5**. Depends on: W1-5's resolver and W1-6's detector, since minting resolves authority and sealed rows must be detector-clean.
+
+---
+
+**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`, and while C1 blocks A2 that condition cannot be met. The gate treats their absence, and their unmet controls, as reasons Tier A cannot be dispatched rather than as waivers.
+
+---
+
 ## W2-1: PostgreSQL and pgvector provisioning driver
 
 Phase W2. Blocked on a Docker-capable host.
