@@ -30,7 +30,7 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **The sole eligible implementation item is onboarding T1.5, per-thread modes in the Git substrate.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5 is closed and accepted. No implementation item is eligible; the WIP slot is free and nothing is dispatched.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14, F15. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -309,3 +309,15 @@ Also: verify **after** every edit, per `PROTOCOL.md`'s safe publish sequence. Sk
 - **W1-7** — Custody service; namespace-specific atomic minting; custody models and revocation; synthetic KMS/HSM signing boundary; and differential canary harness. Owns A7 and A8.
 
 W3-1 must then depend on accepted A1 through A9 evidence **for the exact current revision** of the threat model. C1 continues to block W1-5's A2 and therefore W3-1.
+
+## F15. Git v0 mode immutability is snapshot-integrity, not tamper-proof immutability
+
+**Raised:** onboarding T1.5, disclosed by agent-b, confirmed by agent-a probe, 2026-08-17. **Not a T1.5 defect.** **Closes in:** the production append transaction, or an external anchoring mechanism. No owning task yet.
+
+T1.5 binds a thread's mode declaration to its first event through `thread_config_sha256`. That gives two real properties, both verified by probe: a declaration edited **or added** after a thread has events is refused, and relaxing a thread's mode after the fact **cannot** legitimise a branch that was invalid when written.
+
+What it does not give is immutability against an actor who can rewrite Git history. Such an actor can rewrite the declaration and the root's binding together and produce a new commit that verifies. The digest is a consistency check, not a signature or an external anchor.
+
+**This is correctly scoped rather than overstated.** `PROTOCOL.md`, `threads/README.md`, and agent-b's result event each state the boundary explicitly, so the implementation claims exactly what it delivers. Recording it as a finding rather than a defect.
+
+**To close:** thread creation and the first append become one transaction in an append-only store whose application roles cannot update thread mode after the first event, per constraint C6's discipline; **or** Git history is signed and anchored outside the rewriting actor's control, per specification section 5.2's checkpoint anchoring. Either satisfies it; neither exists yet.
