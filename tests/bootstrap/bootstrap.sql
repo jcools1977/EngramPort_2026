@@ -81,10 +81,32 @@ DO $$ BEGIN RAISE NOTICE 'PASS maintenance resolver and bootstrap positive contr
 
 -- Discrimination: restoring the default PUBLIC grant makes the app invocation
 -- succeed, proving the negative ACL control is not vacuous.
+BEGIN;
 GRANT EXECUTE ON FUNCTION resolve_founder_authority(uuid), bootstrap_workspace(uuid, uuid, uuid, text, text) TO PUBLIC;
 SET ROLE engram_app;
 DO $$ BEGIN
  IF (SELECT count(*) FROM resolve_founder_authority('30000000-0000-0000-0000-000000000001')) <> 1 THEN RAISE EXCEPTION 'PUBLIC grant discrimination did not expose resolver'; END IF;
  RAISE NOTICE 'PASS ACL discrimination: removing PUBLIC revoke makes app resolver succeed';
+END $$;
+RESET ROLE;
+ROLLBACK;
+
+DO $$
+DECLARE fn oid; acl text;
+BEGIN
+ SELECT p.oid, p.proacl::text INTO fn, acl FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+  WHERE n.nspname='public' AND p.proname='resolve_founder_authority' AND pg_get_function_identity_arguments(p.oid)='p_principal_id uuid';
+ IF EXISTS (SELECT 1 FROM aclexplode(coalesce((SELECT proacl FROM pg_proc WHERE oid=fn), acldefault('f', (SELECT proowner FROM pg_proc WHERE oid=fn)))) x WHERE x.grantee=0 AND x.privilege_type='EXECUTE') OR has_function_privilege('engram_app', fn, 'EXECUTE') OR NOT has_function_privilege('engram_maintenance', fn, 'EXECUTE') THEN RAISE EXCEPTION 'final resolver ACL invalid: %', acl; END IF;
+ SELECT p.oid, p.proacl::text INTO fn, acl FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+  WHERE n.nspname='public' AND p.proname='bootstrap_workspace' AND pg_get_function_identity_arguments(p.oid)='p_principal_id uuid, p_tenant_id uuid, p_project_id uuid, p_slug text, p_name text';
+ IF EXISTS (SELECT 1 FROM aclexplode(coalesce((SELECT proacl FROM pg_proc WHERE oid=fn), acldefault('f', (SELECT proowner FROM pg_proc WHERE oid=fn)))) x WHERE x.grantee=0 AND x.privilege_type='EXECUTE') OR has_function_privilege('engram_app', fn, 'EXECUTE') OR NOT has_function_privilege('engram_maintenance', fn, 'EXECUTE') THEN RAISE EXCEPTION 'final bootstrap ACL invalid: %', acl; END IF;
+ RAISE NOTICE 'PASS final live ACL state: no PUBLIC/app EXECUTE and maintenance EXECUTE on both functions';
+END $$;
+SET ROLE engram_app;
+DO $$ BEGIN
+ BEGIN PERFORM resolve_founder_authority('30000000-0000-0000-0000-000000000001'); RAISE EXCEPTION 'post-rollback app resolver unexpectedly succeeded';
+ EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS post-rollback app resolver denied with SQLSTATE 42501'; END;
+ BEGIN PERFORM bootstrap_workspace('30000000-0000-0000-0000-000000000005','30000000-0000-0000-0000-000000000061','30000000-0000-0000-0000-000000000062','post-rollback-forbidden','Forbidden'); RAISE EXCEPTION 'post-rollback app bootstrap unexpectedly succeeded';
+ EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS post-rollback app bootstrap denied with SQLSTATE 42501'; END;
 END $$;
 RESET ROLE;
