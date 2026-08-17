@@ -6,9 +6,13 @@ Purpose: record standing constraints that shape sequencing, so they are decided 
 
 ## C1. No Docker or PostgreSQL host is available to either agent
 
-> **SUPERSEDED BY VERIFICATION, 2026-08-17.** A Docker-capable host now exists and was verified from this repository: Docker Engine 29.7.2, Compose v5.4.0, PostgreSQL **16.15** aarch64, pgvector **0.8.6** available. C1's premise is therefore false and it is no longer the reason database work is blocked.
+> **CLOSED 2026-08-17.** Two distinct things, recorded separately because conflating them is how a project claims more than it has proven.
 >
-> **The gate it guarded has not opened.** `npm run db:test` fails at **exit 3** and zero database controls execute. The blocker is now **F16**, four defects that only execution could reveal. B1 and the queued v0.1 findings remain unverified, for a new and better-understood reason.
+> **Environment available:** Docker Engine 29.7.2, Compose v5.4.0, PostgreSQL **16.15** on aarch64, pgvector **0.8.6**, image arm64-native. No architecture or platform incompatibility.
+>
+> **Database controls verified:** `npm run db:test` runs unmodified and exits **0**, twice from clean state, with **59 assertions passing and zero errors**, including **21 discrimination controls** that each prove a guard's removal changes the outcome. F16 is closed.
+>
+> **What this does NOT close:** the v0.1 gate of specification section 27, which additionally requires end-to-end append, discover, respond and handoff under concurrent load. That is append-transaction and API work and is untouched. Isolation and immutability are proven; the gate is not met.
 >
 > The text below is retained as the historical record of why work was sequenced as it was.
 
@@ -36,7 +40,9 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1 and Re:PORT R2 are closed and accepted. C1 is superseded by verification: a Docker host exists, but the canonical live database path fails, recorded as F16. The sole eligible implementation item is the F16 live-path repair.** Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14, F15. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
+
+**No implementation item is eligible; the WIP slot is free and nothing is dispatched.** A queue that was blocked by C1 for the project's entire history is now unblocked and has not yet been prioritized. Newly eligible and awaiting independent prioritization: v0.1 findings two and three, the `TRUNCATE` guard and the delegation-trigger comment, both confirmed still absent; W1-5's A2 concurrency proof; W2-1 provisioning; onboarding T2; and Re:PORT R3. **The v0.1 gate of specification section 27 remains unmet**, because its concurrent-load append, discover, respond and handoff half is untouched. Open findings: F1, F3, F4, F5, F6, F9, F10, F11, F12, F13, F14, F15. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -133,6 +139,8 @@ It is recorded loudly because the store *looks* durable and atomic. It writes to
 The last is the one that matters. Constraint C5 records that the append transaction will need `projects.next_seq`, so `GRANT UPDATE ON projects TO engram_app` is the single most likely future regression, and it is exactly what this guard does not see.
 
 Not blocking: the delivered grants are correct today, and the live controls in `tests/failure/app-role-grants.sql` would catch any of these once C1 clears. But a guard that passes while missing the likeliest regression is the shape of check this project has agreed is worthless.
+
+**Substantially mitigated 2026-08-17, not closed.** The F16 live path now asserts *actual* privilege behaviour against a running server, including discrimination controls proving each grant guard is load-bearing, so the regex harness is no longer the only check and the three variants it misses would now be caught live. The static harness itself is unchanged, so the drift risk it represents remains.
 
 **To close:** assert on the privilege set rather than on statement wording. A deny-by-default check that enumerates every `engram_app` grant and fails on anything outside the expected set is both shorter and complete.
 
@@ -331,6 +339,12 @@ What it does not give is immutability against an actor who can rewrite Git histo
 ---
 
 ## F16. The canonical live database path fails; four defects invisible to static review
+
+> **CLOSED 2026-08-17.** Implementation `37ced94`, result `5967086`, result event `01a01019-05bc-7d10-9849-6e11413116a9`, evidence `artifacts/agent-b/f16-live-database-results.md` at `634450d41eb269771b9b8c813820a8f143504f7bbf77fe1193bfdd2b06e64ebd`. `npm run db:test` exits 0 on two clean runs, 59 assertions, 0 errors, 21 discrimination controls.
+>
+> **Correction to this finding's own record.** Of the four defects I reported, **three were real and one was my measurement error**. Defects 1, 2 and 3 reproduce against the prior revision. **Defect 4 does not:** on the prior revision, with the migration applied as `engram_migrator` as the canonical runner does, the migrator owns `events`, reaches the immutability trigger, and the control passes with SQLSTATE `55000` as intended. My reported `42501` came from my own diagnostic run, where I had applied the migration as `postgres`, making `postgres` the owner and leaving the migrator a non-owner. The defect was in my harness, not the repository, and I am recording that rather than leaving a false finding in the register.
+>
+> agent-b nonetheless hardened that control by asserting the ownership precondition explicitly, so an implicit dependency is now a loud one. That was worth doing.
 
 **Raised:** 2026-08-17, by agent-a running `npm run db:test` on a verified Docker host. **Supersedes C1 as the blocker for all database work.** **Owner:** unassigned until dispatched.
 
