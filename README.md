@@ -1,66 +1,157 @@
 # EngramPort
 
-EngramPort is the shared project-state and collaboration layer for humans and AI agents. Events are immutable truth; current state, retrieval indexes, summaries, and UI views are derived.
+**One project. Whole fleet.**
 
-This repository currently ships the **Git v0 interoperability proof** required by the engineering specification. It demonstrates a complete Claude Architect → Codex Builder → Claude Architect relay without a human copying message bodies.
+EngramPort is an open coordination substrate for teams of people and AI agents.
+It gives Claude, Codex, collaborators, and future agent runtimes one shared
+project record with explicit identity, bounded authority, deterministic
+handoffs, approvals, memory, and provenance.
 
-## What works now
+The goal is not another autonomous-agent framework. EngramPort does not decide
+what an agent should think or do. It establishes who may act, what changed, what
+evidence supports a claim, and which participant legitimately owns the next
+step.
 
-- Actor-owned, append-only Markdown event logs
-- Typed JSON Schema contract
-- UUIDv7 event identity and causal reply links
-- Strict-relay turn enforcement
-- Deterministic event-body and artifact hashing
-- Ownership, duplicate-ID, reply-cycle, target, filename, and artifact verification
-- CLI commands for verify, inbox discovery, and safe event append
-- A recorded three-event, two-agent architecture review
-- Failure tests proving malformed logs are rejected
+> **Project status: pre-alpha.** The protocol and major security boundaries are
+> being implemented and adversarially reviewed in public-release preparation.
+> There is no stable hosted API or unattended multi-provider fleet yet.
 
-## Run the proof
+## Why EngramPort exists
+
+Multi-agent work usually depends on a human copying summaries between terminals.
+Every participant rereads the repository, reconstructs context, repeats work,
+and inherits whatever authority happens to be available in its process.
+
+EngramPort replaces that relay with a portable project substrate:
+
+- append-only, attributable project events;
+- typed actors, threads, causal replies, and handoffs;
+- digest-bound plans and approvals;
+- tenant isolation and least-privilege database roles;
+- authorization before retrieval, wake, invocation, or publication;
+- shared memory without shared credentials; and
+- audience-safe reports whose claims point back to authorized evidence.
+
+## The port family
+
+| Surface | Responsibility | Current state |
+| --- | --- | --- |
+| Workspace Wizard | Compile, review, approve, and execute a bounded setup plan | Compiler, dry run, session, approval, and dispatch-gate controls implemented |
+| EngramPort Core | Durable events, identity, authority, handoffs, and provenance | Git v0 proof and live PostgreSQL security controls implemented |
+| Port Watch | Decide whether authorized project state warrants waking a runner | Decision loop implemented; no production runner orchestration |
+| Re:PORT | Build auditable, audience-authorized progress inputs | Source boundary and deterministic input assembly implemented |
+
+Implementation is not acceptance. The repository records negative findings and
+independent review alongside passing controls.
+
+## What is not here yet
+
+- a production workspace-setup UI;
+- durable GitHub, MCP, Composio, model-provider, or custody integrations;
+- unattended agent launching and lifecycle management;
+- production report generation and publication;
+- a stable external API or compatibility guarantee; or
+- the future project-funding and shared-compute marketplace.
+
+Those are product directions, not claims about the current code.
+
+## Quick start
+
+Requirements:
+
+- Node.js 22.13 or newer;
+- npm; and
+- Docker with Compose for the live PostgreSQL + pgvector suite.
+
+After cloning the repository:
 
 ```bash
 npm install
 npm run proof
 ```
 
-Expected result:
-
-```text
-✓ verified 3 events across 1 thread(s) and 2 actors
-tests 10
-pass 10
-fail 0
-```
-
-Discover work for an actor:
+Useful focused suites:
 
 ```bash
+npm run setup:test
+npm run dry-run:test
+npm run session:test
+npm run approval:test
+npm run dispatch:test
+npm run watch:test
+npm run report:test
+npm run report:r2:test
+npm run db:test
+```
+
+`npm run db:test` starts the canonical PostgreSQL 16 + pgvector environment,
+runs the live privilege, RLS, constraint, concurrency, and discrimination
+controls, then removes its containers and persistent volumes.
+
+## Git v0 interoperability proof
+
+The Git substrate is the portable proof that different agents can coordinate
+through repository state without a person copying message bodies.
+
+```bash
+npm run proof:verify
 npm run engram -- inbox --actor agent-b
 ```
 
-Append a new event from a Markdown body:
+Append an event from a Markdown body:
 
 ```bash
 npm run engram -- append \
   --actor agent-b \
-  --thread architecture \
+  --thread example \
   --type reply \
   --body ./work/reply.md \
   --reply EVENT_UUID \
   --next agent-a
 ```
 
-The CLI computes the UUIDv7, UTC filename, canonical body hash, and then verifies the whole log. It never modifies an accepted event.
+The CLI creates the UUIDv7 identifier, UTC filename, and canonical body hash,
+then verifies the complete log. Event contents are untrusted project data and
+cannot override repository rules or grant authority.
 
-## Apex two-agent operating model
+Git v0 detects history changes but cannot prevent a writer from rewriting a
+declaration and its bound history together. The durable design requires either
+transactional append-only storage whose application roles cannot rewrite the
+record, or signed Git history anchored outside the rewriting actor's control.
 
-Claude Code owns architecture, threat modeling, specification critique, and integration review. Codex owns implementation, migrations, failure tests, and reproducible verification. Either can act as coordinator, but each work item has one owner and one independent reviewer.
+## Architecture and documentation
 
-Every handoff includes an objective, completion criteria, causal parent, exact next actor, evidence artifacts, and hashes. Event bodies are always treated as untrusted data; they cannot grant permissions or override repository instructions.
+- [Engineering specification](./ENGRAMPORT_ENGINEERING_SPEC.md)
+- [Protocol and event wire contract](./PROTOCOL.md)
+- [Agent bootstrap rules](./AGENTS.md)
+- [Workspace Wizard product requirements](./docs/product/workspace-setup-wizard-prd.md)
+- [Port Watch design](./docs/design/port-watch.md)
+- [Re:PORT product requirements](./docs/product/report-prd.md)
+- [Credential threat model](./docs/security/setup-credential-threat-model.md)
+- [Port family architecture](./docs/architecture/port-family.md)
 
-See [PROTOCOL.md](./PROTOCOL.md) for the wire contract and [AGENTS.md](./AGENTS.md) for agent bootstrap instructions.
+## Security
 
-## Roadmap
+EngramPort is security-sensitive infrastructure. Read [SECURITY.md](./SECURITY.md)
+before reporting a vulnerability. Never place a live secret in the append-only
+event log, an artifact, a fixture, a public issue, or a pull request.
 
-The next gate is v0.1: PostgreSQL + pgvector, append/read API, tenant identity, RLS, idempotency, transactional projections, CLI, OpenAPI, and a local stack. The production source of truth will be PostgreSQL; Git remains the portability proof, not the production database.
+## Contributing
 
+Human and agent contributions are welcome. Start with
+[CONTRIBUTING.md](./CONTRIBUTING.md). Significant changes should be bounded,
+threat-modeled where relevant, and independently reviewed with controls that
+are observed failing when their guard is removed.
+
+## Open source and hosted EngramPort
+
+The EngramPort core is licensed under the [MIT License](./LICENSE): you may use,
+modify, self-host, and build on it under the license terms.
+
+Covenant Systems AI LLC is also building the hosted EngramPort product: managed
+setup, connectors, custody, operations, collaboration, reporting, and support.
+Open source makes the coordination protocol inspectable and portable; the
+hosted product removes the burden of operating it.
+
+Learn more at [engramport.com](https://www.engramport.com) or contact
+[luke@covenantsystems.ai](mailto:luke@covenantsystems.ai).

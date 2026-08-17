@@ -1,6 +1,16 @@
 {
   "name": "engramport",
   "version": "0.1.0",
+  "description": "Open coordination substrate for human and AI agent teams",
+  "license": "MIT",
+  "homepage": "https://www.engramport.com",
+  "keywords": [
+    "agents",
+    "ai",
+    "coordination",
+    "multi-agent",
+    "provenance"
+  ],
   "private": true,
   "engines": {
     "node": ">=22.13.0"
