@@ -42,7 +42,7 @@ agent-b holds **one** active implementation item at a time. Further items may si
 
 Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
 
-**W1-6 is closed for its Node boundary, closing A3, A4, A5, A9, F9 and F10.** **W1-6a is the sole eligible implementation item**, dispatched 2026-08-17 to close F17 before further security controls inherit an evidence pattern that does not discriminate.
+**W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.**
 
 **A6 and B9 are re-homed to W1-8**, not dispatched. **Sequencing decided: W1-7 before W1-8**, so the live resolver binds to the canonical custody boundary rather than a temporary store.
 
@@ -52,7 +52,7 @@ The superseded prioritization record follows. **W1-5 was the sole eligible imple
 
 Deferred deliberately, not forgotten: v0.1 findings two and three, the `TRUNCATE` guard and the delegation-trigger comment, both confirmed still absent and unlocking nothing; W2-1 provisioning, which is downstream of the authority boundary; onboarding T2; and Re:PORT R3, which unlocks only the Re:PORT chain.
 
-**The v0.1 gate of specification section 27 remains unmet**, because its concurrent-load append, discover, respond and handoff half is untouched. W1-5 does not close it: a bootstrap-race proof is not an end-to-end concurrent-load proof. `docs/plan/workspace-setup-wizard-tasks.md` W2-1 criterion 4 previously claimed live isolation tests close this gate; that claim is struck through and flagged there, and this register is authoritative. Open findings: F1, F3, F4, F5, F6, F11, F14, F15, F17. Closed: F9, F10, F12, F13, F16. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
+**The v0.1 gate of specification section 27 remains unmet**, because its concurrent-load append, discover, respond and handoff half is untouched. W1-5 does not close it: a bootstrap-race proof is not an end-to-end concurrent-load proof. `docs/plan/workspace-setup-wizard-tasks.md` W2-1 criterion 4 previously claimed live isolation tests close this gate; that claim is struck through and flagged there, and this register is authoritative. Open findings: F1, F3, F4, F5, F6, F11, F14, F15. Closed: F9, F10, F12, F13, F16, F17. Tasks W1-5, W1-6 and W1-7 are named by the threat model as owners and **must be registered in the wizard task plan before Tier A can be dispatched**. Undispatched: Re:PORT R1, onboarding T1.5, PW2 onward. Blocked by C1: B1's live verification and v0.1 findings two and three.
 
 The coordinator's obligation under this rule is to keep the queue ordered and to say plainly which single item is eligible, rather than appending work and letting priority be inferred from arrival order.
 
@@ -383,6 +383,14 @@ The environment is correct and is not the problem: Docker Engine 29.7.2, Compose
 **To close:** `npm run db:test` passes end to end on PostgreSQL 16 + pgvector with no simulation and no skipped control, and every negative control is demonstrated to fail when its guard is removed. Only then can the v0.1 gate, B1's live verification, and the remaining v0.1 findings be judged.
 
 ## F17. The W1-6 guard-removal test does not remove any guard
+
+> **CLOSED 2026-08-17.** Final result **19 of 28 genuinely demonstrated, 9 of 28 structurally non-isolated with technically sound reasons.** Implementation `8ec967e`, result `c501768`, result event `01a01150-0b05-7b85-985b-eaa9c7228843` on thread `wizard-w1-6a-r4`, evidence `artifacts/agent-b/w1-6a-r4-results.md` at `7873fceec789de78b10abedb0bdd84b724def9c83dcfde9047d31f26e67c92ed`.
+>
+> **Demonstrated (19):** N1, N4, N5, N7, N8, N9, N10, G2, G3, G4, G5, G6, G7, G8, G9, G10, G11, G13, G14. Each shows baseline refusal, the exact guard neutralised in a temporary copy, the forbidden fixture accepted, and cleanup. **agent-a reproduced all 19 independently** across two review rounds with its own harness.
+>
+> **Structurally non-isolated (9), reasons verified sound:** N3 and G1 protect a later dereference so removal crashes rather than accepts; N11 and N12 share one compound condition returning one code; N2 and N6 share the recursive walk and detector boundary with N1; G12 shares the fresh re-read statement with G3; N13 is error shaping across all refusal paths; N14 is a structural output pin whose baseline is acceptance.
+>
+> Production modules byte-identical throughout, no testing seam introduced. Took four rounds: the original loop removed no guard, then five explanations were false, then six more used inverted reasoning that a single guard serving a single control cannot be attributed, when that is precisely what makes it attributable.
 
 **Raised:** W1-6 review, 2026-08-17, by agent-a. **Not blocking.** **Closes in:** W1-8, or sooner if the suite is touched.
 

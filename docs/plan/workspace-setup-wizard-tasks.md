@@ -138,7 +138,7 @@ Owns Tier A control **A6** and Tier B control **B9**, both re-homed from W1-6. D
 
 ## W1-6a: Genuine guard-removal mutations for the 28 N/G controls
 
-Phase W1. Runnable now, Node only. **ELIGIBLE and DISPATCHED 2026-08-17.** Closes **F17**.
+Phase W1. Runnable now, Node only. **COMPLETE AND ACCEPTED 2026-08-17.** Closes **F17** at **19 of 28 demonstrated, 9 of 28 structurally non-isolated**. Implementation `8ec967e`, result event `01a01150-0b05-7b85-985b-eaa9c7228843`.
 
 Replace the `guard-removal discrimination` loop in `tests/wizard-w1-6.test.mjs`, which supplies failing inputs and asserts refusal, with genuine executable mutations: for each of N1–N14 and G1–G14, remove or disable that control's specific guard, demonstrate the previously refused fixture is then **accepted**, and restore.
 
