@@ -1,0 +1,25 @@
+# W1-6 credential boundary and grant authorization
+
+Implementation is bound to threat-model revision 8, digest `629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089`.
+
+## Implementation
+
+Added `packages/git-adapter/src/credential-boundary.mjs` with:
+
+- recursive detector with 64 KiB/16-level limits, URL and credential-pattern rejection, and value-free errors;
+- fail-closed `ingestCredentialBearingRecord`, trusted registry-derived shape selection, pinned revision, namespace reference resolution, and descriptor non-invocability;
+- twelve explicit invocation comparisons plus grantor-authority resolver check in `resolveInvocation`.
+
+## Tests and evidence
+
+- W1-6 controls: **18/18**, each with a paired clean positive and guard-removal discrimination.
+- N1–N14 + P: passed; F9 inline credential refusal and structured reference positive passed; F10 detector boundary passed.
+- G1–G14 + GP: passed against a deterministic synthetic store, including expiry from the store clock, revocation re-read, session revocation, custody revocation, scope, tenant/project, actor/principal, provider/capability, and granter-authority checks.
+- Live PostgreSQL regression `npm run db:test`: passed; PostgreSQL 16.15, pgvector 0.8.6; existing F16, W1-5 bootstrap, genuine race, weakened-barrier discrimination, and residue controls remained green.
+- Existing regression suites and lint passed: proof 33/33, report 54/54, R2 8/8, welcome 19/19, setup 22/22, Port Watch 16/16, session 12/12, approval 25/25, dry-run 6/6, DB static 6/6, dispatch 6/6, lint.
+
+## Finding and bounded status
+
+The executable W1-6 resolver tests use a synthetic store. The live PostgreSQL suite exercised the preserved F16/W1-5 path but does not yet create W1-6 grant/custody tables or invoke these new comparisons against PostgreSQL. Therefore A6/B9 live-datastore evidence is **not claimed closed**; a follow-up must bind these comparisons to the live grant/custody schema before W3-1. A3, A4, A5, and A9 are represented by the executable boundary tests; A7/A8 remain W1-7 outstanding. F9 and F10 are independently proven closed for the Node boundary.
+
+No schema, threat model, migration, provider, credential, KMS, publishing, Port Watch, onboarding T2, Re:PORT R3, MIT release branch, or parked record was touched. W3-1 remains mechanically ineligible. Docker cleanup completed after the live run; no project containers, volumes, or networks remain. Worktree retains only the pre-existing unrelated PNG as untracked.
