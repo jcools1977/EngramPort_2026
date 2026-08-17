@@ -1,0 +1,43 @@
+# Re:PORT R2 implementation evidence
+
+Implementation commit: `b04fa3d4d58f445bc7f711356f6573928abcc7d5`
+
+## Result
+
+R2 assembles deterministic evidence exclusively through R1's `retrieveAuthorized` source interface. For R2, `as_of_seq` is the maximum `project_seq` in the returned, verified authorized evidence set (or zero for an empty set). The evidence is ordered by `project_seq`, then `event_id`; its audit identity continues to bind exact event ids, evidence digests, authorization context, model identity, and reporter revision.
+
+The unchanged-state decision reuses `decideDelivery` extracted from the Port Watch core. Port Watch's enablement, WIP, and handoff-eligibility behavior is unchanged. The shared decision core fitted with no R2-specific fork.
+
+No datastore-level authorization claim is made. R2 verifies every record supplied by the authorized-source interface exactly as R1 does. Authorization-before-datastore-retrieval remains R3 and is blocked by C1.
+
+## Controls and invocation counts
+
+- Identical authorized state: byte-identical evidence and `as_of_seq` 20 across repeated runs, reversed source order, and two independent Node processes.
+- Newly authorized event: evidence changed, `as_of_seq` changed from 10 to 20, wake decision, generator invocations **1**.
+- Unchanged authorized state: 100 repetitions, generator invocations **0**.
+- Unauthorized-only event at sequence 999: evidence unchanged, `as_of_seq` remained 10, generator invocations **0**.
+- Leaked unauthorized record: whole operation aborted with `EVIDENCE_UNAUTHORIZED`.
+- Generated report supplied as evidence: whole operation aborted with `GENERATED_EVIDENCE_FORBIDDEN`.
+- R1 regression suite: unchanged and passing.
+
+The deliberately naive test implementation sorts and diffs every visible record and derives the maximum sequence over all of them. The discrimination control observed it fail all three sharp properties: it exposed the restricted event id, advanced `as_of_seq` from 10 to 999, and therefore made a wake/generator invocation eligible.
+
+Every negative has a positive counterpart: authorized change wakes once; unchanged/unauthorized-only state does not wake; valid authorized records assemble; ordinary project events are admitted while generated reports are refused; stable ordering is checked under reversed input order.
+
+## Exact verification
+
+Node: `v26.5.0`. Fixtures are synthetic and contain no secrets. No new dependency was added.
+
+| Command | Result |
+|---|---:|
+| `npm run report:r2:test` | 8/8 passed |
+| `npm run report:test` | 54/54 passed |
+| `npm run proof:verify` | 59 events, 20 threads, 2 actors before this result event |
+| `npm run proof:test` | 33/33 passed |
+| `npm run welcome:test` | 19/19 passed |
+| `npm run watch:test` | 16/16 passed |
+| `npm run lint` | passed, 0 errors |
+
+## Scope
+
+Implemented only deterministic R2 evidence assembly, authorized-state `as_of_seq`, the shared unchanged-state gate, and Node-only synthetic controls. No generation logic, prompting, rendering, view, publication, R3 retrieval, storage, webhook, network, database, provider, model, credential, connector, or external side effect was built. R2+, R3 onward, onboarding T2, W1-5 through W1-7, Port Watch feature scope, parked inbox records, and the unrelated PNG were not touched.
