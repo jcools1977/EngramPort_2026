@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { canonicalJson } from "./welcome-verify.mjs";
+import { detectCredential } from "./credential-boundary.mjs";
 
 const allowedGitHub=new Set(["contents:read","pull_requests:write_non_default","webhooks:receive"]);
 const compiledPlans=new WeakSet();
@@ -12,6 +13,7 @@ export function parseSetup(source){
 const exact=(object,keys,label)=>{if(!object||typeof object!=="object"||Array.isArray(object))throw new SetupPlanError("SETUP_SCHEMA_INVALID",`${label} must be an object`);for(const k of keys)if(!(k in object))throw new SetupPlanError("SETUP_SCHEMA_INVALID",`${label} missing ${k}`);for(const k of Object.keys(object))if(!keys.includes(k))throw new SetupPlanError("SETUP_SCHEMA_UNKNOWN_FIELD",`${label} unknown field ${k}`);};
 const stringArray=(o,k,label)=>{if(!Array.isArray(o[k])||o[k].some(v=>typeof v!=="string"))throw new SetupPlanError("SETUP_SCHEMA_INVALID",`${label}.${k} must be a string array`);};
 export function validateSetup(p){
+ const finding=detectCredential(p);if(finding.hit)throw new SetupPlanError("CREDENTIAL_INPUT_REFUSED", "credential-bearing setup input refused");
  exact(p,["schema_version","created_at","founder","repository","database","participants","groups","import","welcome"],"setup");if(p.schema_version!==0)throw new SetupPlanError("SETUP_SCHEMA_INVALID","schema_version must be 0");if(!Number.isFinite(Date.parse(p.created_at)))throw new SetupPlanError("SETUP_SCHEMA_INVALID","created_at must be date-time");
  exact(p.founder,["principal_id","scopes","assignable_trust","expires_at"],"founder");stringArray(p.founder,"scopes","founder");stringArray(p.founder,"assignable_trust","founder");
  exact(p.repository,["provider","owner","name","default_branch","permissions","depends_on"],"repository");stringArray(p.repository,"permissions","repository");stringArray(p.repository,"depends_on","repository");

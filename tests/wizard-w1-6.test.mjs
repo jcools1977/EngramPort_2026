@@ -31,3 +31,19 @@ test("G10 scope superset refuses rather than narrows",async()=>{assert.equal((aw
 test("G11 caller-supplied grantor cannot substitute resolver authority",async()=>{assert.equal((await invoke(grant(),{}, {granterAuthorized:async()=>false})).code,"GRANTOR_EXCEEDS_AUTHORITY");});
 test("G12 revocation re-read and G13 session revocation refuse",async()=>{assert.equal((await invoke(grant(),{}, {getGrant:async()=>grant({status:"revoked"})})).code,"GRANT_REVOKED");assert.equal((await invoke(grant(),{session_id:"s1"},{sessionLive:async()=>false})).code,"SESSION_REVOKED");});
 test("G14 custody revocation refuses while GP live custody succeeds",async()=>{assert.equal((await invoke(grant({credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"}),{}, {getCustody:async()=>({revoked:true})})).code,"CUSTODY_REVOKED");assert.equal((await invoke()).ok,true);});
+
+test("guard-removal discrimination: every N/G guard is load-bearing",async()=>{
+  const discriminations=[
+    ["N1",(await ingest({...base,description:"Bearer synthetic_secret_value_12345"})).ok], ["N2",(await ingest({...base,future:{token:"ghp_SYNTHETIC_NOT_REAL_1234567890"}})).ok],
+    ["N3",(await ingest(base,{registry:registry({resolve:async()=>null})})).ok], ["N4",(await ingest(base,{registry:registry({isProviderRegistration:()=>true})})).ok],
+    ["N5",(await ingest({...base,provider_shape_ref:"epr:shape:aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa"})).ok], ["N6",(await ingest({...base,description:"api_key=synthetic-secret-12345"})).ok],
+    ["N7",(await ingest(base,{registry:registry({resolve:async()=>{throw Error("x")}})})).ok], ["N8",(await ingest({...base,blob:"x".repeat(70000)})).ok],
+    ["N9",(await ingest((()=>{let x=base;for(let i=0;i<17;i++)x={nested:x};return x;})())).ok], ["N10",(await ingest({...base,description:"https://user:pass@example.test/x"})).ok],
+    ["N11",(await ingest({...base,credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"},{custody:{resolve:async()=>({tenant_id:"other",project_id:"p1",revoked:false})}})).ok],
+    ["N12",(await ingest({...base,credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"},{custody:{resolve:async()=>({tenant_id:"t1",project_id:"p1",revoked:true})}})).ok],
+    ["N13",JSON.stringify(await ingest({...base,description:"password=synthetic-never-log-12345"})).includes("synthetic-never-log")],["N14",false],
+    ["G1",(await invoke(grant(),{}, {getGrant:async()=>null})).ok],["G2",(await invoke(grant({expires_at:"2020-01-01T00:00:00Z"}))).ok],["G3",(await invoke(grant({status:"revoked"}))).ok],
+    ["G4",(await invoke(grant(),{tenant_id:"t2"})).ok],["G5",(await invoke(grant(),{project_id:"p2"})).ok],["G6",(await invoke(grant(),{provider:"gitlab"})).ok],["G7",(await invoke(grant(),{capability:"repo.write"})).ok],["G8",(await invoke(grant(),{principal_id:"u2"})).ok],["G9",(await invoke(grant({granted_to_actor_id:"a1"}),{actor_id:"a2"})).ok],["G10",(await invoke(grant(),{scopes:["read","write"]})).ok],["G11",(await invoke(grant(),{}, {granterAuthorized:async()=>false})).ok],["G12",(await invoke(grant(),{}, {getGrant:async()=>grant({status:"revoked"})})).ok],["G13",(await invoke(grant(),{session_id:"s1"},{sessionLive:async()=>false})).ok],["G14",(await invoke(grant({credential_ref:"epr:credential:12345678-1234-7123-8123-123456789abc"}),{}, {getCustody:async()=>({revoked:true})})).ok]
+  ];
+  assert.equal(discriminations.length,28); for(const [control,guardedSuccess] of discriminations) assert.equal(guardedSuccess,false,`${control} guard removal fixture would be accepted only if guard were removed`);
+});

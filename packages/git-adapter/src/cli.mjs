@@ -5,6 +5,7 @@ import { hashBody, hashThreadConfig, parseEvent, parseRecord, verifyLog } from "
 import { verifyWelcome } from "./welcome-verify.mjs";
 import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
+import { detectCredential } from "./credential-boundary.mjs";
 
 function args(argv) {
   const out = { _: [] };
@@ -119,6 +120,15 @@ export async function run(argv, cwd = process.cwd()) {
   if (command === "append") {
     for (const required of ["actor", "thread", "type", "body"]) if (!options[required]) throw new Error(`append requires --${required}`);
     const body = await readFile(path.resolve(cwd, options.body), "utf8");
+    const bodyFinding = detectCredential(body);
+    if (bodyFinding.hit) throw new Error(`CREDENTIAL_INPUT_REFUSED: event body refused`);
+    if (options.artifacts) {
+      for (const reference of options.artifacts.split(",")) {
+        const artifactPath = reference.split("#", 1)[0];
+        const artifact = await readFile(path.resolve(cwd, artifactPath), "utf8");
+        if (detectCredential(artifact).hit) throw new Error(`CREDENTIAL_INPUT_REFUSED: artifact refused`);
+      }
+    }
     const occurredAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
     const id = uuidv7();
     const meta = [line("schema_version", 0), line("id", id), line("thread", options.thread), line("from", options.actor), line("type", options.type), line("occurred_at", occurredAt), line("in_reply_to", options.reply ?? null), line("next", options.next ?? null), line("content_sha256", hashBody(body))];

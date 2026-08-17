@@ -15,7 +15,7 @@ export function detectCredential(record, { maxBytes = 64 * 1024, maxDepth = 16 }
     if (typeof v === "string") {
       if (SECRET.test(v)) return "CREDENTIAL_DETECTED";
       if (REF.test(v)) return null;
-      if (URL_SCHEME.test(v)) { try { const u = new URL(v); if (u.protocol !== "https:" || u.username || u.password || CRED_QUERY.test(u.search) || CRED_QUERY.test(u.hash)) return "UNSAFE_URL"; } catch { return "UNSAFE_URL"; } }
+      if (URL_SCHEME.test(v) && (v.includes("://") || /^(?:javascript|data|file|ftp|ssh):/i.test(v))) { try { const u = new URL(v); if (u.protocol !== "https:" || u.username || u.password || CRED_QUERY.test(u.search) || CRED_QUERY.test(u.hash)) return "UNSAFE_URL"; } catch { return "UNSAFE_URL"; } }
       return null;
     }
     if (Array.isArray(v)) for (const x of v) { const hit = walk(x, depth + 1); if (hit) return hit; }
