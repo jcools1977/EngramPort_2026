@@ -1,4 +1,4 @@
-import { createHash, generateKeyPairSync, sign, verify } from "node:crypto";
+import { createHash } from "node:crypto";
 
 export class CustodyError extends Error { constructor(code){super(code);this.code=code;} }
 const NS=new Set(["installation","credential","shape"]);
@@ -9,12 +9,10 @@ export class AtomicCustodyStore {
   resolve(ref,ctx){const row=this.rows.get(ref), binding=this.refs.get(ref);return row&&binding&&!row.revoked&&binding.tenant_id===ctx.tenant_id&&binding.project_id===ctx.project_id?row:null;}
 }
 export class VaultTransitBoundary {
-  constructor(){this.keys=new Map();}
-  createKey(name,{exportable=false}={}){const kp=generateKeyPairSync("rsa",{modulusLength:2048});this.keys.set(name,{...kp,exportable});}
-  sign(name,data){const k=this.keys.get(name);if(!k)throw new CustodyError("KEY_NOT_FOUND");return sign(null,Buffer.from(data),k.privateKey);}
-  export(name){const k=this.keys.get(name);if(!k)throw new CustodyError("KEY_NOT_FOUND");if(!k.exportable)throw new CustodyError("PRIVATE_KEY_NOT_EXPORTABLE");return k.privateKey.export({type:"pkcs8",format:"pem"});}
-  publicKey(name){return this.keys.get(name)?.publicKey;}
-  verify(name,data,sig){return verify(null,Buffer.from(data),this.publicKey(name),sig);}
+  constructor({endpoint="http://127.0.0.1:8201",token}={}){this.endpoint=endpoint;this.token=token;}
+  async request(path,body){if(!this.token)throw new CustodyError("KMS_UNAVAILABLE");const r=await fetch(`${this.endpoint}/v1/${path}`,{method:"POST",headers:{"X-Vault-Token":this.token,"content-type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new CustodyError(`KMS_${r.status}`);return r.json();}
+  async sign(name,data){const r=await this.request(`transit/sign/${name}/sha2-256`,{input:Buffer.from(data).toString("base64")});return r.data?.signature??r;}
+  async export(){throw new CustodyError("PRIVATE_KEY_NOT_EXPORTABLE");}
 }
 export const RETENTION={"RET-SESSION":86400000,"RET-OPS-90":90*86400000,"RET-AUDIT-400":400*86400000,"RET-GRANT-400":400*86400000,"RET-CONFIG-400":400*86400000,"RET-VERIFY-104":104*86400000};
 export function retentionDue(policy,events,now){const starts={"RET-SESSION":events.session_start,"RET-OPS-90":events.terminal,"RET-AUDIT-400":events.accepted,"RET-GRANT-400":events.terminal_status,"RET-CONFIG-400":events.rotated??events.issued,"RET-VERIFY-104":events.last_artifact_expiry};const s=starts[policy];return s!=null&&now-s>=RETENTION[policy];}
