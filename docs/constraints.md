@@ -44,7 +44,12 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
-**W1-7 is dispatched and ACTIVE, returned once and sent back for a bounded revision on 2026-08-17.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. Its first return was refused on two grounds, recorded as **F19** and **F20**: the suite passes 5 of 5 but only **2 of 14 guards are load-bearing**, and the signing boundary is an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** still holds and the revision connects to it. WIP remains one; nothing else is dispatched.
+**W1-7 is dispatched and ACTIVE, returned twice and sent back for a second bounded revision on 2026-08-17.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
+
+- **First return** refused on **F19** and **F20**: the suite passed 5 of 5 but only **2 of 14 guards were load-bearing**, and the signing boundary was an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** held and the revision connected to it.
+- **Second return** accepted the structural direction, since **F20 is materially addressed** and signing now runs through Vault transit HTTP verified live, but refused on **F21**: eight defects in the replacement itself, including a `ReferenceError` that kills every mint, a response fallback that returns a live token as a signature, and caller-controlled key and endpoint selection. **F22** records that `npm test` is not the canonical sweep and left three failing W1-7 tests invisible.
+
+Fixture conversion to live Vault and the durable store is deliberately deferred to the revision after next, so that the F17 discrimination evidence is not built on a broken boundary.
 
 **A6 and B9 are re-homed to W1-8**, not dispatched. **Sequencing decided: W1-7 before W1-8**, so the live resolver binds to the canonical custody boundary rather than a temporary store.
 
@@ -469,3 +474,27 @@ Same class as F17, B1's `application UPDATE denied`, and W1-5's loser-residue me
 **Classified as a provisioning omission with a shared root cause.** The W1-7 handoff named the image and its verified properties but supplied no bring-up step, unlike the PostgreSQL path which has one; that omission is agent-a's. Treating an unstarted dependency as a missing one is agent-b's. The revision requires a committed provisioning path and a loud named failure when the KMS is absent, so the ambiguity cannot recur.
 
 **`AtomicCustodyStore` and `retentionDue` are preserved** as a provider-independent custody interface and a spec-shaped clock map. Neither counts as evidence until backed by the durable store and W1-5's resolver.
+
+## F21. The Vault replacement has defects of its own, two of them security defects
+
+**Raised:** W1-7 revision review, 2026-08-17, by agent-a. **Blocking W1-7 acceptance.** **Closes in:** W1-7 revision 2.
+
+The structural replacement is sound in direction and **F20 is materially addressed**: local key generation, application-memory private keys, `createKey`, `publicKey`, `verify` and any fallback capable of restoring local signing are gone, `SyntheticCustodyBoundary` exists nowhere, and signing runs through Vault transit HTTP, verified live from zero containers. Eight defects remain.
+
+**Blocking, breaks the whole path.** `generateKeyPairSync` is called at line 5 but no longer imported, so every `mint()` throws `ReferenceError` and the A7/A8 path is dead code. **`npm run lint` fails with `no-undef` at 5:39**, so the repository's own tooling caught it and the commit landed anyway.
+
+**Security defect one, false signing success carrying a live token.** `sign()` ends `return r.data?.signature ?? r`, so a 200 response lacking a signature returns the whole body, truthy. Demonstrated against live Vault: such a body contains **`auth.client_token`**. A malformed or misrouted response therefore becomes both a false success and a credential returned to the caller, free to reach a log, event or artifact.
+
+**Security defect two, caller-controlled key and endpoint.** The key name is interpolated into the request path unvalidated, and dot segments escape the transit mount: `../../sys/mounts` resolves to `/v1/sys/mounts/sha2-256`. Endpoint is a constructor argument with no allowlist. The handoff required selection from trusted configuration.
+
+**Remaining five.** KMS absence yields `TypeError: fetch failed` rather than `KMS_UNAVAILABLE`, which only a missing token produces; `export()` always throws in-process without contacting Vault, a simulated refusal that can never produce the B2 differential; `canaryHarness` still calls the now-async `sign()` without `await`, so `signed` is permanently false; no provisioning path was committed to `deploy/`, `scripts/` or `package.json`; and the Vault token is a plain field with no serialization guard.
+
+**Suite state: 231 tests, 228 passed, 3 failed**, all three in W1-7, targeting the removed API. The passing authorization test passes legitimately, since both guards precede the broken reference.
+
+## F22. `npm test` is not the canonical sweep and hides failing suites
+
+**Raised:** W1-7 revision review, 2026-08-17, by agent-a. **Not blocking. Process defect.**
+
+`npm test` is `npm run proof && npm run build && node --test tests/rendered-html.test.mjs`. It runs **none** of the eleven per-suite scripts, so W1-7 failing 3 of 5 leaves `npm test` green. The W1-7 revision result reported regressions green, which was true of `npm test` and false of the repository.
+
+Every review from here reports **per-suite totals**. Treating `npm test` as coverage is how a wholly failing required suite passes unnoticed, which is the same failure shape as F16's four defects invisible to static review: the check ran, reported success, and was never capable of failing the way that mattered.
