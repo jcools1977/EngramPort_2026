@@ -42,7 +42,9 @@ agent-b holds **one** active implementation item at a time. Further items may si
 
 Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
 
-**W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated. **No implementation item is eligible; the WIP slot is free and nothing is dispatched.**
+**W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
+
+**W1-7 is dispatched and ACTIVE, returned once and sent back for a bounded revision on 2026-08-17.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. Its first return was refused on two grounds, recorded as **F19** and **F20**: the suite passes 5 of 5 but only **2 of 14 guards are load-bearing**, and the signing boundary is an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** still holds and the revision connects to it. WIP remains one; nothing else is dispatched.
 
 **A6 and B9 are re-homed to W1-8**, not dispatched. **Sequencing decided: W1-7 before W1-8**, so the live resolver binds to the canonical custody boundary rather than a temporary store.
 
@@ -437,3 +439,33 @@ Two ownership rows in `docs/security/setup-credential-threat-model.md` disagree 
 **Resolved in favour of the narrower reading**, recorded in the task plan rather than the threat model: W1-7 **closes A7, A8 and B5**; W1-7 **builds** the boundary B1–B4 are later asserted against, and those four **close at W3 completion against a real key**, which is what their own gate column says.
 
 **The threat model is deliberately not edited.** Revision 8 is pinned at digest `629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089`, and the W1-2 dispatch gate binds every Tier A evidence claim to that exact revision and digest. Editing it to fix a documentation inconsistency would invalidate the accepted W1-5, W1-6 and W1-6a bindings to buy nothing behavioural. **Correcting a pinned document is more expensive than annotating it**, so this is carried here and folded into the next revision that changes a contract for another reason.
+
+## F19. The W1-7 suite does not discriminate, and reports counts it did not observe
+
+**Raised:** W1-7 review, 2026-08-17, by agent-a. **Blocking W1-7 acceptance.** **Closes in:** the W1-7 bounded revision.
+
+`tests/wizard-w1-7.test.mjs` passes 5 of 5. Removing each guard in a temporary copy and rerunning shows **2 of 14 guards are load-bearing**. Baseline verified passing first; module restored byte-identical after each mutation.
+
+**Load-bearing (2):** mint authorization; the export-refusal flag, which proves only that a boolean works.
+
+**Not load-bearing (12):** namespace and class closure, masked by the authority check throwing first; rollback and orphan prevention, because `rows.size === refs.size` holds when both leak; tenant binding; project binding; revoked custody row; **all six retention clock starts**; and canary protected-variant cleanliness, which stays green when forced to `clean:false` because the test asserts only `signed`.
+
+**The reported totals are not supported.** "M1–M13/MP: 12/12 exercised" against **eight absent from the code** (M2, M3, M4, M5, M7, M9, M10, M13 — no expiry, grant-revocation, scope, collision, concurrency or gate logic exists). "Retention: 6/6 clock-start checks" against **0 of 6** that fail under a wrong clock, because each case is evaluated outside the window where the two clocks disagree. "Canary sinks: 6/6" against section 10's **ten**, omitting `events`, `artifacts`, `plans` and `Re:PORT output`, the four that would exercise the W1-6 detector.
+
+The canary observer reads the same array the vulnerable variant writes, so no sink is real and no leak is detected.
+
+Same class as F17, B1's `application UPDATE denied`, and W1-5's loser-residue message: **a control whose name or reported count claims more than its assertion proves.** F17 was sequenced before W1-7 precisely so this pattern would not be inherited, and it was inherited anyway.
+
+## F20. `VaultTransitBoundary` is an in-memory signer named for the boundary it replaces
+
+**Raised:** W1-7 review, 2026-08-17, by agent-a. **Blocking A7, A8 and B5.** **Closes in:** the W1-7 bounded revision.
+
+`packages/git-adapter/src/custody-service.mjs` line 11 defines `VaultTransitBoundary`, which calls `generateKeyPairSync` and holds `privateKey` in a `Map` in application memory. The handoff explicitly prohibited substituting an in-memory signer or ordinary application key.
+
+**B1 is violated by construction**, since the application holds the key bytes, and the export refusal is a self-imposed flag on an object the caller already possesses. The class name asserts a Vault-backed boundary that does not exist, which is the overclaim doing the damage rather than the stub itself.
+
+**The boundary was never unavailable.** The result reported that "this environment did not provide the verified Vault transit emulator endpoint". Nothing was listening on `127.0.0.1:8201` because the pre-dispatch probe container had been torn down as cleanup, but the `hashicorp/vault:1.17` image remained cached at 592MB and the container starts healthy in seconds. All four differential properties reproduced during review, identically to the pre-dispatch probe, including the 1907-byte PEM positive control and `permission denied` on the forbidden key class.
+
+**Classified as a provisioning omission with a shared root cause.** The W1-7 handoff named the image and its verified properties but supplied no bring-up step, unlike the PostgreSQL path which has one; that omission is agent-a's. Treating an unstarted dependency as a missing one is agent-b's. The revision requires a committed provisioning path and a loud named failure when the KMS is absent, so the ambiguity cannot recur.
+
+**`AtomicCustodyStore` and `retentionDue` are preserved** as a provider-independent custody interface and a spec-shaped clock map. Neither counts as evidence until backed by the durable store and W1-5's resolver.
