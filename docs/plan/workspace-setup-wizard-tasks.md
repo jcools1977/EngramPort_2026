@@ -90,11 +90,23 @@ Acceptance criteria:
 
 ## W1-5: Trusted authority resolver, atomic bootstrap, concurrency proof, and dispatch gate
 
-Phase W1. **Blocked by C1** for its concurrency proof: a credible datastore race proof requires PostgreSQL 16 with pgvector, which no agent environment has. **Not dispatched.**
+Phase W1. **ELIGIBLE and DISPATCHED 2026-08-17.** C1 is closed: the live PostgreSQL 16 + pgvector path passes, so the concurrency proof this task requires is now executable. The former "blocked by C1" status is superseded. **Canonical scope is unchanged.**
 
 Scope, established by W1-2 and unchanged here: trusted authority resolver deriving held authority from a trusted store given only an authenticated `principal_id`; atomic founder bootstrap creating tenant, project, principal and owner membership in one transaction; a concurrent-founder datastore proof; and the revision-bound mechanical dispatch and evidence gate.
 
-Owns Tier A controls **A1** and **A2**. Closes finding **F12**; **F13** closes with A2. Depends on: a PostgreSQL 16 + pgvector host (C1).
+Owns Tier A controls **A1** and **A2**. Closes finding **F12**; **F13** closes with A2. Depends on: the live database path, now available.
+
+**Why W1-5 outranks the other newly unblocked work.** Five workstreams became eligible when C1 closed, and this one was chosen because it is the **dependency root**, not because it is the smallest or the newest:
+
+- **W1-6** needs W1-5's resolver before A6 can derive granter authority rather than accept it.
+- **W1-7** needs both, since minting resolves authority through the resolver and its sealed rows must be detector-clean.
+- **Tier A completion** requires A1 and A2, which only W1-5 owns; without them no Tier A control set can be complete for any revision.
+- **W3** is mechanically ineligible until every Tier A control passes, so W3-1 cannot begin at all until this lands.
+- It establishes the **trusted bootstrap authority boundary**, the point at which authority stops being caller-asserted. F12 records that `start` currently accepts a caller-supplied `founder_authority` object, so every downstream authority claim in the wizard presently rests on an assertion. Nothing built on top of that is sound until it is resolved.
+
+The alternatives were ranked and deferred deliberately: **v0.1 findings two and three** are small and real but unlock nothing; **W2-1** provisioning is downstream of the boundary and would build on caller-asserted authority; **onboarding T2** is a schema task that no other task is waiting on; **Re:PORT R3** is valuable and orthogonal, unlocking only the Re:PORT chain. W1-5 unlocks the largest dependency chain in the plan.
+
+**The v0.1 end-to-end gate remains open** and W1-5 does not close it. Specification section 27 requires append, discover, respond and handoff end to end under concurrent load, which is append-transaction and API work that no current task covers.
 
 ## W1-6: Credential detector, ingest boundary, shape selection, and grant authorization
 
@@ -126,7 +138,7 @@ Acceptance criteria:
 1. Driver interface with connect-existing and provision-managed implementations.
 2. Startup validates pgvector availability and embedding dimensions, and refuses a mismatch per specification section 20.2.
 3. `0001_canonical_core` applies with checksum verification.
-4. The v0.1 isolation and immutability failure tests pass against a live database, with actual server and extension versions recorded. This closes the outstanding v0.1 gate.
+4. The v0.1 isolation and immutability failure tests pass against a live database, with actual server and extension versions recorded. ~~This closes the outstanding v0.1 gate.~~ **STALE CLAIM, FLAGGED 2026-08-17 and not relied upon.** Isolation and immutability passing live does **not** close the v0.1 gate. Those tests already pass, closed under F16 on 2026-08-17, and the gate is still open. Specification section 27 additionally requires end-to-end append, discover, respond and handoff **under concurrent load**, which no current task covers. `docs/constraints.md` states this correctly and is authoritative; this criterion's final sentence was written before the distinction was understood and is retained struck through rather than deleted, so the error is visible rather than erased.
 5. The three review findings on the open v0.1 thread are resolved: identity and authorization tables not writable by the append role, a `TRUNCATE` guard with a negative control, and a comment recording that the delegation trigger's early return depends on RLS.
 6. Portability proven on standard PostgreSQL and on a managed distribution.
 
