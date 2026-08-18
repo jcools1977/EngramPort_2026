@@ -24,6 +24,7 @@
     ,"dispatch:test": "node --test tests/workspace-dispatch-gate.test.mjs"
     ,"w1-6:test": "node --test tests/wizard-w1-6.test.mjs"
     ,"w1-7:test": "node --test tests/wizard-w1-7.test.mjs"
+    ,"kms:test": "bash scripts/run-kms-tests"
     ,"dry-run:test": "node --test tests/workspace-dry-run.test.mjs"
     ,"session:test": "node --test tests/workspace-session.test.mjs"
     ,"approval:test": "node --test tests/workspace-approval.test.mjs"
