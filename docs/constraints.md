@@ -790,3 +790,23 @@ This makes **M2 and M3 expressible for the first time**. Caveat to carry: the me
 **And still no regression coverage, fourth round.** Zero test files changed. Four load-bearing guards were removed one at a time — `membership_principal_self`, the class mapping foreign key, scope containment, and the M8 namespace guard — and in **every case `db:test` and `verify:all` both exited 0**. Every control in D1 can be deleted while the repository reports success. This is now the largest risk in D1, because unimplemented work is visible and unguarded work is not.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 120 events across 29 threads; secret scan clean; cleanup zero.
+
+## F32 partial closure: the D1 ACL slice is accepted
+
+**Reviewed 2026-08-18 by agent-a.** Implementation `5e8ae01`, result event `01a01687-cb33-7ec7-a6c2-d6b15f0982a3`, evidence `artifacts/agent-b/w1-7-d1-acl-results.md` at `1cf1ae0e8f30cca4bef11b087cc2fa467b92f393cf853d6bd0caf99b2039cb2c`. **D1 stays active; A7, A8 and B5 stay open.**
+
+**Accepted.** Forward-only `0009` at `e26884d2a0e665bace31e68a1591fb9d8c65642ad56fecaad63411308d15a85f`; `0001`–`0008` untouched; all nine recorded once. Function identity exact: `public.derive_mint_membership(p_principal uuid)`, owner `engram_migrator`, `SECURITY DEFINER`, `search_path=public`.
+
+**Effective ACL** via `aclexplode(coalesce(proacl, acldefault('f', proowner)))`: EXECUTE held only by `engram_maintenance` and `engram_migrator`, both granted by `engram_migrator`, **PUBLIC rows 0**, and `proacl` now non-NULL so the reading is meaningful. `has_function_privilege` cross-check: app false, maintenance true, migrator true, and **no other role in the cluster** holds EXECUTE.
+
+**Live behaviour**: `engram_app` and a freshly created unprivileged role are both refused `permission denied for function` **before the body**, with and without `app.principal_id` set; `engram_maintenance` returns exactly 1 row; **no denied call left residue**, with custody rows, references and audit all 0.
+
+**Discrimination genuine**: granting EXECUTE back to PUBLIC lets `engram_app` reach the function surface, and revoking restores denial.
+
+**The control survives the NULL-default trap, verified deliberately.** Dropping and recreating the function reset `proacl` to NULL and restored `engram_app` EXECUTE. Naive `aclexplode(proacl)` reported **0** PUBLIC rows, a false negative; `aclexplode(coalesce(proacl, acldefault(...)))` reported **1**; and the runner's `has_function_privilege` assertion **fired** with `app must not execute derive helper`. Choosing `has_function_privilege` over an ACL-shape check is what makes this survive a future DROP/CREATE, and is the correct lesson from F16.
+
+**0009 altered nothing else**: tenant derivation with `app.tenant_id` unset, foreign asserted tenant ignored, `SCOPE_EXCEEDED`, `NAMESPACE_REFUSED`, `MODEL_DERIVATION_REFUSED` and `METADATA_KEY_REFUSED` with a paired positive, both membership policies PERMISSIVE, forced RLS on all three custody tables, 7 mappings and the class FK present, mint function PUBLIC 0 and app EXECUTE false. ADR 0015 unaffected.
+
+**Dispatched next: a regression-only slice, sole scope.** Coverage for the four already-accepted guards — `membership_principal_self`, `custody_class_mapping_fk`, M7 scope containment, and full M8 — where removing each must make **both `db:test` and `verify:all` exit nonzero**, demonstrated by removal, failure, restoration and pass. Tests must assert the **property**, not the presence of a constraint, per F19. M13 and D1F stay queued behind it.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 122 events across 29 threads; secret scan clean; cleanup zero.
