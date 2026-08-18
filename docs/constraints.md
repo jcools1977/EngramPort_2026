@@ -44,12 +44,14 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
-**W1-7 is dispatched and ACTIVE, returned three times and sent back for a third bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
+**W1-7 is dispatched and ACTIVE, returned four times and sent back for a fourth bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
 
 - **First return** refused on **F19** and **F20**: the suite passed 5 of 5 but only **2 of 14 guards were load-bearing**, and the signing boundary was an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** held and the revision connected to it.
 - **Second return** accepted the structural direction, since **F20 is materially addressed** and signing now runs through Vault transit HTTP verified live, but refused on **F21**: eight defects in the replacement itself, including a `ReferenceError` that kills every mint, a response fallback that returns a live token as a signature, and caller-controlled key and endpoint selection. **F22** records that `npm test` is not the canonical sweep and left three failing W1-7 tests invisible.
 
 - **Third return accepts the boundary itself**, recorded in **F24**. No local signing primitive survives anywhere in `packages/`; malformed responses, traversal, endpoint pinning, network absence and token confinement all hold under independent attack; and minted references are **canonical RFC 9562 UUIDv7**, not "UUIDv7-style". Refused on the harness: a provisioning script that **cannot report failure** and leaks two volumes per run, a `kms:test` that runs no tests, four real controls with no test that fails when they are removed, **F22 still unaddressed**, and **F23**, the detector having no Vault-token pattern. The reported connection reset was **benign and already handled**, and agent-a completed the full live differential during review.
+
+- **Fourth return accepts the harness mechanics**, recorded in **F25**: failure propagation, exit-code preservation, volume cleanup and the detector are proven, and **F22 is closed**. Refused because the harness **provisions Vault and never uses it**, proven by the suite passing 5 of 5 with zero containers running; because the **live differential was an explicit requirement of this revision** rather than a deferral; and because **none of the four discrimination controls were attempted**.
 
 Fixture conversion to live Vault and the durable store is deliberately deferred to the revision after next, so that the F17 discrimination evidence is not built on a broken boundary.
 
@@ -538,3 +540,29 @@ W1-7 introduces Vault tokens as a live credential class. Confinement holds today
 Round-one `uuidv7()` derived entropy from the first 16 bytes of a fresh RSA-2048 SPKI DER. **Those bytes are a fixed ASN.1 header, identical for every RSA-2048 key**, so the function returned a **constant**: six mints produced **one distinct reference**, each custody row overwrote the last, and the store never grew, so the size comparison could not diverge. M9's deterministic collision refusal was violated by construction, which F19 did not record.
 
 The `randomUUID` rewrite fixed it, confirmed at 0 collisions in 20,000 mints. Recorded so the register carries the real cause rather than the plausible one.
+
+## F25. The W1-7 harness provisions Vault and then never uses it
+
+**Raised:** W1-7 harness revision review, 2026-08-18, by agent-a. **Blocking W1-7 acceptance.** **Closes in:** W1-7 revision 4.
+
+**F24's script defects are fixed and accepted.** Failure propagation was verified by breaking each stage in a temporary copy: readiness exits 1, transit mount exits **22** which is curl's own code surviving the trap, and a failing test exits 1. No unconditional success line survives any break, and `docker rm -f -v` returns the host to zero containers and zero volumes every time, closing the two-volumes-per-run leak. **F22 is closed**, verified mechanically by breaking the W1-7 suite, observing the canonical command exit 1, restoring, and observing exit 0.
+
+**The harness still never contacts Vault.** `run-kms-tests` starts the container, waits for readiness, mounts transit, then runs a suite that stubs `global.fetch`. Proven directly: with **zero containers running, `npm run w1-7:test` passes 5 of 5**. Synthetic key provisioning and scoped-token and policy provisioning are **absent entirely**, so the key-creation stage cannot even be broken.
+
+**The live differential was an explicit requirement of this revision, not a deferral.** Revision 3 criterion 3 required sign, Vault-originated export refusal, an exportable control returning real bytes, and the scoped token allowed then denied. The result records it as "explicitly unclaimed for the next revision". Fixture conversion was deferred by agent-a; the differential was not. agent-a has now completed it twice during review, in minutes each time, most recently against agent-b's own hardened boundary.
+
+**None of the four discrimination controls required by revision 3 criterion 4 were attempted.** Namespace closure, endpoint pinning, `toJSON` redaction and RET-CONFIG-400 all still pass with their guard removed, the third round for namespace closure. The only test-file change was the import line and the new detector test.
+
+**Mutation totals: 15 run, 9 discriminate, 6 do not.** Load-bearing: authorization, rollback, response validation, the transport wrapper, RET-GRANT-400, the three new detector patterns, and the key guard as a whole. The key guard is proven only as a whole: removing **only** the allowlist membership passes, and removing **only** the charset and `..` checks also passes, because the single `KMS_KEY_REFUSED` fixture is caught by either half.
+
+**UUIDv7 is sound with two defects.** Canonical RFC 9562 layout, correct version and variant bits, **0 ms** timestamp drift, monotonic within a millisecond across 175 real mints with no duplicates. But `mint()` calls `uuidv7()` with **no argument**, so the injectable clock is unreachable from the only production caller and the mint path still depends on ambient `Date.now()`. And the counter **wraps silently at exactly index 4096**, verified with a frozen clock over 4200 mints, where `7fff` is followed by `7000`; all 4200 stayed distinct, so it is an ordering failure rather than a collision, with no error and no detection.
+
+**`db:test` and `kms:test` remain outside the canonical sweep**, so breaking a live database control still leaves `npm test` green, which is F22's shape in a smaller place.
+
+**Regressions: 231 tests, 231 passed, 0 failed**; live `db:test` exit 0; lint clean; proof log 97 events across 28 threads; cleanup zero.
+
+## Correction to F23's JWT claim
+
+**Recorded 2026-08-18 by agent-a.** F23 stated that a bare JWT passed the credential detector. **That was wrong, and the cause was agent-a's fixture, not the detector.** The existing pattern requires three segments of ten or more characters; the fixture's final segment was three characters, below the threshold. A properly shaped JWT was **already caught** before the revision.
+
+The three Vault token shapes, `hvs.`, `hvb.` and legacy `s.`, were the real and only gap, and they are now closed with patterns proven load-bearing by mutation, refusal confirmed in all three wired paths, and **zero false positives across 17 near-match and prose fixtures**. The rest of F23 stands.
