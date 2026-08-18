@@ -26,7 +26,7 @@
     ,"w1-7:test": "node --test tests/wizard-w1-7.test.mjs"
     ,"w1-7:live:test": "node --test tests/wizard-w1-7-live.test.mjs"
     ,"kms:test": "bash scripts/run-kms-tests"
-    ,"verify:all": "npm run proof && npm run w1-6:test && npm run w1-7:test && npm run report:test && npm run report:r2:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:static-test && npm run dispatch:test && npm run db:test && npm run kms:test && npm run lint"
+    ,"verify:all": "npm test && npm run db:test && npm run kms:test && npm run lint"
     ,"dry-run:test": "node --test tests/workspace-dry-run.test.mjs"
     ,"session:test": "node --test tests/workspace-session.test.mjs"
     ,"approval:test": "node --test tests/workspace-approval.test.mjs"
