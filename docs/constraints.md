@@ -44,7 +44,7 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
-**W1-7 is dispatched and ACTIVE, returned seven times and sent back for a seventh bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
+**W1-7 is dispatched and ACTIVE, returned eight times. The harness and plumbing slice is CLOSED as of 2026-08-18; the substantive controls are the sole remaining W1-7 item.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
 
 - **First return** refused on **F19** and **F20**: the suite passed 5 of 5 but only **2 of 14 guards were load-bearing**, and the signing boundary was an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** held and the revision connected to it.
 - **Second return** accepted the structural direction, since **F20 is materially addressed** and signing now runs through Vault transit HTTP verified live, but refused on **F21**: eight defects in the replacement itself, including a `ReferenceError` that kills every mint, a response fallback that returns a live token as a signature, and caller-controlled key and endpoint selection. **F22** records that `npm test` is not the canonical sweep and left three failing W1-7 tests invisible.
@@ -58,6 +58,10 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 - **Sixth return: the live provisioning and differential slice is ACCEPTED**, recorded in **F27**. Real Vault does real work, the four-part differential and both policy discrimination controls reproduce independently, and F26's exit-code regression is fixed. Returned because removing the test skip left **`npm test` and `verify:all` both red**, and because the result event **does not bind its artifact**. All custody-side carried-forward work is byte-identical and untouched.
 
 - **Seventh return**, recorded in **F28**. Test separation and artifact binding both hold under attack: the verifier rejects changed bytes, a changed digest and a missing artifact; no event has ever been modified; the live differential fails rather than skips without Vault, fixing F27 without reintroducing a skip; and all three wiring discriminations reproduce. **Not closed** because `verify:all`, presented as the canonical full sweep, **omits `build` and the rendered-html suite**, proven by a failing suite leaving it green. One-item fix.
+
+- **Eighth return: the harness and plumbing slice is ACCEPTED AND CLOSED**, recorded in **F28 closure**. `verify:all` was reduced to `npm test && db:test && kms:test && lint`, so it **inherits** the Node and site sweep rather than restating it: 19 leaf steps, zero duplication, no cycle, a strict superset of `npm test`. Better than the instruction, which asked for the two suites to be added, because delegation cannot drift. All four discriminations reproduce, the live differential fails rather than skips without Vault, and binding is enforced against bytes.
+
+**What closing the slice does not mean.** No Tier A or Tier B control moved. `custody-service.mjs` and `credential-boundary.mjs` are byte-identical to the state accepted at `a373302`. **A7, A8 and B5 remain open**, B1–B4 remain W3's, A6 and B9 remain W1-8's. The apparatus for proving those controls now exists; it is not evidence for them.
 
 Fixture conversion to live Vault and the durable store is deliberately deferred to the revision after next, so that the F17 discrimination evidence is not built on a broken boundary.
 
@@ -624,3 +628,17 @@ The three Vault token shapes, `hvs.`, `hvb.` and legacy `s.`, were the real and 
 **Defect: `verify:all` is described as the canonical full sweep but omits `build` and `tests/rendered-html.test.mjs`**, both of which `npm test` runs, so neither command is a superset and no single command verifies the repository. Demonstrated: a failing assertion appended to the rendered-html suite gives exit 1 directly and exit 1 under `npm test`, while **`verify:all` stays at exit 0**. This is the **F22 shape in a smaller place**, the same property the previous revision fixed for `db:test` and `kms:test`; that it is site rendering rather than a security control changes the blast radius, not the property. Correction is to make `verify:all` a strict superset of `npm test`.
 
 **Totals: 232 tests, 232 passed, 0 failed, 0 skipped** across fourteen suites including the live differential via `kms:test`; `db:test` exit 0; lint clean; proof 103 events across 28 threads; cleanup zero containers and zero volumes after every run including each injected failure; no token or PEM material in tracked files beyond the detector fixtures.
+
+## F28 closure: the canonical verification sweep
+
+**Closed 2026-08-18 by agent-a**, implementation `240a391`, result event `01a015e2-1702-7d48-884e-8582b50bb4a8`, evidence `artifacts/agent-b/w1-7-canonical-sweep-results.md` at `4cf9bf8637e6d38f3da3db63c4132ac60d92ebdff736eb45c56eae83ea7c0d1d`.
+
+`verify:all` became `npm test && npm run db:test && npm run kms:test && npm run lint`. Rather than adding `build` and the rendered-html suite as agent-a asked, it **delegates** to `npm test` and inherits them. Fully expanded: **19 leaf steps, zero duplicated steps, no cycle, strict superset of `npm test`**. This is better than the requested fix, because a restated list can drift from the sweep it mirrors while a delegated one cannot.
+
+**All four discriminations reproduce**, each mutation confirmed applied first: rendered-html failure gives exit 1 directly, under `npm test` and under `verify:all`; structural W1-7 failure gives 1 and 1; a database failure propagates curl's exit **3** through both; a live-differential failure gives 1 for `kms:test` and `verify:all` while `npm test` correctly stays 0. Restored tree: every command exit 0, proof 105 events across 28 threads, **zero skipped tests across all suites** measured by summing skip counters. Missing live configuration gives 1 test, 0 passed, 1 failed, 0 skipped, exit 1, `KMS_UNAVAILABLE`.
+
+Binding enforcement re-proven on this result: changed bytes and a changed digest each give `artifact hash mismatch`, a missing artifact gives `missing artifact`, correct pair verifies at exit 0.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped** across fifteen suites; lint clean; cleanup zero containers and zero volumes after every run including each injected failure.
+
+**The seven substantive W1-7 controls are now the sole remaining item** and are unchanged: namespace discrimination, endpoint-pin and `toJSON` evidence, RET-CONFIG-400, key-guard masking, production UUIDv7 clock injection, 4096 exhaustion and concurrency, and the durable atomic custody, authorization, canary and retention fixture conversion. Seven returns of harness work produced the apparatus for proving A7, A8 and B5, and none of it is evidence for them.
