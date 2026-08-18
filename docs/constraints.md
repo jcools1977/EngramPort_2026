@@ -44,10 +44,12 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
-**W1-7 is dispatched and ACTIVE, returned twice and sent back for a second bounded revision on 2026-08-17.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
+**W1-7 is dispatched and ACTIVE, returned three times and sent back for a third bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
 
 - **First return** refused on **F19** and **F20**: the suite passed 5 of 5 but only **2 of 14 guards were load-bearing**, and the signing boundary was an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** held and the revision connected to it.
 - **Second return** accepted the structural direction, since **F20 is materially addressed** and signing now runs through Vault transit HTTP verified live, but refused on **F21**: eight defects in the replacement itself, including a `ReferenceError` that kills every mint, a response fallback that returns a live token as a signature, and caller-controlled key and endpoint selection. **F22** records that `npm test` is not the canonical sweep and left three failing W1-7 tests invisible.
+
+- **Third return accepts the boundary itself**, recorded in **F24**. No local signing primitive survives anywhere in `packages/`; malformed responses, traversal, endpoint pinning, network absence and token confinement all hold under independent attack; and minted references are **canonical RFC 9562 UUIDv7**, not "UUIDv7-style". Refused on the harness: a provisioning script that **cannot report failure** and leaks two volumes per run, a `kms:test` that runs no tests, four real controls with no test that fails when they are removed, **F22 still unaddressed**, and **F23**, the detector having no Vault-token pattern. The reported connection reset was **benign and already handled**, and agent-a completed the full live differential during review.
 
 Fixture conversion to live Vault and the durable store is deliberately deferred to the revision after next, so that the F17 discrimination evidence is not built on a broken boundary.
 
@@ -498,3 +500,41 @@ The structural replacement is sound in direction and **F20 is materially address
 `npm test` is `npm run proof && npm run build && node --test tests/rendered-html.test.mjs`. It runs **none** of the eleven per-suite scripts, so W1-7 failing 3 of 5 leaves `npm test` green. The W1-7 revision result reported regressions green, which was true of `npm test` and false of the repository.
 
 Every review from here reports **per-suite totals**. Treating `npm test` as coverage is how a wholly failing required suite passes unnoticed, which is the same failure shape as F16's four defects invisible to static review: the check ran, reported success, and was never capable of failing the way that mattered.
+
+## F23. The credential detector has no pattern for Vault tokens
+
+**Raised:** W1-7 structural revision review, 2026-08-18, by agent-a. **Not blocking. Bounded coverage gap.** **Closes in:** W1-7 revision 3.
+
+Found while building the discrimination control for token confinement. A deliberately vulnerable boundary variant that serializes its token produces JSON containing the token, and **`detectCredential` does not flag it**.
+
+Probing the detector directly: GitHub PAT **caught**, PEM private key **caught**, AWS key **caught**, the token *header* form **caught**. **Every Vault token value shape passes**: `hvs.` service tokens, `hvb.` batch tokens, the legacy `s.` form, and a bare JWT.
+
+W1-7 introduces Vault tokens as a live credential class. Confinement holds today because the token is a private field that survives ten serialization surfaces, but **the second line of defence is absent for exactly the class this task introduces**.
+
+**A4 and F10 are not reopened.** Their text covers the detector existing, being wired into the plan, event and artifact paths, and failing closed. All three still hold; this is pattern coverage, which A4 never claimed.
+
+## F24. The W1-7 provisioning harness cannot fail, and a benign reset was read as a blocker
+
+**Raised:** W1-7 structural revision review, 2026-08-18, by agent-a. **Blocking W1-7 acceptance.** **Closes in:** W1-7 revision 3.
+
+**The boundary itself is sound** and is accepted: no local signing primitive survives anywhere in `packages/` across nine searched patterns, 8 of 8 malformed responses produce `KMS_RESPONSE_INVALID` with zero leakage, 12 of 12 key-name attacks are refused including encoded and mixed-separator variants, endpoint pinning rejects the userinfo trick, network absence yields `KMS_UNAVAILABLE` without leaking the transport error, and the token survives 10 of 10 serialization surfaces including `util.inspect` with `showHidden`. Minted references are **canonical RFC 9562 UUIDv7**, not "UUIDv7-style": correct version and variant bits, timestamp decoding within 1 ms, 0 collisions in 20,000, and 9,000 references accepted by the canonical grammar across all three namespaces.
+
+**The harness around it is the defect.**
+
+`scripts/run-kms-tests` **cannot report failure**: its thirty-attempt retry loop simply ends when exhausted, the transit mount carries `|| true`, and the success line is unconditional. Reproduced: a visible `curl: (56)` followed immediately by `Vault 1.17 provisioned and health-checked` and **exit 0**. It also runs no tests despite its name, and `cleanup()` omits `-v`, orphaning **two volumes per run**, reproduced from a clean baseline as 0 volumes to 2.
+
+**The reported connection reset was benign and the differential was achievable.** Diagnosed against all five candidates: not a bind-address error, not a crash, not a teardown race, not premature setup, not health semantics. It is a readiness race with a specific signature, since Docker publishes the port before Vault's listener exists, so `docker-proxy` accepts and resets, giving `(56)` rather than `(7)`. Health returns 200 by about 0.6 s and the loop's next attempt succeeds. agent-a then completed the entire differential against the hardened production boundary: a live signature, export refused with `private key material is not exportable`, and an exportable positive control returning **1904 bytes of real PEM**.
+
+**Guard-removal audit: 6 of 10 load-bearing**, up from 2 of 14. Load-bearing: authorization, rollback and orphan prevention, the key allowlist, response validation, the transport wrapper, and RET-GRANT-400's clock start. Not load-bearing: namespace closure, still masked by the authority check as in F19; `toJSON` redaction; endpoint pinning; and RET-CONFIG-400, whose fixture now evaluates 1 ms outside the discriminating window `[n+400d, n+400d+10)`.
+
+**F22 is not addressed.** `npm test` is unchanged and W1-7 is not wired into it, demonstrated by appending a failing test, confirming the suite reported one failure, and watching `npm test` pass anyway.
+
+**Regressions: 230 tests, 230 passed, 0 failed** across thirteen suites; live `db:test` exit 0; lint clean; proof log 95 events across 28 threads; cleanup verified at zero containers and zero volumes.
+
+## Correction to F19's rollback finding
+
+**Recorded 2026-08-18 by agent-a.** F19 stated that removing the rollback left the round-one suite green because `rows.size === refs.size` holds when both leak. The assertion is weak, but **that was not the mechanism**, and the earlier diagnosis was wrong.
+
+Round-one `uuidv7()` derived entropy from the first 16 bytes of a fresh RSA-2048 SPKI DER. **Those bytes are a fixed ASN.1 header, identical for every RSA-2048 key**, so the function returned a **constant**: six mints produced **one distinct reference**, each custody row overwrote the last, and the store never grew, so the size comparison could not diverge. M9's deterministic collision refusal was violated by construction, which F19 did not record.
+
+The `randomUUID` rewrite fixed it, confirmed at 0 collisions in 20,000 mints. Recorded so the register carries the real cause rather than the plausible one.
