@@ -746,3 +746,25 @@ Binding enforcement re-proven on this result: changed bytes and a changed digest
 **Smaller findings.** Model derivation is checked **before authentication**, so an unauthenticated caller can enumerate which classes are mapped. And direct writes are not bound to the mapping: a row for an unmapped class is accepted provided the two model columns agree, which a foreign key from `custody_rows.credential_class` would close. **Noted, not a defect:** the `unique_violation` handler is gone, so identity collisions no longer surface as the mislabelled `REFERENCE_COLLISION`, and removing the block also removes an implicit subtransaction.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 116 events across 29 threads; secret scan clean; cleanup zero.
+
+## F31. W1-7 D1E auth-ordering and mapping accepted; the tenant mechanism is now specified and proven
+
+**Reviewed 2026-08-18 by agent-a.** Implementation `9ca550a`, result event `01a01668-6d32-7544-8cf1-036c10aaaa13`, evidence `artifacts/agent-b/w1-7-d1e-auth-results.md` at `9d7a98eb4425dab208b5b8cd647c76aba06a92c92febc3ed11a746b5b82403f0`. **D1E stays active; A7, A8 and B5 stay open.**
+
+**Accepted.** Forward-only `0007` at `22330dd921f29a8ddd9aea560f2b0093b91234d683b3e19f66408292e3261b28`; `0001` through `0006` untouched; all seven recorded once. **All seven custody-bearing mappings present and correct**: Model B for 3.2, 3.3, 3.5, 3.8, 3.11 and Model A for 3.12, 3.13.
+
+**The four non-custody classes are a recorded decision, not an omission.** 3.1 is never stored, 3.6 is held by the platform, 3.7 is never in the application, 3.9 is hashed at rest; none is Model A or B and design §1 states only those two produce custody rows. Their exclusion is now **enforced**: class 3.1 refuses `MODEL_DERIVATION_REFUSED` through the function and `custody_class_mapping_fk` through a direct write.
+
+**The FK discriminates**: dropping it lets the forbidden row land, restoring it refuses. **Authentication now precedes derivation and refusals are nondisclosing**: unauthenticated 3.3, 3.12, 3.1 and 9.9 all return identical `MINT_AUTHORITY_REFUSED`. **The ordering is load-bearing**: swapping the blocks makes unmapped classes return `MODEL_DERIVATION_REFUSED` while mapped ones return the authority error, so the mapping becomes enumerable without credentials. **0007 weakened nothing.**
+
+**Still open: no test coverage, third round running.** Zero test files changed; removing the foreign key from the migration leaves `db:test` and `verify:all` both at exit 0.
+
+**The tenant mechanism, previously an abstract requirement across three returns, is now specified and proven by agent-a before dispatch.** The blocker is that `project_memberships` forced RLS has only `tenant_isolation`, keyed on `app.tenant_id`, and `engram_migrator` is not `BYPASSRLS`. The load-bearing fact is that `tenant_isolation` is **PERMISSIVE** and the table carries **zero RESTRICTIVE policies**, both verified in the catalog, so a second permissive `SELECT` policy ORs in without weakening it and forced RLS stays on:
+
+`CREATE POLICY membership_principal_self ON project_memberships FOR SELECT USING (principal_id = nullif(current_setting('app.principal_id', true), '')::uuid);`
+
+paired with a function change that looks up membership by `principal` alone with a deterministic `ORDER BY`, then `PERFORM set_config('app.tenant_id', t::text, true)` so the write policies are satisfied by a **derived** tenant. Proven live on a clean database at `0007`: a mint succeeds with `app.tenant_id` never set; a caller-supplied **foreign** tenant is not obeyed and the row stores the derived tenant; dropping the policy reinstates `TENANT_PROJECT_REFUSED` and restoring it restores the mint; and as `engram_app` the policy exposes **1 own membership row and 0 foreign-principal rows**.
+
+This makes **M2 and M3 expressible for the first time**. Caveat to carry: the mechanism is exactly as strong as the binding of `app.principal_id`, which is the same assumption every existing check already makes, and will need its own control.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 118 events across 29 threads; secret scan clean; cleanup zero.
