@@ -44,7 +44,7 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
-**W1-7 is dispatched and ACTIVE, returned five times and sent back for a fifth bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
+**W1-7 is dispatched and ACTIVE, returned six times and sent back for a sixth bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
 
 - **First return** refused on **F19** and **F20**: the suite passed 5 of 5 but only **2 of 14 guards were load-bearing**, and the signing boundary was an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** held and the revision connected to it.
 - **Second return** accepted the structural direction, since **F20 is materially addressed** and signing now runs through Vault transit HTTP verified live, but refused on **F21**: eight defects in the replacement itself, including a `ReferenceError` that kills every mint, a response fallback that returns a live token as a signature, and caller-controlled key and endpoint selection. **F22** records that `npm test` is not the canonical sweep and left three failing W1-7 tests invisible.
@@ -54,6 +54,8 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 - **Fourth return accepts the harness mechanics**, recorded in **F25**: failure propagation, exit-code preservation, volume cleanup and the detector are proven, and **F22 is closed**. Refused because the harness **provisions Vault and never uses it**, proven by the suite passing 5 of 5 with zero containers running; because the **live differential was an explicit requirement of this revision** rather than a deferral; and because **none of the four discrimination controls were attempted**.
 
 - **Fifth return** diagnosed in **F26**. Provisioning now reaches the policy step and reports an honest failure rather than a green simulation, which is right. Refused because the HTTP 400 is a **malformed policy request**, one line, with a **second failure queued behind it** that would make the differential pass for the wrong reason; because **exit-code preservation regressed** so the 400 exits zero; and because everything carried forward is byte-identical and unimplemented.
+
+- **Sixth return: the live provisioning and differential slice is ACCEPTED**, recorded in **F27**. Real Vault does real work, the four-part differential and both policy discrimination controls reproduce independently, and F26's exit-code regression is fixed. Returned because removing the test skip left **`npm test` and `verify:all` both red**, and because the result event **does not bind its artifact**. All custody-side carried-forward work is byte-identical and untouched.
 
 Fixture conversion to live Vault and the durable store is deliberately deferred to the revision after next, so that the F17 discrimination evidence is not built on a broken boundary.
 
@@ -588,3 +590,19 @@ The three Vault token shapes, `hvs.`, `hvb.` and legacy `s.`, were the real and 
 **Everything carried forward remains unimplemented.** `custody-service.mjs` and `package.json` are **byte-identical** to the previously reviewed versions, confirmed by hash: namespace closure non-discriminating for a fourth round, endpoint pinning, `toJSON` redaction and RET-CONFIG-400 likewise; the key guard still proven only as a whole; the UUIDv7 clock still unreachable from `mint()`; the counter still wrapping silently at 4096; concurrent collision control still absent; and `db:test` and `kms:test` still outside the canonical sweep.
 
 **Totals: 232 tests, 231 passed, 0 failed, 1 skipped**; live `db:test` exit 0; lint clean; proof log 99 events across 28 threads; cleanup zero containers and zero volumes.
+
+## F27. The W1-7 live differential is accepted; removing the skip left both sweeps red
+
+**Raised:** W1-7 live provisioning correction review, 2026-08-18, by agent-a. **Live slice ACCEPTED.** **Remaining defects close in:** W1-7 revision 6.
+
+**Accepted, reproduced independently against agent-a's own container.** The four-part differential runs through `VaultTransitBoundary`: the scoped token signs `synth-a`, is denied `KMS_403` on `prod-real`, export of the non-exportable key is refused **by Vault** with `private key material is not exportable`, and the exportable control returns real PEM at **1675 bytes** with only length and digest recorded. **Both policy discrimination controls hold**: exact-path denies both at 403/403, broadening allows both at 200/200, and the restored scoped wildcard gives 200/403. The broadening leg is what proves the `prod-real` denial is policy-caused rather than incidental.
+
+**F26's exit-code regression is fixed.** The trap captures `rc=$?` first. Verified with mutations checked as actually applied: a policy body missing its field exits **1** with `KMS_POLICY_INVALID`, broken token extraction exits **1** with `KMS_TOKEN_FAILED`, and an absent Vault exits **1** with `KMS_UNAVAILABLE`, each with no success line and zero residue. Existing-mount reuse now parses `data["transit/"].type` instead of grepping a path string. `kms:test` reports **6 of 6 with zero skips**, and with Vault stopped or the token removed the suite reports **1 failure and zero skips**.
+
+**Defect: both canonical sweeps now fail.** `npm test` and `npm run verify:all` each **exit 1** at `w1-7:test`, which sits at position 3 while `kms:test` provisions Vault at position 15. Removing the skip was correct, but the live test now runs in sweeps that have no Vault. This is the F22 property failing in the opposite direction: rather than a broken suite hiding in a green sweep, a correct suite makes the sweep permanently red. The fix is to gate the live differential on an explicit marker that `kms:test` sets, so plain sweeps run the structural tests and the live test still fails loudly where Vault is expected.
+
+**Defect: the result event does not bind its artifact.** No `artifacts:` field is present; the path and digest appear in body prose only. The digest `23eb887e…` is correct against the file on disk, so the evidence is genuine, but `verify-log` has nothing to check, and all three prior W1-7 results carried the field.
+
+**Carried forward unchanged**, `custody-service.mjs` byte-identical by hash: namespace closure discrimination for a fifth round, endpoint pinning, `toJSON`, RET-CONFIG-400, key-guard masking, the UUIDv7 clock still unreachable from `mint()`, the silent 4096 wrap and concurrency, and the durable fixture conversion that A7, A8 and B5 ultimately depend on.
+
+**Totals: 232 tests, 232 passed, 0 failed, 0 skipped** across thirteen suites including W1-7 under live Vault; `db:test` exit 0; lint clean; proof log 101 events across 28 threads; cleanup zero after every run including each injected failure.
