@@ -700,3 +700,27 @@ Binding enforcement re-proven on this result: changed bytes and a changed digest
 **D1 is split into two bounded continuations under the same WIP.** **D1E, dispatched:** de-circularize tenant derivation, then demonstrate M2 and M3 live; implement M7 scope containment, refused not narrowed; M13's class gate; and derive `retention_policy` from the credential class. **D1F, queued and not dispatched:** M9 live collision, safe M11 and M12 fault injection, a genuinely overlapping mint, and winner/loser plus per-table residue evidence.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 112 events across 29 threads; secret scan clean; cleanup zero containers and zero volumes.
+
+## F30. W1-7 D1E: scope containment is genuine, model derivation is a name without a value
+
+**Raised:** W1-7 D1E review, 2026-08-18, by agent-a. **D1E stays active.** **Closes in:** the bounded D1E correction.
+
+**Accepted.** Binding `f3694aa8…` verified and a clean `HEAD` extraction verifies 114 events across 29 threads. Forward-only `0005`; `0001` through `0004` untouched; all five recorded exactly once, `0005` at `58334599dbb621cf16d6b1440cb7b8c70cfb98fb70141192967a686447c6da40`.
+
+**M7 scope containment is real enforcement**, which was the claim most likely to fail and did not. `required` is computed as `custody:mint:<namespace>:<class>:<model>` from the request and compared against `g.scopes`, trusted state read `FOR SHARE` inside the transaction, so the caller supplies no scope and cannot broaden authority. With an authority holding exactly `custody:mint:credential:3.3:B`: the held triple mints, an unheld class refuses `SCOPE_EXCEEDED`, and an unheld **model** for a held class also refuses. **Load-bearing and unmasked**: removing only the scope check lets an unheld class mint.
+
+**0005 weakened nothing**: M8 still refuses `installation` and `shape` **even when their scope is held**, so the namespace guard correctly precedes scope; metadata refusal, forced RLS on all three, 6 policies, `PUBLIC` at 0 on the function, `engram_app` `SELECT`-only, revoked and expired authority refusing, all references canonical.
+
+**Defect: `inventory_model` is not derived.** Its value is `p_model::text`, the caller's own argument, and **no class-to-model mapping exists in the schema**. Demonstrated: inventory row 3.3 is Model B, KMS/HSM only, yet with a grant naming `custody:mint:credential:3.3:A` the class minted as **Model A with no key locator**, storing `inventory_model='A'`. The grant constrains which model may be **requested**; nothing constrains whether that model is **correct for the class**. Same defect class as `VaultTransitBoundary`: a name claiming more than the value proves.
+
+**Defect: the new column constraints do not hold their invariants.** Direct writes by `engram_maintenance` accepted `inventory_model` **NULL**, because `CHECK (inventory_model IN ('A','B','C'))` is NULL-passing; accepted `'C'`, though design §1 says Model C writes **no custody row**; and accepted `custody_model='B'` with `inventory_model='A'`, so the two can disagree in storage.
+
+**Defect: no test exists.** The change set is migration, runner and artifact; **zero test files changed**. M7 is structurally present and behaviourally unproven in the repository, so nothing in `db:test` will catch a regression.
+
+**M13 is structurally absent**: the scope triple names the class, but nothing checks that the class's Tier C gate has passed for the current revision. No gate table, no gate read.
+
+**F17: 3 guards examined, 1 demonstrated, 1 non-isolable, 1 absent.** Scope check demonstrated and unmasked. Locator guards non-isolable, since removing `KEY_LOCATOR_FORBIDDEN` still refuses via table constraint `custody_rows_check1`, making them named-error improvements like `METADATA_KEY_REFUSED`. Model derivation absent, with no guard to mutate.
+
+**Tenant circularity unchanged and correctly disclaimed**: cleared `app.tenant_id` gives `TENANT_PROJECT_REFUSED`, supplying it mints. M2 and M3 remain unexecutable, which is what keeps D1E open. Incidental: `custody_single_active` violations are reported as `REFERENCE_COLLISION`, conflating identity collision with UUID collision, which D1F's M9 and M10 evidence will need to distinguish.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 114 events across 29 threads; secret scan clean; cleanup zero.
