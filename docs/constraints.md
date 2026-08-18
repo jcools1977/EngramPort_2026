@@ -768,3 +768,25 @@ paired with a function change that looks up membership by `principal` alone with
 This makes **M2 and M3 expressible for the first time**. Caveat to carry: the mechanism is exactly as strong as the binding of `app.principal_id`, which is the same assumption every existing check already makes, and will need its own control.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 118 events across 29 threads; secret scan clean; cleanup zero.
+
+## F32. W1-7 D1E tenant derivation accepted; principal-binding ownership decided in ADR 0015
+
+**Reviewed 2026-08-18 by agent-a.** Implementation `f1b8790`, result event `01a01679-8174-7f18-b204-a132f0623cb3`, evidence `artifacts/agent-b/w1-7-d1e-tenant-results.md` at `662769f7aeae37598d89826aa474ef5c404b43d6c710a34327dc3be9a0fc0a98`. **D1E stays active; A7, A8 and B5 stay open.**
+
+**The circularity that blocked D1E across four returns is closed.** Forward-only `0008` at `2fd9f03708eac04886128b83c3328cce3988c8dce3d433f8abcfe487e6fc2988`; `0001`–`0007` untouched; all eight recorded once. **The policy assumption is guarded rather than assumed**: `0008` raises if any `RESTRICTIVE` policy exists on `project_memberships`; live, both policies are PERMISSIVE and the restrictive count is 0.
+
+**Tenant derivation verified in six cases**: a valid member mints with `app.tenant_id` never set; a foreign preset tenant is ignored and the derived tenant is stored; a nonmember is refused; `engram_app` sees 1 own membership row, 0 foreign, and 0 custody rows; dropping `membership_principal_self` reinstates `TENANT_PROJECT_REFUSED`; weakening it to `USING (true)` exposes 2 rows including 1 foreign. Both directions discriminate.
+
+**Transaction-local state is correct**: the GUC is empty pre-mint, holds the derived tenant inside the transaction, and is empty after both COMMIT and ROLLBACK. A fresh connection reports `tenant=(unset) principal=(unset)`, so pooled reuse cannot inherit. A rolled-back mint leaves zero rows.
+
+**The limit of what the database can prove.** `engram_app` can spoof `app.principal_id` but **cannot execute the mint**. **`engram_maintenance` can set `app.principal_id` to any principal and mint as them**, verified live, storing that principal's tenant and `minted_by_principal_id`. The function takes no caller principal parameter and looks the grant up **by** the session principal, so no cross-check exists.
+
+**Decision, recorded canonically in `docs/adr/0015-principal-binding-ownership.md` at `56f92dcd3c00d46495675968db8528ee724a637f5d4171cf11f1224f6b7fde5f`: option A.** D1's contract begins with a trusted, already-authenticated session principal; **D2 owns binding** the external identity to `app.principal_id` and the privileged session. Option B was rejected because `engram_maintenance` already holds full DML on every table in `public` from `0001`, so it could forge whatever session record the mint would check; B moves the same unverifiable assumption one table deeper while presenting as a control. A also agrees with the existing specification, where row 3.16 is Model C, in-memory today, with C17 gating the durable form.
+
+**Binding consequences: M2 and M3 are accepted only under the explicitly recorded trusted-session precondition; principal-session binding and its discrimination are assigned to D2; and A7 and A8 do not close until D2 proves the binding.**
+
+**Two defects stay in D1.** `derive_mint_membership` carries the **default `PUBLIC EXECUTE`** and `has_function_privilege('engram_app', …)` is true; it discloses nothing beyond existing `engram_app` visibility today because RLS still filters rows, so this is blast radius rather than a leak. Note `aclexplode` reports 0 PUBLIC grants because `proacl` is NULL and `aclexplode(NULL)` returns no rows — a false negative, the same trap as F16; `has_function_privilege` is reliable.
+
+**And still no regression coverage, fourth round.** Zero test files changed. Four load-bearing guards were removed one at a time — `membership_principal_self`, the class mapping foreign key, scope containment, and the M8 namespace guard — and in **every case `db:test` and `verify:all` both exited 0**. Every control in D1 can be deleted while the repository reports success. This is now the largest risk in D1, because unimplemented work is visible and unguarded work is not.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 120 events across 29 threads; secret scan clean; cleanup zero.
