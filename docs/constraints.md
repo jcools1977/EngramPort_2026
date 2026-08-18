@@ -724,3 +724,25 @@ Binding enforcement re-proven on this result: changed bytes and a changed digest
 **Tenant circularity unchanged and correctly disclaimed**: cleared `app.tenant_id` gives `TENANT_PROJECT_REFUSED`, supplying it mints. M2 and M3 remain unexecutable, which is what keeps D1E open. Incidental: `custody_single_active` violations are reported as `REFERENCE_COLLISION`, conflating identity collision with UUID collision, which D1F's M9 and M10 evidence will need to distinguish.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 114 events across 29 threads; secret scan clean; cleanup zero.
+
+## F30 partial closure: model derivation is real; the mapping is 1 of 7 and untested
+
+**Reviewed 2026-08-18 by agent-a.** Implementation `310481a`, result event `01a0165b-578d-7d17-957c-f47d1a2f8b1d`, evidence `artifacts/agent-b/w1-7-d1e-model-results.md` at `92ef5be38caa8dd53b5b4fc6755ec9efdbb4432d37edf21e760db5cad97e8cc7`. **D1E stays active; A7, A8 and B5 stay open.**
+
+**The F30 model-derivation defect is fixed and survives the strongest form of the attack.** With an authority granted **both** `custody:mint:credential:3.3:A` and `…:3.3:B`, class 3.3 asserted as Model A is refused `MODEL_DERIVATION_REFUSED`, with and without a locator; **zero Model-A rows exist for 3.3**; and the correct Model B mints storing `inventory_model=B`. Derivation now precedes scope, so naming a model in the grant buys nothing. Unmapped and unknown classes fail closed. Model C cannot enter the mapping, since the `custody_model` enum has only A and B.
+
+**F30's invariant gaps are closed**: a NULL `inventory_model` violates not-null, and `custody_model='B'` with `inventory_model='A'` violates `custody_inventory_model_matches`.
+
+**The mapping is properly trusted state.** `engram_app` **and `engram_maintenance`** both have no `SELECT`, `INSERT` or `UPDATE` on `custody_inventory_models`; only `engram_migrator` does, and a live attempt by `engram_maintenance` to add a mapping is `permission denied for table`. Migration-controlled rather than operator-writable is the right call.
+
+**Forward-only `0006`; `0001`–`0005` untouched; all six recorded once**, `0006` at `436ebe60f80240ec5b806c01bc04fe2b06f1a6933cc53a6d52beeb4c02510559`. **0006 weakened nothing**: M7, M8, metadata, revocation, expiry, forced RLS, ACLs and canonical references all verified intact.
+
+**Defect: the mapping is 1 of 7.** Only `3.3 → B` is seeded. The custody-bearing classes are Model A rows 3.12 and 3.13 and Model B rows 3.2, 3.3, 3.5, 3.8 and 3.11, so **six are missing** and the service can mint exactly one class. Rows 3.1, 3.6, 3.7 and 3.9 are neither A nor B and need an explicit decision. Fail-closed, so this is incompleteness rather than a hole, but "derives the canonical model" is true of one row, not the inventory.
+
+**Defect: no test covers any of it, second round running.** Zero test files changed. Removing the derivation guard from the migration and running the sweeps gives **`db:test` exit 0 and `verify:all` exit 0** — both green with the control gone. Same shape as F22: the check runs, reports success, and cannot fail the way that matters.
+
+**F17: 1 pair demonstrated, 2 individually non-isolable, 0 falsely counted.** The function guard and the matching `CHECK` mutually mask each other; removing the function guard alone still refuses via the constraint, and **removing both stores the forbidden state** `custody_model=A inventory_model=B`.
+
+**Smaller findings.** Model derivation is checked **before authentication**, so an unauthenticated caller can enumerate which classes are mapped. And direct writes are not bound to the mapping: a row for an unmapped class is accepted provided the two model columns agree, which a foreign key from `custody_rows.credential_class` would close. **Noted, not a defect:** the `unique_violation` handler is gone, so identity collisions no longer surface as the mislabelled `REFERENCE_COLLISION`, and removing the block also removes an implicit subtransaction.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 116 events across 29 threads; secret scan clean; cleanup zero.
