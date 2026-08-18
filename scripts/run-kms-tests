@@ -9,6 +9,11 @@ docker run -d --name "$name" --cap-add IPC_LOCK -p 8201:8200 -e VAULT_DEV_ROOT_T
 ready=0
 for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:8201/v1/sys/health >/dev/null 2>&1; then ready=1; break; fi; sleep 1; done
 [[ $ready == 1 ]] || { echo KMS_UNAVAILABLE >&2; exit 1; }
-curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"type":"transit"}' http://127.0.0.1:8201/v1/sys/mounts/transit >/dev/null
-npm run w1-7:test
+if ! curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"type":"transit"}' http://127.0.0.1:8201/v1/sys/mounts/transit >/dev/null; then curl -fsS -H 'X-Vault-Token: synthetic-dev-root' http://127.0.0.1:8201/v1/sys/mounts | grep -q '"transit/"'; fi
+for spec in 'synth-a|rsa-2048|false' 'synth-exportable|rsa-2048|true' 'prod-real|rsa-2048|false'; do IFS='|' read -r key typ exp <<<"$spec"; body=$(printf '{"type":"%s","exportable":%s}' "$typ" "$exp"); curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d "$body" "http://127.0.0.1:8201/v1/transit/keys/$key" >/dev/null; done
+policy=$(mktemp); trap 'rm -f "$policy"; rc=$?; cleanup; exit ${rc:-$status}' EXIT; printf 'path "transit/sign/synth-a" { capabilities=["update"] }\n' > "$policy"; curl -fsS -X PUT -H 'X-Vault-Token: synthetic-dev-root' --data-binary "@$policy" http://127.0.0.1:8201/v1/sys/policies/acl/synth-policy >/dev/null
+token_json=$(curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"policies":["synth-policy"]}' http://127.0.0.1:8201/v1/auth/token/create); token=$(node -e 'const x=JSON.parse(process.argv[1]);process.stdout.write(x.auth.client_token)' "$token_json"); [[ -n "$token" ]]
+KMS_TOKEN="$token" npm run w1-7:test
+curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d '{"input":"eA=="}' http://127.0.0.1:8201/v1/transit/sign/synth-a/sha2-256 >/dev/null
+! curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d '{"input":"eA=="}' http://127.0.0.1:8201/v1/transit/sign/prod-real/sha2-256 >/dev/null
 echo 'Vault 1.17 provisioned, tested and cleanup scheduled'
