@@ -1,19 +1,90 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 name=engram-kms
+policy_file=""
 status=0
-cleanup(){ docker rm -f -v "$name" >/dev/null 2>&1 || status=$?; }
-trap 'rc=$?; cleanup; exit ${rc:-$status}' EXIT
-cleanup
-docker run -d --name "$name" --cap-add IPC_LOCK -p 8201:8200 -e VAULT_DEV_ROOT_TOKEN_ID=synthetic-dev-root -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 hashicorp/vault:1.17 >/dev/null || { echo KMS_UNAVAILABLE >&2; exit 1; }
+cleanup() {
+  local cleanup_rc=0
+  [[ -z "$policy_file" ]] || rm -f "$policy_file" || cleanup_rc=$?
+  docker rm -f -v "$name" >/dev/null 2>&1 || cleanup_rc=$?
+  if docker ps -aq --filter "name=^${name}$" | grep -q .; then cleanup_rc=1; fi
+  if (( cleanup_rc != 0 && status == 0 )); then status=$cleanup_rc; fi
+}
+trap 'rc=$?; status=$rc; cleanup; if (( rc == 0 && status != 0 )); then exit "$status"; else exit "$rc"; fi' EXIT
+
+docker rm -f -v "$name" >/dev/null 2>&1 || test $? -eq 1
+docker run -d --name "$name" --cap-add IPC_LOCK -p 8201:8200 \
+  -e VAULT_DEV_ROOT_TOKEN_ID=synthetic-dev-root \
+  -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 hashicorp/vault:1.17 >/dev/null || { echo KMS_UNAVAILABLE >&2; exit 1; }
+
 ready=0
-for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:8201/v1/sys/health >/dev/null 2>&1; then ready=1; break; fi; sleep 1; done
-[[ $ready == 1 ]] || { echo KMS_UNAVAILABLE >&2; exit 1; }
-if ! curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"type":"transit"}' http://127.0.0.1:8201/v1/sys/mounts/transit >/dev/null; then curl -fsS -H 'X-Vault-Token: synthetic-dev-root' http://127.0.0.1:8201/v1/sys/mounts | grep -q '"transit/"'; fi
-for spec in 'synth-a|rsa-2048|false' 'synth-exportable|rsa-2048|true' 'prod-real|rsa-2048|false'; do IFS='|' read -r key typ exp <<<"$spec"; body=$(printf '{"type":"%s","exportable":%s}' "$typ" "$exp"); curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d "$body" "http://127.0.0.1:8201/v1/transit/keys/$key" >/dev/null; done
-policy=$(mktemp); trap 'rm -f "$policy"; rc=$?; cleanup; exit ${rc:-$status}' EXIT; printf 'path "transit/sign/synth-a" { capabilities=["update"] }\n' > "$policy"; curl -fsS -X PUT -H 'X-Vault-Token: synthetic-dev-root' --data-binary "@$policy" http://127.0.0.1:8201/v1/sys/policies/acl/synth-policy >/dev/null
-token_json=$(curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"policies":["synth-policy"]}' http://127.0.0.1:8201/v1/auth/token/create); token=$(node -e 'const x=JSON.parse(process.argv[1]);process.stdout.write(x.auth.client_token)' "$token_json"); [[ -n "$token" ]]
+for i in $(seq 1 30); do
+  if curl -fsS http://127.0.0.1:8201/v1/sys/health >/dev/null 2>&1; then ready=1; break; fi
+  sleep 1
+done
+(( ready == 1 )) || { echo KMS_UNAVAILABLE >&2; exit 1; }
+
+root_header=(-H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json')
+mount_response=$(mktemp)
+if ! curl -fsS "${root_header[@]}" -X POST -d '{"type":"transit"}' \
+  http://127.0.0.1:8201/v1/sys/mounts/transit >"$mount_response" 2>/dev/null; then
+  mounts=$(curl -fsS -H 'X-Vault-Token: synthetic-dev-root' http://127.0.0.1:8201/v1/sys/mounts) || { echo KMS_UNAVAILABLE >&2; exit 1; }
+  node -e 'const x=JSON.parse(process.argv[1]);if(x?.data?.["transit/"]?.type!=="transit")process.exit(1)' "$mounts" || { echo KMS_MOUNT_INVALID >&2; exit 1; }
+fi
+rm -f "$mount_response"
+
+for spec in 'synth-a|rsa-2048|false' 'synth-exportable|rsa-2048|true' 'prod-real|rsa-2048|false'; do
+  IFS='|' read -r key typ exp <<<"$spec"
+  body=$(printf '{"type":"%s","exportable":%s}' "$typ" "$exp")
+  curl -fsS "${root_header[@]}" -X POST -d "$body" \
+    "http://127.0.0.1:8201/v1/transit/keys/$key" >/dev/null || { echo KMS_PROVISION_FAILED >&2; exit 1; }
+done
+
+policy_file=$(mktemp)
+if curl -fsS -X PUT -H 'X-Vault-Token: synthetic-dev-root' --data-binary 'path "transit/sign/synth-a/*" { capabilities=["update"] }' \
+  http://127.0.0.1:8201/v1/sys/policies/acl/synth-policy >/dev/null 2>&1; then
+  echo KMS_MALFORMED_POLICY_ACCEPTED >&2; exit 1
+fi
+put_policy() {
+  local hcl=$1 response
+  printf '{"policy":"%s"}\n' "${hcl//\\/\\\\}" | sed 's/"/\\"/g' >"$policy_file"
+  # Rebuild valid JSON with node so HCL is a string field, never a raw body.
+  node -e 'const fs=require("fs");const h=process.argv[1];fs.writeFileSync(process.argv[2],JSON.stringify({policy:h+"\n"}))' "$hcl" "$policy_file"
+  response=$(curl -fsS -X PUT -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' \
+    --data-binary "@$policy_file" http://127.0.0.1:8201/v1/sys/policies/acl/synth-policy) || { echo KMS_POLICY_INVALID >&2; return 1; }
+}
+put_policy 'path "transit/sign/synth-a/*" { capabilities = ["update"] }'
+token_json=$(curl -fsS "${root_header[@]}" -X POST -d '{"policies":["synth-policy"]}' \
+  http://127.0.0.1:8201/v1/auth/token/create) || { echo KMS_TOKEN_FAILED >&2; exit 1; }
+token=$(node -e 'const x=JSON.parse(process.argv[1]);const t=x?.auth?.client_token;if(typeof t!=="string"||!t)process.exit(1);process.stdout.write(t)' "$token_json") || { echo KMS_TOKEN_FAILED >&2; exit 1; }
+
 KMS_TOKEN="$token" npm run w1-7:test
-curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d '{"input":"eA=="}' http://127.0.0.1:8201/v1/transit/sign/synth-a/sha2-256 >/dev/null
-! curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d '{"input":"eA=="}' http://127.0.0.1:8201/v1/transit/sign/prod-real/sha2-256 >/dev/null
-echo 'Vault 1.17 provisioned, tested and cleanup scheduled'
+sign_body='{"input":"eA=="}'
+curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" \
+  http://127.0.0.1:8201/v1/transit/sign/synth-a/sha2-256 >/dev/null
+if curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" \
+  http://127.0.0.1:8201/v1/transit/sign/prod-real/sha2-256 >/dev/null 2>&1; then echo KMS_POLICY_BYPASS >&2; exit 1; fi
+
+# Broken exact-path policy: both operations must deny.
+put_policy 'path "transit/sign/synth-a" { capabilities = ["update"] }'
+if curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" http://127.0.0.1:8201/v1/transit/sign/synth-a/sha2-256 >/dev/null 2>&1; then echo KMS_POLICY_DISCRIMINATION_FAILED >&2; exit 1; fi
+if curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" http://127.0.0.1:8201/v1/transit/sign/prod-real/sha2-256 >/dev/null 2>&1; then echo KMS_POLICY_DISCRIMINATION_FAILED >&2; exit 1; fi
+
+# Broadened policy must make the forbidden operation succeed, then restore.
+put_policy 'path "transit/sign/*" { capabilities = ["update"] }'
+curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" http://127.0.0.1:8201/v1/transit/sign/prod-real/sha2-256 >/dev/null
+put_policy 'path "transit/sign/synth-a/*" { capabilities = ["update"] }'
+curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" http://127.0.0.1:8201/v1/transit/sign/synth-a/sha2-256 >/dev/null
+if curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" http://127.0.0.1:8201/v1/transit/sign/prod-real/sha2-256 >/dev/null 2>&1; then echo KMS_POLICY_RESTORE_FAILED >&2; exit 1; fi
+
+# Sanitized export differential: only reason/length/digest are emitted.
+export_response=$(mktemp)
+export_status=$(curl -sS -o "$export_response" -w '%{http_code}' -H 'X-Vault-Token: synthetic-dev-root' http://127.0.0.1:8201/v1/transit/export/signing-key/synth-a) || { echo KMS_UNAVAILABLE >&2; exit 1; }
+[[ "$export_status" =~ ^4 ]] || { echo KMS_EXPORT_REFUSAL_MISSING >&2; exit 1; }
+node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync(process.argv[1]));const reason=x?.errors?.[0];if(typeof reason!=="string"||!reason)process.exit(1);console.log(`NONEXPORTABLE_REFUSAL=${reason}`)' "$export_response"
+exportable_response=$(mktemp)
+curl -fsS -H 'X-Vault-Token: synthetic-dev-root' http://127.0.0.1:8201/v1/transit/export/signing-key/synth-exportable >"$exportable_response"
+node -e 'const fs=require("fs"),crypto=require("crypto");const x=JSON.parse(fs.readFileSync(process.argv[1]));const pem=x?.data?.keys?.["1"];if(typeof pem!=="string"||!pem)process.exit(1);console.log(`PEM_BYTES=${Buffer.byteLength(pem)} PEM_SHA256=${crypto.createHash("sha256").update(pem).digest("hex")}`)' "$exportable_response"
+rm -f "$export_response" "$exportable_response"
+echo 'Vault 1.17 live differential passed; sanitized evidence only; cleanup scheduled'
