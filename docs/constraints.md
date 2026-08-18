@@ -44,7 +44,7 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
-**W1-7 is dispatched and ACTIVE, returned four times and sent back for a fourth bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
+**W1-7 is dispatched and ACTIVE, returned five times and sent back for a fifth bounded revision on 2026-08-18.** It is not accepted. **A7, A8 and B5 stay open**, and B1–B4 were never W1-7's to close. WIP remains one; nothing else is dispatched.
 
 - **First return** refused on **F19** and **F20**: the suite passed 5 of 5 but only **2 of 14 guards were load-bearing**, and the signing boundary was an in-memory Node key holder named `VaultTransitBoundary`. The Vault emulator was verified reachable during review, so the KMS prerequisite under **C7** held and the revision connected to it.
 - **Second return** accepted the structural direction, since **F20 is materially addressed** and signing now runs through Vault transit HTTP verified live, but refused on **F21**: eight defects in the replacement itself, including a `ReferenceError` that kills every mint, a response fallback that returns a live token as a signature, and caller-controlled key and endpoint selection. **F22** records that `npm test` is not the canonical sweep and left three failing W1-7 tests invisible.
@@ -52,6 +52,8 @@ Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are 
 - **Third return accepts the boundary itself**, recorded in **F24**. No local signing primitive survives anywhere in `packages/`; malformed responses, traversal, endpoint pinning, network absence and token confinement all hold under independent attack; and minted references are **canonical RFC 9562 UUIDv7**, not "UUIDv7-style". Refused on the harness: a provisioning script that **cannot report failure** and leaks two volumes per run, a `kms:test` that runs no tests, four real controls with no test that fails when they are removed, **F22 still unaddressed**, and **F23**, the detector having no Vault-token pattern. The reported connection reset was **benign and already handled**, and agent-a completed the full live differential during review.
 
 - **Fourth return accepts the harness mechanics**, recorded in **F25**: failure propagation, exit-code preservation, volume cleanup and the detector are proven, and **F22 is closed**. Refused because the harness **provisions Vault and never uses it**, proven by the suite passing 5 of 5 with zero containers running; because the **live differential was an explicit requirement of this revision** rather than a deferral; and because **none of the four discrimination controls were attempted**.
+
+- **Fifth return** diagnosed in **F26**. Provisioning now reaches the policy step and reports an honest failure rather than a green simulation, which is right. Refused because the HTTP 400 is a **malformed policy request**, one line, with a **second failure queued behind it** that would make the differential pass for the wrong reason; because **exit-code preservation regressed** so the 400 exits zero; and because everything carried forward is byte-identical and unimplemented.
 
 Fixture conversion to live Vault and the durable store is deliberately deferred to the revision after next, so that the F17 discrimination evidence is not built on a broken boundary.
 
@@ -566,3 +568,23 @@ The `randomUUID` rewrite fixed it, confirmed at 0 collisions in 20,000 mints. Re
 **Recorded 2026-08-18 by agent-a.** F23 stated that a bare JWT passed the credential detector. **That was wrong, and the cause was agent-a's fixture, not the detector.** The existing pattern requires three segments of ten or more characters; the fixture's final segment was three characters, below the threshold. A properly shaped JWT was **already caught** before the revision.
 
 The three Vault token shapes, `hvs.`, `hvb.` and legacy `s.`, were the real and only gap, and they are now closed with patterns proven load-bearing by mutation, refusal confirmed in all three wired paths, and **zero false positives across 17 near-match and prose fixtures**. The rest of F23 stands.
+
+## F26. The W1-7 harness HTTP 400 is a malformed policy request, and it masks two further failures
+
+**Raised:** W1-7 live-differential revision review, 2026-08-18, by agent-a. **Blocking W1-7 acceptance.** **Closes in:** W1-7 revision 5.
+
+**Root cause, isolated by replaying every provisioning call.** The failing operation is `PUT /v1/sys/policies/acl/synth-policy`, status **400**, Vault error `'policy' parameter not supplied or empty`. Line 14 of `scripts/run-kms-tests` sends the **raw HCL document** via `--data-binary "@$policy"`; the endpoint requires a **JSON object with a `policy` field carrying the HCL as a string**. Verified on the same container: raw form **400**, JSON form **204**.
+
+**The Vault configuration is valid and the request is malformed**, confirmed both ways. Every other call already succeeds: mount `204`, and `synth-a`, `synth-exportable`, `prod-real` each `200`. The **Vault CLI inside the container** writes the identical policy successfully and reads it back. Actual image is **Vault v1.17.6**, digest `sha256:74a4ab138ab5d64725e89cd9a9c73f7040c7fe49e98b71697b275ca9a69919df`, not merely the tag.
+
+**A second failure is queued behind it.** The policy grants `transit/sign/synth-a` while the boundary requests `transit/sign/synth-a/sha2-256`. Vault ACL paths are exact unless globbed, so after the JSON fix the scoped token is **denied on the key it should be allowed on**. This is dangerous rather than merely wrong: the differential asserts denial on `prod-real`, so with this policy **both legs deny and a prod-real-only check would pass for the wrong reason**. With `transit/sign/synth-a/*` verified: `synth-a` signs, `prod-real` denied.
+
+**With both corrections the full four-part differential passes**, run end to end during review: scoped sign of `synth-a`, denial on `prod-real`, export of `synth-a` refused with `private key material is not exportable`, and the exportable control returning **1920 bytes of real PEM**.
+
+**Exit-code preservation regressed.** The result claims the command "exited nonzero". Measured from zero Docker state, `npm run kms:test` printed the 400, omitted the success line, cleaned to zero, and **exited 0**. The line-14 trap runs `rm -f "$policy"; rc=$?`, capturing **`rm`'s** status rather than the failure's. This undoes the F24 property in the worst direction, since a provisioning failure now reports success to CI.
+
+**Two further harness defects.** The mount-exists fallback greps only `"transit/"` in the mounts listing and never verifies the mount's **type**. The new live test **skips** rather than fails when `KMS_TOKEN` is absent, so with no Vault at all the suite reports 6 tests, 5 passed, 1 skipped, 0 failed, which is silent in exactly the way a disappearing differential is silent.
+
+**Everything carried forward remains unimplemented.** `custody-service.mjs` and `package.json` are **byte-identical** to the previously reviewed versions, confirmed by hash: namespace closure non-discriminating for a fourth round, endpoint pinning, `toJSON` redaction and RET-CONFIG-400 likewise; the key guard still proven only as a whole; the UUIDv7 clock still unreachable from `mint()`; the counter still wrapping silently at 4096; concurrent collision control still absent; and `db:test` and `kms:test` still outside the canonical sweep.
+
+**Totals: 232 tests, 231 passed, 0 failed, 1 skipped**; live `db:test` exit 0; lint clean; proof log 99 events across 28 threads; cleanup zero containers and zero volumes.
