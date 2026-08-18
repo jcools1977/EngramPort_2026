@@ -660,3 +660,23 @@ Binding enforcement re-proven on this result: changed bytes and a changed digest
 **Live mint controls: 0 of 14 demonstrated**, which agent-b honestly did not claim. Beyond the blockers, M5 has no representation at all since `founder_authorities` carries no revocation column; M7 compares no scopes beyond `custody:mint`; M8 lets any holder mint any namespace including `shape`, which §5A restricts to the trusted registry path; M13 is absent; M11 and M12 have no injection points; M10's barrier exists and discriminates but no overlapping race has been run. Smaller: `retention_policy` is hard-coded to `RET-AUDIT-400` regardless of class, and `granting_event_id` is declared and never populated.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 108 events across 29 threads; secret scan of changed files clean; cleanup zero containers and zero volumes.
+
+## F29 partial closure: migration 0003 corrections accepted
+
+**Reviewed 2026-08-18 by agent-a.** Implementation `4b61d8f`, result event `01a0163a-15bf-7b79-8dca-ae9312087ccd`, evidence `artifacts/agent-b/w1-7-d1-correction-results.md` at `cd6d4c43b62bffd0f1bbe359d3673cf19993404a6a4632cb92300005bd9d7f1a`. **D1 stays active; A7, A8 and B5 stay open.**
+
+**All four claimed corrections hold, and a fully authorized mint now commits end to end for the first time.** Forward-only `0003` rather than a rewrite of `0002`, so migration immutability is preserved: `0001` at `1ffe7e5f…`, `0002` at `22a959fa…`, `0003` at `6fe1bd0f…`, each recorded exactly once on a clean PostgreSQL 16 with pgvector, and git confirms neither earlier file was touched.
+
+**Reference generation is canonical**: a live mint returned a reference passing the database CHECK with version nibble 7, variant nibble 8, and a 48-bit timestamp decoding within 200 ms of the database clock. **Padding discriminates**: unpadded `to_hex(ms)` reproduces the malformed shape and is refused.
+
+**Write policies are individually load-bearing**: dropping `custody_write`, `reference_write` or `audit_write` each breaks the authorized transaction, and **weakening `custody_write` to `WITH CHECK (true)` produces a real cross-tenant write** that the correct policy refuses. That test is only valid as a non-superuser; agent-a's first attempt ran as `postgres`, which bypasses RLS, and was void until re-run as `engram_maintenance`. FORCE RLS remains on all three tables and `engram_app` still has no DML or EXECUTE.
+
+**Revoked authority works and is read `FOR SHARE` inside the mint transaction**, so it is atomic rather than a separate check; expiry is a genuine `clock_timestamp()` comparison. Revocation is deliberately an `IS NOT NULL` test rather than a clock comparison, matching design §5's immediate-and-irreversible semantics. **The metadata allow-list is enforced at the database boundary**: seven forbidden keys refused, permitted keys accepted, and dropping the constraint accepts `password`. **M8 gained a real guard**: `shape` refused, and removing the guard lets a `shape` reference mint.
+
+**F17 totals: 8 mutations run, 8 discriminate, 0 non-isolable.**
+
+**Still open in D1.** The bound artifact `w1-7-d1-results.md` from the previous result **remains untracked**, so a fresh clone still fails verification. **Tenant derivation is still circular**, proven live: without `app.tenant_id` a fully authorized mint fails `TENANT_PROJECT_REFUSED`. M2, M3, M7, M9, M13 and full M8 remain absent, `installation` still mints through the custody path though §5A reserves it. M11 and M12 have no injection points, so rollback and residue are unproven, and no overlapping concurrent mint has been run. `retention_policy` is still hard-coded and `granting_event_id` never populated.
+
+**The allow-list is not full containment**: a permitted key can hold arbitrary content, and `{"notes":"hvs.…"}` mints today. Not a 0003 defect, since design §3 assigns the value-side defence to `detectCredential` before the transaction, which is D2.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 110 events across 29 threads; secret scan clean; cleanup zero.
