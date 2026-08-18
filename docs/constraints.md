@@ -680,3 +680,23 @@ Binding enforcement re-proven on this result: changed bytes and a changed digest
 **The allow-list is not full containment**: a permitted key can hold arbitrary content, and `{"notes":"hvs.…"}` mints today. Not a 0003 defect, since design §3 assigns the value-side defence to `detectCredential` before the transaction, which is D2.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 110 events across 29 threads; secret scan clean; cleanup zero.
+
+## F29 continued: migration 0004 accepted, historical artifact repaired, D1 split into D1E and D1F
+
+**Reviewed 2026-08-18 by agent-a.** Implementation `0f86c80`, result event `01a01644-086b-7f35-b268-69cd9f14a17e`, evidence `artifacts/agent-b/w1-7-d1-continuation-results.md` at `05f3df372660c5468c6a14cee3d33950bb7e0cdca537697c157041d51ba10b50`. **D1 stays active; A7, A8 and B5 stay open.**
+
+**The historical artifact defect is CLOSED.** `artifacts/agent-b/w1-7-d1-results.md` is restored **byte-for-byte** at `c4cb4020…`, satisfying the binding in the earlier event `01a01625`. Extracting `HEAD` into a clean directory and verifying there succeeds at **112 events across 29 threads**, with no reliance on the working tree. Raised twice, now genuinely fixed.
+
+**Migration immutability preserved.** Forward-only `0004`; `0001` through `0003` untouched. All four recorded exactly once: `1ffe7e5f…`, `22a959fa…`, `6fe1bd0f…`, `f184ae7e…`.
+
+**Exactly two controls moved from open to implemented**, neither inferred from the file existing. **Full M8 at the custody path**: `installation` is now refused alongside `shape`, and I confirmed it minted under `0003` and is refused under `0004`. **`METADATA_KEY_REFUSED`** as a named boundary refusal raised before the insert. All eight model and namespace combinations behave correctly, including `KEY_LOCATOR_FORBIDDEN` and `KEY_LOCATOR_REQUIRED`.
+
+**Discrimination: 2 mutations run, 1 isolable and demonstrated, 1 non-isolable.** The M8 guard is load-bearing: weakened to `IN ('shape')`, an `installation` reference mints. **`METADATA_KEY_REFUSED` is redundant with the table `CHECK`** — removing only the boundary check still refuses, and removing **both** accepts a forbidden key. It improves the error surface, not the security boundary, and is recorded as non-isolable rather than counted as a demonstrated guard.
+
+**0004 weakened nothing**: padding, revoked and expired authority all still refuse; forced RLS true on all three tables; exactly 6 policies; `PUBLIC` holds 0 privileges on the function; `engram_app` retains `SELECT` only; the function remains `SECURITY DEFINER` owned by `engram_migrator` with `search_path=public`.
+
+**Confirmed still open**, matching agent-b's own statement, which was accurate throughout: tenant derivation remains circular so M2 and M3 are untestable; **M7 has no scope parameter at all**; M9 collision unexercised; **no fault-injection parameter exists** so M11 and M12 are unproven; no overlapping race run. Carried: `retention_policy` hard-coded, `granting_event_id` unpopulated, and the allow-list guarding keys rather than values until D2's detector.
+
+**D1 is split into two bounded continuations under the same WIP.** **D1E, dispatched:** de-circularize tenant derivation, then demonstrate M2 and M3 live; implement M7 scope containment, refused not narrowed; M13's class gate; and derive `retention_policy` from the credential class. **D1F, queued and not dispatched:** M9 live collision, safe M11 and M12 fault injection, a genuinely overlapping mint, and winner/loser plus per-table residue evidence.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 112 events across 29 threads; secret scan clean; cleanup zero containers and zero volumes.
