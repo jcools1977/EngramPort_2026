@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 name=engram-kms
-cleanup(){ docker rm -f "$name" >/dev/null 2>&1 || true; }
-trap cleanup EXIT
+status=0
+cleanup(){ docker rm -f -v "$name" >/dev/null 2>&1 || status=$?; }
+trap 'rc=$?; cleanup; exit ${rc:-$status}' EXIT
 cleanup
 docker run -d --name "$name" --cap-add IPC_LOCK -p 8201:8200 -e VAULT_DEV_ROOT_TOKEN_ID=synthetic-dev-root -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 hashicorp/vault:1.17 >/dev/null || { echo KMS_UNAVAILABLE >&2; exit 1; }
-for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8201/v1/sys/health >/dev/null && break; sleep 1; done
-curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"type":"transit"}' http://127.0.0.1:8201/v1/sys/mounts/transit >/dev/null || true
-echo 'Vault 1.17 provisioned and health-checked; synthetic transit path ready'
+ready=0
+for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:8201/v1/sys/health >/dev/null 2>&1; then ready=1; break; fi; sleep 1; done
+[[ $ready == 1 ]] || { echo KMS_UNAVAILABLE >&2; exit 1; }
+curl -fsS -X POST -H 'X-Vault-Token: synthetic-dev-root' -H 'content-type: application/json' -d '{"type":"transit"}' http://127.0.0.1:8201/v1/sys/mounts/transit >/dev/null
+npm run w1-7:test
+echo 'Vault 1.17 provisioned, tested and cleanup scheduled'

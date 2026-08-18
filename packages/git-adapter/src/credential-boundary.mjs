@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 export class BoundaryError extends Error { constructor(code, message = "refused") { super(`${code}: ${message}`); this.code = code; } }
 
-const SECRET = /(?:^|\b)(?:gh[pousr]_[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9._~-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\s*[:=]\s*[^\s]{8,})/i;
+const SECRET = /(?:^|\b)(?:gh[pousr]_[A-Za-z0-9_-]{20,}|hvs\.[A-Za-z0-9_-]{20,}|hvb\.[A-Za-z0-9_-]{20,}|s\.[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9._~-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\s*[:=]\s*[^\s]{8,})/i;
 const REF = /^epr:(installation|credential|shape):[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const CRED_QUERY = /(?:token|secret|password|api[_-]?key|access[_-]?token)=/i;

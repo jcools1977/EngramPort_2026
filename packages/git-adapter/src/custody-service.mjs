@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 export class CustodyError extends Error { constructor(code){super(code);this.code=code;} }
 const NS=new Set(["installation","credential","shape"]);
-const uuidv7=()=>{const u=randomUUID().replaceAll("-","");const t=BigInt(Date.now()).toString(16).padStart(12,"0");return `${t.slice(0,8)}-${t.slice(8)}-7${u.slice(13,16)}-8${u.slice(17,20)}-${u.slice(20)}`;};
+let lastMs=-1,counter=0;const uuidv7=(clock=Date.now)=>{const ms=clock();if(ms===lastMs)counter=(counter+1)&0xfff;else{lastMs=ms;counter=0;}const u=randomUUID().replaceAll("-","");const t=BigInt(ms).toString(16).padStart(12,"0");const c=counter.toString(16).padStart(3,"0");return `${t.slice(0,8)}-${t.slice(8)}-7${c}-8${u.slice(17,20)}-${u.slice(20)}`;};
 export class AtomicCustodyStore {
   constructor(){this.rows=new Map();this.refs=new Map();}
   mint({namespace,className,payload},auth,{failAt}={}){if(!NS.has(namespace)||className!==namespace)throw new CustodyError("NAMESPACE_REFUSED");if(!auth?.authorized||auth.namespace!==namespace)throw new CustodyError("MINT_AUTHORITY_REFUSED");const ref=`epr:${namespace}:${uuidv7()}`;const row={ref,namespace,className,tenant_id:auth.tenant_id,project_id:auth.project_id,revoked:false,payload};try{if(failAt==="row")throw new Error("injected row fault");this.rows.set(ref,row);if(failAt==="bind")throw new Error("injected bind fault");this.refs.set(ref,{ref,namespace,tenant_id:auth.tenant_id,project_id:auth.project_id});if(failAt==="audit")throw new Error("injected audit fault");return {ok:true,ref};}catch{this.rows.delete(ref);this.refs.delete(ref);return {ok:false,code:"ATOMIC_ROLLBACK"};}}
