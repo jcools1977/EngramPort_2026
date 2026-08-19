@@ -964,3 +964,19 @@ The review copy was reverted and the tree is unmodified.
 **Verified with the single edit applied**: `db:test` and `verify:all` both **0**; removing the full M8 guard set from **`0010`** makes both exit **3** with `G4 namespace accepted`, and restoring returns both to **0** with `0010` unchanged; **M13 → D1 and D1 → M13 both give 0 and 0**; M13 still refuses class `3.2` with `CLASS_GATE_NOT_PASSED`; G3 reaches **`SCOPE_EXCEEDED`** for unheld `3.5:B`; and all four scopes survive the append, `3.3:B` included.
 
 The review copy was reverted and the tree is unmodified.
+
+## F34 CLOSED: the D1 harness-integration slice is accepted
+
+**Closed 2026-08-19 by agent-a.** Implementation `becb702`, result event `01a01ad1-f69e-788f-b308-1d6fd82286ae`, evidence `artifacts/agent-b/w1-7-canonical-runner-prereqs.md` at `d8b13ebf78859dec9d1f66873566e857a5edda4702bbf781b99224d06e2752e0`. **D1F is now the sole WIP item; D1 stays active; A7, A8 and B5 stay open.**
+
+**Integrity.** Clean extraction verifies 142 events; no event ever rewritten; the change touches **only `scripts/run-db-tests`**; migrations `0001`–`0010` byte-identical with `0010` at `ddb565c4…`; production packages and seeds untouched; historical M13 artifact still `8e2b6157…`.
+
+**Runner state verified live on a database built as the runner builds it**: M13's `('3.3','C3',true,8,…)` gate and `custody:mint:credential:3.3:B` scope preserved; D1's `('3.5','C10',…)` and `('3.12','C14',…)` gates bound to **revision 8** and the accepted digest; **class `3.2` has zero references in the runner** and no gate row at all, so it remains M13's not-passed control; scopes appended through `array_agg(DISTINCT …)` rather than replaced, with `3.3:B` retained and **`3.5:B` absent**.
+
+**All five execution groups pass.** Harness: G1–G4 each `0 → t → 3 → 0`, `executed=4`, **exit 0**; `--negative` **exit 1**. Commands: `npm test`, `db:test`, `kms:test`, `verify:all`, `lint` and `proof` all **0**, with **234 tests, 234 passed, 0 failed, 0 skipped**. Independence: **M13 → D1 and D1 → M13 both 0 and 0**, M13's `3.2` returning `CLASS_GATE_NOT_PASSED` and D1's G3 on unheld `3.5:B` returning `SCOPE_EXCEEDED`. Discrimination: removing the complete M8 guard set from `0010` changes the stored function, confirmed as `NAMESPACE_REFUSED` in `prosrc` going **`t → f → t`**, and makes **`db:test` and `verify:all` both exit 3** reporting `G4 namespace accepted`, with an exact restore returning both to **0**. Cleanup: success and injected failure both leave **zero** scratch databases, containers, volumes and temporary files.
+
+**What this closes.** The canonical sweep can now distinguish a working guard from a missing one. For four rounds every D1 control was real and none was defended. Two things finally made it work, and neither was visible from reading the code: **each prerequisite had to be stated consistently in three places**, and the D1 and M13 fixtures had to stop sharing a credential class.
+
+**D1 status reconciled.** M13 implemented and accepted; the four D1 guards covered behaviourally and defended by the canonical sweep; D1E complete apart from the ADR 0015 trusted-session precondition, which belongs to D2. **A7 and A8 remain open pending the durable fixture conversion; B5 remains open.**
+
+**D1F dispatched as the sole WIP item**, scoped to exactly five things: M9 deterministic collision refusal distinguishable from an identity collision; safe M11 and M12 transaction fault injection with injection points in the function rather than simulated; genuine overlapping mint concurrency on W1-5's bootstrap-race precedent; winner and loser accounting with a named refusal; and **per-table** loser residue asserting zero in `custody_rows`, `minted_references` and `custody_audit` independently, never by comparing two counts, per F19.
