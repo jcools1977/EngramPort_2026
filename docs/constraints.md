@@ -914,3 +914,23 @@ This makes **M2 and M3 expressible for the first time**. Caveat to carry: the me
 **Minor:** the scratch gate rows use `gate_id` `C2` and `C12` where section 11 maps `3.2` to **C8** and `3.12` to **C14**; the mint reads only `passed`, `threat_revision` and `threat_digest`, so behaviour is unaffected but the data is wrong.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test`, `npm test`, `kms:test` and `verify:all` all exit 0; lint clean; proof 134 events across 29 threads; cleanup zero containers, volumes and scratch databases.
+
+## F34 continued: C8/C14 and the G1 context accepted; three corrections finish the harness integration
+
+**Reviewed 2026-08-19 by agent-a.** Implementation `7f520de`, result event `01a01a96-7322-7fb2-8cd7-2f29700e5d0f`, evidence `artifacts/agent-b/w1-7-harness-integration-results.md` at `4b03fe99c79efc9a44eadc9290fbbdd5a14c84413afe1cd0606095fc7176d7b0`. **Slice stays open; D1 active; A7, A8 and B5 open.**
+
+**Accepted.** Clean extraction verifies 136 events; no event ever rewritten; zero migrations and packages touched; `0001`–`0010` byte-identical; M13 production seeds untouched; the historical artifact still hashes `8e2b6157…`. **C8 and C14 are correct** per section 11 for classes `3.2` and `3.12`, and the **G1 opening context is correctly empty**.
+
+**Neither reported failure is what it was called.**
+
+**G1 does not leak.** Row-identity diagnosis from a clean build: the fixture holds two memberships, `11000000-…-0001` in tenant `10000000-…-0001` and `22000000-…-0002` in tenant `20000000-…-0002`. With `app.principal_id = 11000000-…-0001` and `app.tenant_id` **empty**, `engram_maintenance` sees **exactly one row**, the intended self-membership, admitted by `membership_principal_self`; `tenant_isolation` admits nothing with an empty tenant. Foreign-principal rows **0**, total **1**, exactly as asserted, and the two principals are in different tenants so no identity collision turns a foreign row into a second self-membership. The reported nonzero baseline is an artefact of the single `DO` block: G2 raises, the block aborts, and every control's baseline returns 3.
+
+**G2 is masked by a line this change set edited.** `7f520de` set **two** tenant lines to empty; line 3 was correct, but **line 6 is G2's own prerequisite**, setting the tenant so the custody write policy permits the row and the foreign key is what refuses. With line 6 restored the intended path is proven: **SQLSTATE `23503`, constraint `custody_class_mapping_fk`**, `Key is not present in table "custody_inventory_models"`, role `engram_maintenance`; dropping only that FK stores **1 unmapped-class row** and rebuilding restores refusal. Line 8 already clears the tenant, so G3 and G4 are unaffected. No transaction splitting is needed.
+
+**The wiring broke `db:test`.** `d1-behavioural.sql` was added to the runner **twice**, the first copy with shell-escaped quotes, so a clean checkout fails: `line 137: "/…/d1-behavioural.sql": No such file or directory`, **`db:test` exit 1**. Wiring must be judged by running the command. Removing that line alone is insufficient: the canonical database seeds a gate for `3.3` only, so G3's mint of `3.2` hits `CLASS_GATE_NOT_PASSED` and reports `G3 masked`. The runner needs the scratch harness's prerequisites, seeded as the M13 gate row already is.
+
+**With three corrections — fixture line 6 restored, the malformed line deleted, and the gate and scope prerequisites seeded before the fixture — every required behaviour holds**: G1–G4 each `0 → t → 3 → 0`; normal harness **exit 0** with `executed=4`; `--negative` **exit 1**; `db:test` and `verify:all` both **0** with `D1 behavioural guards OK`; **removing the full M8 guard set makes both exit 3** with `G4 namespace accepted`; restoring returns both to 0; the M13 control stays green.
+
+**A finding that changes how M8 must be tested.** Removing the guard from `0008` leaves both sweeps **green**, because **`0010` re-defines `mint_custody_reference` and is applied last**, so its definition wins. Any future guard mutation must target the **last** migration defining the function, not the one that introduced the guard. Also flagged: the added founder-authority seed **replaces** scopes, and the M13 fixture needs `custody:mint:credential:3.3:B`; it works only because M13 runs first, so append rather than replace or document the ordering.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `npm test` and `kms:test` exit 0; lint clean; proof 136 events across 29 threads; cleanup zero. The review copy was reverted and the tree is unmodified.
