@@ -1,5 +1,6 @@
 \set ON_ERROR_STOP on
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 DO $$ DECLARE msg text; n bigint; a0 bigint; BEGIN
   SELECT count(*) INTO a0 FROM custody_audit;
   PERFORM set_config('app.d1f_stage','bogus',false);
