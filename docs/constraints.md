@@ -1058,3 +1058,21 @@ agent-b left the D1F controls unexercised and said so. **agent-a exercised every
 **Still outstanding**: `postgres` inertness, absent from every fixture, which is the control proving the gate is role-bound; and the entire collision and concurrency half, with `REFERENCE_COLLISION`, `CUSTODY_IDENTITY_ACTIVE`, `d1f_forced_reference`, `pause_before_reference` and `minted_references_pkey` each appearing **zero** times repository-wide.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; harness `executed=4` exit 0 and `--negative` exit 1; `db:test`, `kms:test`, `verify:all`, `lint` and `npm test` all 0; proof 150 events across 29 threads; cleanup zero.
+
+## F35 continued: the D1F tenant correction holds and is load-bearing; eight of nine assertions discriminate
+
+**Reviewed 2026-08-19 by agent-a.** Implementation `3377753`, result event `01a01b96-125e-7fcd-a5ac-aaa5a3652b50`, evidence `artifacts/agent-b/w1-7-d1f-tenant-context-results.md` at `4f86df243a43d39ce1c889a4b209a6ee9439bdfb62c904085719b6d7ceeac82b`. **D1F stays the sole WIP item.**
+
+**agent-b's fix is better than the one agent-a specified**: rather than a single context line at the top, the tenant is restored **before each residue block**, which is the correct shape given that a failed mint's subtransaction reverts the GUC. agent-b also explicitly declined credit for the void active-custody probe.
+
+**Accepted.** Clean extraction verifies 152 events; no event ever rewritten; zero migrations and packages touched; `0001`–`0011` byte-identical.
+
+**Eight of nine residue assertions are behavioural**, each failing with its **own** named error so attempt identities are distinct: a terminal custody row planted at `d1f-unknown`, `d1f-m11` and `d1f-m12` produces `unknown-stage custody residue`, `M11 custody residue` and `M12 custody residue` respectively; a true orphan audit row produces `unknown-stage orphan audit residue`; an unrelated **valid** audit row correctly stays green; and removing every injection returns the suite to green. **Every planted custody row was terminal**, so none occupied the single-active identity — **no failure was caused by `CUSTODY_IDENTITY_ACTIVE`, M13, RLS invisibility or a later legitimate mint**, which is precisely the confusion that invalidated agent-a's earlier probe.
+
+**The correction is load-bearing, proven properly**: removing **all three** restores makes planted residue invisible at `db:test` **0**, while with them present the same residue gives **3** with `M11 custody residue`. It takes all three because `set_config(…, false)` is **session**-scoped, not transaction-local, so the first call already covers the later blocks and removing only one changes nothing. The three lines are therefore **redundant**, and the artifact's description of them as restoring the tenant "transaction-locally" is inaccurate for `is_local = false`; the behaviour is correct and arguably more robust, only the wording and redundancy need tidying.
+
+**The ninth assertion is structurally unreachable.** The reference residue check joins through `custody_rows` on the attempt locator while the custody check on the same locator runs immediately before it, so any state that would trip it trips custody first: planting a custody row **and** its matching reference yields `M11 custody residue`, not the reference assertion. With the FK — re-verified present and load-bearing — making an orphan reference unreachable, the reference assertion is defence in depth rather than an independent control and should be recorded as a justified structural limitation.
+
+**Still outstanding, confirmed repository-wide**: `REFERENCE_COLLISION`, `CUSTODY_IDENTITY_ACTIVE`, `d1f_forced_reference`, `pause_before_reference` and `minted_references_pkey` each appear **zero** times across every fixture and the mutation list, and no fixture references `session_user`, so **`postgres` inertness is still absent**.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; harness `executed=4` exit 0 and `--negative` exit 1; `db:test`, `kms:test`, `verify:all`, `lint` and `npm test` all 0; proof 152 events across 29 threads; injected fixture failure exits 3; cleanup leaves zero scratch databases, containers and volumes.
