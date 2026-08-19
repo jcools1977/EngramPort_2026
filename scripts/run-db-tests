@@ -57,6 +57,8 @@ checksum10="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout
 "${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=EXCLUDED.passed,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;"
 "${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0011_d1f_fault_collision.sql"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/m13-class-gate.sql"
+"${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
+"${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1f-controls.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/bootstrap/bootstrap.sql"
 race_dir="$(mktemp -d)"
 race_cleanup() { rm -rf "$race_dir"; }
