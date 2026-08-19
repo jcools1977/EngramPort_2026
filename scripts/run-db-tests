@@ -134,5 +134,4 @@ fi
 "${db[@]}" -U postgres -d engramport -Atc "SELECT version(); SELECT extversion FROM pg_extension WHERE extname='vector';"
 
 
-\"${db[@]}\" -U engram_maintenance -d engramport < \"$root_dir/tests/failure/d1-behavioural.sql\"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1-behavioural.sql"
