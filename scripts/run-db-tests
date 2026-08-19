@@ -47,6 +47,7 @@ checksum9="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/app-role-grants.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/constraints.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/discrimination.sql"
+"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1-regression.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/bootstrap/bootstrap.sql"
 race_dir="$(mktemp -d)"
 race_cleanup() { rm -rf "$race_dir"; }
