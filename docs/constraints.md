@@ -810,3 +810,23 @@ This makes **M2 and M3 expressible for the first time**. Caveat to carry: the me
 **Dispatched next: a regression-only slice, sole scope.** Coverage for the four already-accepted guards — `membership_principal_self`, `custody_class_mapping_fk`, M7 scope containment, and full M8 — where removing each must make **both `db:test` and `verify:all` exit nonzero**, demonstrated by removal, failure, restoration and pass. Tests must assert the **property**, not the presence of a constraint, per F19. M13 and D1F stay queued behind it.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 122 events across 29 threads; secret scan clean; cleanup zero.
+
+## F33. The D1 regression file is baseline coverage, not discrimination; the harness is now proven
+
+**Reviewed 2026-08-19 by agent-a.** Implementation `97767cd`, result event `01a019d2-5fab-7ddd-b3bd-b839ba170f40`, evidence `artifacts/agent-b/w1-7-d1-regression-results.md` at `d80697665e4077198f514903fa4890b637eef958f71896668360b0fcaef1cd0a`. **D1 stays active; A7, A8 and B5 stay open.**
+
+**Accepted as baseline coverage only.** Binding and topology verified, a clean `HEAD` extraction verifies 124 events, and **no production behaviour changed**: zero migrations and zero package files touched. agent-b stated plainly that the four required behavioural mutations were not implemented, which is accurate.
+
+**Measured limits of the new file**, each demonstrated rather than argued. Weakening `membership_principal_self` to `USING (true)` produced a real cross-principal leak, `engram_app` seeing **2 membership rows, 1 foreign**, and **the file still exited 0**: it checks the catalog row's presence, not the property, which is F19's lesson. The mint-ACL branch is `IF NOT has_function_privilege(...) THEN RAISE NOTICE`, so it does nothing when the privilege **is** present; granting `engram_app` EXECUTE on the mint left the file at **exit 0**, meaning that branch cannot fail. And the closing message reports `scope/namespace boundary` while the file contains **no scope or namespace assertion at all**, the same overclaiming shape as B1's `application UPDATE denied`.
+
+**The harness agent-b said was missing is now built and proven by agent-a**, so the revision is executable rather than abstract.
+
+**The trap that would have silently defeated it:** every file in `tests/failure/` is invoked as `-U postgres`, and **`postgres` is a superuser that bypasses RLS entirely**. The membership assertion run under `postgres` reported a foreign row visible even with the correct policy, because RLS never applied. The behavioural file must run as **`engram_maintenance`**.
+
+**Design:** a `d1-behavioural.sql` that drives each control through its behaviour, plus a scratch-database harness that creates `engramport_mut`, applies `0001`–`0009`, seeds, records a baseline, applies one mutation, **verifies from the catalog that it applied**, re-runs the assertions, expects failure, and drops the database. Mint-function mutations are applied by reading `pg_get_functiondef`, removing the exact guard text and `EXECUTE`ing the result.
+
+**All four demonstrations pass**, each baseline 0, mutation applied true, after 3: the policy weakened to `USING(true)` makes a foreign membership row visible; dropping `custody_class_mapping_fk` accepts an unmapped class; removing the scope comparison mints an unheld scope; and removing **both** namespace values **actually mints a `shape` reference**.
+
+**Two masking traps found and fixed while building it.** G2's direct insert was first refused by the **RLS write policy** before the FK could fire, so the tenant context must be set correctly and an `insufficient_privilege` refusal must raise `G2 masked`. And G4 first appeared to pass while `shape` was refused with **`SCOPE_EXCEEDED`**, because the seeded authority held only the `credential` triple — the scope check was standing in for the guard under test. The authority must hold the `shape` and `installation` triples so the namespace guard is the only thing that can refuse, and the assertion must require the specific error code. This is precisely why the handoff required the complete colliding guard set to be removed.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 124 events across 29 threads; secret scan clean; cleanup zero containers, zero volumes, zero scratch databases.
