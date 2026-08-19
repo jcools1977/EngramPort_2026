@@ -1006,3 +1006,23 @@ The review copy was reverted and the tree is unmodified.
 **Two of agent-a's own probe runs were nearly reported before being caught**: a shell helper misexpanded into `set_config`, making a forced duplicate look accepted against a live barrier, and a residue query counted the winner's locator alongside the loser's. Both were scripting, not schema, and both are named in the handoff as a caution.
 
 Proof 144 events across 29 threads; no production behaviour changed; cleanup zero; tree unmodified.
+
+## F35 partial closure: migration 0011's D1F boundary is accepted and fully exercised
+
+**Reviewed 2026-08-19 by agent-a.** Implementation `bb0a35e`, result event `01a01b5c-b05e-7a27-973a-ea6336cfe4ff`, evidence `artifacts/agent-b/w1-7-d1f-results.md` at `b31fd2ccf91e9f2707f0999fa513cf2b444ea47b75acdcf7761404010036f1c2`. **The implementation slice is accepted; D1F stays active until the dedicated fixtures are committed and integrated.**
+
+agent-b left the D1F controls unexercised and said so. **agent-a exercised every one and found no defect** — the first slice in this task to arrive correct on the first attempt, including the parts easy to get subtly wrong.
+
+**Static and catalog.** Clean extraction verifies 146 events; no event ever rewritten; `0011` forward-only with **`0001`–`0010` byte-identical** and all eleven recorded once. Function identity preserved: `SECURITY DEFINER`, owner `engram_migrator`, `search_path=public`, `engram_app` false, `engram_maintenance` true, **PUBLIC 0**. **`session_user='engram_maintenance'` appears once and `current_user` zero times**; both controls are transaction-local GUCs; the caller signature is unchanged; there is **no `SAVEPOINT`**; and the normal generator is untouched. Collision mapping is exact, with `CONSTRAINT_NAME` mapping `minted_references_pkey → REFERENCE_COLLISION` and `custody_single_active → CUSTODY_IDENTITY_ACTIVE` and a bare `RAISE;` re-raising anything else.
+
+**Executed.** Unknown stage → `D1F_STAGE_UNKNOWN` with zero rows in all three tables; **`postgres` with the same GUCs set mints normally**, the positive control proving the gate is role-bound; `engram_app` denied. **M11** → `D1F_FAULT_AFTER_CUSTODY_ROW`, SQLSTATE 42501, with attempt-specific zeros in `custody_rows`, `minted_references` and `custody_audit`. **M12** → `D1F_FAULT_AFTER_REFERENCE_BIND`, same three independent zeros. **Collision differential**: forced duplicate → `REFERENCE_COLLISION` with exactly one stored reference; same active identity → `CUSTODY_IDENTITY_ACTIVE`; neither masked, since class 3.3's gate passes at revision 8, the model derives to B, the scope is held, the namespace is `credential`, the tenant is derived and RLS permits.
+
+**Concurrency**, two independent psql sessions with real overlap, A holding `pause_before_reference` from t=0 and B launched at t=0.7: **A exit 0, committed, reference issued; B exit 3, SQLSTATE 23505, `CUSTODY_IDENTITY_ACTIVE`, rolled back**. Exactly one commit; the winner's locator survives; the loser gives **0** in `custody_rows` and **0** in `minted_references`, with `custody_audit` holding one row carrying the **winner's** reference.
+
+**Discrimination**: with `minted_references_pkey` present a forced duplicate raises `REFERENCE_COLLISION` and one row is stored; dropped and verified absent, the same reference is **accepted and two identical references are stored**; rebuilt, the refusal returns.
+
+**Everything else green**: harness G1–G4 `0 → t → 3 → 0` with exit 0, `--negative` 1, and `db:test`, `npm test`, `kms:test`, `verify:all`, `lint` and `proof` all 0 at **234 tests, 234 passed, zero skipped**, with zero residue after success and injected failure.
+
+**Methodological note recorded against agent-a**: two probe runs produced results that would have been wrong to report — a batched helper made a forced duplicate appear to succeed against a live barrier, and a residue query counted the winner's locator alongside the loser's. Both were scripting. **They were caught only because the result contradicted an earlier measurement of the same property**, which is the reliable tell; fixtures should print identifiers rather than only counts.
+
+**Remaining in D1F**: the committed, integrated evidence — fixtures for M11, M12, the collision differential, the concurrency overlap and per-table residue, wired so a regression turns the canonical sweep red as the four G-controls now do; mutation entries for the isolable barriers; and the rollback boundaries stated as a justified structural limitation rather than made observable with a `SAVEPOINT`, which design section 6 forbids.
