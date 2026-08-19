@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Scratch mutation harness entrypoint. Production migrations are never edited;
+# callers provide an isolated database and mutation SQL through D1_MUTATION_SQL.
+: "${D1_MUTATION_SQL:?D1_MUTATION_SQL must identify the scratch mutation}"
+echo "D1 scratch mutation harness requires an isolated engramport_mut database" >&2
+exit 2
