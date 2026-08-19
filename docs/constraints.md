@@ -950,3 +950,17 @@ This makes **M2 and M3 expressible for the first time**. Caveat to carry: the me
 **With all three applied, every property holds**: harness G1–G4 `0 → t → 3 → 0` with exit 0; `--negative` exit 1; `db:test` and `verify:all` both 0; removing the full M8 guard set from **`0010`** makes both exit **3** with `G4 namespace accepted`; restoring returns both to 0 with `0010` digest `ddb565c4…` unchanged; **both fixture orders give 0 and 0**; 234/234 with zero skipped; and an injected failure leaves zero residue.
 
 The review copy was reverted and the tree is unmodified.
+
+## F34 continued: the G3 class move is correct; one property remains
+
+**Reviewed 2026-08-19 by agent-a.** Implementation `ba5a2fa` with `f1f6ec6`, result event `01a01abb-bb04-763b-a306-50a4c185d241`, evidence `artifacts/agent-b/w1-7-g3-class35-results.md` at `466ffb784b1929608d75007d3c6235383cf57619b0f217df310d0a629ae804b2`. **Slice stays open; D1 active; A7, A8 and B5 open; D1F not dispatched.**
+
+**The class-contention fix is correct and complete.** Clean extraction verifies 140 events; no event ever rewritten; zero migrations and packages touched; `0010` still `ddb565c4…`; historical M13 artifact still `8e2b6157…`. Statically: G3 mints `3.5` and the harness seeds `('3.5','C10',true,…)`; **class `3.2` has zero references in the behavioural fixture** and remains M13's control; G4 remains `3.12`/`C14`; `3.5:B` is absent from granted scopes; and `3.2` has no gate row at all.
+
+**Executed and passing**: the harness gives **G1–G4 each `0 → t → 3 → 0`**, `executed=4`, **exit 0**; `--negative` **exit 1**; `npm test` and `kms:test` both 0; **234 tests, 234 passed, zero skipped**; lint clean; proof 140 events across 29 threads; and an injected harness failure exits 1 leaving **zero** scratch databases, containers, volumes and temporary files.
+
+**One property fails, unchanged across two handoffs.** `scripts/run-db-tests` still seeds only `('3.3','C3',true,…)` and grants only `custody:mint:credential:3.3:B`, so the canonical database lacks the behavioural fixture's prerequisites: **`db:test` exit 3 with `ERROR: G3 masked`, `verify:all` exit 3**. The harness passes because it seeds `3.5`/`C10` and `3.12`/`C14` in its own scratch build.
+
+**Verified with the single edit applied**: `db:test` and `verify:all` both **0**; removing the full M8 guard set from **`0010`** makes both exit **3** with `G4 namespace accepted`, and restoring returns both to **0** with `0010` unchanged; **M13 → D1 and D1 → M13 both give 0 and 0**; M13 still refuses class `3.2` with `CLASS_GATE_NOT_PASSED`; G3 reaches **`SCOPE_EXCEEDED`** for unheld `3.5:B`; and all four scopes survive the append, `3.3:B` included.
+
+The review copy was reverted and the tree is unmodified.
