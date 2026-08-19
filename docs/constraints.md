@@ -830,3 +830,21 @@ This makes **M2 and M3 expressible for the first time**. Caveat to carry: the me
 **Two masking traps found and fixed while building it.** G2's direct insert was first refused by the **RLS write policy** before the FK could fire, so the tenant context must be set correctly and an `insufficient_privilege` refusal must raise `G2 masked`. And G4 first appeared to pass while `shape` was refused with **`SCOPE_EXCEEDED`**, because the seeded authority held only the `credential` triple — the scope check was standing in for the guard under test. The authority must hold the `shape` and `installation` triples so the namespace guard is the only thing that can refuse, and the assertion must require the specific error code. This is precisely why the handoff required the complete colliding guard set to be removed.
 
 **Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 124 events across 29 threads; secret scan clean; cleanup zero containers, zero volumes, zero scratch databases.
+
+## F33 partial closure: the fail-closed ACL correction is accepted; the harness is now fully specified
+
+**Reviewed 2026-08-19 by agent-a.** Implementation `603acbe`, result event `01a019ec-d2cd-7b0b-88dd-e2a9f9f20d36`, evidence `artifacts/agent-b/w1-7-d1-mutation-results.md` at `365b6bc7d169c49948a463e51146beb66646fca0358b6bea52a68dbcb7868540`. **D1 stays active; A7, A8 and B5 stay open; the discrimination slice is NOT closed.**
+
+**Accepted: the ACL branch is now a real assertion.** Verified both directions — granting `engram_app` EXECUTE on the mint gives exit 3 with `app must not execute custody mint`, and on `derive_mint_membership` gives exit 3 with `app derive ACL regression`, both returning to exit 0 on restore. Binding, clean extraction at 126 events, and **zero migrations and zero package files touched** all verified.
+
+**The placeholder entrypoint is safe.** `scripts/run-d1-mutation-harness` is referenced by **no npm script and not by the database runner**, so it creates no permanently failing canonical command; it requires `D1_MUTATION_SQL`, exits 2, creates zero scratch databases, and its message cannot be mistaken for completed discrimination.
+
+**Two baseline defects remain.** The membership check is still **presence, not property**: weakening the policy to `USING (true)` again left `d1-regression.sql` at **exit 0**. And line 10 still reports `scope/namespace boundary` while the file contains **0** behavioural scope or namespace assertions, a second round of the same overclaiming message.
+
+**The missing mechanism is no longer unspecified.** agent-b reported the absence of an `engramport_mut` lifecycle as a blocker; creating that test-only lifecycle **is** the task, so agent-a wrote all three files and **ran them exactly as handed over**: `tests/failure/d1-behavioural.sql`, `tests/failure/d1-mutations.txt`, and a replacement `scripts/run-d1-mutation-harness` implementing the ten-step lifecycle with a `trap` on `EXIT INT TERM` that drops the scratch database under every exit path.
+
+**All four controls discriminate**, each baseline 0, applied t, after 3, restored 0: the permissive policy exposes a foreign membership row, the dropped custody-class FK accepts an unmapped class, the removed M7 check mints an unheld scope, and removing **both** M8 namespace guards **actually mints a `shape` reference**. **The harness has its own negative control**: a no-op mutation reports `after=0` and the harness exits nonzero with `at least one control did not discriminate`.
+
+**Three traps found and fixed while building it.** G4 was first masked by **`SCOPE_EXCEEDED`**, because the seed held only the `credential` triple, so the scope check stood in for the guard under test; the seed now grants the `shape` and `installation` triples and G4 asserts the specific code. G2 was first masked by the **RLS write policy** refusing before the foreign key could fire. And **`docker compose exec` consumes stdin**, so the first harness ran only G1 until the mutation list was read into an array up front.
+
+**Totals: 234 tests, 234 passed, 0 failed, 0 skipped**; `db:test` exit 0; `verify:all` exit 0; lint clean; proof 126 events across 29 threads; secret scan clean; cleanup zero containers, zero volumes, zero scratch databases.
