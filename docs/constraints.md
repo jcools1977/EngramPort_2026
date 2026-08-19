@@ -980,3 +980,29 @@ The review copy was reverted and the tree is unmodified.
 **D1 status reconciled.** M13 implemented and accepted; the four D1 guards covered behaviourally and defended by the canonical sweep; D1E complete apart from the ADR 0015 trusted-session precondition, which belongs to D2. **A7 and A8 remain open pending the durable fixture conversion; B5 remains open.**
 
 **D1F dispatched as the sole WIP item**, scoped to exactly five things: M9 deterministic collision refusal distinguishable from an identity collision; safe M11 and M12 transaction fault injection with injection points in the function rather than simulated; genuine overlapping mint concurrency on W1-5's bootstrap-race precedent; winner and loser accounting with a named refusal; and **per-table** loser residue asserting zero in `custody_rows`, `minted_references` and `custody_audit` independently, never by comparing two counts, per F19.
+
+## F35. D1F assessment accepted as analysis; the contract is prototyped and proven before dispatch
+
+**Reviewed 2026-08-19 by agent-a.** Assessment `389b667`, result event `01a01b3c-ac12-7527-b49a-cba067b9674a`, evidence `artifacts/agent-b/w1-7-d1f-assessment.md` at `18da849db6777f7d34b98f5b1970f577addd7bd98c2d4ed566ccb25d623af923`. **D1F stays active as the sole WIP item.**
+
+**The assessment is accurate on every point**, verified against a live build rather than taken on trust: five uniqueness barriers exist; the mint function's `prosrc` contains **no** fault, stage or injection vocabulary and **no** `session_user`; the signature carries no reference parameter and derives the reference solely from `gen_random_uuid()`; and there is **no** `CONSTRAINT_NAME` handling, so a second mint on an active identity surfaces as a bare `duplicate key value violates unique constraint`. The commit touches **only the artifact**: zero migrations, packages or scripts, and `0001`–`0010` byte-identical. **Their absence is not a blocker; building them is D1F.**
+
+**agent-a prototyped the whole contract in a scratch copy and executed every property before dispatching**, as was done for the mutation harness.
+
+**Authority.** Two transaction-local GUCs read only when **`session_user='engram_maintenance'`** — never `current_user`, which inside `SECURITY DEFINER` is the owner and would grant the control to every caller. Mirrors the `session_user` gate already in `bootstrap_workspace`. Unknown stages fail closed with `D1F_STAGE_UNKNOWN`. **Proven**: unknown stage refused; no stage means a normal mint; `engram_app` denied with `EXECUTE=false` and **PUBLIC 0**; and **`postgres`, whose `session_user` is not `engram_maintenance`, has the stage set and mints normally**, the positive control showing the gate binds to the role rather than the variable.
+
+**M11 and M12 at the design boundaries.** Section 6 orders the transaction 6 custody row, 7 mint reference, 8 bind, 9 audit, so M11 sits after 6 before 8 and M12 after 8 before 9, both inside the real transaction with no `SAVEPOINT`. **Proven**: each raises its named error and rolls the whole transaction back, leaving `custody_rows=0 minted_references=0 custody_audit=0`.
+
+**Deterministic collision** via the same maintenance-only GUC, validated against the canonical grammar for the requested namespace and applied after normal generation so ordinary minting is untouched; a non-canonical value raises `D1F_FORCED_REFERENCE_INVALID`.
+
+**Collision distinction** through `GET STACKED DIAGNOSTICS CONSTRAINT_NAME`, mapping `minted_references_pkey` to **`REFERENCE_COLLISION`** and `custody_single_active` to **`CUSTODY_IDENTITY_ACTIVE`**, re-raising anything else. **Both proven**, closing the conflation raised when every `23505` mapped to one name.
+
+**Concurrency** with one added `pause_before_reference` stage mirroring `app.test_bootstrap_pause`: two independent psql sessions, **A commits with a reference and B loses with `CUSTODY_IDENTITY_ACTIVE`** — one commit, one named loser.
+
+**Residue** proven per table with attempt-specific locators: loser rows **0** in `custody_rows`, **0** in `minted_references`, and `custody_audit` holding **only the winner**, with the same zero-in-all-three after M11 and M12. **Discrimination** proven both ways: with `minted_references_pkey` present a forced duplicate raises `REFERENCE_COLLISION` and 1 reference is stored; with the barrier dropped the same duplicate is **accepted and 2 identical references are stored**.
+
+**Recorded limitation to state rather than engineer around:** neutralising a rollback boundary removes the fault rather than producing partial residue, because PostgreSQL's transaction semantics are what guarantee atomicity. Inventing a `SAVEPOINT` to make residue observable would violate design section 6.
+
+**Two of agent-a's own probe runs were nearly reported before being caught**: a shell helper misexpanded into `set_config`, making a forced duplicate look accepted against a live barrier, and a residue query counted the winner's locator alongside the loser's. Both were scripting, not schema, and both are named in the handoff as a caution.
+
+Proof 144 events across 29 threads; no production behaviour changed; cleanup zero; tree unmodified.
