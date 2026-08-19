@@ -4,6 +4,7 @@ root_dir="$(cd "$(dirname "$0")/.." && pwd)"; compose=(docker compose -f "$root_
 psql_as(){ "${compose[@]}" exec -T postgres psql -q -v ON_ERROR_STOP=1 -U "$1" -d "$2" "${@:3}"; }
 drop(){ "${compose[@]}" exec -T postgres psql -q -U postgres -d postgres -c "DROP DATABASE IF EXISTS $SDB WITH (FORCE);" >/dev/null 2>&1 || true; }
 trap 'rc=$?; drop; exit $rc' EXIT INT TERM
+"${compose[@]}" up -d --wait >/dev/null
 build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql; do psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.2:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes;" >/dev/null; }
 assert(){ psql_as engram_maintenance "$SDB" -f "$root_dir/tests/failure/d1-behavioural.sql" >/dev/null 2>&1; }
 mapfile -t MUTATIONS < "$root_dir/tests/failure/d1-mutations.txt"
