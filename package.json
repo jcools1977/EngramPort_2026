@@ -15,26 +15,27 @@
     "engram": "node scripts/engram",
     "proof:verify": "node scripts/verify-log",
     "proof:test": "node --test tests/git-v0.test.mjs",
-    "proof": "npm run proof:verify && npm run proof:test"
-    ,"db:test": "bash scripts/run-db-tests"
-    ,"welcome:test": "node --test tests/welcome-package.test.mjs"
-    ,"setup:test": "node --test tests/workspace-setup*.test.mjs"
-    ,"watch:test": "node --test tests/port-watch.test.mjs"
-    ,"db:static-test": "node --test tests/app-role-grants-static.test.mjs"
-    ,"dispatch:test": "node --test tests/workspace-dispatch-gate.test.mjs"
-    ,"w1-6:test": "node --test tests/wizard-w1-6.test.mjs"
-    ,"w1-7:test": "node --test tests/wizard-w1-7.test.mjs"
-    ,"w1-7:live:test": "node --test tests/wizard-w1-7-live.test.mjs"
-    ,"kms:test": "bash scripts/run-kms-tests"
-    ,"verify:all": "npm test && npm run db:test && npm run kms:test && npm run lint"
-    ,"dry-run:test": "node --test tests/workspace-dry-run.test.mjs"
-    ,"session:test": "node --test tests/workspace-session.test.mjs"
-    ,"approval:test": "node --test tests/workspace-approval.test.mjs"
-    ,"report:test": "node --test tests/report-boundary.test.mjs"
-    ,"report:r2:test": "node --test tests/report-r2.test.mjs"
+    "proof": "npm run proof:verify && npm run proof:test",
+    "db:test": "bash scripts/run-db-tests",
+    "welcome:test": "node --test tests/welcome-package.test.mjs",
+    "setup:test": "node --test tests/workspace-setup*.test.mjs",
+    "watch:test": "node --test tests/port-watch.test.mjs",
+    "db:static-test": "node --test tests/app-role-grants-static.test.mjs",
+    "dispatch:test": "node --test tests/workspace-dispatch-gate.test.mjs",
+    "w1-6:test": "node --test tests/wizard-w1-6.test.mjs",
+    "w1-7:test": "node --test tests/wizard-w1-7.test.mjs",
+    "w1-7:live:test": "node --test tests/wizard-w1-7-live.test.mjs",
+    "kms:test": "bash scripts/run-kms-tests",
+    "verify:all": "npm test && npm run db:test && npm run kms:test && npm run lint",
+    "dry-run:test": "node --test tests/workspace-dry-run.test.mjs",
+    "session:test": "node --test tests/workspace-session.test.mjs",
+    "approval:test": "node --test tests/workspace-approval.test.mjs",
+    "report:test": "node --test tests/report-boundary.test.mjs",
+    "report:r2:test": "node --test tests/report-r2.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
+    "pg": "8.16.3",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
