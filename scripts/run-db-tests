@@ -61,7 +61,6 @@ checksum10="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-postgres-inert.sql"
 "${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1f-controls.sql"
-D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-collision.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/bootstrap/bootstrap.sql"
 race_dir="$(mktemp -d)"
@@ -193,4 +192,7 @@ fi
 
 
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1-behavioural.sql"
+"${db[@]}" -U postgres -d engramport -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '1 hour') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes;"
+"${db[@]}" -U postgres -d engramport -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002';"
+D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"
 bash "$root_dir/scripts/run-d1-mutation-harness"

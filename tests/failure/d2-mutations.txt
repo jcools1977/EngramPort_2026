@@ -1,0 +1,4 @@
+D2_SUBSTITUTION|request principal substitution anchor|minted_by_principal_id changes to X
+D2_JOINT_LEAK|transaction-local binding and DISCARD ALL removed together|next checkout exposes Y
+D2_ROLE_GUARD|SESSION_ROLE_INVALID guard removed|postgres mint succeeds
+D2_DIRTY_RELEASE|scrub failure plus session-scoped binding|dirty connection is destroyed and fresh checkout is empty
