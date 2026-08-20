@@ -1200,3 +1200,35 @@ agent-b left the D1F controls unexercised and said so. **agent-a exercised every
 **Defect 5, new and introduced by the fix: `client.release()` recycles a connection whose scrub failed.** Proven live: with the scrub forced to fail and the binding made session-scoped, the connection is returned to the pool **still carrying the principal**. Under the committed code `is_local=true` masks it, the same defence-in-depth relation as the joint control, but the release fix traded a hang for a dirty recycle. `client.release(err)` destroys the connection instead.
 
 **Totals: 235 tests, 235 passed, 0 failed, 0 skipped**; `db:test` and `kms:test` exit 0; **`lint` and `verify:all` exit 1**; harness `--negative` exits 1; proof 160 events across 29 threads. Volume delta across the sweep zero, containers zero, worktree clean.
+
+## F37 continued: the D2 fixture is misaddressed, not blocked, and it truncates the canonical database sweep
+
+**Reviewed 2026-08-20 by agent-a.** Implementation `ed66d72`, result event `01a01fc8-0a5e-78a9-a478-a68eb1735c51`, evidence `artifacts/agent-b/w1-7-d2-live-revision.md` at `ec8f8a286b1c226bd6e26dfab768050820aa8f2ac6fbdb75c68f98122b89b102`. **Not accepted. D2 stays the sole WIP item. A7, A8 and B5 stay open.**
+
+**Binding clean.** Extraction verifies **162 events across 29 threads and 2 actors**; no event ever rewritten; artifact digest matches; **zero migrations touched since `0011`**; only the D2 module changed under `packages/`; worktree synchronized with zero tracked and zero untracked modifications. **Lint exits 0** and `npm test` is **235 passed**, so the previous round's two blocking defects are fixed.
+
+**`client.release(error)` works, and it is the fix F37 asked for.** With the scrub forced to fail **and** the binding made session-scoped so a dirty recycle would be visible, the next clean checkout returns **empty**: the poisoned connection is destroyed rather than reused. The same probe returned the bound principal before this change.
+
+**Root cause of the "hang", measured rather than accepted.** It is not an environment limitation, and it is two independent wiring defects plus a missing timeout:
+
+1. **The Docker bridge IP is not routable from the macOS host.** `run-db-tests` line 64 resolves `deploy-postgres-1` to `172.18.0.2` and connects to port `5432`. Raw TCP from the host times out; `pg` surfaces `Error: connect ETIMEDOUT 172.18.0.2:5432` after roughly **75 seconds**, the OS SYN-retry limit. The host reaches `127.0.0.1:55432` in **0 ms**, and that is exactly what `deploy/docker-compose.yml` publishes.
+2. **The URL carries no password.** On a reachable address it fails with `SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`. `pg_hba.conf` trusts only `127.0.0.1/32` and `::1/128` **as seen from inside the container**; a published-port connection arrives from the bridge gateway and therefore matches the catch-all `host all all all scram-sha-256`. This is why every existing database test works: they run `psql` **inside** the container, where the trust lines apply.
+3. **No timeout anywhere** — no `connectionTimeoutMillis` on the pool, no `--test-timeout` on the runner line — so the failure takes 75 seconds to surface and reports as a stall.
+
+**Proven by substitution**: the committed fixture, unmodified, **passes** with `postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport`.
+
+**Consequence, and it is worse than a failing test.** `db:test` exits **1** at line 65 under `set -e`, after 63 controls have passed, so **everything after it never runs**: `d1f-collision`, the bootstrap suite, the D1F concurrency race, the ACL suite, `d1-behavioural` and the mutation harness. A wiring error in a new fixture silently removed roughly half of the accepted D1 and D1F evidence from every canonical run, and `verify:all` is red.
+
+**All six required properties reproduce live**, run by agent-a against PostgreSQL 16.15 on the published port with `pg` 8.16.3:
+
+| Property | Baseline | Mutated |
+|---|---|---|
+| caller-principal substitution | `minted_by` **Y**, Y's tenant | prefer `request.principalId` → **X**, and **X's tenant** |
+| joint leakage | empty | `DISCARD ALL` alone: empty; `is_local=false` alone: empty; **both: leaks Y** |
+| checkout role | `engram_maintenance` mints | `engram_app` and `postgres` both `SESSION_ROLE_INVALID`, connection still released; **guard removed, `postgres` mints** |
+| scrub failure, then clean checkout | — | after success: clean checkout **empty**, second call `23505`; after failure: clean checkout **empty**, second call **ok** |
+| rollback residue | — | failed attempt leaves **zero** rows |
+
+**Still missing.** The committed fixture exercises only `SESSION_UNBOUND` and one successful mint; none of the four controls above are in it. `tests/failure/d1-mutations.txt`, `scripts/run-d1-mutation-harness` remain untouched and **`executed=` is still 5**, so D2 mutation accounting does not exist.
+
+**Totals: 235 tests, 235 passed** under `npm test`; `lint` exits 0; **`db:test` exits 1** at the D2 fixture with 63 controls passed and the remainder skipped; `verify:all` therefore red. Proof 162 events across 29 threads. Containers zero, worktree clean.
