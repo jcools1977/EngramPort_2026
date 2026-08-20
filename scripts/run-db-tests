@@ -192,7 +192,7 @@ fi
 
 
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1-behavioural.sql"
-"${db[@]}" -U postgres -d engramport -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '1 hour') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes;"
-"${db[@]}" -U postgres -d engramport -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002';"
-D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"
+"${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows; DO \$\$ BEGIN IF EXISTS(SELECT 1 FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002') THEN RAISE EXCEPTION 'D2 synthetic authority collision'; END IF; END \$\$; INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '1 hour');"
+D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/engramport" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"
+"${db[@]}" -U postgres -d engramport -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002' AND scopes=ARRAY['custody:mint:credential:3.3:B'] AND revoked_at IS NULL;"
 bash "$root_dir/scripts/run-d1-mutation-harness"

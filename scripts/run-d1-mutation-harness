@@ -1,20 +1,94 @@
 #!/usr/bin/env bash
 set -uo pipefail
-root_dir="$(cd "$(dirname "$0")/.." && pwd)"; compose=(docker compose -f "$root_dir/deploy/docker-compose.yml"); SDB=engramport_mut; fail=0
+root_dir="$(cd "$(dirname "$0")/.." && pwd)"; compose=(docker compose -f "$root_dir/deploy/docker-compose.yml"); SDB=engramport_mut; fail=0; mutation_dir="$(mktemp -d "$root_dir/.d2-mutations.XXXXXX")"
 psql_as(){ "${compose[@]}" exec -T postgres psql -q -v ON_ERROR_STOP=1 -U "$1" -d "$2" "${@:3}"; }
 drop(){ "${compose[@]}" exec -T postgres psql -q -U postgres -d postgres -c "DROP DATABASE IF EXISTS $SDB WITH (FORCE);" >/dev/null 2>&1 || true; }
-cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; exit $rc; }
+cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; rm -rf "$mutation_dir"; exit $rc; }
 trap cleanup EXIT INT TERM
 "${compose[@]}" up -d --wait >/dev/null
-build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes;" >/dev/null; }
+build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours'),('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;" >/dev/null; }
 assert_file(){ local fixture="$1" out rc; out=$(mktemp); psql_as engram_maintenance "$SDB" -f - < "$fixture" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-assert(){ local first second; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); echo "$second"; return 0; }
+run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" D2_BINDING_MODULE="$module" D2_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"; }
+assert_d2(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_d2 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+assert(){ local first second third; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); if [ "$second" != 0 ]; then echo "$second"; return 0; fi; third=$(assert_d2); echo "$third"; return 0; }
 plant_d1f_residue(){ psql_as postgres "$SDB" -c "INSERT INTO custody_rows(id,tenant_id,project_id,namespace,credential_class,custody_model,inventory_model,required_scope,key_locator,metadata,minted_by_principal_id,terminal_at,retention_policy) VALUES ('d1f00000-0000-4000-8000-000000000011','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','credential','3.3','B','B','custody:mint:credential:3.3:B','d1f-m11','{}','11000000-0000-0000-0000-000000000001',clock_timestamp(),'RET-AUDIT-400');" >/dev/null; }
-mapfile -t MUTATIONS < "$root_dir/tests/failure/d1-mutations.txt"
+make_d2_variant(){
+  node - "$root_dir/packages/git-adapter/src/d2-session-binding.mjs" "$1" "$2" <<'NODE'
+const fs=require("node:fs"); const [source,target,mode]=process.argv.slice(2); let text=fs.readFileSync(source,"utf8");
+function replace(anchor,replacement){ const parts=text.split(anchor); if(parts.length!==2) throw new Error(`anchor count ${parts.length-1}: ${anchor}`); text=parts.join(replacement); }
+if(mode==="substitution") replace("[session.principalId]","[request.principalId ?? session.principalId]");
+if(["local_false","joint","dirty_fault","dirty_weakened"].includes(mode)) replace("SELECT set_config('app.principal_id', $1, true)","SELECT set_config('app.principal_id', $1, false)");
+if(["no_scrub","joint"].includes(mode)) replace('      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }',"");
+if(mode==="role") replace('      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");',"");
+if(["dirty_fault","dirty_weakened"].includes(mode)) replace('client.query("DISCARD ALL")','client.query("DISCARD ALLXX")');
+if(mode==="dirty_weakened") replace("client.release(scrubError)","client.release()");
+fs.writeFileSync(target,text);
+NODE
+}
+capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [ "$mutation" = D2_MODULE_SUBSTITUTION ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/substitution.mjs"; pattern="substitution"
+    base=$(assert_d2 "$source_module" "$pattern")
+    make_d2_variant "$variant" substitution || { fail=1; continue; }
+    if grep -Fq '[request.principalId ?? session.principalId]' "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/substitution.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'D2_SUBSTITUTION minted_by=22000000-0000-0000-0000-000000000002 tenant=20000000-0000-0000-0000-000000000002' "$log" && forbidden=t
+    restored=$(assert_d2 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D2_MODULE_JOINT_LEAK ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="joint"
+    local_variant="$mutation_dir/local-false.mjs"; scrub_variant="$mutation_dir/no-scrub.mjs"; joint_variant="$mutation_dir/joint.mjs"
+    base=$(assert_d2 "$source_module" "$pattern")
+    make_d2_variant "$local_variant" local_false || { fail=1; continue; }; local_only=$(assert_d2 "$local_variant" "$pattern")
+    make_d2_variant "$scrub_variant" no_scrub || { fail=1; continue; }; scrub_only=$(assert_d2 "$scrub_variant" "$pattern")
+    make_d2_variant "$joint_variant" joint || { fail=1; continue; }
+    if grep -Fq "set_config('app.principal_id', \$1, false)" "$joint_variant" && ! grep -Fq 'client.query("DISCARD ALL")' "$joint_variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/joint.log"; capture_d2 "$joint_variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'D2_JOINT_LEAK module_checkout="11000000-0000-0000-0000-000000000001"' "$log" && forbidden=t
+    restored=$(assert_d2 "$source_module" "$pattern")
+    printf '%s baseline=%s local_only=%s scrub_only=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$local_only" "$scrub_only" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$local_only" = 0 ] && [ "$scrub_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D2_MODULE_ROLE_GUARD ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/role.mjs"; pattern="role"
+    base=$(assert_d2 "$source_module" "$pattern")
+    make_d2_variant "$variant" role || { fail=1; continue; }
+    if ! grep -Fq 'SESSION_ROLE_INVALID' "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/role.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'D2_ROLE_GUARD maintenance=accepted app=' "$log" && grep -Fq 'postgres=accepted' "$log" && forbidden=t
+    restored=$(assert_d2 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D2_MODULE_DIRTY_RELEASE ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; fault_variant="$mutation_dir/dirty-fault.mjs"; weak_variant="$mutation_dir/dirty-weakened.mjs"; pattern="dirty-success"
+    base=$(assert_d2 "$source_module" "$pattern")
+    make_d2_variant "$fault_variant" dirty_fault || { fail=1; continue; }
+    fault_log="$mutation_dir/dirty-fault.log"; capture_d2 "$fault_variant" "$pattern" "$fault_log"; fault_only=$?
+    fault_clean=f; grep -Fq 'principal=""' "$fault_log" && fault_clean=t
+    make_d2_variant "$weak_variant" dirty_weakened || { fail=1; continue; }
+    if grep -Fq 'client.query("DISCARD ALLXX")' "$weak_variant" && grep -Fq 'client.release()' "$weak_variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/dirty-weakened.log"; capture_d2 "$weak_variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'principal="11000000-0000-0000-0000-000000000001"' "$log" && forbidden=t
+    restored=$(assert_d2 "$source_module" "$pattern")
+    printf '%s baseline=%s fault_only=%s fault_clean=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$fault_only" "$fault_clean" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$fault_only" = 0 ] && [ "$fault_clean" = t ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = FIXTURE_REMOVE_TENANT_CONTEXT ]; then
     build || { fail=1; continue; }
     plant_d1f_residue || { fail=1; continue; }
@@ -40,6 +114,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 5 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 9 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
