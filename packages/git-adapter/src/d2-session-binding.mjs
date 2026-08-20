@@ -35,5 +35,49 @@ export class PrincipalSessionBinding {
     }
   }
 
+  async resolveCustodyReference(reference, session) {
+    if (!session?.verified || typeof session.principalId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
+    const client = await (await this.#getPool()).connect();
+    try {
+      const role = await client.query("SELECT session_user");
+      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('app.principal_id', $1, true)", [session.principalId]);
+      const result = await client.query("SELECT resolve_custody_reference($1) AS custody", [reference]);
+      await client.query("COMMIT");
+      return result.rows[0].custody;
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch (rollbackError) { void rollbackError; }
+      if (error?.code === "42501" && error?.message === "REFERENCE_UNRESOLVED") return null;
+      throw error;
+    } finally {
+      let scrubError;
+      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }
+      try { client.release(scrubError); } catch (releaseError) { void releaseError; }
+    }
+  }
+
+  async revokeCustodyReference(reference, session) {
+    if (!session?.verified || typeof session.principalId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
+    const client = await (await this.#getPool()).connect();
+    try {
+      const role = await client.query("SELECT session_user");
+      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('app.principal_id', $1, true)", [session.principalId]);
+      const result = await client.query("SELECT revoke_custody_reference($1) AS revoked_at", [reference]);
+      await client.query("COMMIT");
+      return { ok: true, revokedAt: result.rows[0].revoked_at };
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch (rollbackError) { void rollbackError; }
+      if (error?.code === "42501" && error?.message === "REFERENCE_UNRESOLVED") return { ok: false, code: "REFERENCE_UNRESOLVED" };
+      throw error;
+    } finally {
+      let scrubError;
+      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }
+      try { client.release(scrubError); } catch (releaseError) { void releaseError; }
+    }
+  }
+
   async close() { if (this.#pool) await this.#pool.end(); }
 }
