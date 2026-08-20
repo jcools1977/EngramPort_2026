@@ -1359,3 +1359,25 @@ So the `0/0/0` line is true and is a property of PostgreSQL rather than evidence
 **Structural note on totals**: the four durable W1-7 controls register only when `D2_DURABLE_URL` is present, so `npm test` reports **233 passed, 0 skipped** while those four are not registered at all. They run under `db:test`. Absence is invisible in the aggregate, so per-suite totals must be quoted rather than the aggregate.
 
 **Durable retention conversion dispatched** as the next bounded slice, with the F19 requirement stated explicitly: prove due **and** not-due for the same policy in the window where the right and wrong clock start disagree. The ten-sink canary and the signing demonstration remain later slices.
+
+## F38 continued: durable retention conversion accepted; the retention duration is a constant, not policy-derived
+
+**Reviewed 2026-08-20 by agent-a.** Implementation `dfc372e`, evidence `28efa16`, result event `01a02126-4ae0-71fc-961b-60799e43b9ce`, artifact `artifacts/agent-b/w1-7-d3-retention-results.md` at `2b476f469a6e2fd94441136640c568887bb9e66fd284cdae8dc106470fe2d88a`, migration `0013` at `195c1497927852c4ad60c1b092ca44fd8d5340c0c592423c2eb9014929a90c36`. **Accepted. D3 stays the sole WIP item; A7, A8 and B5 stay open.**
+
+**Binding and immutability.** 175 events across 29 threads and two actors before the append; **no event ever modified**; artifact and migration digests match; `0001` through `0012` byte-identical with `0013` the only migrations change; the adapter change is **purely additive**, with no removed lines on the accepted mint, resolve or revoke paths.
+
+**Reproduced live rather than trusted.** `db:test` exit 0 with **83 controls**, live D2 **7/7**, live W1-7 **8/8**, harness **`executed=14`**, `--negative` exit 1, `npm test` **233 passed, 0 skipped**, `kms:test` 1/1, `lint` and `verify:all` exit 0, containers and volumes delta zero, worktree clean.
+
+**The clock starts are in the disagreement window, which is the F19 requirement, and I reproduced the discrimination with my own mutation rather than the harness's.** `RET-CONFIG-400` at `issued -401d` / `rotated -399d`: accepted function **not due**; replacing `coalesce(c.rotated_at, c.issued_at)` with `c.issued_at` → **due**; restore → not due. `RET-GRANT-400` at `issued -500d` / `terminal -399d` is equally discriminable under the same substitution, so a second mutation is available whenever wanted.
+
+**The revoked clock genuinely derives from durable revocation state**: after a lawful revoke of a `RET-GRANT-400` row with null `terminal_at`, `clock_start` equals `revoked_at` equals `terminal_at` equals the revoke call's return.
+
+**Boundary probes beyond the suite**: `engram_app` execution of `evaluate_custody_retention` **denied in fact**; the foreign probe genuinely cross-tenant, since `22000000-…-0002` derives a real membership at tenant `20000000-…-0002`; unknown, malformed and foreign all returning the same non-disclosing `RETENTION_UNRESOLVED`.
+
+**The carried correction landed**: `D3_RESOLUTION_ISOLATION baseline=0 rls_only=0 predicate_only=0 applied=t combined=1 forbidden=t restored=0`. The recorded single-layer results match what agent-a measured independently the round before.
+
+**Limitation 1, dispatched as the next slice: the 400-day duration is a constant, not derived from the policy.** `evaluate_custody_retention` computes `evaluated - clock_start >= interval '400 days'` for **every** row; the policy selects only the clock start. **Measured**: a `RET-GRANT-400` row with `clock_start` 150 days ago returns **not due**, and a `RET-OPS-90` row with the same clock start would return the same answer when it should be due. This is correct today only because all three covered policies share one duration, so **the policy-to-duration mapping is entirely unexercised**. Section 3.0 defines six policies; `RET-SESSION` at one day, `RET-OPS-90` at ninety and `RET-VERIFY-104` at one hundred and four would each be wrong under a constant. **This is the same defect class the project keeps catching — a value that is right by coincidence rather than by derivation — and it is exactly what F19 caught on the clock-start axis.**
+
+**Limitation 2, recorded and carried: an unsupported policy is indistinguishable from a missing row.** A row carrying `RET-OPS-90` raises the same `RETENTION_UNRESOLVED` as an unknown reference. Failing closed is right and the non-disclosure is deliberate, but an operator cannot tell a policy gap from a missing row. No production row is affected today, because the mint writes `RET-AUDIT-400`.
+
+**Dispatched**: retention policy-duration derivation across all six section 3.0 policies, preferring a migration-owned durable mapping over an inline `CASE`, with the discriminating case stated explicitly — a short-policy row in the window where the correct duration says due and 400 days says not due must report due. **The ten-sink canary and the synthetic signing demonstration are named as the slice after.**
