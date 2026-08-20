@@ -151,12 +151,12 @@ test("D2 live behavioral controls", async (t) => {
       } finally { await binding.close(); }
     });
 
-    if (enabled("residue")) await t.test("failed attempt leaves zero custody, reference, and audit residue", async () => {
+    if (enabled("residue")) await t.test("committed state after the D2 sequence is clean", async () => {
       const residue = await admin.query("SELECT (SELECT count(*)::int FROM custody_rows) AS custody,(SELECT count(*)::int FROM minted_references) AS references,(SELECT count(*)::int FROM custody_audit) AS audit");
       assert.deepEqual(residue.rows[0], { custody: 0, references: 0, audit: 0 });
       const cleanPool = new Pool({ connectionString: maintenanceUrl, max: 1, connectionTimeoutMillis: 3000, statement_timeout: 5000 });
       try { assert.equal((await checkoutPrincipal(cleanPool)).principal, ""); } finally { await cleanPool.end(); }
-      console.log("D2_FAILED_RESIDUE custody=0 references=0 audit=0 clean_checkout=true");
+      console.log("D2_COMMITTED_STATE custody=0 references=0 audit=0 clean_checkout=true implicit_abort_boundary=true");
     });
   } finally {
     await reset(admin).catch(() => {});
