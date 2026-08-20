@@ -26,11 +26,12 @@ export class PrincipalSessionBinding {
       await client.query("COMMIT");
       return { reference: result.rows[0].reference, principalId: session.principalId };
     } catch (error) {
-      try { await client.query("ROLLBACK"); } catch {}
+      try { await client.query("ROLLBACK"); } catch (rollbackError) { void rollbackError; }
       throw error;
     } finally {
-      try { await client.query("DISCARD ALL"); } catch {}
-      try { client.release(); } catch {}
+      let scrubError;
+      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }
+      try { client.release(scrubError); } catch (releaseError) { void releaseError; }
     }
   }
 

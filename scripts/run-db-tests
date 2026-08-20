@@ -61,6 +61,8 @@ checksum10="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-postgres-inert.sql"
 "${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1f-controls.sql"
+DBIP="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' deploy-postgres-1)"
+D2_DATABASE_URL="postgres://engram_maintenance@${DBIP}:5432/engramport" node --test "$root_dir/tests/d2-live.test.mjs"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-collision.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/bootstrap/bootstrap.sql"
 race_dir="$(mktemp -d)"
