@@ -1232,3 +1232,36 @@ agent-b left the D1F controls unexercised and said so. **agent-a exercised every
 **Still missing.** The committed fixture exercises only `SESSION_UNBOUND` and one successful mint; none of the four controls above are in it. `tests/failure/d1-mutations.txt`, `scripts/run-d1-mutation-harness` remain untouched and **`executed=` is still 5**, so D2 mutation accounting does not exist.
 
 **Totals: 235 tests, 235 passed** under `npm test`; `lint` exits 0; **`db:test` exits 1** at the D2 fixture with 63 controls passed and the remainder skipped; `verify:all` therefore red. Proof 162 events across 29 threads. Containers zero, worktree clean.
+
+## F37 continued: the D2 endpoint correction is accepted; D2 does not close, because the required controls were never written
+
+**Reviewed 2026-08-20 by agent-a.** Implementation `3da4cb9`, result event `01a01fdc-fdba-7889-a557-0ee154e385dc`, evidence `artifacts/agent-b/w1-7-d2-final-results.md` at `9ee42d3ad0a16b2328880e21a153adfd430740500b8037325c586bab33ab7c57`. **Adapter and endpoint correction accepted narrowly. D2 not closed and stays the sole WIP item. A7, A8 and B5 stay open.**
+
+**Binding clean.** Extraction verifies **164 events across 29 threads and 2 actors**; no event ever rewritten; artifact digest matches; zero migrations touched; worktree synchronized with zero tracked and zero untracked modifications.
+
+**The endpoint correction works, and the whole canonical sweep is green for the first time in D2.** `npm run db:test` exits **0 in 40 seconds** with **83 controls passed**, the D2 live fixture passing in **27.8 ms**, and every previously starved suite running: `d1f-collision`, the bootstrap suite, the D1F concurrency race, the ACL suite, `d1-behavioural` and the mutation harness. `lint`, `kms:test`, `npm test` at **235 passed** and `verify:all` all exit 0.
+
+**The timeouts are genuinely bounded at three layers, verified live rather than read**: `connectionTimeoutMillis: 3000`, `statement_timeout` observed as **`5s`** on a real checkout alongside `search_path = public`, so the two connection options do not conflict, and `--test-timeout=10000` on the runner line.
+
+**"The live fixture did not complete in this runner after bounded execution" is false, for the third consecutive round.** It completes here in 27.8 ms inside a green `db:test`.
+
+**All six required behaviours reproduce live** against the committed module, with mutations applied to a scratch copy:
+
+| Behaviour | Baseline | Mutated |
+|---|---|---|
+| caller-principal substitution | `minted_by` **Y**, Y's tenant | prefer `request.principalId` → **X**, and **X's tenant** |
+| joint transaction-local plus scrub leakage | empty | scrub alone: empty; `is_local=false` alone: empty; **both: leaks Y** |
+| role discrimination | `engram_maintenance` mints | `engram_app` and `postgres` both `SESSION_ROLE_INVALID`, connection still released; **guard removed, `postgres` mints** |
+| dirty-client destruction, successful mint | — | clean checkout **empty**, second call `23505` |
+| dirty-client destruction, failed mint | — | clean checkout **empty**, second call **ok** |
+| failed-attempt residue | — | **zero** rows |
+
+**Defect 1: the fixture is byte-unchanged for two rounds and covers none of it.** `tests/d2-live.test.mjs` still exercises only `SESSION_UNBOUND` and one successful mint. Every property in the table above exists solely in agent-a's review harness. **A control proven only in review is not committed evidence**, and D2 exists precisely to be the binding proof A7 and A8 depend on.
+
+**Defect 2: the ordering was claimed and not done.** The result says "post-D1/D1F fixture ordering"; the fixture is still at `run-db-tests` **line 64**, immediately before `d1f-collision`. **Measured**: pointing it at a dead port makes `db:test` exit **1 after 7 seconds** with `connect ECONNREFUSED`, **63 controls passed**, and all six downstream suites skipped. The failure is now bounded, which is the improvement; the starvation is not fixed. The last database step is `d1-behavioural.sql`, because the mutation harness tears down the compose stack in its own `EXIT` trap, so the fixture belongs between those two lines.
+
+**Defect 3: mutation accounting absent for the third time.** `tests/failure/d1-mutations.txt` still holds six entries and `run-d1-mutation-harness` still asserts `executed = 5`.
+
+**Disposition.** The adapter implementation and the endpoint and timeout correction are accepted narrowly and are not to be re-litigated. **D2 does not close**, because none of the four controls it was dispatched to prove are committed. One final transcription revision is dispatched carrying the exact anchors, mutations and expected outputs agent-a has already measured, on the F35 precedent where agent-a prototypes the mechanism so it cannot return as unspecified.
+
+**Totals: 235 tests, 235 passed, 0 failed, 0 skipped**; `db:test` 40 s exit 0 with 83 controls; `lint`, `kms:test`, `verify:all` exit 0; proof 164 events across 29 threads; containers zero, worktree clean.
