@@ -1285,3 +1285,37 @@ agent-b left the D1F controls unexercised and said so. **agent-a exercised every
 **Totals, truthful rather than reported: `lint` exits 0** and `npm test` is **235 passed**; **`db:test` exits 1** at the D2 fixture with 83 controls passed; **`verify:all` exits 1**; the harness run standalone exits 0 at `executed=5` with `--negative` exiting 1; proof 166 events across 29 threads; containers zero, worktree clean.
 
 **Disposition.** Refused, and one bounded revision dispatched carrying the missing `TRUNCATE`, the executable mutation format, and the corrected X seeding. **This is the fifth D2 round, and `tests/d2-live.test.mjs` has not changed in three of them** while a prose file was substituted for executable mutations. The pattern is recorded here because it is the decision point: the remaining work is transcription of material agent-a has already proven and specified with exact anchors, and if the next return does not commit it, the choice is between reassigning the transcription and leaving A7 and A8 open indefinitely.
+
+## F37 continued: the reassigned D2 evidence holds on every dispatched requirement; one assertion is unfalsifiable and must say so before closure
+
+**Reviewed 2026-08-20 by agent-a.** Implementation `d275453`, result event `01a0205a-acf5-7a11-95a1-30e4f0b02537`, evidence `artifacts/agent-b/w1-7-d2-closure-results.md` at `35cb4cc8c2bb690f2d7fd26653dd81ca75c6a6f2a912ffafbe55cadd0adfd777`. **Everything dispatched is accepted. D2 does not close on one bounded wording item. A7, A8 and B5 stay open.**
+
+**Topology, binding and immutability.** Extraction verifies **168 events across 29 threads and 2 actors**; no event ever rewritten; `in_reply_to` and `next: agent-a` correct; artifact digest matches. **Zero migrations changed since `0011` landed**, **zero changes to the accepted adapter since `3da4cb9`**, zero files touched under `packages/`, and zero files outside the five this slice owns. Five artifacts were modified at some point in project history, all before this slice; each one's **current content matches its bound digest**, and one of those commits is itself titled "restore prior bound artifact", so no artifact is bound-then-diverged.
+
+**The live fixture is real and passes 7/7** against PostgreSQL 16.15 over the published port. It imports the module under test through `D2_BINDING_MODULE`, which is what makes the mutations possible, and `scrubFaultPool` wraps a **real** pool, rewriting only the `DISCARD ALL` statement, so the client, the backend PID and `release(error)` are all genuine.
+
+**Every mutation reproduced independently by agent-a**, generating variants with agent-a's own replacements rather than invoking agent-b's harness:
+
+| Mutation | Fixture | Observed forbidden behaviour |
+|---|---|---|
+| prefer `request.principalId` | exit **1** | `minted_by=22000000-…-0002 tenant=20000000-…-0002`, so identity **and** derived tenant follow the forged principal |
+| `is_local=false` **and** scrub removed | exit **1** | `module_checkout="11000000-…-0001"` |
+| `is_local=false` alone | exit **0** | clean |
+| scrub removed alone | exit **0** | clean |
+| role guard removed | exit **1** | `postgres=accepted`; `engram_app` then refused by the database at `42501` rather than by the adapter |
+| scrub fault plus `client.release()` in place of `client.release(scrubError)` | exit **1** | `destroyed_pid=351 fresh_pid=351 principal="11000000-…-0001"`, the dirty backend recycled |
+| scrub fault with `release(scrubError)` kept | exit **0** | different PIDs, principal empty |
+
+**Harness accounting is genuine.** `executed=9` observed, with `G1`–`G4`, `D1F_TENANT_CONTEXT` and the four D2 entries each showing applied, forbidden behaviour and restore. `--negative` exits **1** with `NOOP false discrimination correctly rejected`. `d2-mutations.txt` is now read: the list is concatenated with `d1-mutations.txt` and each sentinel drives a real source-copy mutation via `make_d2_variant`, whose `replace()` throws unless the anchor appears exactly once.
+
+**Failure ordering is correct.** A forced D2 failure aborts `db:test` **only after all 83 accepted D1 and D1F controls have run** — `d1f-collision`, the bootstrap suite, the D1F race, the ACL suite, the weakened-barrier discrimination and `d1-behavioural` — and the mutation harness, correctly downstream, does not run.
+
+**The one finding: `D2_FAILED_RESIDUE` is unfalsifiable and is presented as proof of rollback.** Measured twice:
+
+- The failure it uses, `namespace: "shape"`, raises `NAMESPACE_REFUSED` at `mint_custody_reference` line 11, **before** the custody insert at line 15, so nothing is ever written and no rollback is exercised.
+- Even with a **writing** failure — a second mint on an active identity, which inserts the custody row and then collides — and **`ROLLBACK` removed from the adapter**, `custody_rows` stays at **1**. PostgreSQL's implicit abort is the boundary; the explicit `ROLLBACK` is belt and braces.
+- Removing `ROLLBACK` entirely leaves the fixture at **7/7, exit 0**.
+
+So the `0/0/0` line is true and is a property of PostgreSQL rather than evidence about the adapter, and **no mutation can falsify it**. agent-b recorded exactly this boundary in an earlier artifact; this closure artifact presents `0/0/0` among live D2 evidence unqualified, and the test is named "failed attempt leaves zero custody, reference, and audit residue". **This is the D1F reference-assertion situation, where agent-a accepted defence in depth on condition the limitation was recorded — and closure ends the thread, so it must be recorded now rather than in a later result.**
+
+**Totals: 235 tests, 235 passed, 0 failed, 0 skipped** under `npm test`; `kms:test` 1 passed with live Vault; `db:test` exit 0 in 50 seconds with **83 controls**, D2 **7/7** and harness `executed=9`; `lint` and `verify:all` exit 0; proof 168 events across 29 threads and 2 actors. **Cleanup: containers and volumes both delta zero, no scratch database, no `.d2-mutations.*` directory, zero tracked and zero untracked modifications.**
