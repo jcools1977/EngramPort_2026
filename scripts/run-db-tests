@@ -58,11 +58,63 @@ checksum10="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout
 "${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0011_d1f_fault_collision.sql"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/m13-class-gate.sql"
 "${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
+"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-postgres-inert.sql"
+"${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1f-controls.sql"
+"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-collision.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/bootstrap/bootstrap.sql"
 race_dir="$(mktemp -d)"
 race_cleanup() { rm -rf "$race_dir"; }
 trap 'race_cleanup; cleanup' EXIT
+"${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
+cat > "$race_dir/d1f-a.sql" <<'SQL'
+\set ON_ERROR_STOP on
+SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.d1f_stage','pause_before_reference',false);
+SELECT set_config('app.d1f_forced_reference','epr:credential:01a01bb2-8135-7000-8000-000000000101',false);
+SELECT mint_custody_reference('3.3','credential','B','d1f-race-a','{}');
+SQL
+cat > "$race_dir/d1f-b.sql" <<'SQL'
+\set ON_ERROR_STOP on
+SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.d1f_stage','pause_before_reference',false);
+SELECT set_config('app.d1f_forced_reference','epr:credential:01a01bb2-8135-7000-8000-000000000102',false);
+SELECT mint_custody_reference('3.3','credential','B','d1f-race-b','{}');
+SQL
+set +e
+"${db[@]}" -U engram_maintenance -d engramport < "$race_dir/d1f-a.sql" >"$race_dir/d1f-a.out" 2>&1 & d1f_pid_a=$!
+sleep 0.2
+"${db[@]}" -U engram_maintenance -d engramport < "$race_dir/d1f-b.sql" >"$race_dir/d1f-b.out" 2>&1 & d1f_pid_b=$!
+wait "$d1f_pid_a"; d1f_status_a=$?
+wait "$d1f_pid_b"; d1f_status_b=$?
+set -e
+if [[ $d1f_status_a -eq 0 && $d1f_status_b -ne 0 ]]; then
+  winner_locator=d1f-race-a; loser_locator=d1f-race-b
+  winner_ref=epr:credential:01a01bb2-8135-7000-8000-000000000101; loser_ref=epr:credential:01a01bb2-8135-7000-8000-000000000102
+elif [[ $d1f_status_b -eq 0 && $d1f_status_a -ne 0 ]]; then
+  winner_locator=d1f-race-b; loser_locator=d1f-race-a
+  winner_ref=epr:credential:01a01bb2-8135-7000-8000-000000000102; loser_ref=epr:credential:01a01bb2-8135-7000-8000-000000000101
+else
+  echo "D1F concurrency expected exactly one winner (a=$d1f_status_a b=$d1f_status_b)" >&2
+  cat "$race_dir/d1f-a.out" "$race_dir/d1f-b.out" >&2
+  exit 1
+fi
+if ! grep -q 'CUSTODY_IDENTITY_ACTIVE' "$race_dir/d1f-a.out" "$race_dir/d1f-b.out"; then
+  echo "D1F concurrency loser did not report CUSTODY_IDENTITY_ACTIVE" >&2
+  cat "$race_dir/d1f-a.out" "$race_dir/d1f-b.out" >&2
+  exit 1
+fi
+d1f_loser_custody=$("${db[@]}" -U postgres -d engramport -Atc "SELECT count(*) FROM custody_rows WHERE key_locator='$loser_locator';")
+d1f_loser_reference=$("${db[@]}" -U postgres -d engramport -Atc "SELECT count(*) FROM minted_references WHERE reference='$loser_ref';")
+d1f_loser_audit=$("${db[@]}" -U postgres -d engramport -Atc "SELECT count(*) FROM custody_audit WHERE reference='$loser_ref';")
+d1f_winner_custody=$("${db[@]}" -U postgres -d engramport -Atc "SELECT count(*) FROM custody_rows WHERE key_locator='$winner_locator';")
+d1f_winner_reference=$("${db[@]}" -U postgres -d engramport -Atc "SELECT count(*) FROM minted_references WHERE reference='$winner_ref';")
+d1f_winner_audit=$("${db[@]}" -U postgres -d engramport -Atc "SELECT count(*) FROM custody_audit WHERE reference='$winner_ref';")
+if [[ $d1f_loser_custody != 0 || $d1f_loser_reference != 0 || $d1f_loser_audit != 0 || $d1f_winner_custody != 1 || $d1f_winner_reference != 1 || $d1f_winner_audit != 1 ]]; then
+  echo "D1F concurrency residue mismatch: loser=$d1f_loser_custody/$d1f_loser_reference/$d1f_loser_audit winner=$d1f_winner_custody/$d1f_winner_reference/$d1f_winner_audit" >&2
+  exit 1
+fi
+echo "PASS D1F overlapping concurrency exactly one winner (a=$d1f_status_a b=$d1f_status_b), loser custody/reference/audit=0/0/0, winner=1/1/1"
 cat > "$race_dir/a.sql" <<'SQL'
 \set ON_ERROR_STOP on
 SELECT set_config('app.test_bootstrap_pause','true',false);
@@ -140,3 +192,4 @@ fi
 
 
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/d1-behavioural.sql"
+bash "$root_dir/scripts/run-d1-mutation-harness"
