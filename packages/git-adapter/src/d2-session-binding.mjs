@@ -15,6 +15,8 @@ export class PrincipalSessionBinding {
     if (!session?.verified || typeof session.principalId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
     const client = await (await this.#getPool()).connect();
     try {
+      const role = await client.query("SELECT session_user");
+      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");
       await client.query("BEGIN");
       await client.query("SELECT set_config('app.principal_id', $1, true)", [session.principalId]);
       const result = await client.query(
@@ -24,11 +26,11 @@ export class PrincipalSessionBinding {
       await client.query("COMMIT");
       return { reference: result.rows[0].reference, principalId: session.principalId };
     } catch (error) {
-      await client.query("ROLLBACK");
+      try { await client.query("ROLLBACK"); } catch {}
       throw error;
     } finally {
-      await client.query("DISCARD ALL");
-      client.release();
+      try { await client.query("DISCARD ALL"); } catch {}
+      try { client.release(); } catch {}
     }
   }
 

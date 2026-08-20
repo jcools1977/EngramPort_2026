@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { PrincipalSessionBinding } from "../packages/git-adapter/src/d2-session-binding.mjs";
 
 function fakePool() {
-  const calls = []; const client = { async query(sql, params) { calls.push([sql, params]); if (sql.startsWith("SELECT mint")) return { rows: [{ reference: "epr:credential:00000000-0000-7000-8000-000000000000" }] }; }, release() {} };
+  const calls = []; const client = { async query(sql, params) { calls.push([sql, params]); if (sql.includes("session_user")) return { rows: [{ session_user: "engram_maintenance" }] }; if (sql.startsWith("SELECT mint")) return { rows: [{ reference: "epr:credential:00000000-0000-7000-8000-000000000000" }] }; }, release() {} };
   return { calls, connect: async () => client, end: async () => {} };
 }
 test("D2 refuses unbound sessions before acquiring a connection", async () => { const p=fakePool(); const b=new PrincipalSessionBinding({pool:p}); await assert.rejects(() => b.mint({}, null), e => e.code === "SESSION_UNBOUND"); assert.equal(p.calls.length,0); });
