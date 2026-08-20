@@ -10,6 +10,8 @@ build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_m
 assert_file(){ local fixture="$1" out rc; out=$(mktemp); psql_as engram_maintenance "$SDB" -f - < "$fixture" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" D2_BINDING_MODULE="$module" D2_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"; }
 assert_d2(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_d2 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_7(){ local module="$1" pattern="${2:-}"; W1_7_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_7_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_7_BINDING_MODULE="$module" W1_7_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
+assert_w1_7(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_w1_7 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert(){ local first second third; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); if [ "$second" != 0 ]; then echo "$second"; return 0; fi; third=$(assert_d2); echo "$third"; return 0; }
 plant_d1f_residue(){ psql_as postgres "$SDB" -c "INSERT INTO custody_rows(id,tenant_id,project_id,namespace,credential_class,custody_model,inventory_model,required_scope,key_locator,metadata,minted_by_principal_id,terminal_at,retention_policy) VALUES ('d1f00000-0000-4000-8000-000000000011','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','credential','3.3','B','B','custody:mint:credential:3.3:B','d1f-m11','{}','11000000-0000-0000-0000-000000000001',clock_timestamp(),'RET-AUDIT-400');" >/dev/null; }
 make_d2_variant(){
@@ -22,11 +24,14 @@ if(["no_scrub","joint"].includes(mode)) replace('      try { await client.query(
 if(mode==="role") replace('      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");',"");
 if(["dirty_fault","dirty_weakened"].includes(mode)) replace('client.query("DISCARD ALL")','client.query("DISCARD ALLXX")');
 if(mode==="dirty_weakened") replace("client.release(scrubError)","client.release()");
+if(mode==="rollback_mint") replace('      await client.query("COMMIT");','      await client.query("ROLLBACK");');
+if(mode==="swallow_refusal") replace("      throw error;",'      return { reference: "epr:credential:01a02095-c806-7000-8000-000000000001", principalId: session.principalId };');
 fs.writeFileSync(target,text);
 NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt")
+capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
@@ -89,6 +94,33 @@ for line in "${MUTATIONS[@]}"; do
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$fault_only" = 0 ] && [ "$fault_clean" = t ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
+  if [ "$mutation" = D3_MODULE_ROLLBACK_MINT ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-rollback-mint.mjs"; pattern="atomic"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    make_d2_variant "$variant" rollback_mint || { fail=1; continue; }
+    if grep -Fq '      await client.query("ROLLBACK");' "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/d3-rollback-mint.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'W1_7_DURABLE_ATOMIC custody=0 references=0 audit=0 canonical=true' "$log" && forbidden=t
+    restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_MODULE_SWALLOW_REFUSAL ]; then
+    build || { fail=1; continue; }
+    psql_as postgres "$SDB" -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002';" >/dev/null || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-swallow-refusal.mjs"; pattern="authorization"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    make_d2_variant "$variant" swallow_refusal || { fail=1; continue; }
+    if grep -Fq '01a02095-c806-7000-8000-000000000001' "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/d3-swallow-refusal.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'MINT_AUTHORITY_REFUSED=accepted' "$log" && forbidden=t
+    restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = FIXTURE_REMOVE_TENANT_CONTEXT ]; then
     build || { fail=1; continue; }
     plant_d1f_residue || { fail=1; continue; }
@@ -114,6 +146,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 9 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 11 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
