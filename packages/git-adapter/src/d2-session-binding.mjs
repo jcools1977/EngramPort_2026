@@ -9,7 +9,7 @@ export class PrincipalSessionBinding {
     this.#pool = pool; this.#connectionString = connectionString;
   }
 
-  async #getPool() { if (!this.#pool) { const { Pool } = await import("pg"); this.#pool = new Pool({ connectionString: this.#connectionString, options: "-c search_path=public" }); } return this.#pool; }
+  async #getPool() { if (!this.#pool) { const { Pool } = await import("pg"); this.#pool = new Pool({ connectionString: this.#connectionString, options: "-c search_path=public", connectionTimeoutMillis: 3000, statement_timeout: 5000 }); } return this.#pool; }
 
   async mint(request, session) {
     if (!session?.verified || typeof session.principalId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
