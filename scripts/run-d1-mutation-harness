@@ -125,13 +125,19 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="resolution"
     base=$(assert_w1_7 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "DROP POLICY custody_read ON custody_rows; CREATE POLICY custody_read ON custody_rows FOR SELECT USING(true); DROP POLICY reference_read ON minted_references; CREATE POLICY reference_read ON minted_references FOR SELECT USING(true);" >/dev/null || { fail=1; continue; }
+    rls_only=$(assert_w1_7 "$source_module" "$pattern")
+    build >/dev/null 2>&1 || { fail=1; continue; }
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'AND r.tenant_id=t AND r.project_id=p','AND true /* D3_RESOLUTION_ISOLATION_WEAKENED */') WHERE oid='resolve_custody_reference(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    predicate_only=$(assert_w1_7 "$source_module" "$pattern")
+    build >/dev/null 2>&1 || { fail=1; continue; }
     psql_as postgres "$SDB" -c "DROP POLICY custody_read ON custody_rows; CREATE POLICY custody_read ON custody_rows FOR SELECT USING(true); DROP POLICY reference_read ON minted_references; CREATE POLICY reference_read ON minted_references FOR SELECT USING(true); UPDATE pg_proc SET prosrc=replace(prosrc,'AND r.tenant_id=t AND r.project_id=p','AND true /* D3_RESOLUTION_ISOLATION_WEAKENED */') WHERE oid='resolve_custody_reference(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT (SELECT count(*)=2 FROM pg_policy WHERE polname IN ('custody_read','reference_read') AND pg_get_expr(polqual,polrelid)='true') AND position('D3_RESOLUTION_ISOLATION_WEAKENED' in (SELECT prosrc FROM pg_proc WHERE oid='resolve_custody_reference(text)'::regprocedure))>0" | tr -d '[:space:]')
     log="$mutation_dir/d3-resolution-isolation.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'foreign=resolved' "$log" && forbidden=t
     build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
-    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
-    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    printf '%s baseline=%s rls_only=%s predicate_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$name" "$base" "$rls_only" "$predicate_only" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$rls_only" = 0 ] && [ "$predicate_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = D3_DB_SKIP_REFERENCE_REVOKE ]; then
@@ -142,6 +148,20 @@ for line in "${MUTATIONS[@]}"; do
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_REFERENCE_REVOKE_SKIPPED' in prosrc)>0 AND position('UPDATE minted_references SET revoked_at=revoked_time WHERE reference=p_reference;' in prosrc)=0 FROM pg_proc WHERE oid='revoke_custody_reference(text)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/d3-revocation-atomicity.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'clock=false' "$log" && forbidden=t
+    [ "$forbidden" = t ] || cat "$log" >&2
+    build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_DB_USE_ISSUED_RETENTION_CLOCK ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="retention"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'coalesce(c.rotated_at,c.issued_at)','c.issued_at /* D3_RETENTION_WRONG_CLOCK */') WHERE oid='evaluate_custody_retention(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_RETENTION_WRONG_CLOCK' in prosrc)>0 AND position('coalesce(c.rotated_at,c.issued_at)' in prosrc)=0 FROM pg_proc WHERE oid='evaluate_custody_retention(text)'::regprocedure" | tr -d '[:space:]')
+    log="$mutation_dir/d3-retention-clock.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'W1_7_DURABLE_RETENTION config=true/true' "$log" && forbidden=t
     [ "$forbidden" = t ] || cat "$log" >&2
     build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
@@ -173,6 +193,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 13 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 14 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

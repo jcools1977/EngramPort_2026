@@ -79,5 +79,27 @@ export class PrincipalSessionBinding {
     }
   }
 
+  async evaluateCustodyRetention(reference, session) {
+    if (!session?.verified || typeof session.principalId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
+    const client = await (await this.#getPool()).connect();
+    try {
+      const role = await client.query("SELECT session_user");
+      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('app.principal_id', $1, true)", [session.principalId]);
+      const result = await client.query("SELECT evaluate_custody_retention($1) AS retention", [reference]);
+      await client.query("COMMIT");
+      return result.rows[0].retention;
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch (rollbackError) { void rollbackError; }
+      if (error?.code === "42501" && error?.message === "RETENTION_UNRESOLVED") return null;
+      throw error;
+    } finally {
+      let scrubError;
+      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }
+      try { client.release(scrubError); } catch (releaseError) { void releaseError; }
+    }
+  }
+
   async close() { if (this.#pool) await this.#pool.end(); }
 }
