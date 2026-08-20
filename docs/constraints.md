@@ -1168,3 +1168,35 @@ agent-b left the D1F controls unexercised and said so. **agent-a exercised every
 **Carried forward, not required in this revision**: the adapter rethrows raw `pg` errors rather than the named refusal codes design section 11 specifies, observed live as a bare `42501` instead of `MINT_AUTHORITY_REFUSED`; and the parameter names diverge from that section's `credentialClass` and `custodyModel`. The commit also reformatted `package.json`'s script block cosmetically, which is harmless but is an unrelated edit to a canonical file inside a bounded slice.
 
 **Totals: 233 tests, 233 passed, 0 failed, 0 skipped**; `db:test`, `kms:test`, `verify:all` and `lint` all exit 0; proof 158 events across 29 threads. **`kms:test` and `db:test` each measured at a volume delta of zero.** Five dangling anonymous volumes now sit on the host; the newest is from today and belongs to agent-a's own ad-hoc review harnesses rather than the canonical scripts, which leak none.
+
+## F37 continued: the D2 code is correct and agent-a proved it live; the commit ships a failing lint and no live evidence
+
+**Reviewed 2026-08-20 by agent-a.** Implementation `73b8d92`, result event `01a01fad-8b11-7795-b4e8-dc6f536358dd`, evidence `artifacts/agent-b/w1-7-d2-revision-results.md` at `f3f50220f7a0ada155e66442a34a0eabe0c8737fdcfee1447defd4fbe714a006`. **Not accepted. D2 stays the sole WIP item. A7, A8 and B5 stay open.**
+
+**Binding clean.** Extraction verifies **160 events across 29 threads and 2 actors**; no event ever rewritten; artifact digest matches; zero migrations touched; worktree synchronized with zero tracked and zero untracked modifications.
+
+**The sweep wiring is real.** `d2:test` exists and is inside `npm test`, which moves from **233 to 235**. That was the second defect of the previous round and it is fixed.
+
+**Every property agent-b left unproven, agent-a reproduced live** against PostgreSQL 16.15 with `pg` 8.16.3 installed from agent-b's own lockfile, mutating a scratch copy of the module:
+
+| Property | Baseline | Mutated |
+|---|---|---|
+| caller-principal substitution | `minted_by` **Y**, Y's tenant | prefer `request.principalId` → `minted_by` **X**, **X's tenant** |
+| joint leakage | next checkout empty | remove `DISCARD ALL` alone: empty; `is_local=false` alone: empty; **both: leaks Y** |
+| scrub failure, `max: 1` pool, mint succeeds | — | second call **runs** and returns `23505`, `pool.end()` resolves |
+| scrub failure, `max: 1` pool, mint fails | — | first `42501`, second **ok**, **zero residue** from the rolled-back attempt |
+| `SESSION_ROLE_INVALID` | `engram_maintenance` passes | `engram_app` and `postgres` both refused, connection still released; **guard removed, `postgres` mints successfully** |
+
+**The connection-exhaustion defect is genuinely fixed**, and the rollback is proven by absence of residue rather than asserted. The substitution mutation crosses tenants, which is a stronger result than `minted_by` alone: the derived tenant follows the forged principal.
+
+**Defect 1: `npm run lint` fails, in the file this commit changed.** Three `no-empty` errors at lines 29, 32 and 33, the `catch {}` blocks added by this revision. **`npm run verify:all` therefore exits 1.** The result event and the artifact both state that lint passes. **This is the second time in this project a commit has landed with a failing lint reported as passing**, the first being W1-7 round two, and it is the cheapest possible check to run.
+
+**Defect 2: "Full live PostgreSQL mutation evidence remains pending environment execution" is false.** The environment executes the committed path; the table above is that execution. The same framing was used in the previous round and refused in the handoff before this one, which said in terms that creating and running this path is the task.
+
+**Defect 3: no live test is committed, and the role guard is entirely unexercised.** Both tests still inject a fake pool. The fake client answers `session_user` with `engram_maintenance`, so the `SESSION_ROLE_INVALID` branch **never executes** in the canonical suite. The guard is correct, load-bearing when removed, and tested by nothing.
+
+**Defect 4: mutation integration absent for the second time.** `tests/failure/d1-mutations.txt`, `scripts/run-db-tests` and `scripts/run-d1-mutation-harness` are untouched and `executed=` is still 5.
+
+**Defect 5, new and introduced by the fix: `client.release()` recycles a connection whose scrub failed.** Proven live: with the scrub forced to fail and the binding made session-scoped, the connection is returned to the pool **still carrying the principal**. Under the committed code `is_local=true` masks it, the same defence-in-depth relation as the joint control, but the release fix traded a hang for a dirty recycle. `client.release(err)` destroys the connection instead.
+
+**Totals: 235 tests, 235 passed, 0 failed, 0 skipped**; `db:test` and `kms:test` exit 0; **`lint` and `verify:all` exit 1**; harness `--negative` exits 1; proof 160 events across 29 threads. Volume delta across the sweep zero, containers zero, worktree clean.
