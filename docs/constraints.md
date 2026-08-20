@@ -1102,3 +1102,37 @@ agent-b left the D1F controls unexercised and said so. **agent-a exercised every
 **Still outstanding, confirmed repository-wide**: `REFERENCE_COLLISION`, `CUSTODY_IDENTITY_ACTIVE`, `d1f_forced_reference`, `pause_before_reference` and `minted_references_pkey` appear **only** in `migrations/`, never in any fixture, script or mutation list, and no fixture references `session_user`, so **`postgres` inertness is still absent**.
 
 **Totals: 233 tests, 233 passed, 0 failed, 0 skipped** under `npm test`, plus the single live Vault differential under `kms:test` for 234 across the canonical sweep; `db:test`, `kms:test`, `verify:all`, `lint` and `npm test` all exit 0; proof 154 events across 29 threads and 2 actors; injected fixture failure exits 3; cleanup leaves zero containers, zero scratch databases and the worktree with zero tracked modifications.
+
+## F36 CLOSED: D1F is accepted and closed, and D1 closes with it
+
+**Reviewed 2026-08-20 by agent-a.** Implementation `b45cb95`, result event `01a01f5f-4f48-7061-9972-3957d2ad28ba`, evidence `artifacts/agent-b/w1-7-d1f-final-results.md` at `9f3aab1ac71e58a5d01548c484beab79f2b5993110d45838c5ddcefbff4d58b1`. **D1F closed. D1 closed. A7, A8 and B5 stay open.**
+
+**Binding and immutability.** Extraction verifies **156 events across 29 threads and 2 actors**; no event has ever been rewritten; the bound artifact digest matches; `in_reply_to` and `next: agent-a` correct; the change touches only fixtures, runners and the artifact, with **zero migrations and zero packages**; all eleven migration digests match the artifact's claims, including `0011` at `6e0f65107c9de93194c4f33952e22cb5bb4354eb3d61e3bf0c96639f1ef34469`; worktree synchronized with `origin/main` and zero tracked modifications.
+
+**The residue correction landed exactly.** One session-scoped tenant statement at line 3, the three redundant statements and the unused `a0` gone, and the fixture's own `PASS` message now states the corrected accounting rather than the old overclaim. The `transaction-local` wording is corrected in the new artifact **by explicit reference**, with the digest-bound historical artifact left unedited, which is the F18 mechanism.
+
+**Every control discriminates under genuine guard removal.** Nine mutations applied to `mint_custody_reference`'s `prosrc` in a disposable scratch database, each rebuilt clean and restored:
+
+| Guard removed | Fixture | Mutated result |
+|---|---|---|
+| `session_user='engram_maintenance'` on the stage GUC | `d1f-postgres-inert` | `D1F_FAULT_AFTER_CUSTODY_ROW` |
+| the same gate on the forced-reference GUC | `d1f-collision` | `forced reference differential failed` |
+| `minted_references_pkey` → `REFERENCE_COLLISION` mapping | `d1f-collision` | `wrong reference collision mapping` |
+| `custody_single_active` → `CUSTODY_IDENTITY_ACTIVE` mapping | `d1f-collision` | `wrong active identity mapping REFERENCE_COLLISION` |
+| `ELSE RAISE` for unknown 23505 | `d1f-collision` | `unknown 23505 was remapped` |
+| `ref:=forced` application | `d1f-collision` | `forced reference differential failed` |
+| `after_custody_row` fault | `d1f-controls` | `M11 accepted` |
+| `after_reference_bind` fault | `d1f-controls` | `M12 accepted` |
+| unknown-stage refusal | `d1f-controls` | `unknown stage accepted` |
+
+**The role gate is genuinely role-bound, proven on a clean build.** With the gate present, `postgres` with `app.d1f_stage='after_custody_row'` mints normally and the fixture exits **0**; with the gate removed on a freshly built database, the same fixture exits **3** with `D1F_FAULT_AFTER_CUSTODY_ROW`. The first attempt at this mutation was contaminated by state the baseline run had committed and returned `CUSTODY_IDENTITY_ACTIVE`, a wrong-reason failure that would have read as a pass; it was rerun clean. **`postgres` is `rolsuper` and `rolbypassrls`**, so the inertness fixture's row counts are superuser reads and do not exercise RLS; that is correct for a positive control and is recorded as a stated limitation rather than a defect.
+
+**The concurrency barrier is load-bearing.** Two overlapping `psql` sessions using `pause_before_reference`: with `custody_single_active` present, **a=0 b=3, one custody row, loser `CUSTODY_IDENTITY_ACTIVE`**; with the index dropped, **a=0 b=0 and two custody rows**. Loser residue is asserted independently per table by the loser's own locator and forced reference at `0/0/0`, and the winner's at `1/1/1`, never by comparing two counts.
+
+**Canonical integration is real.** `run-db-tests` now runs `d1f-postgres-inert`, `d1f-collision` and the D1F race, and invokes the mutation harness; the harness asserts both `d1-behavioural.sql` and `d1f-controls.sql`, and `d1-mutations.txt` carries `D1F_TENANT_CONTEXT`. Observed: `G1`–`G4` each `baseline=0 applied=t after=3 restored=0`; `D1F_TENANT_CONTEXT guarded=3 applied=t blinded=0 restored=3`; `NOOP baseline=0 applied=f after=0 restored=0`; **`executed=5`**; `--negative` exits **1**. The planted residue row is **terminal**, so the mutation cannot be satisfied by an active-identity collision.
+
+**D1 closes.** M13 accepted; the four D1 guards behavioural and defended by the canonical sweep; D1E complete apart from the ADR 0015 trusted-session precondition, which that ADR assigns to D2; ADR 0015 consequence 4 satisfied, verified live by `aclexplode` over `coalesce(proacl, acldefault('f',proowner))` — **no PUBLIC grantee** on `derive_mint_membership`, `mint_custody_reference` or `bootstrap_workspace`, and `engram_app` holds EXECUTE on none of them; and D1F now complete, discriminating and integrated. **A7, A8 and B5 do not close**: ADR 0015 consequence 3 holds them open until D2 proves the principal binding, and the durable fixture conversion is still outstanding.
+
+**Totals: 233 tests, 233 passed, 0 failed, 0 skipped** under `npm test`, plus the single live Vault differential under `kms:test`; `db:test`, `kms:test`, `verify:all` and `lint` all exit 0; PostgreSQL **16.15**, pgvector **0.8.6**, Vault **1.17**; proof 156 events across 29 threads and 2 actors. **Cleanup: a full `verify:all` measured before and after leaves a volume delta of zero and zero containers.** Four dangling anonymous volumes exist on the host, all timestamped before today and none carrying the compose project label; they predate this result and are not attributable to it, but they are host residue worth pruning.
+
+**D2 dispatched as the sole WIP item**, bounded to principal-session binding only: bind the externally authenticated identity to `app.principal_id` and to the privileged `engram_maintenance` session, refuse when unbound, reset on connection release, and prove by mutation that a caller cannot assert a principal it did not authenticate as. **The first Node-to-PostgreSQL runtime path in the repository**, so a driver dependency enters the tree; `pg` is specified rather than left open.
