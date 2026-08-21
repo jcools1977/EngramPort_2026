@@ -29,6 +29,16 @@ function uuidv7(now = Date.now()) {
 function compact(iso) { return iso.replace(/[-:]/g, "").replace(".000", ""); }
 function line(key, value) { return `${key}: ${value === null ? "null" : Array.isArray(value) ? `[${value.join(", ")}]` : value}`; }
 
+export async function validateAppendInputs({ body, artifacts = [], cwd = process.cwd() }) {
+  const bodyFinding = detectCredential(body);
+  if (bodyFinding.hit) { const error = new Error("CREDENTIAL_INPUT_REFUSED: event body refused"); error.code = "CREDENTIAL_INPUT_REFUSED"; throw error; }
+  for (const reference of artifacts) {
+    const artifactPath = reference.split("#", 1)[0];
+    const artifact = await readFile(path.resolve(cwd, artifactPath), "utf8");
+    if (detectCredential(artifact).hit) { const error = new Error("CREDENTIAL_INPUT_REFUSED: artifact refused"); error.code = "CREDENTIAL_INPUT_REFUSED"; throw error; }
+  }
+}
+
 const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
 
 async function threadHasEvents(cwd, thread) {
@@ -120,15 +130,7 @@ export async function run(argv, cwd = process.cwd()) {
   if (command === "append") {
     for (const required of ["actor", "thread", "type", "body"]) if (!options[required]) throw new Error(`append requires --${required}`);
     const body = await readFile(path.resolve(cwd, options.body), "utf8");
-    const bodyFinding = detectCredential(body);
-    if (bodyFinding.hit) throw new Error(`CREDENTIAL_INPUT_REFUSED: event body refused`);
-    if (options.artifacts) {
-      for (const reference of options.artifacts.split(",")) {
-        const artifactPath = reference.split("#", 1)[0];
-        const artifact = await readFile(path.resolve(cwd, artifactPath), "utf8");
-        if (detectCredential(artifact).hit) throw new Error(`CREDENTIAL_INPUT_REFUSED: artifact refused`);
-      }
-    }
+    await validateAppendInputs({ body, artifacts: options.artifacts?.split(",") ?? [], cwd });
     const occurredAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
     const id = uuidv7();
     const meta = [line("schema_version", 0), line("id", id), line("thread", options.thread), line("from", options.actor), line("type", options.type), line("occurred_at", occurredAt), line("in_reply_to", options.reply ?? null), line("next", options.next ?? null), line("content_sha256", hashBody(body))];

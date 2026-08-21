@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { decideDelivery } from "../../port-watch/src/index.mjs";
+import { detectCredential } from "./credential-boundary.mjs";
 
 const envelopeSchema = JSON.parse(await readFile(new URL("../../../schemas/report-envelope-v1.schema.json", import.meta.url), "utf8"));
 const inputsSchema = JSON.parse(await readFile(new URL("../../../schemas/report-inputs-v1.schema.json", import.meta.url), "utf8"));
@@ -163,6 +164,7 @@ export function selectEvidenceCandidates(records, { includeGenerated = false, pu
 }
 
 function validateEvidenceRecord(record, authorization, asOfSeq) {
+  if (detectCredential(record).hit) throw new ReportBoundaryError("CREDENTIAL_INPUT_REFUSED", "credential-bearing report evidence refused", "$.evidence");
   exactKeys(record, new Set(["event_id", "tenant_id", "project_id", "project_seq", "kind", "sensitivity", "visibility", "payload", "content_sha256", "authorization_context_sha256"]), "evidence");
   if (!UUID.test(record.event_id ?? "")) throw new ReportBoundaryError("EVIDENCE_MALFORMED", "event_id must be a UUID", "$.evidence.event_id");
   if (record.tenant_id !== authorization.tenant_id || record.project_id !== authorization.project_id) throw new ReportBoundaryError("EVIDENCE_CROSS_PROJECT", `event ${record.event_id} is outside the authorized tenant/project`);
