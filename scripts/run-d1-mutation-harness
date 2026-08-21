@@ -43,6 +43,8 @@ if(mode==="detector_disabled"){
   const file=path.join(root,"packages/git-adapter/src/credential-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="if (SECRET.test(v)) return \"CREDENTIAL_DETECTED\";";if(!text.includes(anchor))throw new Error("detector anchor absent");text=text.replace(anchor,"if (false /* D3_CANARY_DETECTOR_DISABLED */) return \"CREDENTIAL_DETECTED\";");fs.writeFileSync(file,text);
 }else if(mode==="observer_neutered"){
   const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink]";if(text.split(anchor).length-1!==2)throw new Error("observer anchors not exact");text=text.split(anchor).join("const dirty=false /* D3_CANARY_OBSERVER_NEUTERED */&&Boolean(await observers[sink]");fs.writeFileSync(file,text);
+}else if(mode==="operational_observer_neutered"){
+  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink].vulnerable(context));";if(text.split(anchor).length-1!==1)throw new Error("operational observer anchor not exact");text=text.replace(anchor,'const dirty=!(["logs","process_arguments","process_environment","core_dumps","backups","error_surfaces"].includes(sink)) /* D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED */&&Boolean(await observers[sink].vulnerable(context));');fs.writeFileSync(file,text);
 }else throw new Error("unknown canary variant");
 NODE
 }
@@ -205,7 +207,7 @@ for line in "${MUTATIONS[@]}"; do
     make_canary_variant "$variant_root" detector_disabled || { fail=1; continue; }
     if grep -Fq 'D3_CANARY_DETECTOR_DISABLED' "$variant_root/packages/git-adapter/src/credential-boundary.mjs" && ! grep -Fq 'if (SECRET.test(v)) return "CREDENTIAL_DETECTED";' "$variant_root/packages/git-adapter/src/credential-boundary.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-detector-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
-    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=4/4 protected_clean=0/4 signed=4/4' "$log" && grep -Fq 'observers=event-file,artifact-file,compiled-plan,report-output' "$log" && forbidden=t
+    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=10/10 protected_clean=6/10 signed=10/10' "$log" && grep -Fq 'observers=event-file,artifact-registration,compiled-plan,report-output,operation-log,live-argv,live-environment,core-dump,live-backup,error-message-and-stack' "$log" && forbidden=t
     [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_canary "$source_root")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
@@ -218,7 +220,20 @@ for line in "${MUTATIONS[@]}"; do
     make_canary_variant "$variant_root" observer_neutered || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 2 ] && ! grep -Fq 'const dirty=Boolean(await observers[sink]' "$variant_root/packages/git-adapter/src/custody-service.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
-    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=0/4 protected_clean=4/4 signed=4/4' "$log" && grep -Fq 'observers=event-file,artifact-file,compiled-plan,report-output' "$log" && forbidden=t
+    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=0/10 protected_clean=10/10 signed=10/10' "$log" && grep -Fq 'observers=event-file,artifact-registration,compiled-plan,report-output,operation-log,live-argv,live-environment,core-dump,live-backup,error-message-and-stack' "$log" && forbidden=t
+    [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_canary "$source_root")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_SOURCE_NEUTER_OPERATIONAL_OBSERVER ]; then
+    source_root="$root_dir"; variant_root="$mutation_dir/canary-operational-observer-neutered"
+    base=$(assert_canary "$source_root")
+    make_canary_variant "$variant_root" operational_observer_neutered || { fail=1; continue; }
+    if [ "$(grep -Fo 'D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 1 ]; then applied=t; else applied=f; fi
+    log="$mutation_dir/canary-operational-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=4/10 protected_clean=10/10 signed=10/10' "$log" && grep -Fq 'observers=event-file,artifact-registration,compiled-plan,report-output,operation-log,live-argv,live-environment,core-dump,live-backup,error-message-and-stack' "$log" && forbidden=t
     [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_canary "$source_root")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
@@ -250,6 +265,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 17 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 18 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
