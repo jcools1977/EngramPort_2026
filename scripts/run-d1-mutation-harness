@@ -168,6 +168,20 @@ for line in "${MUTATIONS[@]}"; do
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
+  if [ "$mutation" = D3_DB_USE_OLD_RETENTION_DURATION ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="retention"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'evaluated-clock_start>=retention_window','evaluated-clock_start>=interval ''400 days'' /* D3_RETENTION_OLD_DURATION */') WHERE oid='evaluate_custody_retention(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_RETENTION_OLD_DURATION' in prosrc)>0 AND position('evaluated-clock_start>=retention_window' in prosrc)=0 FROM pg_proc WHERE oid='evaluate_custody_retention(text)'::regprocedure" | tr -d '[:space:]')
+    log="$mutation_dir/d3-retention-duration.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'W1_7_DURABLE_RETENTION config=false/true grant=false/true audit=false/true ops=false/false' "$log" && forbidden=t
+    [ "$forbidden" = t ] || cat "$log" >&2
+    build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = FIXTURE_REMOVE_TENANT_CONTEXT ]; then
     build || { fail=1; continue; }
     plant_d1f_residue || { fail=1; continue; }
@@ -193,6 +207,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 14 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 15 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
