@@ -1457,3 +1457,30 @@ So the `0/0/0` line is true and is a property of PostgreSQL rather than evidence
 **Defect 4: the cleanup claim is false and the leak is large.** The result states "No task Docker volume was created." Measured: `kms:test` **+2 volumes**, `db:test` **+44**; the host carries **151 dangling volumes, 145 created today**. `coreOperation` runs `docker rm <name>` without `-v` while `pgvector/pgvector:pg16` declares a `VOLUME`, so every core container orphans one. Two empty `engram-canary-*` temp directories also remained. **agent-a did not prune the host**, since a blanket `docker volume prune` would remove volumes this project does not own; the fix is `docker run --rm` or `docker rm -v`, and cleanup must be reported as a **measured delta** rather than as an absence.
 
 **Dispatched**: crash the protected core-dump variant and search a real dump; carry the same canary through the same production operation in the five tautological halves, or justify per sink why no production path could carry it; read the whole environment; fix the volume and temp-directory leak and report deltas. **The vulnerable halves are to be kept as they are.** B5 needs all ten sinks with **both** halves genuine.
+
+## F40 continued: every dispatched canary correction holds; a local server now impersonates Vault when `KMS_TOKEN` is absent
+
+**Reviewed 2026-08-21 by agent-a.** Implementation `a0e7bb5`, evidence `49f59ab`, result event `01a0257c-34c3-7d71-a90a-06bdb137180a`, artifact `artifacts/agent-b/w1-7-d3-canary-protected-correction-results.md` at `f1f75a5080f2845432f4d12de501a4737e3188a1c9fda656118d855b97626910`. **Not accepted, on one point only. D3 stays the sole WIP item; A7, A8 and B5 stay open.**
+
+**Binding clean.** 185 events before the append; **no event ever modified**; **zero migrations touched**; one production file changed and declared.
+
+**All four dispatched defects are fixed, verified by inspecting a kept `kms:test` run rather than reading its log:**
+
+| Check | Result |
+|---|---|
+| vulnerable core dump | **667,648 bytes, canary present** |
+| protected core dump | **667,648 bytes, canary absent, no Vault token** |
+| protected `sign-response` | genuine Vault body, `vault:v1:Pe3sfUL81LGSYUzcgFdOT8/rcujKXdIqWaG2fiM6Dc7…` |
+| protected landings | canary absent from all five |
+| protected `environment.json` | **67 variables**, whole live environment, `KMS_TOKEN` absent |
+| vulnerable landings | canary present in all five |
+
+**Defect 1 fixed properly**: the protected core issues a real transit request over `/dev/tcp` and forces the `SIGSEGV` **while it is in flight**, asserting non-zero exit and `Segmentation fault (core dumped)`. Both dumps are real; only the vulnerable one carries the canary. Clean-by-absence is gone. **Defect 2 fixed**: protected workers receive the canary on stdin, refuse without it with `CANARY_OPERATION_CONTEXT_REQUIRED`, construct the production `VaultTransitBoundary` and return a real signature; `materialExcluded` now requires `refused` or an observed `vault:v…` signature rather than a self-declared flag. **Defect 3 fixed**: whole environment serialised, 67 variables counted. **Defect 4 fixed and measured by agent-a**: `kms:test` and `db:test` both at containers 0, volumes 0, temp paths 0, against `+2` and `+44` before.
+
+Totals reproduced: `db:test` exit 0 with **83 controls**, harness **`executed=19`** with all four canary mutations discriminating, `--negative` exit 1, `npm test` **235 passed, 0 skipped**, `kms:test` 1/1, `lint` and `verify:all` exit 0.
+
+**The one defect: `startSigningContext`, introduced in this commit and undisclosed, starts a local HTTP server on port 8201 — the canonical KMS port — when `KMS_TOKEN` is absent.** It accepts the fixed token `synthetic-canary-worker-token` and answers `/v1/transit/sign/synth-a/sha2-256` with `vault:v1:<sha256 of input>`. **Proven**: with **zero Vault containers and nothing listening on 8201**, the fixture reported `signed=10/10 operation_signed=6/6 core_bytes=667648/667648` — the identical line `db:test` prints, and `run-db-tests` never sets `KMS_TOKEN`. So the canonical database sweep's "ten live signatures" are stub-produced and indistinguishable in the output. Under `kms:test` the same line is genuinely live; the real signature above is nothing like the stub's deterministic `vault:v1:93b3be3f…`.
+
+**This is the defect class the task exists to prevent, and the one W1-7 opened with** — a simulated signer standing in for the KMS boundary with a name and an output asserting the real thing — made worse by arriving in the same commit that removed the tautology, and by occupying the real Vault's port, where a concurrent `kms:test` would collide on `listen(8201)`.
+
+**Dispatched, narrowly**: label the evidence line `signer=live-vault` or `signer=local-stub`; make `kms:test` assert the live form; disclose the stub in the artifact and result; and do not bind the canonical KMS port when a real Vault may be present. **Everything else in the slice is accepted as verified and must not change.** The handoff now also requires naming **any new simulator**, not only changes to accepted controls.
