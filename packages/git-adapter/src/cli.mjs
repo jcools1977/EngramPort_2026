@@ -32,7 +32,7 @@ function line(key, value) { return `${key}: ${value === null ? "null" : Array.is
 export async function validateAppendInputs({ body, artifacts = [], cwd = process.cwd() }) {
   const bodyFinding = detectCredential(body);
   if (bodyFinding.hit) { const error = new Error("CREDENTIAL_INPUT_REFUSED: event body refused"); error.code = "CREDENTIAL_INPUT_REFUSED"; throw error; }
-  for (const reference of artifacts) {
+  for (const reference of artifacts.filter(Boolean)) {
     const artifactPath = reference.split("#", 1)[0];
     const artifact = await readFile(path.resolve(cwd, artifactPath), "utf8");
     if (detectCredential(artifact).hit) { const error = new Error("CREDENTIAL_INPUT_REFUSED: artifact refused"); error.code = "CREDENTIAL_INPUT_REFUSED"; throw error; }
@@ -130,7 +130,8 @@ export async function run(argv, cwd = process.cwd()) {
   if (command === "append") {
     for (const required of ["actor", "thread", "type", "body"]) if (!options[required]) throw new Error(`append requires --${required}`);
     const body = await readFile(path.resolve(cwd, options.body), "utf8");
-    await validateAppendInputs({ body, artifacts: options.artifacts?.split(",") ?? [], cwd });
+    const artifacts = options.artifacts ? options.artifacts.split(",").filter(Boolean) : [];
+    await validateAppendInputs({ body, artifacts, cwd });
     const occurredAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
     const id = uuidv7();
     const meta = [line("schema_version", 0), line("id", id), line("thread", options.thread), line("from", options.actor), line("type", options.type), line("occurred_at", occurredAt), line("in_reply_to", options.reply ?? null), line("next", options.next ?? null), line("content_sha256", hashBody(body))];
@@ -138,7 +139,7 @@ export async function run(argv, cwd = process.cwd()) {
       const declaration = await readThreadDeclaration(cwd, options.thread);
       if (declaration) meta.push(line("thread_config_sha256", hashThreadConfig(declaration)));
     }
-    if (options.artifacts) meta.push(line("artifacts", options.artifacts.split(",")));
+    if (artifacts.length) meta.push(line("artifacts", artifacts));
     const directory = path.join(cwd, "events", options.actor);
     await mkdir(directory, { recursive: true });
     const file = path.join(directory, `${compact(occurredAt)}_${id}.md`);

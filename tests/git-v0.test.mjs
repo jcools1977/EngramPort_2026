@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { hashBody, hashThreadConfig, verifyLog } from "../packages/git-adapter/src/verify-log.mjs";
+import { run } from "../packages/git-adapter/src/cli.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const surfaces = ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml"];
@@ -75,6 +76,24 @@ test("valid two-agent relay verifies", async () => {
   // The log is append-only, so counts grow. Assert the floor set by the v0 relay, not a frozen census.
   assert.ok(result.events >= 3, `expected at least the 3 v0 relay events, saw ${result.events}`);
   assert.ok(result.threads >= 1, `expected at least the v0 architecture thread, saw ${result.threads}`);
+});
+
+test("append with an empty artifacts flag preserves artifact-free append behavior", async () => {
+  const directory = await fixture();
+  try {
+    await declare(directory, "empty-artifacts", "free_form");
+    const body = path.join(directory, "empty-artifacts-body.txt");
+    await writeFile(body, "synthetic append without artifacts\n");
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "empty-artifacts", "--type", "message", "--body", body, "--artifacts", ""], directory), 0);
+    const result = await verifyLog(directory);
+    assert.equal(result.ok, true, result.errors.join("\n"));
+    const written = (await readdir(path.join(directory, "events", "agent-b"))).filter((name) => name.includes("empty-artifacts"));
+    assert.equal(written.length, 0, "event filenames carry identities, not thread names");
+    const sources = await Promise.all((await readdir(path.join(directory, "events", "agent-b"))).map((name) => readFile(path.join(directory, "events", "agent-b", name), "utf8")));
+    const appended = sources.find((source) => source.includes("thread: empty-artifacts"));
+    assert.ok(appended);
+    assert.doesNotMatch(appended, /^artifacts:/m);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 await rejects("modified content is rejected", (d) => mutate(d, "events/agent-a/20260814T141000Z_0198f2a1-1000-7000-8000-000000000001.md", (s) => `${s}\nchanged\n`), /content hash mismatch/);

@@ -205,7 +205,7 @@ for line in "${MUTATIONS[@]}"; do
     make_canary_variant "$variant_root" detector_disabled || { fail=1; continue; }
     if grep -Fq 'D3_CANARY_DETECTOR_DISABLED' "$variant_root/packages/git-adapter/src/credential-boundary.mjs" && ! grep -Fq 'if (SECRET.test(v)) return "CREDENTIAL_DETECTED";' "$variant_root/packages/git-adapter/src/credential-boundary.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-detector-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
-    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=4/4 protected_clean=0/4 signed=4/4' "$log" && forbidden=t
+    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=4/4 protected_clean=0/4 signed=4/4' "$log" && grep -Fq 'observers=event-file,artifact-file,compiled-plan,report-output' "$log" && forbidden=t
     [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_canary "$source_root")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
@@ -218,7 +218,7 @@ for line in "${MUTATIONS[@]}"; do
     make_canary_variant "$variant_root" observer_neutered || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 2 ] && ! grep -Fq 'const dirty=Boolean(await observers[sink]' "$variant_root/packages/git-adapter/src/custody-service.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
-    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=0/4 protected_clean=4/4 signed=4/4' "$log" && forbidden=t
+    forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=0/4 protected_clean=4/4 signed=4/4' "$log" && grep -Fq 'observers=event-file,artifact-file,compiled-plan,report-output' "$log" && forbidden=t
     [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_canary "$source_root")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
