@@ -190,6 +190,32 @@ for line in "${MUTATIONS[@]}"; do
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
+  if [ "$mutation" = D3_DB_RESTORE_LOWEST_MEMBERSHIP ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="m3-membership"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "CREATE OR REPLACE FUNCTION derive_mint_membership(p_principal uuid) RETURNS TABLE(tenant_id uuid,project_id uuid) LANGUAGE sql SECURITY DEFINER SET search_path=public AS \$\$ SELECT pm.tenant_id,pm.project_id FROM project_memberships pm WHERE pm.principal_id=p_principal ORDER BY pm.tenant_id,pm.project_id LIMIT 1 \$\$;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('ORDER BY pm.tenant_id,pm.project_id LIMIT 1' in prosrc)>0 FROM pg_proc WHERE oid='derive_mint_membership(uuid)'::regprocedure" | tr -d '[:space:]')
+    log="$mutation_dir/d3-m3-membership.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'ambiguous=accepted landed=02000000-0000-0000-0000-0000000000ff' "$log" && forbidden=t
+    build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_DB_DROP_ACTIVE_BARRIER ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="m10-race"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "DROP INDEX custody_single_active;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT to_regclass('custody_single_active') IS NULL" | tr -d '[:space:]')
+    log="$mutation_dir/d3-m10-race.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'W1_7_A8_M10 winners=2 custody=2 references=2' "$log" && forbidden=t
+    build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = D3_DB_WEAKEN_RESOLUTION ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="resolution"
@@ -341,6 +367,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 24 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 26 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
