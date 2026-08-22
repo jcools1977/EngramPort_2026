@@ -47,6 +47,8 @@ if(mode==="detector_disabled"){
   const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink].vulnerable(context));";if(text.split(anchor).length-1!==1)throw new Error("operational observer anchor not exact");text=text.replace(anchor,'const dirty=!(["logs","process_arguments","process_environment","core_dumps","backups","error_surfaces"].includes(sink)) /* D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED */&&Boolean(await observers[sink].vulnerable(context));');fs.writeFileSync(file,text);
 }else if(mode==="protected_operation_bypassed"){
   const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor='const operationSigned=typeof result?.signature==="string";';if(text.split(anchor).length-1!==1)throw new Error("protected operation anchor not exact");text=text.replace(anchor,'const operationSigned=false /* D3_CANARY_PROTECTED_OPERATION_BYPASSED */;');fs.writeFileSync(file,text);
+}else if(mode==="report_incident_disabled"){
+  const file=path.join(root,"packages/git-adapter/src/report-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="      await incidentSink(incident);";if(text.split(anchor).length-1!==1)throw new Error("report incident anchor not exact");text=text.replace(anchor,"      void incident; /* D3_CANARY_REPORT_INCIDENT_DISABLED */");fs.writeFileSync(file,text);
 }else throw new Error("unknown canary variant");
 NODE
 }
@@ -255,6 +257,19 @@ for line in "${MUTATIONS[@]}"; do
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
+  if [ "$mutation" = D3_SOURCE_REMOVE_REPORT_INCIDENT ]; then
+    source_root="$root_dir"; variant_root="$mutation_dir/canary-report-incident-disabled"
+    base=$(assert_canary "$source_root")
+    make_canary_variant "$variant_root" report_incident_disabled || { fail=1; continue; }
+    if grep -Fq 'D3_CANARY_REPORT_INCIDENT_DISABLED' "$variant_root/packages/git-adapter/src/report-boundary.mjs" && ! grep -Fq 'await incidentSink(incident);' "$variant_root/packages/git-adapter/src/report-boundary.mjs"; then applied=t; else applied=f; fi
+    log="$mutation_dir/canary-report-incident-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq 'W1_7_REPORT_INCIDENT excluded=true recorded=false landing=event-file count=0' "$log" && forbidden=t
+    [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_canary "$source_root")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = FIXTURE_REMOVE_TENANT_CONTEXT ]; then
     build || { fail=1; continue; }
     plant_d1f_residue || { fail=1; continue; }
@@ -280,6 +295,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 19 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 20 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

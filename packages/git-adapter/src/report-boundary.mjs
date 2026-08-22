@@ -229,10 +229,30 @@ export async function assembleDeterministicEvidence(request, source) {
   return assembleAuthorizedReportInput({ ...request, as_of_seq: null }, source);
 }
 
-export async function runReportIfChanged({ request, source, previous_as_of_seq, generator }) {
+export async function runReportIfChanged({ request, source, previous_as_of_seq, generator, incidentSink = null }) {
   if (!Number.isInteger(previous_as_of_seq) || previous_as_of_seq < 0) throw new ReportBoundaryError("INPUT_MALFORMED", "previous_as_of_seq must be a non-negative integer", "$.previous_as_of_seq");
   if (typeof generator !== "function") throw new ReportBoundaryError("INPUT_MALFORMED", "generator must be a function", "$.generator");
-  const input = await assembleDeterministicEvidence(request, source);
+  if (incidentSink !== null && typeof incidentSink !== "function") throw new ReportBoundaryError("INPUT_MALFORMED", "incidentSink must be a function", "$.incidentSink");
+  let input;
+  try {
+    input = await assembleDeterministicEvidence(request, source);
+  } catch (error) {
+    if (error?.code === "CREDENTIAL_INPUT_REFUSED" && incidentSink) {
+      const incident = Object.freeze({
+        kind: "incident.opened",
+        incident_key: "report-credential-input-refused",
+        summary: "Re:PORT credential-bearing evidence refused",
+        severity: "high",
+        detected_at: new Date().toISOString(),
+        refusal_code: error.code,
+        tenant_id: request?.authorization?.tenant_id ?? null,
+        project_id: request?.authorization?.project_id ?? null,
+        evidence_path: error.path
+      });
+      await incidentSink(incident);
+    }
+    throw error;
+  }
   const decision = decideDelivery({ cursor: previous_as_of_seq, events: input.source_events });
   if (decision.action === "skip") return Object.freeze({ ...decision, input });
   return Object.freeze({ ...decision, input, generated: await generator(input) });
