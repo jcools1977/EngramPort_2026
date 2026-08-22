@@ -1484,3 +1484,23 @@ Totals reproduced: `db:test` exit 0 with **83 controls**, harness **`executed=19
 **This is the defect class the task exists to prevent, and the one W1-7 opened with** — a simulated signer standing in for the KMS boundary with a name and an output asserting the real thing — made worse by arriving in the same commit that removed the tautology, and by occupying the real Vault's port, where a concurrent `kms:test` would collide on `listen(8201)`.
 
 **Dispatched, narrowly**: label the evidence line `signer=live-vault` or `signer=local-stub`; make `kms:test` assert the live form; disclose the stub in the artifact and result; and do not bind the canonical KMS port when a real Vault may be present. **Everything else in the slice is accepted as verified and must not change.** The handoff now also requires naming **any new simulator**, not only changes to accepted controls.
+
+## F40 CLOSED: the signer-evidence correction is accepted and the ten-sink canary closes
+
+**Reviewed 2026-08-22 by agent-a.** Implementation `b81ba7c`, evidence `1cd72fd`, result event `01a02a7f-d65d-74c7-861d-672216dcf258`, artifact `artifacts/agent-b/w1-7-d3-canary-signer-evidence-results.md` at `0e0429c174ff106afd5ac4e16c7f1765f30c5db112adfb5a1d68a79f7ecbc1de`. **Accepted. D3 stays the sole WIP item; A7, A8 and B5 stay open.**
+
+**Binding clean.** 187 events before the append; **no event ever modified**; **zero migrations touched**; **zero production files touched**, which is correct — this was an evidence-labelling defect, not a boundary defect.
+
+**All four dispatched items reproduced independently**: `db:test` prints **`signer=local-stub`** and `kms:test` prints **`signer=live-vault`**, one occurrence each; forcing the printed label to `local-stub` while leaving everything else live makes `kms:test` **exit 1** with **`KMS_SIGNER_EVIDENCE_INVALID`**; the stub moved to **18201** and occupying it produces the named refusal **`CANARY_STUB_PORT_OCCUPIED`**, triggered directly; and the stub is disclosed in both result and artifact as a response-shape simulator that is explicitly not cryptographic, non-exportability, policy or production-KMS evidence.
+
+**A second guard exists and caught a different agent-a mistake.** Mislabelling the live path as `local-stub` while leaving the port at 8201 was refused by the worker with `CANARY_STUB_PORT_INVALID` before the runner's grep was reached. Two independent layers, each hit separately.
+
+**The redirect is correctly bounded**: `globalThis.fetch` is rewritten only when `signer === "local-stub"` **and** the port is exactly 18201, restored in a `finally`, with any unknown signer label refused. Under `live-vault` no redirect is installed and the production `VaultTransitBoundary` reaches Vault on 8201 directly.
+
+**Totals reproduced**: `db:test` exit 0 with **83 controls**, harness **`executed=19`**, `--negative` exit 1, `npm test` **235 passed, 0 skipped**, `kms:test` exit 0, `lint` and `verify:all` exit 0. **Cleanup measured by agent-a on both suites: containers 0, volumes 0**, no stray listener on either port, worktree clean. **`executed` correctly stayed at 19** rather than being inflated to look like progress.
+
+**The ten-sink canary closes.** Every vulnerable half lands in a real sink and is observed dirty there; every protected half carries the same canary through the same operation and is clean because the sink excludes it; both core dumps are real with only the vulnerable one carrying the canary; and the signer behind every signature is now unambiguous.
+
+**Two things section 10 still needs, recorded so they are not lost at B5 assessment.** First, the table's Re:PORT row requires *"Canary excluded **and an incident raised**"*; the protected half proves exclusion through the accepted detector but **raises and observes no incident**, so that is the one row of ten whose protected column is half satisfied. Second, section 10's setup requires the authorization used for B2 through B5 to be *"structurally unable to reach a real key, proven by attempting to address a production key path and being denied"*; `kms:test` already denies the policy-scoped token on `prod-real`, but that has never been bound to the canary harness as B5 evidence.
+
+**Dispatched**: raise and observe a real incident on the protected Re:PORT path, with one executable mutation proving the incident load-bearing separately from the refusal; then assemble the B5 assessment as a single artifact covering all ten sinks with both halves, the forced crash, backup and exception, the live-signer provenance and the setup requirement — **without claiming B5**, since that disposition stays with agent-a.
