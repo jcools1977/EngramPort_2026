@@ -3,10 +3,12 @@ set -euo pipefail
 
 name=engram-kms
 policy_file=""
+live_log=""
 status=0
 cleanup() {
   local cleanup_rc=0
   [[ -z "$policy_file" ]] || rm -f "$policy_file" || cleanup_rc=$?
+  [[ -z "$live_log" ]] || rm -f "$live_log" || cleanup_rc=$?
   docker rm -f -v "$name" >/dev/null 2>&1 || cleanup_rc=$?
   if docker ps -aq --filter "name=^${name}$" | grep -q .; then cleanup_rc=1; fi
   if (( cleanup_rc != 0 && status == 0 )); then status=$cleanup_rc; fi
@@ -59,7 +61,10 @@ token_json=$(curl -fsS "${root_header[@]}" -X POST -d '{"policies":["synth-polic
   http://127.0.0.1:8201/v1/auth/token/create) || { echo KMS_TOKEN_FAILED >&2; exit 1; }
 token=$(node -e 'const x=JSON.parse(process.argv[1]);const t=x?.auth?.client_token;if(typeof t!=="string"||!t)process.exit(1);process.stdout.write(t)' "$token_json") || { echo KMS_TOKEN_FAILED >&2; exit 1; }
 
-KMS_TOKEN="$token" npm run w1-7:live:test
+live_log=$(mktemp)
+KMS_TOKEN="$token" npm run w1-7:live:test | tee "$live_log"
+grep -Fq 'signer=live-vault' "$live_log" || { echo KMS_SIGNER_EVIDENCE_INVALID >&2; exit 1; }
+if grep -Fq 'signer=local-stub' "$live_log"; then echo KMS_SIGNER_EVIDENCE_INVALID >&2; exit 1; fi
 sign_body='{"input":"eA=="}'
 curl -fsS -X POST -H "X-Vault-Token: $token" -H 'content-type: application/json' -d "$sign_body" \
   http://127.0.0.1:8201/v1/transit/sign/synth-a/sha2-256 >/dev/null

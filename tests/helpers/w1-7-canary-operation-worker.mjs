@@ -11,9 +11,15 @@ const material=process.env.ENGRAM_CANARY_MATERIAL??"synthetic-safe";
 if(mode.startsWith("protected_")){
   let input="";for await(const chunk of process.stdin)input+=chunk;const request=JSON.parse(input);
   if(!/^Bearer synthetic-canary-[0-9a-f]{64}$/.test(request.canary))throw new Error("CANARY_OPERATION_CONTEXT_REQUIRED");
+  if(!["live-vault","local-stub"].includes(request.signer))throw new Error("CANARY_SIGNER_INVALID");
+  const originalFetch=globalThis.fetch;
+  if(request.signer==="local-stub"){
+    if(request.port!==18201)throw new Error("CANARY_STUB_PORT_INVALID");
+    globalThis.fetch=(input,init)=>originalFetch(String(input).replace("http://127.0.0.1:8201",`http://127.0.0.1:${request.port}`),init);
+  }
   const {VaultTransitBoundary}=await import(pathToFileURL(path.join(request.moduleRoot,"packages/git-adapter/src/custody-service.mjs")));
   const boundary=new VaultTransitBoundary({token:request.token,allowedKeys:["synth-a"]});
-  const signature=await boundary.sign("synth-a",request.digest);
+  let signature;try{signature=await boundary.sign("synth-a",request.digest);}finally{globalThis.fetch=originalFetch;}
   const safe={operation:"sign",digest:request.digest,signature_class:"vault-transit"};
   if(mode==="protected_logs")await appendFile(landing,JSON.stringify({level:"trace",...safe})+"\n");
   else if(mode==="protected_argv")await writeFile(landing,JSON.stringify({...safe,argv:process.argv}));
@@ -26,7 +32,7 @@ if(mode.startsWith("protected_")){
     try{throw new Error("SIGNING_OPERATION_FAILED");}catch(error){await writeFile(landing,JSON.stringify({...safe,message:error.message,stack:error.stack}));}
   }
   else throw new Error(`unknown protected canary operation ${mode}`);
-  process.stdout.write(JSON.stringify({signature}));
+  process.stdout.write(JSON.stringify({signature,signer:request.signer}));
 }
 else if(mode==="logs")await appendFile(landing,JSON.stringify({level:process.env.ENGRAM_LOG_LEVEL??"trace",operation:"sign",material,syntheticSignature})+"\n");
 else if(mode==="argv")await writeFile(landing,JSON.stringify({operation:"sign",argv:process.argv,syntheticSignature}));

@@ -9,5 +9,6 @@ test("live Vault transit differential",async()=>{
   const b=new VaultTransitBoundary({token:process.env.KMS_TOKEN,allowedKeys:["synth-a"]});
   assert.match(await b.sign("synth-a","x"),/^vault:v\d+:/);
   await assert.rejects(()=>b.sign("prod-real","x"),e=>e.code.startsWith("KMS_"));
-  await runCanaryFixture({moduleRoot:fileURLToPath(new URL("..",import.meta.url)),boundary:b});
+  const evidence=await runCanaryFixture({moduleRoot:fileURLToPath(new URL("..",import.meta.url)),boundary:b});
+  assert.equal(evidence.signer,"live-vault","kms:test requires live Vault signer evidence");
 });
