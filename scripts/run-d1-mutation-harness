@@ -28,6 +28,7 @@ if(["dirty_fault","dirty_weakened"].includes(mode)) replace('client.query("DISCA
 if(mode==="dirty_weakened") replace("client.release(scrubError)","client.release()");
 if(mode==="rollback_mint") replace('      await client.query("COMMIT");','      await client.query("ROLLBACK");');
 if(mode==="swallow_refusal") replace("      throw error;",'      return { reference: "epr:credential:01a02095-c806-7000-8000-000000000001", principalId: session.principalId };');
+if(mode==="caller_reference") replace('      const result = await client.query(\n        "SELECT mint_custody_reference','      if (typeof request.reference === "string") await client.query("SELECT set_config(\'app.d1f_forced_reference\', $1, true)", [request.reference]);\n      const result = await client.query(\n        "SELECT mint_custody_reference');
 fs.writeFileSync(target,text);
 NODE
 }
@@ -140,6 +141,51 @@ for line in "${MUTATIONS[@]}"; do
     log="$mutation_dir/d3-swallow-refusal.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'MINT_AUTHORITY_REFUSED=accepted' "$log" && forbidden=t
     restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_MODULE_CALLER_REFERENCE ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-caller-reference.mjs"; pattern="control-mapping"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    make_d2_variant "$variant" caller_reference || { fail=1; continue; }
+    if grep -Fq "app.d1f_forced_reference" "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/d3-caller-reference.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'W1_7_A8_M1 chosen=accepted' "$log" && forbidden=t
+    restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_DB_REMOVE_EXPIRED_AUTHORITY ] || [ "$mutation" = D3_DB_REMOVE_REVOKED_AUTHORITY ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="control-mapping"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    if [ "$mutation" = D3_DB_REMOVE_EXPIRED_AUTHORITY ]; then
+      psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,' OR g.expires_at<=clock_timestamp()',' /* D3_A8_M4_EXPIRED_REMOVED */') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
+      applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_A8_M4_EXPIRED_REMOVED' in prosrc)>0 AND position('g.expires_at<=clock_timestamp()' in prosrc)=0 FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure" | tr -d '[:space:]'); expected='M4=accepted'
+    else
+      psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'g.revoked_at IS NOT NULL OR ','/* D3_A8_M5_REVOKED_REMOVED */ false OR ') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
+      applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_A8_M5_REVOKED_REMOVED' in prosrc)>0 AND position('g.revoked_at IS NOT NULL' in prosrc)=0 FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure" | tr -d '[:space:]'); expected='M5=accepted'
+    fi
+    log="$mutation_dir/${name}.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq "$expected" "$log" && forbidden=t
+    build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D3_DB_REMOVE_CLASS_GATE ]; then
+    build || { fail=1; continue; }
+    psql_as postgres "$SDB" -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002'; UPDATE founder_authorities SET scopes=array_append(scopes,'custody:mint:credential:3.2:B') WHERE principal_id='11000000-0000-0000-0000-000000000001' AND NOT ('custody:mint:credential:3.2:B'=ANY(scopes));" >/dev/null || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="authorization"
+    base=$(assert_w1_7 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'IF NOT FOUND OR NOT gate.passed OR gate.threat_revision<>8 OR gate.threat_digest<>''629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'' THEN RAISE EXCEPTION ''CLASS_GATE_NOT_PASSED'' USING ERRCODE=''42501'';END IF;','PERFORM set_config(''app.d3_mutation'',''D3_A8_M13_GATE_REMOVED'',true);') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_A8_M13_GATE_REMOVED' in prosrc)>0 AND position('CLASS_GATE_NOT_PASSED' in prosrc)=0 FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure" | tr -d '[:space:]')
+    log="$mutation_dir/d3-m13-class-gate.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
+    forbidden=f; grep -Fq 'CLASS_GATE_NOT_PASSED=accepted' "$log" && forbidden=t
+    build >/dev/null 2>&1; psql_as postgres "$SDB" -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002'; UPDATE founder_authorities SET scopes=array_append(scopes,'custody:mint:credential:3.2:B') WHERE principal_id='11000000-0000-0000-0000-000000000001' AND NOT ('custody:mint:credential:3.2:B'=ANY(scopes));" >/dev/null; restored=$(assert_w1_7 "$source_module" "$pattern")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
@@ -295,6 +341,6 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 20 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then [ "$executed" = 24 ] || fail=1; fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
