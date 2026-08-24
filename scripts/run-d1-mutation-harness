@@ -6,7 +6,7 @@ drop(){ "${compose[@]}" exec -T postgres psql -q -U postgres -d postgres -c "DRO
 cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; rm -rf "$mutation_dir"; exit $rc; }
 trap cleanup EXIT INT TERM
 "${compose[@]}" up -d --wait >/dev/null
-build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours'),('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;" >/dev/null; }
+build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql "$root_dir"/migrations/002[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours'),('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;" >/dev/null; }
 assert_file(){ local fixture="$1" out rc; out=$(mktemp); psql_as engram_maintenance "$SDB" -f - < "$fixture" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" D2_BINDING_MODULE="$module" D2_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"; }
 assert_d2(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_d2 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -15,6 +15,8 @@ assert_w1_7(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-
 run_w1_8(){ local module="$1" pattern="$2"; W1_8_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_8_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_8_BOUNDARY_MODULE="$module" W1_8_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-8-live.test.mjs"; }
 run_w1_1(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-1-durable-session.test.mjs"; }
 assert_w1_1(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1 "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_1_lifecycle(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_LIFECYCLE_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-1-session-lifecycle.test.mjs"; }
+assert_w1_1_lifecycle(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_lifecycle "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 m3_probe(){
   local expected="$1" out rc landed
@@ -103,11 +105,70 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [ "$mutation" = W1_1_LIFECYCLE_PROPERTIES ]; then
+    for property in read-expiry sweep introspection clock read-terminal already-terminal ownership atomic; do
+      build || { fail=1; continue; }
+      base=$(assert_w1_1_lifecycle "$property")
+      if [ "$property" = ownership ]; then
+        select_anchor="AND s.founder_principal_id=principal"; update_anchor="AND founder_principal_id=principal"; marker=W1_1_OWNERSHIP_PREDICATES_REMOVED
+        psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(replace(prosrc,'$select_anchor','AND true /* $marker */'),'$update_anchor','AND true') WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+        predicate_only=$(assert_w1_1_lifecycle "$property")
+        build >/dev/null 2>&1 || { fail=1; continue; }
+        psql_as postgres "$SDB" -c "DROP POLICY setup_session_founder ON setup_session_delegations; CREATE POLICY setup_session_founder ON setup_session_delegations USING(true) WITH CHECK(true);" >/dev/null || { fail=1; continue; }
+        rls_only=$(assert_w1_1_lifecycle "$property")
+        psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(replace(prosrc,'$select_anchor','AND true /* $marker */'),'$update_anchor','AND true') WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+        applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in (SELECT prosrc FROM pg_proc WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure))>0 AND position('$select_anchor' in (SELECT prosrc FROM pg_proc WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure))=0 AND position('$update_anchor' in (SELECT prosrc FROM pg_proc WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure))=0 AND (SELECT pg_get_expr(polqual,polrelid)='true' FROM pg_policy WHERE polname='setup_session_founder')" | tr -d '[:space:]')
+        log="$mutation_dir/w1-1-lifecycle-ownership.log"; run_w1_1_lifecycle "$property" >"$log" 2>&1; after=$?
+        forbidden=f; grep -Fq 'W1_1_LIFECYCLE ownership result=accepted state=completed' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+        build >/dev/null 2>&1; restored=$(assert_w1_1_lifecycle "$property")
+        printf 'W1_1_LIFECYCLE_OWNERSHIP baseline=%s predicate_only=%s rls_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$predicate_only" "$rls_only" "$applied" "$after" "$forbidden" "$restored"
+        executed=$((executed+1)); [ "$base" = 0 ] && [ "$predicate_only" = 0 ] && [ "$rls_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+        continue
+      fi
+      if [ "$property" = atomic ]; then
+        anchor="SET terminal_state=p_terminal_state,terminal_at=transition_clock"; marker=W1_1_TERMINAL_TIMESTAMP_REMOVED
+        psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','SET terminal_state=p_terminal_state /* $marker */') WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+        assignment_only=$(assert_w1_1_lifecycle "$property")
+        build >/dev/null 2>&1 || { fail=1; continue; }
+        psql_as postgres "$SDB" -c "ALTER TABLE setup_session_delegations DROP CONSTRAINT setup_session_delegations_check;" >/dev/null || { fail=1; continue; }
+        constraint_only=$(assert_w1_1_lifecycle "$property")
+        psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','SET terminal_state=p_terminal_state /* $marker */') WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure;" >/dev/null || { fail=1; continue; }
+        applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='setup_session_delegations'::regclass AND conname='setup_session_delegations_check') FROM pg_proc WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure" | tr -d '[:space:]')
+        log="$mutation_dir/w1-1-lifecycle-atomic.log"; run_w1_1_lifecycle "$property" >"$log" 2>&1; after=$?
+        forbidden=f; grep -Fq 'W1_1_LIFECYCLE atomic=false result=accepted state=completed stamped=false' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+        build >/dev/null 2>&1; restored=$(assert_w1_1_lifecycle "$property")
+        printf 'W1_1_LIFECYCLE_ATOMIC baseline=%s assignment_only=%s constraint_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$assignment_only" "$constraint_only" "$applied" "$after" "$forbidden" "$restored"
+        executed=$((executed+1)); [ "$base" = 0 ] && [ "$assignment_only" != 0 ] && [ "$constraint_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+        continue
+      fi
+      case "$property" in
+        read-expiry) oid="read_live_setup_session_delegation(uuid)"; anchor="AND s.expires_at>clock_timestamp()"; replacement="AND true /* W1_1_READ_EXPIRY_REMOVED */"; marker=W1_1_READ_EXPIRY_REMOVED; expected="W1_1_LIFECYCLE read_expiry live=1 expired=1" ;;
+        sweep) oid="sweep_expired_setup_session_delegations()"; anchor="AND expires_at<=sweep_clock"; replacement="AND false /* W1_1_SWEEP_REMOVED */"; marker=W1_1_SWEEP_REMOVED; expected="W1_1_LIFECYCLE sweep swept=0 expired_state=none expired_stamped=false live_state=none" ;;
+        introspection) oid="inspect_setup_session_delegation(uuid)"; anchor="AND s.expires_at>snapshot_clock"; replacement="AND true /* W1_1_INSPECTION_EXPIRY_REMOVED */"; marker=W1_1_INSPECTION_EXPIRY_REMOVED; expected="expired_active=true expired_state=expired" ;;
+        clock) oid="inspect_setup_session_delegation(uuid)"; anchor="snapshot_clock timestamptz:=clock_timestamp();"; replacement="snapshot_clock timestamptz:=to_timestamp(946684800); /* W1_1_DB_CLOCK_REMOVED */"; marker=W1_1_DB_CLOCK_REMOVED; expected="W1_1_LIFECYCLE clock_db=false" ;;
+        already-terminal) oid="transition_setup_session_delegation(uuid,text)"; anchor="IF row_terminal_state IS NOT NULL THEN"; replacement="IF false /* W1_1_ALREADY_TERMINAL_REMOVED */ THEN"; marker=W1_1_ALREADY_TERMINAL_REMOVED; expected="W1_1_LIFECYCLE already_terminal second=accepted state=abandoned" ;;
+      esac
+      if [ "$property" = read-terminal ]; then
+        oid="read_live_setup_session_delegation(uuid)"; marker=W1_1_READ_TERMINAL_REMOVED; expected="W1_1_LIFECYCLE read_terminal live=1 terminal=1"
+        psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(replace(prosrc,'AND s.terminal_state IS NULL','AND true /* $marker */'),'AND s.terminal_at IS NULL','AND true') WHERE oid='$oid'::regprocedure;" >/dev/null || { fail=1; continue; }
+        applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('s.terminal_state IS NULL' in prosrc)=0 AND position('s.terminal_at IS NULL' in prosrc)=0 FROM pg_proc WHERE oid='$oid'::regprocedure" | tr -d '[:space:]')
+      else
+        psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','$replacement') WHERE oid='$oid'::regprocedure;" >/dev/null || { fail=1; continue; }
+        applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='$oid'::regprocedure" | tr -d '[:space:]')
+      fi
+      log="$mutation_dir/w1-1-lifecycle-$property.log"; run_w1_1_lifecycle "$property" >"$log" 2>&1; after=$?
+      forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+      build >/dev/null 2>&1; restored=$(assert_w1_1_lifecycle "$property")
+      printf 'W1_1_LIFECYCLE_%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$(printf '%s' "$property" | tr '[:lower:]-' '[:upper:]_')" "$base" "$applied" "$after" "$forbidden" "$restored"
+      executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    done
+    continue
+  fi
   if [ "$mutation" = W1_1_SETUP_SESSION_PROPERTIES ]; then
     for property in nonsetup scope authority-expiry retention; do
       build || { fail=1; continue; }
@@ -540,7 +601,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 55 ] || fail=1
+  [ "$executed" = 63 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
