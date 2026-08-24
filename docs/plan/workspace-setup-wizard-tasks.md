@@ -153,7 +153,7 @@ Acceptance criteria:
 
 ## W1-7: Custody service, atomic minting, signing boundary, canary harness, and retention
 
-Phase W1. **DISPATCHED 2026-08-17** as the sole eligible item, after the section 10 KMS prerequisite was verified reachable under **C7**. Sequenced before W1-8 so the live resolver binds to the canonical custody boundary.
+Phase W1. **COMPLETE AND ACCEPTED 2026-08-24** by closing event `01a03429-469e-7ce9-9080-6ed939b7e561`. The section 10 KMS prerequisite was verified reachable under **C7** before dispatch, and the completed custody boundary remains the prerequisite for W1-8's live resolver.
 
 Scope, established by W1-2 and unchanged here: the custody service and its three custody models; namespace-specific atomic reference minting per the section 5A contract with controls M1–M13 plus MP; the synthetic KMS or HSM signing boundary; the differential canary harness with a vulnerable variant per sink; and retention enforcement for the **six** named policies RET-SESSION, RET-OPS-90, RET-AUDIT-400, RET-GRANT-400, RET-CONFIG-400 and RET-VERIFY-104.
 
@@ -168,7 +168,7 @@ Depends on: W1-5's resolver and W1-6's detector, since minting resolves authorit
 
 ---
 
-**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`. ~~while C1 blocks A2 that condition cannot be met.~~ **Corrected 2026-08-17: C1 closed and A2 closed with accepted W1-5.** The condition still cannot be met, because **A6, A7 and A8 are outstanding**; the gate refuses at `DISPATCH_TIER_A_INCOMPLETE:A6`. The gate treats their absence, and their unmet controls, as reasons Tier A cannot be dispatched rather than as waivers.
+**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`. ~~while C1 blocks A2 that condition cannot be met.~~ **Corrected 2026-08-17: C1 closed and A2 closed with accepted W1-5. Corrected 2026-08-24: A7 and A8 closed with accepted W1-7.** The condition still cannot be met, because **A6 is outstanding**; the gate refuses at `DISPATCH_TIER_A_INCOMPLETE:A6`. The gate treats its absence and unmet control as a reason Tier A cannot be dispatched rather than as a waiver.
 
 ---
 
