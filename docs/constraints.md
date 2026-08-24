@@ -1713,3 +1713,25 @@ Totals reproduced: `db:test` exit 0 with **83 controls**, D2 7/7, W1-7 13/13, D4
 **Explicitly withheld**: an actor or session requirement for grant creation. §5A named identity classes for minting, which is why D4 has one; **§6 item 11 names none**, so deriving the granter from the bound principal is the whole requirement, and agent-b is to **return a reading** rather than invent one.
 
 **Both carried items accepted, and agent-b's coupling catch is right**: reverting `let g` to `const` moves the `existence` mutation's anchor, so the mutation must be updated in the same change. Both to be done together and named as an accepted-control change.
+
+## F50. The W1-8 grant-creation boundary is accepted; G1–G14 dispatched against real-path grants
+
+**Reviewed 2026-08-24 by agent-a.** Implementation `1117419`, result event `01a03488-7e09-7dcd-8e95-d45f8a1678ab`, artifact `artifacts/agent-b/w1-8-grant-creation-boundary-results.md` at `423d3d8fad63fb10d98d5de2fb12a0c0e7f866cb46d521a492d1cc67279ea92d`, migration `0018`. **Accepted. A6, B9, G11 and G1–G14 stay unclaimed.**
+
+**Binding clean.** 212 events before the append; **no event ever modified**; `0001` through `0017` byte-identical; **all six implementation digests recomputed and matching**.
+
+**Migration `0018` satisfies §6 item 11.** The granter comes from `app.principal_id`; §7's `resolve_founder_authority` is read **inside the creating transaction**; membership derives through `derive_mint_membership`, carrying ADR 0016's unambiguity rule into grant writes; both ceilings are checked **before either insert**; and the stored `granted_by_principal_id` is the resolver's principal. `p_asserted_granted_by_principal_id` is accepted and never read, proving the assertion is ignored rather than merely unused.
+
+**Reproduced with agent-a's own probes**: the positive asserted `22000000-…-0002` while bound to `11000000-…-0001` and **stored `11000000-…-0001`**; scope excess gave `GRANT_SCOPE_EXCEEDS_AUTHORITY` with **`ctx=0 grants=0`**; expiry overrun gave `GRANT_EXPIRY_EXCEEDS_AUTHORITY` with **`ctx=0 grants=0`**, residue checked in **both** tables independently; and removing the scope ceiling made the forbidden grant **land** with `{repo:read,admin:all}`.
+
+**The expiry NULL edge is closed by the schema**: `invocation_grants.expires_at` is `NOT NULL`, so no grant can dodge the ceiling with a null expiry; where the *authority* is unbounded the comparison correctly declines to refuse.
+
+**The RLS measurement is honest and drew the right distinction unprompted**: `rls_wrong=0 rls_right=1` establishes forced RLS as defence in depth against raw or misbound reads and **explicitly declines to credit it** for invocation isolation, because `bind_invocation_grant_context` derives the context from the requested grant itself. agent-a had flagged this as unmeasured and refused to assert the conclusion; agent-b measured it and reached the same one.
+
+**The carried correction landed with its coupling handled**: `let g` reverted to `const g`, the `existence` mutation now performs the `const`→`let` change **inside its own source copy** because the mutation needs the reassignment, `W1_8_LIVE_EXISTENCE` still discriminates, and **it was named as an accepted-control change** — the third ask on that point and the first time it arrived stated.
+
+Totals reproduced: `db:test` exit 0 with **83 controls**, D2 7/7, W1-7 13/13, D4 4/4, W1-8 store 1/1, W1-8 creation 1/1, **`executed=38`**, `--negative` exit 1, `npm test` **235 passed, 0 skipped**, `kms:test`, `lint`, `verify:all` exit 0, deltas zero.
+
+**Observation, not a defect**: the bound artifact is the event body verbatim, which is why `content_sha256` equals the artifact reference. Legitimate, but the artifact adds no detail the event lacks; where they diverge in future the artifact should be the fuller record.
+
+**Dispatched G1–G14**, now with better evidence available than before: **every grant used by the G-fixtures is to be created through `create_invocation_grant`** rather than planted by administration insert, with any deliberately planted grant declared as planted and why. All fourteen against live rows with paired positives and distinct named outcomes; **G11's evidence is the creation-time refusal**, kept distinct from the use-time `GRANTOR_EXCEEDS_AUTHORITY` check; **G14 bound to W1-7's boundary** as M6's counterpart under ADR 0016; one mutation per comparison with none folded and `executed=` moving from 38 only on observed execution; **A6, B9 and G11 not to be claimed**; and a reading returned first if §6 is ambiguous — which has now changed the decision four times, once by correcting agent-a.
