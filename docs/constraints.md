@@ -1877,3 +1877,19 @@ One mutation per new refusal and per C6 requirement that can carry one, with any
 **Sequencing: convergence before OIDC, reordering agent-b's checklist.** OIDC's establishment half is blocked on DeVere regardless, so leading with it would park the task behind an authorisation that may not come. Convergence is fully synthetic-provable and removes a live risk now — bypassing C17 and C6, semantic drift, split-brain teardown, principal-binding mismatch, and **green tests against an engine deployment does not use**, which is the failure mode this project has spent fifty-five findings learning to distrust.
 
 **Dispatched**: `SetupSessionStore` as the single seam with the manager wrapping exactly one instance; a PostgreSQL implementation over the accepted durable functions, **reusing `PrincipalSessionBinding`'s transaction-local binding rather than inventing a second pattern**; the maps demoted to a test adapter with **no dual writes, no fallback, no best effort**; approved-step execution re-reading durable liveness and translating into the **accepted** named refusals; and ADR 0021's repeat-safety evidence with a discriminating mutation. Criterion 5's four negatives through the durable path are **explicitly the slice after**, so a single change is not asked to prove two things. `workspace-session.mjs` and its twelve accepted tests are named as accepted controls that convergence will touch, with a reading required first if the manager's API cannot wrap a store without changing observable behaviour.
+
+## F57. `engramport-dev` provisioned for the C17 scheduling evidence, and agent-a takes this slice rather than agent-b
+
+**Recorded 2026-08-24 by agent-a, on DeVere's authorization.** Related: ADR 0021, ADR 0022, constraint C6, gate C17.
+
+**Project created**: `engramport-dev`, ref `shomnibpmqhupkrtieii`, organization `An2b`, region `us-east-1`, PostgreSQL **17.6.1.155**, **$10/month**. The cost was stated to DeVere before creation.
+
+**Why a new project rather than an existing one.** Two EngramPort projects already exist — `engramport-prod` (`gclagzxhgwmchbbtpjlu`) and `engramport-substrate-prod` (`fusyqysbhtyxhnbshzsa`), both `ACTIVE_HEALTHY` on Postgres 17.6. **ADR 0022 restricts Supabase to synthetic material for one purpose**, and writing synthetic setup-session rows into a project named `-prod` is not something agent-a would assume authorization for. Neither existing project's contents were inspected. DeVere chose a new project.
+
+**`pg_cron` 1.6.4 is available and not yet installed**, confirmed by reading the extension list on the existing EngramPort project. So Supabase can satisfy C6 requirement 2's schedule half, which is ADR 0021's named trigger.
+
+**Version difference recorded rather than glossed**: Supabase is PostgreSQL **17.6**; all 83 accepted database controls run against **16.15** locally. This is acceptable for the narrow proof — that a scheduler invokes the sweep server-side without application traffic — and **must not be cited as evidence that any accepted control holds on 17.6**, which has never been tested.
+
+**Role exception, stated rather than drifted into.** `CLAUDE.md` assigns implementation to agent-b unless a handoff explicitly says otherwise. **This slice is agent-a's**, for a specific reason: the Supabase MCP is bound to this session, and the only way to give agent-b access would be to hand over a connection string — which **ADR 0022 forbids**, since secrets must never reach the repository, the scratchpad or any file. Doing the work through the MCP means **no secret is ever written anywhere**. agent-b's convergence slice remains in flight and untouched; the two are independent, and agent-a's own work will be reviewed against the same standard applied to agent-b's, including a discriminating mutation for the scheduled sweep.
+
+**Nothing closes yet.** C6 requirement 2 and C17 remain open until the evidence is gathered on the new project.
