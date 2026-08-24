@@ -120,17 +120,17 @@ for line in "${MUTATIONS[@]}"; do
       esac
       if [ "$property" = nonsetup ]; then
         psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','IF false /* $marker */ THEN') WHERE oid='create_setup_session_delegation(uuid,text[],timestamptz,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
-        table_log="$mutation_dir/w1-1-nonsetup-table-only.log"; run_w1_1 "$property" >"$table_log" 2>&1; table_only=$?
+        boundary_log="$mutation_dir/w1-1-nonsetup-boundary-only.log"; run_w1_1 "$property" >"$boundary_log" 2>&1; boundary_only=$?
         build >/dev/null 2>&1
         psql_as postgres "$SDB" -c "ALTER TABLE setup_session_delegations DROP CONSTRAINT setup_session_delegations_scopes_check;" >/dev/null || { fail=1; continue; }
-        boundary_only=$(assert_w1_1 "$property")
+        table_only=$(assert_w1_1 "$property")
         psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','IF false /* $marker */ THEN') WHERE oid='create_setup_session_delegation(uuid,text[],timestamptz,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
         applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 AND NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='setup_session_delegations'::regclass AND conname='setup_session_delegations_scopes_check') FROM pg_proc WHERE oid='create_setup_session_delegation(uuid,text[],timestamptz,uuid)'::regprocedure" | tr -d '[:space:]')
         log="$mutation_dir/w1-1-nonsetup-combined.log"; run_w1_1 "$property" >"$log" 2>&1; after=$?
-        forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || { cat "$table_log" >&2; cat "$log" >&2; }
+        forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || { cat "$boundary_log" >&2; cat "$log" >&2; }
         build >/dev/null 2>&1; restored=$(assert_w1_1 "$property")
-        printf 'W1_1_SETUP_NONSETUP baseline=%s table_only=%s boundary_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$table_only" "$boundary_only" "$applied" "$after" "$forbidden" "$restored"
-        executed=$((executed+1)); [ "$base" = 0 ] && [ "$table_only" != 0 ] && [ "$boundary_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+        printf 'W1_1_SETUP_NONSETUP baseline=%s boundary_only=%s table_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$boundary_only" "$table_only" "$applied" "$after" "$forbidden" "$restored"
+        executed=$((executed+1)); [ "$base" = 0 ] && [ "$boundary_only" != 0 ] && [ "$table_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
         continue
       fi
       psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','IF false /* $marker */ THEN') WHERE oid='create_setup_session_delegation(uuid,text[],timestamptz,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
