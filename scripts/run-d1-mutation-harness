@@ -71,7 +71,7 @@ make_w1_8_variant(){
 const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="existence"){
-  replace('  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");','  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) g=grantDoc; /* W1_8_EXISTENCE_REMOVED */');
+  replace('  const g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");','  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) g=grantDoc; /* W1_8_EXISTENCE_REMOVED */');
   replace('  const fresh = await deps.store.getGrant(g.grant_id);','  const fresh = (await deps.store.getGrant(g.grant_id)) ?? g; /* W1_8_EXISTENCE_REREAD_REMOVED */');
 }else if(mode==="tenant")replace('  if (request.tenant_id !== g.tenant_id) return fail("TENANT_MISMATCH");','  if (false /* W1_8_TENANT_REMOVED */) return fail("TENANT_MISMATCH");');
 else if(mode==="project")replace('  if (request.project_id !== g.project_id) return fail("PROJECT_MISMATCH");','  if (false /* W1_8_PROJECT_REMOVED */) return fail("PROJECT_MISMATCH");');
@@ -107,6 +107,24 @@ for line in "${MUTATIONS[@]}"; do
       printf 'W1_8_LIVE_%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$(printf '%s' "$property" | tr '[:lower:]' '[:upper:]')" "$base" "$applied" "$after" "$forbidden" "$restored"
       executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     done
+    continue
+  fi
+  if [ "$mutation" = W1_8_DB_REMOVE_CREATE_SCOPE ] || [ "$mutation" = W1_8_DB_REMOVE_CREATE_EXPIRY ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/credential-boundary.mjs"
+    if [ "$mutation" = W1_8_DB_REMOVE_CREATE_SCOPE ]; then
+      pattern="creation-scope"; marker="W1_8_CREATE_SCOPE_REMOVED"; anchor="IF NOT (p_scopes <@ authority_scopes) THEN"; expected="W1_8_CREATE scope=accepted landed=1"
+    else
+      pattern="creation-expiry"; marker="W1_8_CREATE_EXPIRY_REMOVED"; anchor="IF p_expires_at > authority_expires_at THEN"; expected="W1_8_CREATE expiry=accepted landed=1"
+    fi
+    base=$(assert_w1_8 "$source_module" "$pattern")
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','IF false /* $marker */ THEN') WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure" | tr -d '[:space:]')
+    log="$mutation_dir/${name}.log"; run_w1_8 "$source_module" "$pattern" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    build >/dev/null 2>&1; restored=$(assert_w1_8 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = D2_MODULE_SUBSTITUTION ]; then
@@ -434,7 +452,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 36 ] || fail=1
+  [ "$executed" = 38 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

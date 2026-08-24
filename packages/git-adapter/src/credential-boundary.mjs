@@ -126,7 +126,7 @@ export async function resolveInvocation(grantDoc, request, deps) {
   if (typeof deps?.store?.transaction === "function") return deps.store.transaction(store => resolveInvocation(grantDoc, request, { ...deps, store }));
   const fail = code => ({ ok: false, code });
   if (!grantDoc?.grant_id) return fail("GRANT_NOT_FOUND");
-  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");
+  const g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");
   if (JSON.stringify({ ...grantDoc, status: g.status }) !== JSON.stringify({ ...g, status: g.status })) return fail("GRANT_MISMATCH");
   if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");
   if ((g.granted_to_actor_id ?? null) !== (request.actor_id ?? null)) return fail("ACTOR_MISMATCH");
