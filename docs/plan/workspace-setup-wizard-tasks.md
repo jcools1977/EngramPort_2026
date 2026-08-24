@@ -126,7 +126,7 @@ Owns, as narrowed: Tier A controls **A3**, **A4**, **A5**, **A9**, and findings 
 
 ## W1-8: Live grant authorization and invocation resolution
 
-Phase W1. **Not dispatched.** Split out of W1-6 on 2026-08-17 because it requires a live datastore that W1-6's Node boundary does not provide.
+Phase W1. **COMPLETE AND ACCEPTED 2026-08-24** by closing event `01a0351f-f4e8-7c43-9c44-513cbde78776`. Split out of W1-6 on 2026-08-17 because it required a live datastore that W1-6's Node boundary did not provide.
 
 **Sequenced after W1-7, decided 2026-08-17.** W1-8 binds the live resolver to grant and custody rows, and W1-7 is what defines the canonical custody boundary: the custody service, namespace-specific atomic minting, and custody-row revocation semantics. Running W1-8 first would bind the resolver to a temporary custody store and then require rebinding once W1-7 lands, which is rework and, worse, would let an interim custody shape harden into the thing the resolver was proven against. **W1-7 before W1-8.**
 
@@ -134,7 +134,9 @@ Scope: back the injected `deps.store` of `packages/git-adapter/src/credential-bo
 
 Owns Tier A control **A6** and Tier B control **B9**, both re-homed from W1-6. Depends on: W1-5's resolver, available; and a live PostgreSQL path, available since C1 closed.
 
-**The logic already exists and is tested against synthetic stores.** What is missing is the datastore behind it, so this is an integration task rather than a design task. `resolveInvocation` already performs an invocation-time re-read and calls a `serverNow()` abstraction, which is the correct shape to bind to a real store.
+**A6 is closed.** The accepted `create_invocation_grant` boundary supplies its grant-write half; the fourteen live invocation comparisons supply its invocation half, with paired positives and thirteen discriminating mutations. The closure carries ADR 0015's trusted-session precondition and ADR 0016's open project-context deferral.
+
+**B9 is built but not closed.** It remains gated on W3-1, where the invocation boundary is asserted against real material. ADR 0019 records that the digest-pinned evidence row carries two stale fields under F18: its owner still reads W1-6, and its single `W3 completion` gate reflects Tier B's B9 rather than Tier A's A6. Revision 8 remains unchanged.
 
 ## W1-6a: Genuine guard-removal mutations for the 28 N/G controls
 
@@ -168,7 +170,7 @@ Depends on: W1-5's resolver and W1-6's detector, since minting resolves authorit
 
 ---
 
-**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`. ~~while C1 blocks A2 that condition cannot be met.~~ **Corrected 2026-08-17: C1 closed and A2 closed with accepted W1-5. Corrected 2026-08-24: A7 and A8 closed with accepted W1-7.** The condition still cannot be met, because **A6 is outstanding**; the gate refuses at `DISPATCH_TIER_A_INCOMPLETE:A6`. The gate treats its absence and unmet control as a reason Tier A cannot be dispatched rather than as a waiver.
+**Registration is not satisfaction.** Recording these three tasks satisfies no Tier A control, closes no finding, and authorizes no dispatch. Their presence here makes the W1-2 dispatch gate enforceable: W3-1 fails closed unless the evidence registry reports every Tier A control passed for the exact current revision of `docs/security/setup-credential-threat-model.md`. ~~while C1 blocks A2 that condition cannot be met.~~ **Corrected 2026-08-17: C1 closed and A2 closed with accepted W1-5. Corrected 2026-08-24: A7 and A8 closed with accepted W1-7. Corrected 2026-08-24 under ADR 0019: A6 closed with accepted W1-8; Tier A is complete and the gate reports eligible.** Eligibility is not authorization: W3-1 is not dispatched, B9 remains built-not-closed, and the decision to use real credential and GitHub App material belongs to DeVere.
 
 ---
 
