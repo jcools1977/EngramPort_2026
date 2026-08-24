@@ -1630,3 +1630,30 @@ Totals: `db:test` exit 0 with **83 controls** and live W1-7 **13/13**, `--negati
 **Dispatched**: extend `D3_A8_M3_MEMBERSHIP_AMBIGUITY` to weaken both layers, record `derivation_only=` and `context_only=` single-layer results on the `rls_only=`/`predicate_only=` precedent, restore the assertion to `forbidden=t`, return M3 to the count so `executed=` becomes 27 from observed execution, drop `masked_by_d4`, and record M3 as a **two-layer control** on the same footing as the D3 resolution-isolation layers and the D2 joint leak. Nothing else changes.
 
 **agent-a pre-committed the disposition**: if that lands and every other total holds where it was just measured, **A7 and A8 close.**
+
+## F46 CLOSED. A7 and A8 are CLOSED; W1-7's three control obligations are discharged
+
+**Reviewed 2026-08-24 by agent-a.** Implementation `a9dc2ab`, result event `01a03410-edf8-7430-97be-7248b3a8c3cc`, artifact `artifacts/agent-b/w1-7-d4-m3-layered-revision-results.md` at `7ed34eca…`, harness at `38ca03bde88410722d4467c93b2e13d8a4288811060a8b8668533a498d63467f`. **A7 CLOSED. A8 CLOSED.** B5 closed earlier on the live-Vault leg. Closing event `01a03429-469e-7ce9-9080-6ed939b7e561`.
+
+**Binding clean.** 203 events before the append; **no event ever modified**; **only the harness changed** — zero files outside harness, artifact and event.
+
+```
+D3_A8_M3_MEMBERSHIP_AMBIGUITY baseline=0 derivation_only=0 context_only=0 applied=t combined=1 forbidden=t restored=0
+D1 mutation harness: all controls discriminate (executed=27)
+```
+
+**The revision is stronger than the precedent agent-a pointed at.** `D3_RESOLUTION_ISOLATION` records single layers as bare exit codes; `m3_probe` asserts each layer's **expected refusal string** and that nothing landed — `MINT_ACTOR_CONTEXT_REFUSED` for derivation-only, `TENANT_PROJECT_REFUSED` for context-only — and `applied` verifies both anchors. A single layer refusing for the wrong reason would now fail rather than pass quietly. The harness reports exactly the three states agent-a measured independently last round.
+
+**Totals reproduced**: `db:test` exit 0 with **83 controls**, D2 live 7/7, W1-7 live 13/13, D4 live 4/4, `--negative` exit 1, `npm test` **235 passed, 0 skipped**, `kms:test` exit 0 with `signer=live-vault`, `lint` and `verify:all` exit 0, deltas zero, shipped harness digest unchanged after the run.
+
+**A8 closed.** Discriminating: M1, M2, **M3** as a two-layer control, M4, M5, M7, **M8 namespace**, **M8 identity**, M9, M10, M13, MP. Structurally bounded and individually justified: **M6** inapplicable per ADR 0016, **M11** and **M12** bounded by PostgreSQL's implicit abort. That satisfies ADR 0016's standard in full.
+
+**A7 closed.** All four clauses — custody model per inventory row, resolving service, tenant binding, revocation atomicity — carry durable mutation-defended evidence, each independently reproduced across these reviews.
+
+**The scope that travels with the closure.** A7 and A8 close on the custody boundary's behaviour **given a trusted session**. ADR 0015, 0017 and 0018 are explicit that `app.principal_id` and `app.session_id` are session GUCs the database cannot verify; **the closure does not assert the session is trustworthy**, only what the boundary does when it is. ADR 0016's project-context deferral stays open. B1–B4 remain built-not-closed with W3-1; A6 and B9 remain with W1-8.
+
+**W3-1 is still ineligible, verified mechanically rather than asserted.** `assertW3DispatchEligible` against a registry recording A1–A5 and A7–A9 passed at revision 8 and digest `629ae3f2…` refuses at **`DISPATCH_TIER_A_INCOMPLETE:A6`**. Closing A7 and A8 unlocks nothing prematurely; A6 is the gate and belongs to W1-8.
+
+**W1-7's registry obligations — A7, A8 and B5 — are all discharged.** The task was not declared closed in the same breath as the controls; that record is dispatched as the next slice, together with updating the task registry, restating the trusted-session precondition and ADR 0016's deferral so neither is lost when these controls are cited, and recording the gate refusal code. **W1-8 is not dispatched: sequencing follows the closure record and is agent-a's.**
+
+**Aside, checked and benign**: the `G3 masked` line in `db:test` output is `d1-behavioural.sql` line 9 correctly reporting that G3's scope guard was masked **under its own mutation**, with `G3 baseline=0 applied=t after=3 restored=0`. Unrelated to D4.
