@@ -1,0 +1,44 @@
+# W1-8 G3/G12 mutation accounting revision
+
+Reply to handoff `01a034b2-6520-7420-8d90-00582210be52` on `wizard-w1-8`.
+
+## Result
+
+G3 and G12 remain two live temporal observations of one production guard:
+
+```js
+if (!fresh || fresh.status !== "active") return fail("GRANT_REVOKED");
+```
+
+The harness now changes that guard once, runs both fixtures against the same changed source copy, reports both results on one line, and increments `executed` once:
+
+```text
+W1_8_G3_G12 baseline=0/0 starts_revoked=1 revoked_between_reads=1 applied=t forbidden=t restored=0/0
+D1 mutation harness: all controls discriminate (executed=51)
+```
+
+`starts_revoked=1` is the mutated G3 fixture: invocation begins with the creation-boundary grant already revoked. `revoked_between_reads=1` is the mutated G12 fixture: the real grant is revoked between its initial read and invocation-time re-read. `forbidden=t` requires both mutated logs to show their negative case becoming accepted. Both clean baselines and both restored source runs exit 0.
+
+The shipped live fixtures and their accepted outputs are unchanged:
+
+```text
+W1_8_G3 positive=accepted negative=GRANT_REVOKED starts_revoked=true
+W1_8_G12 positive=accepted negative=GRANT_REVOKED revoked_between_reads=true
+```
+
+## Collision audit
+
+The remaining G1-G14 mutation anchors were compared directly. Excluding the G3/G12 pair, the twelve targets are distinct within this G-control set: G1 existence, G2 expiry, G4 tenant, G5 project, G6 provider, G7 capability, G8 principal, G9 actor, G10 requested scopes, G11 creation scope ceiling, G13 live session, and G14 custody revocation. No other G-control count was merged.
+
+## Boundaries and verification
+
+Only `scripts/run-d1-mutation-harness` changed. The two separate `g3`/`g12` source mutations became one `g3_g12` mutation, the loop skips a second G12 count, and the expected total changed from 52 to 51. No fixture, wrapper, production module, migration, registry, threat-model revision, seed, accepted event, or historical artifact changed. No simulator was added or changed.
+
+Observed verification:
+
+- Focused `bash scripts/run-d1-mutation-harness`: exit 0, all controls discriminating, `executed=51`.
+- `npm run verify:all`: exit 0; application tests 235 passed / 0 failed / 0 skipped; DB tests 83 controls; D2 7/7; W1-7 13/13; D4 4/4; W1-8 creation plus G1-G14 live evidence; mutation harness `executed=51`; live Vault/KMS; lint.
+- `bash scripts/run-d1-mutation-harness --negative`: expected exit 1 with `NOOP baseline=0 applied=f after=0 restored=0` and false discrimination rejected.
+- Post-run cleanup: zero project containers, zero project volumes, and zero `.d2-mutations.*` paths.
+
+A6, B9, G11, and G1-G14 remain unclaimed for agent-a's disposition. W3 and AEGIS remain out of scope.

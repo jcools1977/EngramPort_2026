@@ -85,7 +85,7 @@ else if(mode==="g1"){
   replace('  const g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");','  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) g=grantDoc; /* W1_8_G1_REMOVED */');
   replace('  const fresh = await deps.store.getGrant(g.grant_id);','  const fresh = (await deps.store.getGrant(g.grant_id)) ?? g;');
 }else if(mode==="g2")replace('  if (Date.parse(g.expires_at) <= await deps.store.serverNow()) return fail("GRANT_EXPIRED");','  if (false /* W1_8_G2_REMOVED */) return fail("GRANT_EXPIRED");');
-else if(mode==="g3")replace('if (!fresh || fresh.status !== "active") return fail("GRANT_REVOKED");','if (false /* W1_8_G3_REMOVED */) return fail("GRANT_REVOKED");');
+else if(mode==="g3_g12")replace('if (!fresh || fresh.status !== "active") return fail("GRANT_REVOKED");','if (false /* W1_8_G3_G12_REMOVED */) return fail("GRANT_REVOKED");');
 else if(mode==="g4")replace('  if (request.tenant_id !== g.tenant_id) return fail("TENANT_MISMATCH");','  if (false /* W1_8_G4_REMOVED */) return fail("TENANT_MISMATCH");');
 else if(mode==="g5")replace('  if (request.project_id !== g.project_id) return fail("PROJECT_MISMATCH");','  if (false /* W1_8_G5_REMOVED */) return fail("PROJECT_MISMATCH");');
 else if(mode==="g6")replace('  if (request.provider !== g.provider) return fail("PROVIDER_MISMATCH");','  if (false /* W1_8_G6_REMOVED */) return fail("PROVIDER_MISMATCH");');
@@ -93,7 +93,6 @@ else if(mode==="g7")replace('  if (request.capability !== g.capability) return f
 else if(mode==="g8")replace('  if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");','  if (false /* W1_8_G8_REMOVED */) return fail("PRINCIPAL_MISMATCH");');
 else if(mode==="g9")replace('  if ((g.granted_to_actor_id ?? null) !== (request.actor_id ?? null)) return fail("ACTOR_MISMATCH");','  if (false /* W1_8_G9_REMOVED */) return fail("ACTOR_MISMATCH");');
 else if(mode==="g10")replace('  if (!has(new Set(g.scopes), request.scopes ?? [])) return fail("SCOPE_EXCEEDED");','  if (false /* W1_8_G10_REMOVED */) return fail("SCOPE_EXCEEDED");');
-else if(mode==="g12")replace('if (!fresh || fresh.status !== "active") return fail("GRANT_REVOKED");','if (false /* W1_8_G12_REMOVED */) return fail("GRANT_REVOKED");');
 else if(mode==="g13")replace('  if (request.session_id && !(await deps.store.sessionLive(request.session_id))) return fail("SESSION_REVOKED");','  if (false /* W1_8_G13_REMOVED */) return fail("SESSION_REVOKED");');
 else if(mode==="g14")replace('if (!row || row.revoked) return fail("CUSTODY_REVOKED");','if (false /* W1_8_G14_REMOVED */) return fail("CUSTODY_REVOKED");');
 else throw new Error(`unknown W1-8 variant ${mode}`);
@@ -146,8 +145,22 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/credential-boundary.mjs"
     for control in $(seq 1 14); do
+      [ "$control" = 12 ] && continue
       pattern="g$control"; base=$(assert_w1_8 "$source_module" "$pattern")
-      if [ "$control" = 11 ]; then
+      if [ "$control" = 3 ]; then
+        g12_base=$(assert_w1_8 "$source_module" g12)
+        variant="$mutation_dir/w1-8-g3-g12.mjs"; make_w1_8_variant "$variant" g3_g12 || { fail=1; continue; }
+        if grep -Fq "W1_8_G3_G12_REMOVED" "$variant"; then applied=t; else applied=f; fi
+        g3_log="$mutation_dir/w1-8-g3.log"; run_w1_8 "$variant" g3 >"$g3_log" 2>&1; starts_revoked=$?
+        g12_log="$mutation_dir/w1-8-g12.log"; run_w1_8 "$variant" g12 >"$g12_log" 2>&1; revoked_between_reads=$?
+        forbidden=f
+        if grep -Fq "W1_8_G3 positive=accepted negative=accepted" "$g3_log" && grep -Fq "W1_8_G12 positive=accepted negative=accepted" "$g12_log"; then forbidden=t; fi
+        [ "$forbidden" = t ] || { cat "$g3_log" >&2; cat "$g12_log" >&2; }
+        g12_restored=$(assert_w1_8 "$source_module" g12); restored=$(assert_w1_8 "$source_module" g3)
+        printf 'W1_8_G3_G12 baseline=%s/%s starts_revoked=%s revoked_between_reads=%s applied=%s forbidden=%s restored=%s/%s\n' "$base" "$g12_base" "$starts_revoked" "$revoked_between_reads" "$applied" "$forbidden" "$restored" "$g12_restored"
+        executed=$((executed+1)); [ "$base" = 0 ] && [ "$g12_base" = 0 ] && [ "$starts_revoked" != 0 ] && [ "$revoked_between_reads" != 0 ] && [ "$applied" = t ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] && [ "$g12_restored" = 0 ] || fail=1
+        continue
+      elif [ "$control" = 11 ]; then
         marker="W1_8_G11_REMOVED"; anchor="IF NOT (p_scopes <@ authority_scopes) THEN"
         psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','IF false /* $marker */ THEN') WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
         applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure" | tr -d '[:space:]')
@@ -490,7 +503,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 52 ] || fail=1
+  [ "$executed" = 51 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
