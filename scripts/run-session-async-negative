@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const repository=resolve(import.meta.dirname,"..");
+const managerSource=join(repository,"packages/git-adapter/src/workspace-session.mjs");
+const temporary=mkdtempSync(join(tmpdir(),"engramport-session-async-negative-"));
+const expectedFailures=new Set([
+  "completion structurally removes identity, delegation, approval, and credential",
+  "expired session refuses approved execution and leaves no identity",
+  "torn-down session cannot authorize and replayed approval is refused",
+  "approval from session A cannot execute under session B",
+  "scope and expiry ceilings reuse W0 predicates",
+  "non-setup scope and unbounded session are refused",
+  "abandonment leaves no partial authority",
+  "reordered steps are refused with paired genuine-plan control",
+  "inserted step is refused with paired genuine-plan control",
+  "removed step is refused with paired genuine-plan control",
+  "substituted step is refused with paired genuine-plan control",
+  "modified parameters are refused with paired genuine-plan control",
+  "forged but self-consistent plan is not authorized by a genuine approval",
+  "one consequential flag change is self-consistent but refused by genuine approval",
+  "all consequential flags changed is the refused F8 control",
+  "added dependency is self-consistent but refused by genuine approval",
+  "removed dependency is self-consistent but refused by genuine approval",
+  "wire dependency order is verified verbatim and never normalized",
+  "cross-plan approval is refused with paired approved-plan control",
+  "a future wire field is preserved, covered, diffed, and refused without an exclusion",
+  "hand-built step list is refused at approval and execution",
+]);
+const nonmanagerRefusals=[
+  "v2 wire is refused with a specific profile error and differs from v3 plan identity",
+  "tampered serialized plan is refused on load with paired round trip",
+  "verified plan parameters are deeply immutable",
+];
+
+function tapNames(output,prefix){
+  return output.split("\n").flatMap(line=>{
+    const match=line.match(new RegExp(`^\\s*${prefix} \\d+ - (.+)$`));
+    return match&&!match[1].endsWith(".test.mjs")?[match[1]]:[];
+  });
+}
+
+try{
+  let permissive=readFileSync(managerSource,"utf8");
+  const setupRefusals=permissive.match(/throw new SetupPlanError\([^;]+?\)/g)??[];
+  const mismatchRefusals=permissive.match(/throw planMismatchError\([^;]+?\)/g)??[];
+  assert.equal(setupRefusals.length,16,"manager refusal inventory changed");
+  assert.equal(mismatchRefusals.length,1,"plan-mismatch refusal inventory changed");
+  permissive=permissive
+    .replace("./workspace-setup.mjs",pathToFileURL(join(repository,"packages/git-adapter/src/workspace-setup.mjs")).href)
+    .replace("./workspace-approval.mjs",pathToFileURL(join(repository,"packages/git-adapter/src/workspace-approval.mjs")).href)
+    .replace(/throw new SetupPlanError\([^;]+?\)/g,"void 0")
+    .replace(/throw planMismatchError\([^;]+?\)/g,"void 0");
+  writeFileSync(join(temporary,"workspace-session.mjs"),permissive);
+
+  const environment={...process.env,SETUP_SESSION_MANAGER_MODULE:pathToFileURL(join(temporary,"workspace-session.mjs")).href};
+  const files=["tests/workspace-session.test.mjs","tests/workspace-approval.test.mjs"];
+  const failed=[];
+  const passed=[];
+  for(const file of files){
+    const result=spawnSync(process.execPath,["--test","--test-reporter=tap",file],{cwd:repository,encoding:"utf8",env:environment});
+    const output=`${result.stdout}${result.stderr}`;
+    assert.notEqual(result.status,0,`${file} unexpectedly passed under permissive manager`);
+    failed.push(...tapNames(output,"not ok"));
+    passed.push(...tapNames(output,"ok"));
+  }
+
+  assert.deepEqual(new Set(failed),expectedFailures,"permissive-manager failure names changed");
+  assert.equal(failed.length,expectedFailures.size,"permissive-manager failures were duplicated or omitted");
+  assert.equal(passed.length,16,"permissive-manager passing-test count changed");
+  for(const name of nonmanagerRefusals)assert.ok(passed.includes(name),`nonmanager refusal did not stay green: ${name}`);
+  console.log(`W1_1_ASYNC_PERMISSIVE failed=${failed.length} passed=${passed.length} manager_refusals_removed=${setupRefusals.length+mismatchRefusals.length} nonmanager_green=${nonmanagerRefusals.length} enumerated=t`);
+}finally{
+  rmSync(temporary,{recursive:true,force:true});
+}
