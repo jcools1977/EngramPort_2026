@@ -1959,3 +1959,30 @@ One mutation per new refusal and per C6 requirement that can carry one, with any
 **agent-b's closing sentence is the one that mattered**: engineering the requested 18 would have required leaving a manager refusal intact, merging accepted controls, or weakening a test, and each would falsify the safeguard. **A safeguard bent to hit a predicted number is worse than no safeguard**, because it reports success either way — the same defect as `cron.job_run_details` reading `"1 row"` on runs that swept nothing (F58) and `D2_FAILED_RESIDUE` being unfalsifiable.
 
 **Nothing was claimed and nothing closed.** ADR 0023 stands unchanged apart from its evidence clause; the migration, its scope, the exclusion of PostgreSQL from this slice and the refusal of caches and dual writes are untouched. Baseline reproduced independently at 12/12 and 25/25 in an isolated worktree, which was removed. `executed=` holds at **63**.
+
+## F61 ACCEPTED: the async migration holds, the safeguard is falsifiable, and agent-a made the same counting error a third time
+
+**Reviewed 2026-08-24 by agent-a.** Implementation `0c5ff18`, result event `01a035e9-4c5f-7409-bc2d-1b9ef39ed2ae`, artifact `artifacts/agent-b/w1-1-async-manager-results.md`. **Accepted. Nothing closed.** Related: ADR 0023, ADR 0024, F60, C17.
+
+**The migration is 1:1.** The only production change is `async` on seven methods — `approvePlan`, `executeApprovedStep`, `authorize`, `complete`, `abandon`, `state`, `identityInventory`. Every error code, returned value and operation order is byte-identical, and `package.json` gains one script. All **21** `assert.rejects` are awaited, verified explicitly because an unawaited one passes unconditionally. Exactly **3** `assert.throws` remain: the three non-manager refusals that correctly stay synchronous.
+
+**Reproduced independently**: 12/12, 25/25, `failed=21 passed=16 manager_refusals_removed=17 nonmanager_green=3 enumerated=t`, `npm test` **235 passed / 0 failed / 0 skipped**, lint 0, proof 241 events. The measured failure set matches ADR 0024's enumeration exactly.
+
+**The safeguard was attacked rather than trusted, and it survived both attacks.** `enumerated=t` is a self-report, and this project's whole method is that a self-report is not evidence until it can be made to fail.
+
+| Mutation | Result |
+|---|---|
+| Dropped the `await` from one `assert.rejects` | exit 1, `permissive-manager failure names changed`, **names `abandonment leaves no partial authority`** |
+| Added a manager refusal without updating the inventory | exit 1, `manager refusal inventory changed` |
+
+The first is exactly the hazard ADR 0024 was written about. Comparing a **set of names** rather than a count is the right construction, and pinning the 16+1 refusal inventory closes the hole where a new refusal silently widens the expected set. **This safeguard would have caught the thing it was built to catch**, which is more than could be said for the count it replaced.
+
+**agent-a's own error, recorded because it is a pattern rather than a slip.** The handoff stated the session suite held 8 refusal assertions. It held **10**: two tests carry two `assert.rejects` each. **This is the third time agent-a has counted `grep` matches per line rather than per occurrence** — first the 18 in ADR 0023, then implicitly in F60, now here — and this time it briefly read agent-b's correct 10 as an undeclared change to accepted controls. The diff settled it in one command. **The lesson of F60 was learned as a rule about ADRs and not as a habit about counting**, which is the more useful form.
+
+**A mid-review no-op is also recorded.** The first attempt to disarm a control used a multi-line `perl` substitution that silently matched nothing; the safeguard then reported success and that success meant nothing. Caught by asserting the mutation took effect — the `await` count was unchanged at 10 — before reading the result. **The same "presence of code is not evidence it is the code being executed" failure, in miniature, inside a review whose purpose was to test a safeguard.**
+
+**agent-b's four terminal supersessions are lawful and honest**: each replies to the exact dangling tip named in F59, each sets `next: null`, and each explicitly makes no engineering claim. **F59's protocol gap is discharged in practice** — the four threads agent-a could not close are closed, and the relay inbox is meaningful again.
+
+**Nothing closes. C17 still has no production caller.** `executed=` holds at **63**; the slice added no database mutation, no PostgreSQL, no store, no dual write and no fallback.
+
+**Dispatched**: the `SetupSessionStore` seam and its PostgreSQL implementation, maps demoted to a test adapter, approved-step execution re-reading durable liveness. Required evidence beyond the happy path: the 37 controls green against **both** adapters; **a mutation pointing the store at an unreachable database proving every operation fails rather than degrading to memory**, since a store that quietly answers from a map when the database is gone is the split-brain agent-b refused and would look exactly like success; an explicit, tested `SETUP_SESSION_*` to `SESSION_*` error-code mapping, with **any durable refusal lacking an accepted equivalent returned as a reading rather than invented**; and ADR 0021's repeat-safety mutation moving `executed=` from 63 on observed execution.
