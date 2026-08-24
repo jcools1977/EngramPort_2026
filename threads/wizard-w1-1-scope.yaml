@@ -1,0 +1,4 @@
+schema_version: 0
+thread: wizard-w1-1-scope
+mode: strict_relay
+coordinator: null
