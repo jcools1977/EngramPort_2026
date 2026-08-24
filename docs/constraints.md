@@ -1576,3 +1576,21 @@ Totals: `db:test` exit 0 with **83 controls** and live W1-7 **13/13**, `--negati
 **A8's state is now complete and has exactly one open item.** Discriminating: M1, M2, M3, M4, M5, M7, M8's namespace half, M9, M10, M13, MP. Structurally bounded and justified: M6, M11, M12. **Open: M8's identity half.** A8 closes when the session-binding layer binds an actor, the mint refuses a non-custody kind or trust class, `minted_by_actor_id` is written and checked, and a mutation removing that check makes an agent-backed mint succeed observably. **A7 closes with it.**
 
 **Dispatched**: update the mapping artifact to that state, state A8's closing condition verbatim, **add no new mutation** and leave `executed=` at 26, supersede rather than edit the bound artifact, and do not implement the actor check inside D3.
+
+## F44 CLOSED: the A7/A8 record is complete; M8's actor binding is owned by W1-7 as slice D4
+
+**Reviewed 2026-08-24 by agent-a.** Implementation `239b671`, result event `01a02bf8-5b37-7d00-980f-2774f94a2611`, artifact `artifacts/agent-b/w1-7-d3-a7-a8-final-mapping.md` at `0712e08457054f9192db5a3b3e3df41051ad45313df59f87e98ef931f7026706`. **Accepted. D3 complete; D4 is now the sole WIP item; A7 and A8 stay open.**
+
+**Binding clean.** 197 events before the append; **no event ever modified**; the commit adds **only the artifact and the event** — zero migrations, production files, fixtures or mutations. **The supersession was done correctly**: the prior mapping is still byte-identical at its bound digest `1c12e807…`, so the new artifact stands beside the immutable record rather than over it.
+
+**Content verified rather than trusted**: `D3_A8_M3_MEMBERSHIP_AMBIGUITY` and `D3_A8_M10_ACTIVE_RACE` named; M6 recorded as **`inapplicable`**; M8 split into namespace and identity halves; `executed=26` unchanged; ADR 0017 cited; `minted_by_actor_id` named; ADR 0017 consequence 3's closing condition present **verbatim**; **zero closure claims**. Baseline re-run and still holding: `db:test` exit 0 with 83 controls and live W1-7 13/13, `--negative` exit 1, `npm test` 235 passed 0 skipped, `kms:test`, `lint` and `verify:all` exit 0, deltas zero. **Attributing totals to agent-a's reproduced baseline rather than claiming a fresh run was the honest move for a slice that executes nothing.**
+
+**Ownership decided: W1-7, slice D4.** ADR 0017 said "the layer that owns session identity binding" without naming a task. Named now, with the two alternatives refused on their merits.
+
+**Not W1-8.** W1-8 owns A6 and B9, is scoped to invocation-time resolution, and is **deliberately sequenced after W1-7** so the live resolver binds to a settled custody boundary. Assigning M8 there would make **A8, a W1-7-owned control, close only after W1-8** — inverting the declared sequencing and leaving W1-7 unable to close its own controls.
+
+**Not W1-1.** W1-1 owns the founder setup session, its delegation, teardown and C17. M8 concerns who is minting at the **custody** boundary, which is the adapter session D2 built.
+
+**W1-7, because the seam is `PrincipalSessionBinding`** — the same object, file and checkout path that already binds the principal and the privileged database session — and because A8 is W1-7's control to close. **The schema already carries everything needed**, so D4 is wiring rather than design: `agent_sessions(actor_id, tenant_id, project_id)`, `actor_delegations(actor_id, principal_id, scopes, expires_at)`, `actors(kind, trust)` with `trust_level` spanning `system`, `trusted_service` and `trusted_agent`, and `custody_rows.minted_by_actor_id` declared and never written.
+
+**Dispatched D4**: bind the actor from the trusted store with a caller-supplied `actorId` ignored as `principalId` already is; **return the reading before implementing** which trust classes may mint `credential`, as was done for M6 and M3; write and check `minted_by_actor_id`; one forward-only migration if needed; the discriminating mutation being **an agent-backed mint succeeding with the check removed**; and a paired positive proving the ordinary path still mints. **Project context is explicitly not folded in** — ADR 0016 deferred it to this same layer and `agent_sessions` carries tenant and project, so D4 may make it reachable, but whether M3's deferral is discharged is agent-a's separate determination.
