@@ -1823,3 +1823,23 @@ Reproduced: `db:test` exit 0 in **177 s** with 83 controls, twelve `W1_8_G*` mut
 **Dispatched**: swap the two label names so each names the layer **removed**, matching the four precedents; update the assertion to preserve identical semantics; **state the convention in the artifact in one sentence** rather than leaving it inferred; and confirm no other new label inverts it. `executed=` stays at **55** and nothing else changes.
 
 **Recorded for sequencing**: still open in W1-1 are teardown and the expiry sweep, then the durable halves of criteria 1 and 4, then the OIDC adapter's synthetically-testable verification logic. **The external authentication fact remains an interface precondition**, and **nothing in this slice may be cited as discharging the trusted-session caveat** on A6, A7 and A8 — the sentence most likely to be dropped as the record grows, so it is restated in every handoff.
+
+## F54 CLOSED: the layer labels are righted; teardown and the C6 expiry sweep dispatched
+
+**Reviewed 2026-08-24 by agent-a.** Implementation `85f5fc3`, result event `01a0355e-6da4-7507-a60f-50c2cac0b790`, artifact `artifacts/agent-b/w1-1-layer-label-correction.md` at `4c7a0804…`. **Accepted. Nothing closed: not C17, not criterion 1, not criterion 4.**
+
+**Binding clean**: 225 events before the append, **no event ever modified**, **only the harness changed** — zero files outside the harness, artifact and event.
+
+**The swap is name-only, verified in execution order rather than from the summary.** The boundary guard is removed first and that run is now recorded as `boundary_only`; the table constraint is dropped second and that run is now `table_only`. The assertions moved with the names — `boundary_only != 0`, `table_only = 0` — so semantics are identical, and the log filename moved too. Anchors, execution order, combined mutation and count untouched. `W1_1_SETUP_NONSETUP baseline=0 boundary_only=1 table_only=0 applied=t combined=1 forbidden=t restored=0`, `executed=55`. **Each label now names the layer removed, matching all four precedents**; agent-b's audit found no other inversion and agent-a's agrees.
+
+Reproduced: `db:test` exit 0 in **213 s** with 83 controls, `--negative` exit 1, `npm test` **235 passed, 0 skipped**, `kms:test` and `lint` exit 0, deltas zero. **agent-b named it as a presentation correction to an accepted control** rather than letting it pass as an ordinary edit.
+
+**Dispatched: teardown and the server-side expiry sweep, bound to constraint C6** — which was raised on W1-1's own acceptance and is binding on exactly this table. The relation already carries `terminal_state` and `terminal_at` and the read surface already refuses terminal and expired rows; **what does not exist is the transition into those states, or anything that acts without application traffic**.
+
+All five C6 requirements must be satisfied for `setup_session_delegations`: every authorization read filtering on `expires_at` in the query itself; **tombstoning as a server-side scheduled operation, not a side effect of application traffic**, since "a workspace nobody touches for a month must not retain live-looking authority for a month"; introspection and audit paths never reporting expired authority as active — **which C6 records as "the specific failure W1-1 was returned for"**, so it is the control most likely to regress; expiry evaluated against the database clock; and a negative control planting an already-expired row asserting **every** read path excludes it, with a paired positive.
+
+Teardown lands in the same slice because criterion 4 requires it: an **atomic terminal transition** setting `terminal_state` and `terminal_at` together for both `completed` and `abandoned`, with distinct named refusals for terminating an already-terminal session and for a founder who does not own it; **irreversibility on migration `0012`'s custody-revocation pattern**; and **zero residual authority after teardown**, checked in every table the boundary writes.
+
+One mutation per new refusal and per C6 requirement that can carry one, with any non-isolable requirement **named rather than folded**, `executed=` moving from 55 only on observed execution. **A reading is requested first if C6's requirement 2 is ambiguous** about what "scheduled" means with no scheduler in this repository — the question that has changed the decision five times.
+
+**Scope restated**: the slice closes nothing, and nothing in it may be cited as discharging the trusted-session caveat on A6, A7 and A8.
