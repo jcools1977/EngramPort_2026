@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP on
 DO $$ DECLARE n integer; msg text; ns text; BEGIN
-PERFORM set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false); PERFORM set_config('app.tenant_id','',false);
+PERFORM set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false); PERFORM set_config('app.session_id','15000000-0000-0000-0000-000000000008',false); PERFORM set_config('app.tenant_id','',false);
 SELECT count(*) INTO n FROM project_memberships WHERE principal_id<>'11000000-0000-0000-0000-000000000001'; IF n<>0 THEN RAISE EXCEPTION 'G1 membership leak'; END IF;
 SELECT count(*) INTO n FROM project_memberships; IF n<>1 THEN RAISE EXCEPTION 'G1 own membership missing'; END IF;
 PERFORM set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);

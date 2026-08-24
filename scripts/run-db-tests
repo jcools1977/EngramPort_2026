@@ -70,6 +70,9 @@ checksum14="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout
 checksum15="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0015_d3_membership_ambiguity.sql")"
 "${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0015_d3_membership_ambiguity.sql"
 "${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES ('0015_d3_membership_ambiguity', '$checksum15');"
+checksum16="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0016_d4_custody_minter_identity.sql")"
+"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0016_d4_custody_minter_identity.sql"
+"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES ('0016_d4_custody_minter_identity', '$checksum16');"
 "${db[@]}" -U engram_maintenance -d engramport < "$root_dir/tests/failure/m13-class-gate.sql"
 "${db[@]}" -U postgres -d engramport -c "TRUNCATE custody_audit,minted_references,custody_rows;"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1f-postgres-inert.sql"
@@ -84,6 +87,7 @@ trap 'race_cleanup; cleanup' EXIT
 cat > "$race_dir/d1f-a.sql" <<'SQL'
 \set ON_ERROR_STOP on
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.d1f_stage','pause_before_reference',false);
 SELECT set_config('app.d1f_forced_reference','epr:credential:01a01bb2-8135-7000-8000-000000000101',false);
 SELECT mint_custody_reference('3.3','credential','B','d1f-race-a','{}');
@@ -91,6 +95,7 @@ SQL
 cat > "$race_dir/d1f-b.sql" <<'SQL'
 \set ON_ERROR_STOP on
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.d1f_stage','pause_before_reference',false);
 SELECT set_config('app.d1f_forced_reference','epr:credential:01a01bb2-8135-7000-8000-000000000102',false);
 SELECT mint_custody_reference('3.3','credential','B','d1f-race-b','{}');
@@ -210,4 +215,5 @@ fi
 D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/engramport" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"
 "${db[@]}" -U postgres -d engramport -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002' AND scopes=ARRAY['custody:mint:credential:3.3:B'] AND revoked_at IS NULL;"
 W1_7_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" W1_7_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"
+D4_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" D4_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/d4-custody-minter-live.test.mjs"
 bash "$root_dir/scripts/run-d1-mutation-harness"

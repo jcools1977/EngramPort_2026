@@ -13,12 +13,14 @@ const appUrl = process.env.D2_APP_DATABASE_URL ?? "postgres://engram_app@127.0.0
 const postgresUrl = process.env.D2_POSTGRES_DATABASE_URL ?? "postgres://postgres@127.0.0.1:5432/engramport";
 const principalY = "11000000-0000-0000-0000-000000000001";
 const principalX = "22000000-0000-0000-0000-000000000002";
+const custodySession = "15000000-0000-0000-0000-000000000008";
+const foreignCustodySession = "25000000-0000-0000-0000-000000000008";
 const tenantY = "10000000-0000-0000-0000-000000000001";
 const selectedCase = process.env.D2_CASE ?? "";
 const enabled = (name) => selectedCase === "" || selectedCase === name;
 
 const request = (keyLocator, extra = {}) => ({ className: "3.3", namespace: "credential", model: "B", keyLocator, metadata: {}, ...extra });
-const sessionY = { verified: true, principalId: principalY };
+const sessionY = { verified: true, principalId: principalY, sessionId: custodySession };
 
 async function reset(admin) {
   await admin.query("TRUNCATE custody_audit,minted_references,custody_rows");
@@ -60,7 +62,7 @@ test("D2 live behavioral controls", async (t) => {
       await reset(admin);
       const binding = new PrincipalSessionBinding({ connectionString: maintenanceUrl });
       try {
-        const result = await binding.mint(request("d2-substitution", { principalId: principalX }), sessionY);
+        const result = await binding.mint(request("d2-substitution", { principalId: principalX, sessionId: foreignCustodySession }), sessionY);
         const stored = await admin.query("SELECT minted_by_principal_id,tenant_id FROM custody_rows WHERE key_locator='d2-substitution'");
         console.log(`D2_SUBSTITUTION minted_by=${stored.rows[0]?.minted_by_principal_id} tenant=${stored.rows[0]?.tenant_id}`);
         assert.equal(result.principalId, principalY);

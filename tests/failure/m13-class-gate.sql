@@ -1,5 +1,6 @@
 \set ON_ERROR_STOP on
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 DO $$ DECLARE r text; msg text; BEGIN
   r := mint_custody_reference('3.3','credential','B','vault:transit/synth-a','{}'::jsonb);
   IF r !~ '^epr:credential:' THEN RAISE EXCEPTION 'M13 positive reference invalid'; END IF;

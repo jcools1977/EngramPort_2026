@@ -16,10 +16,17 @@ INSERT INTO project_memberships(tenant_id,project_id,principal_id,role) VALUES
 INSERT INTO actors(id,tenant_id,project_id,kind,slug,display_name,trust) VALUES
  ('13000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','agent','agent-a','Agent A','trusted_agent'),
  ('13000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','agent','undelegated','Undelegated','trusted_agent'),
- ('24000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002','23000000-0000-0000-0000-000000000002','agent','agent-b','Agent B','trusted_agent');
+ ('24000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002','23000000-0000-0000-0000-000000000002','agent','agent-b','Agent B','trusted_agent'),
+ ('13000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','service','synthetic-custody-service','Synthetic Custody Service','trusted_service'),
+ ('24000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000002','23000000-0000-0000-0000-000000000002','service','synthetic-custody-service','Synthetic Custody Service','trusted_service');
 INSERT INTO actor_delegations(actor_id,principal_id,scopes) VALUES
  ('13000000-0000-0000-0000-000000000001','11000000-0000-0000-0000-000000000001',ARRAY['events:append']),
- ('24000000-0000-0000-0000-000000000002','22000000-0000-0000-0000-000000000002',ARRAY['events:append']);
+ ('24000000-0000-0000-0000-000000000002','22000000-0000-0000-0000-000000000002',ARRAY['events:append']),
+ ('13000000-0000-0000-0000-000000000008','11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.2:B','custody:mint:credential:3.3:B','custody:mint:credential:3.12:A']),
+ ('24000000-0000-0000-0000-000000000008','22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B']);
+INSERT INTO agent_sessions(id,tenant_id,project_id,actor_id,provider_session_ref,client_name,client_version) VALUES
+ ('15000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','13000000-0000-0000-0000-000000000008','synthetic-d4-session-a','synthetic-custody-fixture','1'),
+ ('25000000-0000-0000-0000-000000000008','20000000-0000-0000-0000-000000000002','23000000-0000-0000-0000-000000000002','24000000-0000-0000-0000-000000000008','synthetic-d4-session-b','synthetic-custody-fixture','1');
 INSERT INTO events(id,tenant_id,project_id,project_seq,schema_version,kind,actor_id,principal_id,occurred_at,
  correlation_id,idempotency_key,visibility,trust,payload,hash_profile,content_sha256,chain_hash,labels) VALUES
  ('14000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001',1,1,'message.published','13000000-0000-0000-0000-000000000001','11000000-0000-0000-0000-000000000001',now(),'14000000-0000-0000-0000-000000000001','seed-a','project','trusted_agent','{"title":"Alpha secret","body":"tenant alpha searchable"}','engramport-event-v1',decode(repeat('aa',32),'hex'),decode(repeat('ab',32),'hex'),ARRAY['alpha']),

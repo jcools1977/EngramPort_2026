@@ -20,7 +20,7 @@ make_d2_variant(){
   node - "$root_dir/packages/git-adapter/src/d2-session-binding.mjs" "$1" "$2" <<'NODE'
 const fs=require("node:fs"); const [source,target,mode]=process.argv.slice(2); let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){ if(!text.includes(anchor)) throw new Error(`anchor absent: ${anchor}`); text=text.split(anchor).join(replacement); }
-if(mode==="substitution") replace("[session.principalId]","[request.principalId ?? session.principalId]");
+if(mode==="substitution"){replace("[session.principalId]","[request.principalId ?? session.principalId]");replace("[session.sessionId]","[request.sessionId ?? session.sessionId]");}
 if(["local_false","joint","dirty_fault","dirty_weakened"].includes(mode)) replace("SELECT set_config('app.principal_id', $1, true)","SELECT set_config('app.principal_id', $1, false)");
 if(["no_scrub","joint"].includes(mode)) replace('      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }',"");
 if(mode==="role") replace('      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");',"");
@@ -198,9 +198,10 @@ for line in "${MUTATIONS[@]}"; do
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('ORDER BY pm.tenant_id,pm.project_id LIMIT 1' in prosrc)>0 FROM pg_proc WHERE oid='derive_mint_membership(uuid)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/d3-m3-membership.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'ambiguous=accepted landed=02000000-0000-0000-0000-0000000000ff' "$log" && forbidden=t
+    masked=f; [ "$after" != 0 ] && [ "$forbidden" = f ] && grep -Eq 'ambiguous=MINT_(SESSION|ACTOR_CONTEXT)_REFUSED landed=none' "$log" && masked=t
     build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
-    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
-    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s masked_by_d4=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$masked" "$restored"
+    [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$masked" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = D3_DB_DROP_ACTIVE_BARRIER ]; then
@@ -367,6 +368,19 @@ for line in "${MUTATIONS[@]}"; do
   printf '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" != "--negative" ]; then [ "$executed" = 26 ] || fail=1; fi
+if [ "${1:-}" != "--negative" ]; then
+  build || fail=1
+  psql_as postgres "$SDB" -c "UPDATE actor_delegations SET scopes=array_append(scopes,'custody:mint:credential:3.3:B') WHERE actor_id='13000000-0000-0000-0000-000000000001' AND NOT ('custody:mint:credential:3.3:B'=ANY(scopes)); INSERT INTO agent_sessions(id,tenant_id,project_id,actor_id,provider_session_ref,client_name) VALUES ('15000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','13000000-0000-0000-0000-000000000001','synthetic-d4-agent-session','d4-mutation');" >/dev/null || fail=1
+  d4_sql="SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false); SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000001',false); SELECT mint_custody_reference('3.3','credential','B','d4-agent-mutation','{}');"
+  psql_as engram_maintenance "$SDB" -c "$d4_sql" >/dev/null 2>&1; d4_base=$?
+  psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'IF NOT FOUND OR minter.kind<>''service'' OR minter.trust<>''trusted_service'' THEN RAISE EXCEPTION ''MINT_ACTOR_REFUSED'' USING ERRCODE=''42501'';END IF;','IF NOT FOUND THEN RAISE EXCEPTION ''MINT_ACTOR_REFUSED'' USING ERRCODE=''42501'';END IF; PERFORM set_config(''app.d4_mutation'',''D4_M8_KIND_TRUST_REMOVED'',true);') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || fail=1
+  d4_applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D4_M8_KIND_TRUST_REMOVED' in prosrc)>0 AND position('minter.kind<>''service''' in prosrc)=0 AND position('minter.trust<>''trusted_service''' in prosrc)=0 FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure" | tr -d '[:space:]')
+  psql_as engram_maintenance "$SDB" -c "$d4_sql" >/dev/null 2>&1; d4_after=$?
+  d4_forbidden=$(psql_as postgres "$SDB" -Atc "SELECT count(*)=1 FROM custody_rows WHERE key_locator='d4-agent-mutation' AND minted_by_actor_id='13000000-0000-0000-0000-000000000001'" | tr -d '[:space:]')
+  build >/dev/null 2>&1
+  printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
+  executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
+  [ "$executed" = 26 ] || fail=1
+fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
-[ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
+[ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all unmasked controls discriminate (executed=$executed, masked_by_d4=1)"

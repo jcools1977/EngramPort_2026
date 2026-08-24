@@ -1,5 +1,6 @@
 \set ON_ERROR_STOP on
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 DO $$ DECLARE msg text; n bigint; BEGIN
   PERFORM set_config('app.d1f_stage','bogus',false);

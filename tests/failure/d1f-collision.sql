@@ -3,6 +3,7 @@ TRUNCATE custody_audit,minted_references,custody_rows;
 
 SET SESSION AUTHORIZATION engram_maintenance;
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 DO $$
 DECLARE natural_ref text; forced_ref constant text:='epr:credential:01a01bb2-8135-7000-8000-000000000001';
@@ -18,6 +19,7 @@ TRUNCATE custody_audit,minted_references,custody_rows;
 
 SET SESSION AUTHORIZATION engram_maintenance;
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 DO $$
 DECLARE forced_ref constant text:='epr:credential:01a01bb2-8135-7000-8000-000000000001'; actual text; msg text;
@@ -47,6 +49,7 @@ RESET SESSION AUTHORIZATION;
 CREATE UNIQUE INDEX d1f_unknown_unique ON custody_rows ((1));
 SET SESSION AUTHORIZATION engram_maintenance;
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 DO $$
 DECLARE msg text; cname text;
@@ -68,6 +71,7 @@ ALTER TABLE minted_references DROP CONSTRAINT minted_references_pkey;
 DO $$ BEGIN IF EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='minted_references'::regclass AND conname='minted_references_pkey') THEN RAISE EXCEPTION 'minted_references_pkey drop did not apply'; END IF; END $$;
 SET SESSION AUTHORIZATION engram_maintenance;
 SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false);
+SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false);
 SELECT set_config('app.tenant_id','10000000-0000-0000-0000-000000000001',false);
 SELECT set_config('app.d1f_forced_reference','epr:credential:01a01bb2-8135-7000-8000-000000000001',false);
 SELECT mint_custody_reference('3.3','credential','B','d1f-pkey-dropped','{}');

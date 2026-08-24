@@ -1,0 +1,31 @@
+BEGIN;
+
+CREATE OR REPLACE FUNCTION mint_custody_reference(p_credential_class text,p_namespace epr_namespace,p_model custody_model,p_key_locator text,p_metadata jsonb DEFAULT '{}') RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE principal uuid:=nullif(current_setting('app.principal_id',true),'')::uuid;session_id uuid:=nullif(current_setting('app.session_id',true),'')::uuid;t uuid;p uuid;g founder_authorities%ROWTYPE;canonical custody_model;gate credential_class_gates%ROWTYPE;minter actors%ROWTYPE;session_row agent_sessions%ROWTYPE;row_id uuid:=gen_random_uuid();ref text;ms bigint;hexms text;required text;actor_required text;stage text:=CASE WHEN session_user='engram_maintenance' THEN nullif(current_setting('app.d1f_stage',true),'') ELSE NULL END;forced text:=CASE WHEN session_user='engram_maintenance' THEN nullif(current_setting('app.d1f_forced_reference',true),'') ELSE NULL END;cname text;
+BEGIN
+ IF principal IS NULL THEN RAISE EXCEPTION 'MINT_AUTHORITY_REFUSED' USING ERRCODE='42501';END IF;
+ IF stage IS NOT NULL AND stage NOT IN ('after_custody_row','after_reference_bind','pause_before_reference') THEN RAISE EXCEPTION 'D1F_STAGE_UNKNOWN' USING ERRCODE='42501';END IF;
+ SELECT * INTO g FROM founder_authorities WHERE principal_id=principal FOR SHARE; IF NOT FOUND OR g.revoked_at IS NOT NULL OR g.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'MINT_AUTHORITY_REFUSED' USING ERRCODE='42501';END IF;
+ SELECT custody_model INTO canonical FROM custody_inventory_models WHERE credential_class=p_credential_class; IF canonical IS NULL OR p_model<>canonical THEN RAISE EXCEPTION 'MODEL_DERIVATION_REFUSED' USING ERRCODE='42501';END IF;
+ SELECT * INTO gate FROM credential_class_gates WHERE credential_class=p_credential_class FOR SHARE; IF NOT FOUND OR NOT gate.passed OR gate.threat_revision<>8 OR gate.threat_digest<>'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089' THEN RAISE EXCEPTION 'CLASS_GATE_NOT_PASSED' USING ERRCODE='42501';END IF;
+ SELECT d.tenant_id,d.project_id INTO t,p FROM derive_mint_membership(principal) d; IF t IS NULL THEN RAISE EXCEPTION 'TENANT_PROJECT_REFUSED' USING ERRCODE='42501';END IF; PERFORM set_config('app.tenant_id',t::text,true);
+ IF p_namespace IN ('shape','installation') THEN RAISE EXCEPTION 'NAMESPACE_REFUSED' USING ERRCODE='42501';END IF; required:=format('custody:mint:%s:%s:%s',p_namespace,p_credential_class,p_model); IF NOT(required=ANY(g.scopes)) THEN RAISE EXCEPTION 'SCOPE_EXCEEDED' USING ERRCODE='42501';END IF;
+ IF p_model='B' AND p_key_locator IS NULL THEN RAISE EXCEPTION 'KEY_LOCATOR_REQUIRED';END IF; IF p_model='A' AND p_key_locator IS NOT NULL THEN RAISE EXCEPTION 'KEY_LOCATOR_FORBIDDEN';END IF; IF NOT custody_metadata_keys_allowed(p_metadata) THEN RAISE EXCEPTION 'METADATA_KEY_REFUSED';END IF;
+ IF session_id IS NULL THEN RAISE EXCEPTION 'MINT_SESSION_REFUSED' USING ERRCODE='42501';END IF;
+ SELECT * INTO session_row FROM agent_sessions WHERE id=session_id AND ended_at IS NULL FOR SHARE; IF NOT FOUND THEN RAISE EXCEPTION 'MINT_SESSION_REFUSED' USING ERRCODE='42501';END IF;
+ SELECT * INTO minter FROM actors WHERE id=session_row.actor_id AND disabled_at IS NULL FOR SHARE; IF NOT FOUND OR minter.kind<>'service' OR minter.trust<>'trusted_service' THEN RAISE EXCEPTION 'MINT_ACTOR_REFUSED' USING ERRCODE='42501';END IF;
+ IF minter.tenant_id<>session_row.tenant_id OR minter.project_id<>session_row.project_id OR minter.tenant_id<>t OR minter.project_id<>p THEN RAISE EXCEPTION 'MINT_ACTOR_CONTEXT_REFUSED' USING ERRCODE='42501';END IF;
+ actor_required:=format('custody:mint:credential:%s:%s',p_credential_class,p_model); IF NOT EXISTS(SELECT 1 FROM actor_delegations d WHERE d.actor_id=minter.id AND d.principal_id=principal AND (d.expires_at IS NULL OR d.expires_at>clock_timestamp()) AND actor_required=ANY(d.scopes)) THEN RAISE EXCEPTION 'MINT_ACTOR_DELEGATION_REFUSED' USING ERRCODE='42501';END IF;
+ ms:=floor(extract(epoch from clock_timestamp())*1000)::bigint; hexms:=lpad(to_hex(ms),12,'0'); ref:=format('epr:%s:%s-%s-7%s-8%s-%s',p_namespace,substr(hexms,1,8),substr(hexms,9,4),substr(replace(row_id::text,'-',''),1,3),substr(replace(row_id::text,'-',''),18,3),substr(replace(row_id::text,'-',''),21,12));
+ IF forced IS NOT NULL THEN IF forced !~ ('^epr:'||p_namespace::text||':[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$') THEN RAISE EXCEPTION 'D1F_FORCED_REFERENCE_INVALID' USING ERRCODE='42501';END IF; ref:=forced; END IF;
+ INSERT INTO custody_rows(id,tenant_id,project_id,namespace,credential_class,custody_model,inventory_model,required_scope,key_locator,metadata,minted_by_principal_id,minted_by_actor_id,retention_policy) VALUES(row_id,t,p,p_namespace,p_credential_class,p_model,canonical::text,required,p_key_locator,p_metadata,principal,minter.id,'RET-AUDIT-400');
+ IF stage='after_custody_row' THEN RAISE EXCEPTION 'D1F_FAULT_AFTER_CUSTODY_ROW' USING ERRCODE='42501'; END IF; IF stage='pause_before_reference' THEN PERFORM pg_sleep(2); END IF;
+ INSERT INTO minted_references VALUES(ref,row_id,t,p,p_namespace,clock_timestamp()); IF stage='after_reference_bind' THEN RAISE EXCEPTION 'D1F_FAULT_AFTER_REFERENCE_BIND' USING ERRCODE='42501'; END IF;
+ INSERT INTO custody_audit(tenant_id,project_id,namespace,credential_class,action,outcome,principal_id,reference) VALUES(t,p,p_namespace,p_credential_class,'mint','success',principal,ref); RETURN ref;
+EXCEPTION WHEN unique_violation THEN GET STACKED DIAGNOSTICS cname=CONSTRAINT_NAME; IF cname='minted_references_pkey' THEN RAISE EXCEPTION 'REFERENCE_COLLISION' USING ERRCODE='23505'; ELSIF cname='custody_single_active' THEN RAISE EXCEPTION 'CUSTODY_IDENTITY_ACTIVE' USING ERRCODE='23505'; ELSE RAISE; END IF;
+END $$;
+
+REVOKE ALL ON FUNCTION mint_custody_reference(text,epr_namespace,custody_model,text,jsonb) FROM PUBLIC,engram_app;
+GRANT EXECUTE ON FUNCTION mint_custody_reference(text,epr_namespace,custody_model,text,jsonb) TO engram_maintenance;
+
+COMMIT;
