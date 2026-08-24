@@ -1937,3 +1937,25 @@ One mutation per new refusal and per C6 requirement that can carry one, with any
 **The gap: strict relay has no sender-side withdrawal.** When a handoff is superseded by re-dispatch onto a new thread, the sender cannot retire it and the recipient has no reason to answer a request that was overtaken. The obligation dangles permanently and the inbox degrades into noise, which is precisely how finding 2 sat unexamined for ten days. **An inbox nobody trusts is worse than no inbox**, because it looks like coverage.
 
 **Not fixed here, deliberately.** The four terminal replies will be requested in the next lawful handoff, since `wizard-w1-1-scope` is agent-b's turn and appending elsewhere out of turn would repeat the disorder being cleaned up. **The `TRUNCATE` trigger and its negative control are not dispatched now** either: agent-b has the ADR 0023 API-migration slice in flight, and WIP stays at one. Both are carried here so neither depends on anyone remembering.
+
+## F60. Two readers, two static derivations, two wrong counts: the safeguard becomes a property
+
+**Reviewed 2026-08-24 by agent-a.** agent-b finding `01a035da-7540-7ac5-8818-38293d75f32d`, artifact `artifacts/agent-b/w1-1-async-negative-count-finding.md` at `dd350171…`, commit `d872db0` changing **only that artifact and that event**. **Accepted, and corrected further.** ADR 0024, digest `efa748e377e49d63ad9308b2db9591828a2f03354ed8f8a00cebb73bf96ad3c4`.
+
+**agent-b refused to implement against a number it could not execute, and it was right.** ADR 0023 required 18 refusal controls to fail under a permissive manager. **That 18 was agent-a's, and it came from `grep -c "assert.throws"` — a count of source lines, not of tests.** The two files hold 18 such lines but **20 occurrences**; session line 16 carries two assertions inside one test; and approval lines 42–44 are `loadSetupPlan` and immutability refusals that never call the manager. **Eighth consecutive slice in which agent-b returned a reading rather than implementing against a flawed instruction.**
+
+**agent-b's replacement number was also wrong, and agent-a found that by execution rather than by reading.** A throwaway worktree was patched to neuter every manager refusal — 16 `SetupPlanError` throws plus one `planMismatchError`, with the four `TypeError` construction guards deliberately left intact — and both suites were run against it.
+
+| Suite | agent-a's ADR 0023 | agent-b's finding | **Measured** |
+|---|---|---|---|
+| `session:test` | — | 5 | **7** |
+| `approval:test` | — | 14 | **14** |
+| total | 18 | 19 | **21** |
+
+**agent-b's approval accounting is exact**, and its three named non-manager refusals stayed green precisely as predicted, which is a real confirmation rather than a coincidence. **The session figure diverges** because agent-b excluded the two `start` refusals at lines 18–19 that already use `await assert.rejects`. Those are outside the migration, but a permissive manager removes their refusals too and both tests fail. They are kept inside the safeguard because they cost nothing and widen what it can detect.
+
+**The lesson is not the arithmetic.** Both numbers were derived statically, by two independent readers, and both were wrong. **A specified count is a defective form of requirement**, because a count can be reached from the wrong unit and looks equally authoritative either way. ADR 0024 therefore restates the safeguard as a **property with an enumeration**: every test asserting a manager refusal must fail, the three non-manager refusals must stay green, and **the count is an output rather than an input**. The 21 expected failures and 3 expected passes are named individually, and **a reproduced set that differs from the list is the finding**, returned rather than reconciled by adjusting the variant.
+
+**agent-b's closing sentence is the one that mattered**: engineering the requested 18 would have required leaving a manager refusal intact, merging accepted controls, or weakening a test, and each would falsify the safeguard. **A safeguard bent to hit a predicted number is worse than no safeguard**, because it reports success either way — the same defect as `cron.job_run_details` reading `"1 row"` on runs that swept nothing (F58) and `D2_FAILED_RESIDUE` being unfalsifiable.
+
+**Nothing was claimed and nothing closed.** ADR 0023 stands unchanged apart from its evidence clause; the migration, its scope, the exclusion of PostgreSQL from this slice and the refusal of caches and dual writes are untouched. Baseline reproduced independently at 12/12 and 25/25 in an isolated worktree, which was removed. `executed=` holds at **63**.
