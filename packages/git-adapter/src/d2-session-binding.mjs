@@ -11,6 +11,29 @@ export class PrincipalSessionBinding {
 
   async #getPool() { if (!this.#pool) { const { Pool } = await import("pg"); this.#pool = new Pool({ connectionString: this.#connectionString, options: "-c search_path=public", connectionTimeoutMillis: 3000, statement_timeout: 5000 }); } return this.#pool; }
 
+  async transaction(session, operation) {
+    if (!session?.verified || typeof session.principalId !== "string" || typeof session.sessionId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
+    if (typeof operation !== "function") throw new TypeError("transaction operation required");
+    const client = await (await this.#getPool()).connect();
+    try {
+      const role = await client.query("SELECT session_user");
+      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('app.principal_id', $1, true)", [session.principalId]);
+      await client.query("SELECT set_config('app.session_id', $1, true)", [session.sessionId]);
+      const result = await operation(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch (rollbackError) { void rollbackError; }
+      throw error;
+    } finally {
+      let scrubError;
+      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }
+      try { client.release(scrubError); } catch (releaseError) { void releaseError; }
+    }
+  }
+
   async mint(request, session) {
     if (!session?.verified || typeof session.principalId !== "string" || typeof session.sessionId !== "string") throw new SessionBindingError("SESSION_UNBOUND");
     const client = await (await this.#getPool()).connect();

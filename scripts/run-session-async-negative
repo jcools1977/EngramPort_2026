@@ -50,11 +50,12 @@ try{
   let permissive=readFileSync(managerSource,"utf8");
   const setupRefusals=permissive.match(/throw new SetupPlanError\([^;]+?\)/g)??[];
   const mismatchRefusals=permissive.match(/throw planMismatchError\([^;]+?\)/g)??[];
-  assert.equal(setupRefusals.length,16,"manager refusal inventory changed");
+  assert.equal(setupRefusals.length,18,"manager refusal inventory changed");
   assert.equal(mismatchRefusals.length,1,"plan-mismatch refusal inventory changed");
   permissive=permissive
     .replace("./workspace-setup.mjs",pathToFileURL(join(repository,"packages/git-adapter/src/workspace-setup.mjs")).href)
     .replace("./workspace-approval.mjs",pathToFileURL(join(repository,"packages/git-adapter/src/workspace-approval.mjs")).href)
+    .replace("./workspace-session-store.mjs",pathToFileURL(join(repository,"packages/git-adapter/src/workspace-session-store.mjs")).href)
     .replace(/throw new SetupPlanError\([^;]+?\)/g,"void 0")
     .replace(/throw planMismatchError\([^;]+?\)/g,"void 0");
   writeFileSync(join(temporary,"workspace-session.mjs"),permissive);

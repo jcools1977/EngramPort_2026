@@ -7,7 +7,7 @@ const adminUrl=process.env.W1_1_POSTGRES_DATABASE_URL??"postgres://postgres@127.
 const selected=process.env.W1_1_LIFECYCLE_CASE??"all";
 const principal="11000000-0000-0000-0000-000000000001";
 const foreignPrincipal="22000000-0000-0000-0000-000000000002";
-const ids={live:"19000000-0000-7000-8000-000000000001",expired:"19000000-0000-7000-8000-000000000002",terminal:"19000000-0000-7000-8000-000000000003",abandoned:"19000000-0000-7000-8000-000000000004",foreign:"19000000-0000-7000-8000-000000000005",atomic:"19000000-0000-7000-8000-000000000006"};
+const ids={live:"19000000-0000-7000-8000-000000000001",expired:"19000000-0000-7000-8000-000000000002",terminal:"19000000-0000-7000-8000-000000000003",abandoned:"19000000-0000-7000-8000-000000000004",foreign:"19000000-0000-7000-8000-000000000005",atomic:"19000000-0000-7000-8000-000000000006",repeatExpired:"19000000-0000-7000-8000-000000000007",repeatLive:"19000000-0000-7000-8000-000000000008"};
 
 async function reset(admin){
   await admin.query("DELETE FROM setup_session_delegations");
@@ -74,6 +74,15 @@ async function runCase(name,{admin,maintenance}){
     const expired=rows.find(row=>row.session_id===ids.expired),liveRow=rows.find(row=>row.session_id===ids.live);
     console.log(`W1_1_LIFECYCLE sweep swept=${swept} expired_state=${expired?.state} expired_stamped=${expired?.stamped} live_state=${liveRow?.state}`);
     assert.deepEqual({swept,expiredState:expired?.state,expiredStamped:expired?.stamped,liveState:liveRow?.state},{swept:1,expiredState:"expired",expiredStamped:true,liveState:"none"});
+  }else if(name==="repeat-safety"){
+    await plant(admin,ids.repeatExpired,principal,"-1 hour");await plant(admin,ids.repeatLive,principal,"1 hour");
+    const sweep=async()=>Number((await maintenance.query("SELECT sweep_expired_setup_session_delegations() AS count")).rows[0].count);
+    const first=await sweep(),firstStamp=(await admin.query("SELECT terminal_at FROM setup_session_delegations WHERE session_id=$1",[ids.repeatExpired])).rows[0]?.terminal_at?.getTime();
+    const second=await sweep(),secondStamp=(await admin.query("SELECT terminal_at FROM setup_session_delegations WHERE session_id=$1",[ids.repeatExpired])).rows[0]?.terminal_at?.getTime();
+    const third=await sweep(),thirdStamp=(await admin.query("SELECT terminal_at FROM setup_session_delegations WHERE session_id=$1",[ids.repeatExpired])).rows[0]?.terminal_at?.getTime();
+    const terminalStable=Number.isFinite(firstStamp)&&firstStamp===secondStamp&&secondStamp===thirdStamp,liveState=(await inspect(maintenance,ids.repeatLive))?.effective_state;
+    console.log(`W1_1_LIFECYCLE repeat first=${first} second=${second} third=${third} terminal_stable=${terminalStable} live=${liveState}`);
+    assert.deepEqual({first,second,third,terminalStable,liveState},{first:1,second:0,third:0,terminalStable:true,liveState:"active"});
   }else if(name==="introspection"){
     await plant(admin,ids.live,principal,"1 hour");await plant(admin,ids.expired,principal,"-1 hour");
     const liveRow=await inspect(maintenance,ids.live),expired=await inspect(maintenance,ids.expired);
@@ -117,7 +126,7 @@ test(`W1-1 setup-session lifecycle: ${selected}`,async()=>{
   const admin=new Pool({connectionString:adminUrl,max:2,connectionTimeoutMillis:3000,statement_timeout:5000});
   const maintenance=new Pool({connectionString:maintenanceUrl,max:2,connectionTimeoutMillis:3000,statement_timeout:5000});
   try{
-    const cases=selected==="all"?["positive","read-expiry","sweep","introspection","clock","read-terminal","already-terminal","ownership","atomic"]:[selected];
+    const cases=selected==="all"?["positive","read-expiry","sweep","repeat-safety","introspection","clock","read-terminal","already-terminal","ownership","atomic"]:[selected];
     for(const name of cases)await runCase(name,{admin,maintenance});
   }finally{await reset(admin).catch(()=>{});await maintenance.end();await admin.end();}
 });
