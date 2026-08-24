@@ -12,6 +12,8 @@ run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram
 assert_d2(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_d2 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_7(){ local module="$1" pattern="${2:-}"; W1_7_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_7_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_7_BINDING_MODULE="$module" W1_7_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
 assert_w1_7(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_w1_7 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_8(){ local module="$1" pattern="$2"; W1_8_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_8_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_8_BOUNDARY_MODULE="$module" W1_8_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-8-live.test.mjs"; }
+assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 m3_probe(){
   local expected="$1" out rc landed
   psql_as postgres "$SDB" -c "INSERT INTO projects(id,tenant_id,slug,name) VALUES ('02000000-0000-0000-0000-0000000000ff','10000000-0000-0000-0000-000000000001','d3-m3-probe','D3 M3 Probe'); INSERT INTO project_memberships(tenant_id,project_id,principal_id,role) VALUES ('10000000-0000-0000-0000-000000000001','02000000-0000-0000-0000-0000000000ff','11000000-0000-0000-0000-000000000001','reader');" >/dev/null || { echo 1; return 0; }
@@ -64,13 +66,49 @@ if(mode==="detector_disabled"){
 }else throw new Error("unknown canary variant");
 NODE
 }
+make_w1_8_variant(){
+  node - "$root_dir/packages/git-adapter/src/credential-boundary.mjs" "$1" "$2" <<'NODE'
+const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
+function replace(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
+if(mode==="existence"){
+  replace('  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");','  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) g=grantDoc; /* W1_8_EXISTENCE_REMOVED */');
+  replace('  const fresh = await deps.store.getGrant(g.grant_id);','  const fresh = (await deps.store.getGrant(g.grant_id)) ?? g; /* W1_8_EXISTENCE_REREAD_REMOVED */');
+}else if(mode==="tenant")replace('  if (request.tenant_id !== g.tenant_id) return fail("TENANT_MISMATCH");','  if (false /* W1_8_TENANT_REMOVED */) return fail("TENANT_MISMATCH");');
+else if(mode==="project")replace('  if (request.project_id !== g.project_id) return fail("PROJECT_MISMATCH");','  if (false /* W1_8_PROJECT_REMOVED */) return fail("PROJECT_MISMATCH");');
+else if(mode==="principal")replace('  if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");','  if (false /* W1_8_PRINCIPAL_REMOVED */) return fail("PRINCIPAL_MISMATCH");');
+else if(mode==="actor")replace('  if ((g.granted_to_actor_id ?? null) !== (request.actor_id ?? null)) return fail("ACTOR_MISMATCH");','  if (false /* W1_8_ACTOR_REMOVED */) return fail("ACTOR_MISMATCH");');
+else if(mode==="scope")replace('  if (!has(new Set(g.scopes), request.scopes ?? [])) return fail("SCOPE_EXCEEDED");','  if (false /* W1_8_SCOPE_REMOVED */) return fail("SCOPE_EXCEEDED");');
+else if(mode==="expiry")replace('  if (Date.parse(g.expires_at) <= await deps.store.serverNow()) return fail("GRANT_EXPIRED");','  if (false /* W1_8_EXPIRY_REMOVED */) return fail("GRANT_EXPIRED");');
+else if(mode==="revocation")replace('if (!fresh || fresh.status !== "active") return fail("GRANT_REVOKED");','if (false /* W1_8_REVOCATION_REMOVED */) return fail("GRANT_REVOKED");');
+else if(mode==="clock")replace('      const result = await client.query("SELECT clock_timestamp() AS server_now");','      const result = await client.query("SELECT \'2000-01-01T00:00:00Z\'::timestamptz AS server_now /* W1_8_CLOCK_CONSTANT */");');
+else throw new Error(`unknown W1-8 variant ${mode}`);
+fs.writeFileSync(target,text);
+NODE
+}
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [ "$mutation" = W1_8_SOURCE_PROPERTIES ]; then
+    build || { fail=1; continue; }
+    source_module="$root_dir/packages/git-adapter/src/credential-boundary.mjs"
+    for property in existence tenant project principal actor scope expiry revocation clock; do
+      base=$(assert_w1_8 "$source_module" "$property")
+      variant="$mutation_dir/w1-8-$property.mjs"; make_w1_8_variant "$variant" "$property" || { fail=1; continue; }
+      if grep -Fq "W1_8_$(printf '%s' "$property" | tr '[:lower:]' '[:upper:]')" "$variant"; then applied=t; else applied=f; fi
+      log="$mutation_dir/w1-8-$property.log"; run_w1_8 "$variant" "$property" >"$log" 2>&1; after=$?
+      forbidden=f
+      if [ "$property" = clock ]; then grep -Fq 'W1_8_LIVE_PROPERTY clock_db=false' "$log" && forbidden=t; else grep -Fq "W1_8_LIVE_PROPERTY $property=accepted" "$log" && forbidden=t; fi
+      [ "$forbidden" = t ] || cat "$log" >&2
+      restored=$(assert_w1_8 "$source_module" "$property")
+      printf 'W1_8_LIVE_%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$(printf '%s' "$property" | tr '[:lower:]' '[:upper:]')" "$base" "$applied" "$after" "$forbidden" "$restored"
+      executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    done
+    continue
+  fi
   if [ "$mutation" = D2_MODULE_SUBSTITUTION ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/substitution.mjs"; pattern="substitution"
@@ -396,7 +434,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 27 ] || fail=1
+  [ "$executed" = 36 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

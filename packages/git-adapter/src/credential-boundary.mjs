@@ -44,10 +44,89 @@ export async function ingestCredentialBearingRecord(record, context = {}, deps =
 }
 
 const has = (set, values) => values.every(v => set.has(v));
+function invocationTransaction(client) {
+  return {
+    async getGrant(grantId) {
+      const bound = await client.query("SELECT bind_invocation_grant_context($1::uuid) AS bound", [grantId]);
+      if (!bound.rows[0]?.bound) return null;
+      const result = await client.query(
+        `SELECT grant_id::text,capability,provider,tenant_id::text,project_id::text,
+                granted_to_principal_id::text,granted_to_actor_id::text,granted_by_principal_id::text,
+                granting_event_id::text,scopes,expires_at,
+                CASE WHEN revoked_at IS NULL THEN 'active' ELSE 'revoked' END AS status,
+                installation_ref,credential_ref
+           FROM invocation_grants WHERE grant_id=$1::uuid`,
+        [grantId]
+      );
+      const row = result.rows[0];
+      if (!row) return null;
+      await client.query("SELECT set_config('app.principal_id',$1,true)", [row.granted_to_principal_id]);
+      return { ...row, expires_at: row.expires_at.toISOString() };
+    },
+    async serverNow() {
+      const result = await client.query("SELECT clock_timestamp() AS server_now");
+      return result.rows[0].server_now.getTime();
+    },
+    async sessionLive(sessionId) {
+      const result = await client.query("SELECT EXISTS(SELECT 1 FROM agent_sessions WHERE id=$1::uuid AND ended_at IS NULL AND tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid AND project_id=nullif(current_setting('app.project_id',true),'')::uuid) AS live", [sessionId]);
+      return result.rows[0].live;
+    },
+    async getCustody(reference) {
+      const result = await client.query(
+        `SELECT r.tenant_id::text,r.project_id::text,
+                (r.revoked_at IS NOT NULL OR c.revoked_at IS NOT NULL OR c.terminal_at IS NOT NULL OR (c.expires_at IS NOT NULL AND c.expires_at<=clock_timestamp())) AS revoked
+           FROM minted_references r JOIN custody_rows c ON c.id=r.custody_row_id
+          WHERE r.reference=$1
+            AND r.tenant_id=nullif(current_setting('app.tenant_id',true),'')::uuid
+            AND r.project_id=nullif(current_setting('app.project_id',true),'')::uuid`,
+        [reference]
+      );
+      return result.rows[0] ?? null;
+    },
+    async granterAuthorized(principalId, scopes) {
+      const result = await client.query("SELECT invocation_granter_authorized($1::uuid,$2::text[]) AS authorized", [principalId, scopes]);
+      return result.rows[0].authorized;
+    }
+  };
+}
+
+export class PostgresInvocationStore {
+  #pool; #connectionString;
+  constructor({ connectionString, pool } = {}) { this.#connectionString = connectionString; this.#pool = pool; }
+  async #getPool() {
+    if (!this.#pool) {
+      const { Pool } = await import("pg");
+      this.#pool = new Pool({ connectionString: this.#connectionString, options: "-c search_path=public", connectionTimeoutMillis: 3000, statement_timeout: 5000 });
+    }
+    return this.#pool;
+  }
+  async transaction(work) {
+    const client = await (await this.#getPool()).connect();
+    let releaseError;
+    try {
+      const role = await client.query("SELECT session_user");
+      if (role.rows[0]?.session_user !== "engram_maintenance") throw new BoundaryError("INVOCATION_ROLE_INVALID");
+      await client.query("BEGIN READ ONLY");
+      const result = await work(invocationTransaction(client));
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      releaseError = error;
+      throw error;
+    } finally {
+      try { await client.query("DISCARD ALL"); } catch (error) { releaseError ??= error; }
+      client.release(releaseError);
+    }
+  }
+  async close() { if (this.#pool) await this.#pool.end(); }
+}
+
 export async function resolveInvocation(grantDoc, request, deps) {
+  if (typeof deps?.store?.transaction === "function") return deps.store.transaction(store => resolveInvocation(grantDoc, request, { ...deps, store }));
   const fail = code => ({ ok: false, code });
   if (!grantDoc?.grant_id) return fail("GRANT_NOT_FOUND");
-  const g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");
+  let g = await deps.store.getGrant(grantDoc.grant_id); if (!g) return fail("GRANT_NOT_FOUND");
   if (JSON.stringify({ ...grantDoc, status: g.status }) !== JSON.stringify({ ...g, status: g.status })) return fail("GRANT_MISMATCH");
   if (request.principal_id !== g.granted_to_principal_id) return fail("PRINCIPAL_MISMATCH");
   if ((g.granted_to_actor_id ?? null) !== (request.actor_id ?? null)) return fail("ACTOR_MISMATCH");
