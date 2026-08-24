@@ -12,6 +12,17 @@ run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram
 assert_d2(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_d2 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_7(){ local module="$1" pattern="${2:-}"; W1_7_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_7_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_7_BINDING_MODULE="$module" W1_7_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
 assert_w1_7(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_w1_7 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+m3_probe(){
+  local expected="$1" out rc landed
+  psql_as postgres "$SDB" -c "INSERT INTO projects(id,tenant_id,slug,name) VALUES ('02000000-0000-0000-0000-0000000000ff','10000000-0000-0000-0000-000000000001','d3-m3-probe','D3 M3 Probe'); INSERT INTO project_memberships(tenant_id,project_id,principal_id,role) VALUES ('10000000-0000-0000-0000-000000000001','02000000-0000-0000-0000-0000000000ff','11000000-0000-0000-0000-000000000001','reader');" >/dev/null || { echo 1; return 0; }
+  out=$(mktemp)
+  psql_as engram_maintenance "$SDB" -c "SELECT set_config('app.principal_id','11000000-0000-0000-0000-000000000001',false); SELECT set_config('app.session_id','15000000-0000-0000-0000-000000000008',false); SELECT mint_custody_reference('3.3','credential','B','d3-m3-layer-probe','{}');" >"$out" 2>&1; rc=$?
+  landed=$(psql_as postgres "$SDB" -Atc "SELECT count(*) FROM custody_rows WHERE key_locator='d3-m3-layer-probe'" | tr -d '[:space:]')
+  psql_as postgres "$SDB" -c "TRUNCATE custody_audit,minted_references,custody_rows; DELETE FROM project_memberships WHERE project_id='02000000-0000-0000-0000-0000000000ff'; DELETE FROM projects WHERE id='02000000-0000-0000-0000-0000000000ff';" >/dev/null
+  if [ "$rc" != 0 ] && [ "$landed" = 0 ] && grep -Fq "$expected" "$out"; then echo 0; else cat "$out" >&2; echo 1; fi
+  rm -f "$out"
+  return 0
+}
 run_canary(){ local module_root="$1"; W1_7_CANARY_MODULE_ROOT="$module_root" W1_7_CASE=canary node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
 assert_canary(){ local module_root="$1" out rc; out=$(mktemp); run_canary "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert(){ local first second third; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); if [ "$second" != 0 ]; then echo "$second"; return 0; fi; third=$(assert_d2); echo "$third"; return 0; }
@@ -195,13 +206,18 @@ for line in "${MUTATIONS[@]}"; do
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="m3-membership"
     base=$(assert_w1_7 "$source_module" "$pattern")
     psql_as postgres "$SDB" -c "CREATE OR REPLACE FUNCTION derive_mint_membership(p_principal uuid) RETURNS TABLE(tenant_id uuid,project_id uuid) LANGUAGE sql SECURITY DEFINER SET search_path=public AS \$\$ SELECT pm.tenant_id,pm.project_id FROM project_memberships pm WHERE pm.principal_id=p_principal ORDER BY pm.tenant_id,pm.project_id LIMIT 1 \$\$;" >/dev/null || { fail=1; continue; }
-    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('ORDER BY pm.tenant_id,pm.project_id LIMIT 1' in prosrc)>0 FROM pg_proc WHERE oid='derive_mint_membership(uuid)'::regprocedure" | tr -d '[:space:]')
+    derivation_only=$(m3_probe MINT_ACTOR_CONTEXT_REFUSED)
+    build >/dev/null 2>&1 || { fail=1; continue; }
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,' OR minter.tenant_id<>t OR minter.project_id<>p',' /* D3_A8_M3_ACTOR_CONTEXT_REMOVED */') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    context_only=$(m3_probe TENANT_PROJECT_REFUSED)
+    build >/dev/null 2>&1 || { fail=1; continue; }
+    psql_as postgres "$SDB" -c "CREATE OR REPLACE FUNCTION derive_mint_membership(p_principal uuid) RETURNS TABLE(tenant_id uuid,project_id uuid) LANGUAGE sql SECURITY DEFINER SET search_path=public AS \$\$ SELECT pm.tenant_id,pm.project_id FROM project_memberships pm WHERE pm.principal_id=p_principal ORDER BY pm.tenant_id,pm.project_id LIMIT 1 \$\$; UPDATE pg_proc SET prosrc=replace(prosrc,' OR minter.tenant_id<>t OR minter.project_id<>p',' /* D3_A8_M3_ACTOR_CONTEXT_REMOVED */') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('ORDER BY pm.tenant_id,pm.project_id LIMIT 1' in (SELECT prosrc FROM pg_proc WHERE oid='derive_mint_membership(uuid)'::regprocedure))>0 AND position('D3_A8_M3_ACTOR_CONTEXT_REMOVED' in (SELECT prosrc FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure))>0" | tr -d '[:space:]')
     log="$mutation_dir/d3-m3-membership.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'ambiguous=accepted landed=02000000-0000-0000-0000-0000000000ff' "$log" && forbidden=t
-    masked=f; [ "$after" != 0 ] && [ "$forbidden" = f ] && grep -Eq 'ambiguous=MINT_(SESSION|ACTOR_CONTEXT)_REFUSED landed=none' "$log" && masked=t
     build >/dev/null 2>&1; restored=$(assert_w1_7 "$source_module" "$pattern")
-    printf '%s baseline=%s applied=%s after=%s forbidden=%s masked_by_d4=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$masked" "$restored"
-    [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$masked" = t ] && [ "$restored" = 0 ] || fail=1
+    printf '%s baseline=%s derivation_only=%s context_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$name" "$base" "$derivation_only" "$context_only" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$derivation_only" = 0 ] && [ "$context_only" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = D3_DB_DROP_ACTIVE_BARRIER ]; then
@@ -380,7 +396,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 26 ] || fail=1
+  [ "$executed" = 27 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
-[ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all unmasked controls discriminate (executed=$executed, masked_by_d4=1)"
+[ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
