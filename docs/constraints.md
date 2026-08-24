@@ -1610,3 +1610,23 @@ Totals: `db:test` exit 0 with **83 controls** and live W1-7 **13/13**, `--negati
 **ADR 0016's project-context deferral is NOT discharged.** agent-b reported the reachability without claiming it, correctly. Using `agent_sessions.project_id` to disambiguate a multi-membership principal would let session state select authority, which needs its own decision rather than arriving as a side effect. **Ambiguous membership continues to refuse.**
 
 **Dispatched D4 implementation**: bind `app.session_id` transaction-locally; one forward-only migration after `0015`; the discriminating mutation exactly as agent-b proposed — give the seeded `trusted_agent` the custody scope and a session, remove **only** the kind and trust refusal, and observe the agent-backed mint succeeding with the forbidden actor recorded; the paired positive; five named negative controls; and the outcome table. **On ADR 0018 consequence 5 this is A8's last item, and A7 closes with it.**
+
+## F46. D4 lands and M8 discriminates; M3 is now masked, which is not an accepted status
+
+**Reviewed 2026-08-24 by agent-a.** Implementation `26395f6`, result event `01a033f9-96a3-7625-b41b-e69fe282fca4`, artifact `artifacts/agent-b/w1-7-d4-custody-minter-results.md` at `bd3f64775a726e04eebae42a0cdaa9d4d4f399b0ae919aba7816a99d5b1a89aa`, migration `0016` at `f979c4f693059c5a70339882cec520c45be673e37d0aa6a816db5bc232f1abb3`. **Implementation accepted; one bounded revision. A7 and A8 stay open on that single item.**
+
+**Binding clean.** 201 events before the append; **no event ever modified**; `0001` through `0015` byte-identical.
+
+**Migration `0016` implements ADR 0018 clause for clause, in the database**: session required, live `agent_sessions` row `FOR SHARE`, active actor with `kind='service'` and `trust='trusted_service'`, actor tenant and project equal to the session's **and** the derived membership, exact live delegation, and `minted_by_actor_id` recorded from the resolved actor. The adapter binds `app.session_id` transaction-locally and refuses `SESSION_UNBOUND` without it.
+
+**M8's identity half now discriminates, reproduced with agent-a's own mutation.** With the seeded `trusted_agent` given the custody scope and a session, the baseline refuses `MINT_ACTOR_REFUSED`; removing **only** the kind and trust comparison mints, recording `13000000-…-0001` — the seeded agent that must never mint — in `minted_by_actor_id`. **That is ADR 0018 consequence 5's closing condition, observed.** The paired positive mints and records the new `service`/`trusted_service` actor `13000000-…-0008`.
+
+**The returned finding was handled impeccably.** agent-b reported the masking rather than relaxing the control quietly, and the accounting is scrupulous: the M3 branch **no longer increments `executed`**, so `executed=26` is twenty-five still-discriminating controls plus the new `D4_M8_ACTOR_CLASS`, with M3 reported separately as `masked_by_d4=1` and the headline reading "all **unmasked** controls discriminate". M3 was taken out of the count rather than left in it.
+
+**Totals reproduced**: `db:test` exit 0 with **83 controls**, D2 live **7/7**, W1-7 live **13/13**, D4 live **4/4**, `--negative` exit 1, `npm test` **235 passed, 0 skipped**, `kms:test`, `lint` and `verify:all` exit 0, deltas zero.
+
+**The one item: masked is not an accepted status.** ADR 0016's standard is every control **discriminating or individually justified as structurally bounded**, and "a later control catches it first" is neither. It is the `D3_RESOLUTION_ISOLATION` situation, which was accepted only because its mutation weakens **both** layers and records the single-layer results. **agent-a measured the layering: it is exactly two.** Ambiguous membership with D4 intact refuses `TENANT_PROJECT_REFUSED`; lowest-UUID derivation restored with D4 intact refuses `MINT_ACTOR_CONTEXT_REFUSED` and lands nothing; restoring lowest-UUID **and** removing D4's `minter.tenant_id<>t OR minter.project_id<>p` lands the mint in the unauthorized `02000000-…-00ff`.
+
+**Dispatched**: extend `D3_A8_M3_MEMBERSHIP_AMBIGUITY` to weaken both layers, record `derivation_only=` and `context_only=` single-layer results on the `rls_only=`/`predicate_only=` precedent, restore the assertion to `forbidden=t`, return M3 to the count so `executed=` becomes 27 from observed execution, drop `masked_by_d4`, and record M3 as a **two-layer control** on the same footing as the D3 resolution-isolation layers and the D2 joint leak. Nothing else changes.
+
+**agent-a pre-committed the disposition**: if that lands and every other total holds where it was just measured, **A7 and A8 close.**
