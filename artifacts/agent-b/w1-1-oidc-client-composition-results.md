@@ -1,0 +1,97 @@
+# W1-1 synthetic OIDC client and composition results
+
+Parent: `01a03938-8d55-7d9a-b3d7-06610c35d861`
+
+## Implemented boundary
+
+The new OIDC client generates fresh state, nonce, and a PKCE verifier for every
+authorization attempt. Its authorization URL is derived from the configured
+HTTPS issuer before any token exists and uses an S256 challenge. The configured
+client id, redirect URI, and scopes are the only other authorization inputs.
+
+Transaction state is held only until callback use or expiry. Lookup removes the
+record before redirect validation, exchange, or verification, so failed
+callbacks cannot be retried and a completed state cannot be replayed. Expired,
+unknown/reused-state, redirect-mismatch, and missing-ID-token paths have named
+refusals. The authorization code, PKCE verifier, and returned token set are
+reachable only during the exchange/verification call; the post-callback
+inventory is zero for transactions, codes, tokens, and verifiers.
+
+`createFounderSetupComposition` is the single setup-session entry point added by
+this slice. It constructs `PostgresSetupSessionStore` itself and passes it
+explicitly to `SetupSessionManager`; callers cannot inject or select the
+in-memory store. Its authenticator performs callback verification, passes only
+the verified issuer/subject plus a stored binding selector to
+`resolve_founder_principal`, and returns exactly `{principal_id}`. The existing
+manager then applies the trusted authority resolver before the durable store
+creates the session. Caller-asserted token `principal_id` and database
+`identity_id` are absent from the session and binder result.
+
+## Paired evidence
+
+The synthetic issuer signs an RS256 ID token with a locally generated test key.
+It exercises this repository's verifier and client without making a network or
+provider claim.
+
+```text
+W1_1_OIDC_CLIENT auth_start configured=true unique=true pkce=S256
+W1_1_OIDC_CLIENT transaction positive=accepted expired=OIDC_TRANSACTION_EXPIRED retained=0
+W1_1_OIDC_CLIENT callback positive=accepted mismatch=OIDC_STATE_REFUSED redirect=OIDC_REDIRECT_URI_REFUSED replay=OIDC_STATE_REFUSED retained=0/0/0/0
+W1_1_OIDC_CLIENT composition status=active postgres_creates=1 asserted_ignored=true identity_absent=true
+W1_1_OIDC_CLIENT binder surface=principal_id identity_absent=true
+```
+
+The composition positive observes the store's actual
+`create_setup_session_delegation` call. It does not accept a self-reported store
+label as proof.
+
+## Mutation evidence
+
+Five independent mutations correspond to the five dispatched requirements:
+
+1. S256 is replaced by a plain verifier challenge.
+2. transaction expiry is disabled;
+3. one-time state deletion is disabled;
+4. the durable store argument is removed from the manager composition; and
+5. the principal resolver returns the whole database row.
+
+Each clean baseline exits zero, each variant is observed as applied, each
+variant exposes its forbidden outcome and exits nonzero, and each shipped
+module restores to zero.
+
+```text
+W1_1_OIDC_CLIENT_AUTH_START baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_CLIENT_TRANSACTION baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_CLIENT_CALLBACK baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_CLIENT_COMPOSITION baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_CLIENT_BINDER baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: all controls discriminate (executed=91)
+```
+
+The counter moves from 86 to 91 only for those five observed controls.
+
+## Verification
+
+```text
+npm test                 exit 0; full application suite and production build green
+npm run db:test          exit 0; 83 database controls and all live suites green
+npm run kms:test         exit 0; live Vault differential green
+npm run lint             exit 0
+npm run proof:verify     exit 0; 271 events / 34 threads before publication
+cleanup                  containers_delta=0 volumes_delta=0 temp_paths_delta=0
+```
+
+## Non-claims
+
+This slice performs no OIDC discovery, JWKS retrieval, real-provider token
+exchange, client registration, credential use, or network call. The injected
+exchange boundary still needs the later client-secret custody decision and
+provider registration before production use. A synthetic issuer proves only
+our client's state, PKCE, nonce, redirect, retention, and binder behavior; it
+does not prove that an external provider vouched for an identity.
+
+The store half of the deferred deployment-composition control is now present.
+The current-scheduler-state half is not: no schedule probe, paired positive, or
+schedule mutation is claimed. C17 remains closed under the accepted
+`[TEST-GATED]` reading, the production obligation remains conditional, and this
+slice closes or reopens no task or control.

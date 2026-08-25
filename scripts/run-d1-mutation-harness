@@ -26,6 +26,8 @@ run_w1_1_manager(){ local module_root="$1" pattern="$2"; W1_1_MANAGER_MODULE_ROO
 assert_w1_1_manager(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_manager "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_oidc(){ local module="$1" pattern="$2"; W1_1_OIDC_VERIFIER_MODULE="$module" W1_1_OIDC_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-verifier.test.mjs"; }
 assert_w1_1_oidc(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_1_oidc_client(){ local module_root="$1" pattern="$2"; W1_1_OIDC_CLIENT_MODULE_ROOT="$module_root" W1_1_OIDC_CLIENT_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-client.test.mjs"; }
+assert_w1_1_oidc_client(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_client "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_binding(){ local pattern="$1"; W1_1_BINDING_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_BINDING_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_BINDING_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/founder-binding-live.test.mjs"; }
 assert_w1_1_binding(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_binding "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
@@ -127,6 +129,22 @@ else throw new Error(`unknown OIDC variant ${mode}`);
 fs.writeFileSync(file,text);
 NODE
 }
+make_w1_1_oidc_client_variant(){
+  local target="$1" mode="$2"
+  mkdir -p "$target/packages/git-adapter"
+  cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
+  node - "$target" "$mode" <<'NODE'
+const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
+const clientFile=path.join(root,"packages/git-adapter/src/oidc-client.mjs"),compositionFile=path.join(root,"packages/git-adapter/src/founder-setup-composition.mjs");
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+if(mode==="auth-start")mutate(clientFile,'code_challenge:codeChallenge,code_challenge_method:"S256"','code_challenge:codeVerifier,code_challenge_method:"plain" /* W1_1_OIDC_CLIENT_AUTH_START_REMOVED */');
+else if(mode==="transaction-state")mutate(clientFile,'if(transaction.expiresAt<=clock().getTime() /* W1_1_OIDC_CLIENT_EXPIRY_GUARD */)','if(false /* W1_1_OIDC_CLIENT_TRANSACTION_REMOVED */)');
+else if(mode==="callback")mutate(clientFile,'transactions.delete(state); /* W1_1_OIDC_CLIENT_ONE_TIME_GUARD */','void state; /* W1_1_OIDC_CLIENT_CALLBACK_REMOVED */');
+else if(mode==="composition-store")mutate(compositionFile,'    store, /* W1_1_OIDC_COMPOSITION_DURABLE_STORE */','    store:undefined, /* W1_1_OIDC_CLIENT_COMPOSITION_REMOVED */');
+else if(mode==="binder")mutate(compositionFile,'    return Object.freeze({principal_id:row.principal_id}); /* W1_1_OIDC_BINDER_EXACT_SURFACE */','    return Object.freeze({...row}); /* W1_1_OIDC_CLIENT_BINDER_REMOVED */');
+else throw new Error(`unknown OIDC client variant ${mode}`);
+NODE
+}
 make_canary_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target/packages/git-adapter" "$target/packages/port-watch" "$target/schemas"
@@ -183,11 +201,29 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt" "$root_dir/tests/failure/w1-1-binding-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-client-mutations.txt" "$root_dir/tests/failure/w1-1-binding-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [[ "$mutation" = W1_1_OIDC_CLIENT_* ]]; then
+    case "$mutation" in
+      W1_1_OIDC_CLIENT_AUTH_START) pattern=auth-start; marker=W1_1_OIDC_CLIENT_AUTH_START_REMOVED; expected='W1_1_OIDC_CLIENT auth_start configured=true unique=true pkce=plain' ;;
+      W1_1_OIDC_CLIENT_TRANSACTION) pattern=transaction-state; marker=W1_1_OIDC_CLIENT_TRANSACTION_REMOVED; expected='W1_1_OIDC_CLIENT transaction positive=accepted expired=accepted retained=0' ;;
+      W1_1_OIDC_CLIENT_CALLBACK) pattern=callback; marker=W1_1_OIDC_CLIENT_CALLBACK_REMOVED; expected='W1_1_OIDC_CLIENT callback positive=accepted mismatch=OIDC_STATE_REFUSED redirect=OIDC_REDIRECT_URI_REFUSED replay=accepted retained=2/0/0/0' ;;
+      W1_1_OIDC_CLIENT_COMPOSITION) pattern=composition-store; marker=W1_1_OIDC_CLIENT_COMPOSITION_REMOVED; expected='W1_1_OIDC_CLIENT composition status=active postgres_creates=0 asserted_ignored=true identity_absent=true' ;;
+      W1_1_OIDC_CLIENT_BINDER) pattern=binder; marker=W1_1_OIDC_CLIENT_BINDER_REMOVED; expected='W1_1_OIDC_CLIENT binder surface=identity_id,principal_id identity_absent=false' ;;
+    esac
+    base=$(assert_w1_1_oidc_client "$root_dir" "$pattern")
+    variant="$mutation_dir/w1-1-oidc-client-$pattern";make_w1_1_oidc_client_variant "$variant" "$pattern" || { fail=1;continue; }
+    if grep -Rq "$marker" "$variant/packages/git-adapter/src";then applied=t;else applied=f;fi
+    log="$mutation_dir/w1-1-oidc-client-$pattern.log";run_w1_1_oidc_client "$variant" "$pattern" >"$log" 2>&1;after=$?
+    forbidden=f;grep -Fq "$expected" "$log"&&forbidden=t;[ "$forbidden" = t ]||cat "$log" >&2
+    restored=$(assert_w1_1_oidc_client "$root_dir" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1));[ "$base" = 0 ]&&[ "$applied" = t ]&&[ "$after" != 0 ]&&[ "$forbidden" = t ]&&[ "$restored" = 0 ]||fail=1
+    continue
+  fi
   if [[ "$mutation" = W1_1_BINDING_* ]]; then
     case "$mutation" in
       W1_1_BINDING_ABSENT) pattern=absent; anchor='AND b.identity_id=identity_row.identity_id /* W1_1_BINDING_ABSENT_GUARD */'; replacement='AND true /* W1_1_BINDING_ABSENT_REMOVED */'; marker=W1_1_BINDING_ABSENT_REMOVED; expected='W1_1_BINDING absent positive=54000000-0000-0000-0000-000000000001 negative=54000000-0000-0000-0000-000000000003' ;;
@@ -803,7 +839,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 86 ] || fail=1
+  [ "$executed" = 91 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
