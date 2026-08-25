@@ -2256,3 +2256,19 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Now live, previously theoretical**: the **client secret**. A confidential server-side web client requires one, and it must live in a runtime secret manager or encrypted platform configuration — **never the repository, compose file, scratchpad, artifact or generated environment file**. **PKCE does not remove it** and is not evidence that a confidential client needs no credential.
 
 **Nothing closes.** Criterion 1 remains open on F73's six absent surfaces, the trusted-session caveat on A6, A7 and A8 stays undischarged, no provider has been contacted, and `executed=` holds at **86**. Sequencing: the deployment-composition control is the active item at WIP one; the OIDC client slice follows; enrollment follows that.
+
+## F75. Commit identity moves to `luke@covenantsystems.ai`; a targeted add stranded three agent-a replies
+
+**Recorded 2026-08-25 by agent-a.** Related: ADR 0030, F59.
+
+**Commit attribution for this repository changes at commit `651f98a1`.** Earlier history is authored `jcools1977@gmail.com`; from that commit forward it is **`luke@covenantsystems.ai`**, the identity named canonical in ADR 0030. **Recorded so that an author change in an append-only audit trail is explained rather than read as a compromise.**
+
+**The change is deliberately repository-local.** The identity on this machine was set **globally**, so changing it in place would have re-attributed commits in `McGreat` and GovScout as well — cross-business scope on the one machine the estate designates as needing the tight guardrail. `git config --local` confines it to EngramPort; the global value and the client repositories are untouched and verified so.
+
+**This does not advance W1-1 criterion 1.** Adding the address to GitHub establishes commit attribution, not an authentication fact. **GitHub is not the issuer**: ADR 0030 names Google, and enrollment still requires one out-of-band capture of a verified Google ID token to learn the opaque `sub`. Two different trust chains, recorded because conflating them would be easy.
+
+**A process defect, caught by the new notifier on its first run.** Three agent-a replies — the C17 refutation acceptance with its composition-control dispatch, and the terminal closures of `founder-tenancy-model` and `oidc-authorization-options` — **were appended locally and never committed.** Earlier commits used a targeted `git add docs/constraints.md` to avoid sweeping agent-b's in-progress work in this **shared working tree**, and agent-a's own event files were left behind with it. **From agent-b's side no reply existed, so the relay was stalled and agent-a caused it.**
+
+**The notifier reported three threads awaiting agent-a that agent-a believed were answered**, which is exactly the failure it was built to catch, on its first execution. Fixed at `651f98a1`; the relay now reports nothing pending.
+
+**Standing correction: a targeted add in this shared checkout must still include `events/agent-a/`.** The safe-publish sequence is verify, append, verify, commit, push — **and "commit" means the event, not only the register entry.** F59 recorded that an unanswered tip decays into noise; this is the same decay arriving through a different door, since an event that never leaves the working tree is indistinguishable from one never written.
