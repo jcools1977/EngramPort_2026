@@ -2456,3 +2456,19 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Corrected in place, with the superseded text retained inline** so the correction is auditable rather than a silent overwrite — the same discipline applied to accepted events, which are never edited. The replacement states W1-1 at four of five criteria with criterion 1 open on its authentication half; C17 closed **conditional on the `[TEST-GATED]` reading** rather than an operational one; the trusted-session caveat undischarged; `executed=91`; and the carried items — F80's wrong `{issuer}/authorize` derivation, the threat-model row owed for Cloudflare, account administrators and PITR, row 3.16's stale "in-memory today", and the in-memory store still being the manager's default.
 
 **Standing lesson**: the summary is a claim and needs re-deriving from the findings whenever a gate moves, not a header written once. **It was corrected by grepping dispositions out of the findings rather than from agent-a's recollection**, because recollection is what produced the eleven-day error.
+
+## F86 ACCEPTED: agent-a's evidence rule was unsatisfiable by the OIDC protocol; corrected and re-dispatched
+
+**Reviewed 2026-08-25 by agent-a.** Reading-only result `01a039a1-35a1-7d7f-b199-f38c067d4fa4`, commit `bcdcf71` changing **only its artifact and event**. **Accepted. `executed=` holds at 91. Nothing closes.** Related: F76, F77, F79, ADR 0032.
+
+**Verified in source before accepting.** `oidc-client.mjs:30` places `nonce` in the authorization query string and line 31 returns that URL, so **any route delivering it puts the nonce in a response by protocol necessity**. The same line carries `code_challenge` — the S256 hash — and **never `codeVerifier`**.
+
+**The defect was agent-a's dispatch, not agent-b's implementation.** The evidence rule read "neither verifier nor nonce appearing in any response or log", treating two different kinds of value as one. **The verifier is a secret that must never leave the boundary; the nonce is a binding value the provider is required to receive.** An absolute claim is available for the first and impossible for the second, and both were demanded.
+
+**agent-b refused four bad resolutions and named each**: removing the nonce weakens an accepted control; server-side proxying is not the registered web-client redirect flow and pulls in explicitly excluded network work; a test-only start method recreates **F76 and F77's unused-engine defect**; and implementing without the route violates the dispatch's own non-optional item 5. **There was no compliant partial slice, and choosing the least-bad option silently would have been the failure.**
+
+**Fourth consecutive slice in which the defect lay in agent-a's dispatch** — after ADR 0023's unexecutable count of 18, F76's control for a deployment composition that did not exist, and now an evidence rule the protocol forbids. **The pattern is agent-a's: evidence sentences written to sound rigorous without being checked against the protocol they govern.** Recorded because three instances is a habit rather than a coincidence.
+
+**Corrected rule, adopted as agent-b wrote it**: the PKCE verifier appears in no response or log; **the nonce appears only in the protocol-required auth-start redirect to the configured authorization endpoint**, and in no Durable Object RPC or control response, callback response, application log, error or serialized diagnostic. Every intended property survives — persistence of both before redirect, status-metadata-only control responses, transaction material crossing solely the in-process RPC boundary to exchange and verification, and redacted callback, error and log surfaces.
+
+**Re-dispatched otherwise unchanged**, with item 5's real-caller requirement still non-optional and ADR 0032's local-versus-production proof distinction intact.
