@@ -2492,3 +2492,21 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Local-versus-production distinction accepted verbatim**: Miniflare establishes local workerd behaviour, SQLite persistence across a genuine instance restart, transaction serialization, reverse RPC, routing, expiry and cleanup, and **simulates** production placement, global routing, alarm delivery, PITR restoration and replication. **Ninth consecutive slice carrying a self-reported wrong-reason result** — the Node renderer's failure to load `cloudflare:workers` — uncounted.
 
 **Nothing dispatched.** Everything remaining requires the provider composition: real discovery, JWKS retrieval and token exchange, which need the client secret at deploy and **DeVere's authorization**. **WIP stays at one and no slice was manufactured to fill it.**
+
+## F88. The provider composition is authorized: the first real provider, credential and network egress in this project
+
+**Decided 2026-08-25 by DeVere.** Recorded by agent-a. ADR 0033, digest `3137bcd6e00ba3892006ca38e3d2f849232ff320eaedf5024fc1e261071a7eff`. **Nothing closes; `executed=` holds at 98.**
+
+**Real Google discovery, JWKS retrieval, token exchange and ID-token verification are authorized**, using the F83 client and the F84 secret reference. **This is the first authorization in this project to permit a real provider, a real credential and real network egress.** The standing rule — synthetic principals, synthetic keys, local containers only — is **narrowed for this scope and remains in force everywhere else**.
+
+**Bounded deliberately**: Google only and this client only; **the loopback redirect only**, with production deployment, the `app.engramport.com` Custom Domain, `wrangler secret put` and any Cloudflare API call **explicitly not granted**; custody unchanged under ADR 0031 as amended by ADR 0032; `openid` scope only; and no retention of the ID token, any access token or the full claim set.
+
+**The local secret path avoids disk without a shell variable**: an environment file holding **`op://` references rather than values** is not a secret and may exist in the repository, and `op run --env-file` resolves them at launch so plaintext exists only in the launched process. **A shell variable is refused** because it enters history and the process table.
+
+**What becomes provable**: real discovery with endpoints taken from the document rather than derived, which **closes F80** — the `{issuer}/authorize` convention is wrong for Google, whose token endpoint is on a different host; a genuine JWKS key lifecycle, where **F73's finding that the fixture's non-standard `status` label is not what real providers publish** must not be what makes the accepted rotation control pass; and **F73's undispositioned `azp` question, now decidable against tokens Google actually issues** rather than by speculation. **The `sub` capture becomes possible and is the point.**
+
+**What remains unprovable and is restated because it will be tempting**: nothing here establishes that the provider's enrollment judgement is sound. **F73's conclusion stands — criterion 1's closure is a tested technical chain plus a named operational trust statement**, and F74 narrows it further, since DeVere administers the Workspace and is also the founder, collapsing two trust roots into one person. **A successful login must not be described as discharging the trusted-session caveat.**
+
+**Real-provider observations are additional evidence, never replacements.** The ten verifier mutations and seven Durable Object controls keep running unchanged and are **not re-pointed at Google**; no real-provider observation may be counted as a local control.
+
+**A protocol error by agent-a, recorded rather than quietly repaired.** The acceptance on `oidc-durable-transactions` set `next: agent-b` while dispatching nothing, **parking that thread on agent-b with no work** — the dangling tip F59 spent ten days paying for. The subsequent attempt to dispatch there was **correctly rejected by the verifier**: an actor may not reply to itself. The invalid event was removed before any commit, the work moved to a new thread `oidc-provider-composition`, and **agent-b was asked to terminate the parked thread**, which only it can do.
