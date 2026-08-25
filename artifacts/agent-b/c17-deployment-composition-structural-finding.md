@@ -1,0 +1,84 @@
+# C17 deployment-composition structural finding
+
+Parent: `01a03911-47ef-7e49-beb6-a5d0bb7c7b3e`  
+Thread: `c17-closure-refutation`
+
+## Disposition
+
+The requested fail-closed deployment-composition control cannot be built or
+claimed honestly in the current repository and local target. This is the
+structural-limitation path authorized by the handoff. No implementation,
+fixture, mutation, or execution-count change is warranted.
+
+C17 remains closed under the accepted `[TEST-GATED]` capability reading. This
+finding does not reopen C17; it identifies the missing production composition
+needed to enforce that reading at first setup-session creation.
+
+## Evidence
+
+### There is no application composition to guard
+
+- `SetupSessionManager` has no non-test construction site. Its only non-test
+  occurrence is the class definition in
+  `packages/git-adapter/src/workspace-session.mjs`.
+- `PostgresSetupSessionStore` likewise has no non-test construction site.
+- `app/` contains the static web surface (`layout.tsx`, `page.tsx`, styles, and
+  ChatGPT auth metadata), but no setup-session route or composition root.
+- The Git adapter CLI exposes repository setup/log commands, not a production
+  setup-session start path.
+
+Adding a new composition module without wiring it to a real setup-session entry
+point would recreate the already-identified defect: green tests against an
+unused engine would not make the memory default unreachable in production.
+
+### The current scheduler state cannot be observed locally
+
+- The local deployment is plain `pgvector/pgvector:pg16`; it does not install or
+  configure `pg_cron`.
+- The repository contains the sweep function but no application-visible
+  `cron.job`/scheduler-state probe and no schedule installation surface.
+- ADR 0021 already records why replacing the local image or simulating
+  `pg_cron` would prove a different deployment than the one being controlled.
+- The accepted parent records the real target's current state as
+  `scheduled_jobs=0`. A previous successful sweep is history, not evidence that
+  the schedule is currently enabled.
+
+A callback returning `true`, a fabricated cron table, or a persisted "last
+ran" marker would violate the handoff's current-state requirement and would
+fake the scheduler the control is supposed to verify.
+
+## Why the requested mutations cannot discriminate here
+
+The clean baseline must include both a real `PostgresSetupSessionStore` and a
+currently enabled schedule, then permit a first setup session. The local target
+cannot supply that baseline.
+
+Without a schedule-positive target, removing the store guard and removing the
+schedule guard cannot each be shown independently to turn a forbidden
+configuration into an acceptance. One missing fact masks the other. Supplying
+the missing fact through a test double would make the mutation discriminate
+against the double, not against deployment composition.
+
+Therefore:
+
+- no paired positive is recorded;
+- no guard-removal mutation is counted;
+- `executed` remains `86`;
+- no production control is claimed.
+
+## Smallest honest prerequisite
+
+Resume this slice only when both parts of one real deployment composition are
+in scope:
+
+1. a chosen application entry point that actually owns first setup-session
+   creation and selects its durable store; and
+2. an authorized current-state observation from that entry point's deployment
+   target showing the sweep schedule is enabled.
+
+At that point the single integrated control can refuse distinct
+`SETUP_SESSION_STORE_NOT_DURABLE` and
+`SETUP_SESSION_SWEEP_NOT_SCHEDULED` outcomes, prove one real paired positive,
+and run the two separate guard-removal mutations. Until then, implementing a
+repository-only approximation would weaken rather than discharge the accepted
+deployment condition.
