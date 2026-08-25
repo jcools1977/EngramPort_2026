@@ -2168,3 +2168,33 @@ Verified: `db:lock-test` 2/2, `db:test` exit 0 with the nested sweep at `execute
 **Two costings that change the record.** The `iss`/`sub` transfer ADR 0027 chose is **dearer than ADR 0027 stated**: it replaces the accepted `bootstrap_workspace(uuid,uuid,uuid,text,text)` signature and pulls `tests/bootstrap/bootstrap.sql:50-111` and `scripts/run-db-tests:157-225` with it, and **there is a real alternative ADR 0027 did not name** — the registry stays canonical and the tenant principal keeps the synthetic `bootstrap` pair. DeVere chose transfer; **the price is now measured rather than assumed**, and it is a later slice. Conversely, under the chosen option the accepted concurrency control **does not change** and there are **zero existing key or foreign-key rewrites**, while Option A would have required two core keys plus eight principal foreign keys across four migrations, the `principals` RLS policy, and `validate_event_actor_delegation`. **That number is why A was rejected, and it is the shape a rejection should have.**
 
 **Dispatched: the two-level registry and resolver, additive only.** No `bootstrap_workspace` change and no OIDC wiring in this slice. Global identity unique on exact `(issuer, subject)` with `identity_id` never leaving that layer; tenant-local binding of `identity_id + tenant_id` to one `principal_id`; a one-time `founding_authorization` whose **single use is enforced in the datastore, because an application-enforced one-shot is not one-shot**; a `SECURITY DEFINER` resolver ignoring caller-asserted principal or tenant, where **a tenant hint is never authority**; and the **global-disable check placed in the binder before any `principal_id` is returned**, resolving ADR 0027's tension between hiding `identity_id` and enforcing a global disable. Four refusals, none folded, each with a paired positive and its own mutation, plus the positive the product decision rests on: **the same verified identity bound to two distinct tenant-local principals without violating the tenant-scoped unique constraint.** The founding authorization's missing threat-model row is to be **carried as a finding, not written into digest-pinned revision 8**.
+
+## F71. C17 CLOSES by DeVere's decision; OIDC is authorized provider-neutrally; contract governance is settled
+
+**Decided 2026-08-25 by DeVere** after two independent reviews converged. **Recorded by agent-a.** ADR 0028 `3b0a42af540d3175a11f8c9051643d2c18c7295839f88a8b9c88690d06626a7f`, ADR 0029 `beedbff3d1e73fb5fb42ab376730dd6f8a2035653ab00dd4a7d7d2df113dc8a5`.
+
+**Records caveat, again.** agent-b's C17 and OIDC readings **are not in the event log**. Both threads carry only agent-a's handoff and **still await agent-b's reply**; the convergence DeVere reports was reached off-relay. **This is the second time**, and it is now a pattern worth naming rather than a one-off: **the register records DeVere's decisions and agent-a's verification, not agent-b's reasoning, which remains unpublished on both threads.**
+
+### C17 CLOSES
+
+**Setup-session delegation is derived from resolved authority and never caller-asserted, and its durable form satisfies C6**, with datastore, lifecycle, scheduler, convergence and mutation evidence all reproduced independently by agent-a across F55, F58, F63, F64 and F65.
+
+**Three things C17's closure explicitly does not do**, recorded because each is exactly the inference that would otherwise be drawn later:
+
+1. **It does not close W1-1 criterion 1.** The authentication fact remains unproven.
+2. **It does not discharge the trusted-session caveat on A6, A7 or A8.** C17 is about delegation; the caveat is about authentication.
+3. **It does not permit production to use the in-memory store.** **Production must explicitly configure the PostgreSQL store and the scheduler.**
+
+**Two cleanup obligations are carried, and are explicitly not reasons to have held the gate open**: `SetupSessionManager` still defaults to `InMemorySetupSessionStore`, and threat-model row 3.16 still reads "Model C, in-memory today" under F18. **Revision 8 is digest-pinned and is not edited**; the row is owed a correction in a later revision.
+
+### OIDC authorized provider-neutrally, issuer unnamed
+
+Architecture accepted in ADR 0029: one allowlisted issuer and client, Authorization Code with PKCE S256, exact redirect URI, `state` and `nonce`, **`openid` scope only**, identity on verified `(iss, sub)` alone, **no dynamic issuer trust and no token-supplied JWKS location**, no token or full-claims retention, and **ordinary login cannot found a tenant** — ADR 0027's single-use authorization does.
+
+**agent-a established by DNS alone that the obvious answer is unavailable.** `an2b.com` resolves mail to **Proton**, which is **not an OIDC identity provider**, so the natural domain cannot be the issuer without a new identity tenancy. `covenantsystems.ai` resolves to **Google**, making Google Workspace the only organization-backed OIDC issuer in the estate today — but that domain belongs to **GovScout**, so using it roots **EngramPort's** founder identity across a product boundary the estate otherwise guards. The identity in use here is a **personal** Google account, and `iss` is identical for personal and Workspace accounts, so only the registry binding distinguishes them. **Three live consequences, and the choice is DeVere's.**
+
+### Contract-surface governance settled
+
+Three classes per ADR 0028, governed by: **agents may change implementation, not product meaning.** **ADR 0025's two codes were class two and should not have parked the workflow.** ADR 0027's tenancy model was class three and was correctly escalated. **Class-two changes are to be read adversarially by the other agent before acceptance rather than escalated** — the mechanism that caught both defects in agent-a's own ADRs, where escalation would not have.
+
+**`executed=` holds at 82.** No control, migration or accepted surface changed in this recording.
