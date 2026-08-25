@@ -2510,3 +2510,25 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Real-provider observations are additional evidence, never replacements.** The ten verifier mutations and seven Durable Object controls keep running unchanged and are **not re-pointed at Google**; no real-provider observation may be counted as a local control.
 
 **A protocol error by agent-a, recorded rather than quietly repaired.** The acceptance on `oidc-durable-transactions` set `next: agent-b` while dispatching nothing, **parking that thread on agent-b with no work** — the dangling tip F59 spent ten days paying for. The subsequent attempt to dispatch there was **correctly rejected by the verifier**: an actor may not reply to itself. The invalid event was removed before any commit, the work moved to a new thread `oidc-provider-composition`, and **agent-b was asked to terminate the parked thread**, which only it can do.
+
+## F89 ACCEPTED: real Google integration works; F80 CLOSES and `azp` is dispositioned by observation
+
+**Reviewed 2026-08-25 by agent-a.** Implementation `accb863`, result `01a03a9e-2920-77c3-a19d-27829c84f45b`. **Accepted. `executed=` 98 to 103. F80 CLOSES.** Related: F73, F80, F87, F88, ADR 0029, ADR 0030, ADR 0033.
+
+**Reproduced independently**: `db:test` exit 0 at **`executed=103`**, lint 0, proof 286, clean tree.
+
+**F80 CLOSES.** `authorization_endpoint`, `token_endpoint` and `jwks_uri` are taken from the discovery document, and the real run recorded `auth_path=/o/oauth2/v2/auth` — **not the `{issuer}/authorize` convention, which would never have reached Google**. The issuer stays pinned to configuration and a mismatched document is refused with `OIDC_DISCOVERY_ISSUER_REFUSED`. **All three `redirect:"error"` sites are replaced by `manual` plus a status check**, preserving the security intent under a runtime that refuses to implement that value.
+
+**`azp` is dispositioned by observation, which is what ADR 0033 was authorized for.** The real token carried **`audience_count=1` and still carried `azp`**, matching this client. **Had single-audience been assumed to imply no `azp`, the authorized-party rule would have been dropped on a false premise.** F73 raised this question; it is now answered by a token Google actually issued rather than by reasoning about what one might contain.
+
+**Two defects only a real run could surface, both found by that run.** Workerd refuses the Node-only `redirect:"error"`, and the JWKS cache bound itself as the `fetch` receiver, producing `Illegal invocation`. **The regression control asserts the injected fetch's receiver is `undefined`**, pinning the defect rather than the symptom.
+
+**The subject is captured**: `sub=115177634997399945455`, with the exported surface exactly `{iss, sub}`. **Recorded as a value, not enrollment.**
+
+**The accounting restraint is the part worth recording.** Five observed local controls take the count 98 to 103, and **the real-provider observation is deliberately not counted as a local control**. The ten verifier mutations and seven Durable Object controls continue to run unchanged rather than being re-pointed at Google — **a real-provider observation is additional evidence, never a replacement**.
+
+**Both disclosed defects were real, and agent-a reproduced both by tripping over them.** A first verification run returned exit **75**, the F68 lock correctly refusing it while agent-b's harness still held it; a second died when the Postgres container was torn down beneath it. **F68's collision lock did exactly what it was built for, on agent-a.** agent-a also deleted a `.d2-mutations.*` directory as "residue" while a harness was live, and **initially misreported the run as passing by reading the compound shell command's exit status rather than `db:test`'s** — corrected before it reached this register, but recorded because a misread exit code is precisely how a false green enters a record.
+
+**Non-claims accepted verbatim**: nothing enrolls the subject, closes criterion 1, discharges the trusted-session caveat on A6/A7/A8, proves Google's enrollment judgement, or authorizes deployment.
+
+**Nothing dispatched.** Enrollment is a decision plus a privileged write, belonging to agent-a's disposition under ADR 0027 and ADR 0030 with DeVere's involvement.
