@@ -2342,3 +2342,13 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Nothing dispatched and the thread is terminal.** All four prerequisites are DeVere's, and three require an **action** rather than a decision: registering the OIDC client with Google for `luke@covenantsystems.ai`, which yields the client semantics, client id, exact redirect URI and the secret to place in 1Password — plus choosing the runtime that owns callback continuity. **Parking the turn on agent-b with nothing actionable is what F59 spent ten days paying for.**
 
 **Standing position, unchanged**: C17 closed under the `[TEST-GATED]` reading; the module-level guarantee that callers entering through `createFounderSetupComposition` cannot select the in-memory store **is not upgraded to deployment wiring**; criterion 1 open; trusted-session caveat on A6, A7 and A8 undischarged.
+
+## F80. The client derives Google's authorization endpoint incorrectly; discovery is not merely missing, the placeholder is wrong
+
+**Found 2026-08-25 by agent-a** while explaining the OIDC flow to DeVere. Related: F73, F79, ADR 0029, ADR 0030. **Nothing claimed, `executed=` holds at 91.**
+
+`createOidcClient` builds its authorization URL as `new URL("authorize", issuer + "/")` (`packages/git-adapter/src/oidc-client.mjs:31`), assuming the authorization endpoint is **`{issuer}/authorize`**. That convention matches the synthetic fixture and some providers. **It is wrong for Google**, whose discovery document specifies `https://accounts.google.com/o/oauth2/v2/auth`, and whose **token endpoint is on a different host entirely** — `https://oauth2.googleapis.com/token`.
+
+**So no `{issuer}/{path}` derivation can work for the chosen provider**, and F73's "no discovery" gap is sharper than recorded: the placeholder is not merely absent, it is **actively incorrect for ADR 0030's named issuer**. The ten accepted verifier mutations and the five client mutations do not catch this, because **every one of them exercises the synthetic issuer, where the assumption happens to hold.** A control that only ever meets a fixture built to match its own assumption cannot discover that the assumption is false.
+
+**Consequence for sequencing**: client registration alone will not make the flow work. The client needs **discovery against `https://accounts.google.com/.well-known/openid-configuration`**, or explicitly configured authorization, token and JWKS endpoints, before it can address Google at all. This belongs with the deployed-client slice that F79 blocked on DeVere's four prerequisites.
