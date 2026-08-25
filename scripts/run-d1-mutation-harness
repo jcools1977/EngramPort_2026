@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 set -uo pipefail
-root_dir="$(cd "$(dirname "$0")/.." && pwd)"; compose=(docker compose -f "$root_dir/deploy/docker-compose.yml"); SDB=engramport_mut; fail=0; mutation_dir="$(mktemp -d "$root_dir/.d2-mutations.XXXXXX")"
+root_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$root_dir/scripts/db-test-lock"
+ENGRAMPORT_DB_TEST_LOCK_LABEL=run-d1-mutation-harness
+db_test_lock_acquire || exit $?
+if [[ "${1:-}" == "--lock-probe" ]];then trap db_test_lock_release EXIT;db_test_lock_probe "${2:-}" "${3:-}";exit;fi
+compose=(docker compose -f "$root_dir/deploy/docker-compose.yml"); SDB=engramport_mut; fail=0; mutation_dir="$(mktemp -d "$root_dir/.d2-mutations.XXXXXX")"
 psql_as(){ "${compose[@]}" exec -T postgres psql -q -v ON_ERROR_STOP=1 -U "$1" -d "$2" "${@:3}"; }
 drop(){ "${compose[@]}" exec -T postgres psql -q -U postgres -d postgres -c "DROP DATABASE IF EXISTS $SDB WITH (FORCE);" >/dev/null 2>&1 || true; }
-cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; rm -rf "$mutation_dir"; exit $rc; }
+cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; rm -rf "$mutation_dir";db_test_lock_release;exit $rc; }
 trap cleanup EXIT INT TERM
 "${compose[@]}" up -d --wait >/dev/null
 build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql "$root_dir"/migrations/002[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours'),('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;" >/dev/null; }

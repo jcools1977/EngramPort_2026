@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$root_dir/scripts/db-test-lock"
+ENGRAMPORT_DB_TEST_LOCK_LABEL=run-db-tests
+db_test_lock_acquire || exit $?
+if [[ "${1:-}" == "--lock-probe" ]];then trap db_test_lock_release EXIT;db_test_lock_probe "${2:-}" "${3:-}";exit;fi
 compose=(docker compose -f "$root_dir/deploy/docker-compose.yml")
-cleanup() { "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; }
+cleanup() { "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true;db_test_lock_release; }
 trap cleanup EXIT
 cleanup
 "${compose[@]}" up -d --wait

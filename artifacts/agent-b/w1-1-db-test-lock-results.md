@@ -1,0 +1,50 @@
+# W1-1 database-test collision lock results
+
+Reply to handoff `01a03856-6981-7fbe-a676-fa44dfb8aba0` on `wizard-w1-1-scope`.
+
+## Result
+
+Both destructive database-test entrypoints now acquire one shared advisory lock before touching Docker or the fixed `engramport_mut` scratch database:
+
+- `scripts/run-db-tests`
+- `scripts/run-d1-mutation-harness`
+
+The lock is atomic, process-owned, inherited by the mutation harness when the canonical database runner invokes it, and released only by its matching owner. A direct second invocation exits 75 with `ENGRAMPORT_DB_TEST_LOCKED` and the active owner PID. No Docker cleanup or database operation runs on the refused path.
+
+The parent/child path is reentrant through the inherited owner token. The complete canonical `db:test` run therefore held one lock across its database controls and nested mutation sweep without deadlocking or prematurely releasing the parent's lock.
+
+## Concurrent refusal and survival
+
+`tests/db-test-lock.test.mjs` proves both entry directions with no fabricated store or database result:
+
+1. `run-db-tests` holds the lock; direct `run-d1-mutation-harness` is refused with exit 75; the database holder is released and completes normally.
+2. `run-d1-mutation-harness` holds the lock; direct `run-db-tests` is refused with exit 75; the mutation holder is released and completes normally.
+
+Each holder emits `ENGRAMPORT_DB_TEST_LOCK_PROBE_COMPLETED` only after its refused competitor has exited and the test explicitly releases it. Refusal alone is insufficient for the test to pass.
+
+## Stale-lock recovery
+
+The stale path is observed rather than asserted. The test starts `run-db-tests`, waits until it owns the lock, kills that process with `SIGKILL`, and confirms the owner symlink remains. A direct mutation-harness invocation then detects the dead PID, reports `ENGRAMPORT_DB_TEST_LOCK_STALE_RECOVERED`, acquires the same lock, completes normally, and removes it.
+
+The PID check is fail-closed for a live or unreadable owner. An old owner that has died cannot wedge later runs.
+
+## Discrimination disposition
+
+No lock-removal mutation was executed and `executed=` remains 82.
+
+Removing the lock and running the two genuine entrypoints concurrently would deliberately recreate the destructive condition: both share the default Compose project and `engramport_mut`, while either cleanup can run `docker compose down --volumes` beneath the other. That violates the handoff's no-wreckage condition. Running only two lock probes after removing the lock would be safe, but would prove merely that a refusal disappeared; it would not observe the real database interference requested by the mutation clause. This slice therefore takes the explicit structural-limitation exemption and claims no mutation credit.
+
+A unique per-run database/project scheme was not substituted. It would multiply heavy Docker and database mutation sweeps on one host and requires a separate sequencing decision; the bounded advisory refusal fixes the observed multi-agent hazard without changing database identity or test semantics.
+
+## Verification
+
+- `npm run db:lock-test`: exit 0; 2 passed, 0 failed, covering both entry directions and SIGKILL recovery.
+- `npm run db:test`: exit 0; 83 database controls; nested mutation harness `executed=82`.
+- `npm test`: exit 0; 248 passed, 0 failed, 0 skipped.
+- `npm run kms:test`: exit 0; live Vault differential green and cleanup deltas zero.
+- `npm run session:async-negative`: exit 0; `failed=21 passed=16 manager_refusals_removed=19 nonmanager_green=3 enumerated=t`.
+- `bash scripts/run-d1-mutation-harness --negative`: expected exit 1 with `NOOP baseline=0 applied=f after=0 restored=0` and `NOOP false discrimination correctly rejected`.
+- `npm run lint`, `bash -n`, and `git diff --check`: exit 0.
+- `npm run proof:verify`: exit 0 at 256 events before publication.
+
+No migration, database control, application package, credential, provider integration, session control, or threat-model claim changed. This slice closes nothing.
