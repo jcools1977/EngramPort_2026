@@ -20,7 +20,7 @@ const localBindingConfig = {
     OIDC_ISSUER: "https://accounts.google.com",
     OIDC_AUTHORIZATION_ENDPOINT: "https://accounts.google.com/o/oauth2/v2/auth",
     OIDC_CLIENT_ID: "1074508038321-g7n86n4nj23858t9mm4r94fqmugkb0sd.apps.googleusercontent.com",
-    OIDC_REDIRECT_URI: "https://app.engramport.com/auth/callback",
+    OIDC_REDIRECT_URI: "http://localhost:8787/auth/callback",
     OIDC_SCOPE: "openid",
     OIDC_TRANSACTION_TTL_MS: "600000",
   },

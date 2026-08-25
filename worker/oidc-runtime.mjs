@@ -42,7 +42,7 @@ export async function routeOidcRequest(request,env,{boundary=unavailableOidcBoun
   try{
     const client=createOidcClient({
       issuer:env.OIDC_ISSUER,
-      authorizationEndpoint:env.OIDC_AUTHORIZATION_ENDPOINT,
+      authorizationEndpoint:boundary.authorizationEndpoint??env.OIDC_AUTHORIZATION_ENDPOINT,
       clientId:env.OIDC_CLIENT_ID,
       redirectUri:env.OIDC_REDIRECT_URI,
       scope:env.OIDC_SCOPE??"openid",

@@ -30,6 +30,8 @@ run_w1_1_oidc_client(){ local module_root="$1" pattern="$2"; W1_1_OIDC_CLIENT_MO
 assert_w1_1_oidc_client(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_client "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_oidc_durable(){ local module_root="$1" pattern="$2"; W1_1_OIDC_DURABLE_MODULE_ROOT="$module_root" W1_1_OIDC_DURABLE_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-durable.test.mjs"; }
 assert_w1_1_oidc_durable(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_durable "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_1_oidc_provider(){ local module_root="$1" pattern="$2"; W1_1_OIDC_PROVIDER_MODULE_ROOT="$module_root" W1_1_OIDC_PROVIDER_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-provider.test.mjs"; }
+assert_w1_1_oidc_provider(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_provider "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_binding(){ local pattern="$1"; W1_1_BINDING_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_BINDING_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_BINDING_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/founder-binding-live.test.mjs"; }
 assert_w1_1_binding(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_binding "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
@@ -160,7 +162,7 @@ make_w1_1_oidc_durable_variant(){
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const entryFile=path.join(root,"worker/entry.mjs"),runtimeFile=path.join(root,"worker/oidc-runtime.mjs"),objectFile=path.join(root,"worker/oidc-transaction-durable-object.mjs"),clientFile=path.join(root,"packages/git-adapter/src/oidc-client.mjs");
 function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
-if(mode==="route")mutate(entryFile,'if(isOidcRoute(url))return routeOidcRequest(request,env,{boundary:oidcBoundary,...oidcOptions}); /* W1_1_OIDC_REAL_WORKER_ROUTE */','if(false /* W1_1_OIDC_DURABLE_ROUTE_REMOVED */)return routeOidcRequest(request,env,{boundary:oidcBoundary,...oidcOptions});');
+if(mode==="route")mutate(entryFile,'if(isOidcRoute(url))return routeOidcRequest(request,env,{boundary:await boundaryFor(env),...oidcOptions}); /* W1_1_OIDC_REAL_WORKER_ROUTE */','if(false /* W1_1_OIDC_DURABLE_ROUTE_REMOVED */)return routeOidcRequest(request,env,{boundary:await boundaryFor(env),...oidcOptions});');
 else if(mode==="same-name")mutate(runtimeFile,'this.#namespace.getByName(state).claim(consumer); /* W1_1_OIDC_DO_SAME_NAME_CLAIM */','this.#namespace.getByName(`${state}-callback`).claim(consumer); /* W1_1_OIDC_DURABLE_SAME_NAME_REMOVED */');
 else if(mode==="restart")mutate(objectFile,'await this.ctx.storage.put(RECORD_KEY,transaction); /* W1_1_OIDC_DO_PERSISTED_RECORD */','void transaction; /* W1_1_OIDC_DURABLE_RESTART_REMOVED */');
 else if(mode==="atomic")mutate(objectFile,'await storage.put(RECORD_KEY,{...record,status:"claimed"}); /* W1_1_OIDC_DO_ATOMIC_CLAIM */','await storage.put(RECORD_KEY,{...record,status:"pending"}); /* W1_1_OIDC_DURABLE_ATOMIC_REMOVED */');
@@ -171,6 +173,22 @@ else if(mode==="expiry"){
 else if(mode==="cleanup")mutate(objectFile,'await this.ctx.storage.deleteAll(); /* W1_1_OIDC_DO_DELETE_ALL */','void 0; /* W1_1_OIDC_DURABLE_CLEANUP_REMOVED */');
 else if(mode==="redaction")mutate(objectFile,'return Object.freeze({status:record.status,present:true,expiresAt:record.expiresAt,alarmAt:await this.ctx.storage.getAlarm()});','return Object.freeze({status:record.status,present:true,expiresAt:record.expiresAt,alarmAt:await this.ctx.storage.getAlarm(),nonce:record.nonce,codeVerifier:record.codeVerifier}); /* W1_1_OIDC_DURABLE_REDACTION_REMOVED */');
 else throw new Error(`unknown durable OIDC variant ${mode}`);
+NODE
+}
+make_w1_1_oidc_provider_variant(){
+  local target="$1" mode="$2"
+  mkdir -p "$target/packages/git-adapter"
+  cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
+  node - "$target" "$mode" <<'NODE'
+const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
+const providerFile=path.join(root,"packages/git-adapter/src/oidc-provider.mjs");
+function mutate(anchor,replacement){let text=fs.readFileSync(providerFile,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(providerFile,text);}
+if(mode==="discovery")mutate('authorizationEndpoint:httpsEndpoint(document.authorization_endpoint,"authorization_endpoint"), /* W1_1_PROVIDER_DISCOVERY_ENDPOINTS */','authorizationEndpoint:new URL("/authorize",configured).toString(), /* W1_1_PROVIDER_DISCOVERY_REMOVED */');
+else if(mode==="jwks-lifecycle")mutate('      this.#keys=replacement; /* W1_1_PROVIDER_JWKS_REPLACE */','      this.#keys=new Map([...this.#keys,...replacement]); /* W1_1_PROVIDER_JWKS_REPLACE_REMOVED */');
+else if(mode==="exchange")mutate('grant_type:"authorization_code",code_verifier:required(codeVerifier,"codeVerifier") /* W1_1_PROVIDER_EXCHANGE_PKCE */','grant_type:"authorization_code",omitted_code_verifier:required(codeVerifier,"codeVerifier") /* W1_1_PROVIDER_EXCHANGE_REMOVED */');
+else if(mode==="azp")mutate('if((audiences.length>1||payload.azp!==undefined)&&payload.azp!==configuredAudience /* W1_1_PROVIDER_AZP_GUARD */)','if(false /* W1_1_PROVIDER_AZP_REMOVED */)');
+else if(mode==="subject")mutate('  return Object.freeze({iss:claims.iss,sub:claims.sub}); /* W1_1_PROVIDER_SUBJECT_EXACT_SURFACE */','  return Object.freeze({...claims}); /* W1_1_PROVIDER_SUBJECT_REMOVED */');
+else throw new Error(`unknown provider OIDC variant ${mode}`);
 NODE
 }
 make_canary_variant(){
@@ -229,11 +247,31 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-client-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-durable-mutations.txt" "$root_dir/tests/failure/w1-1-binding-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-client-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-durable-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-provider-mutations.txt" "$root_dir/tests/failure/w1-1-binding-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [[ "$mutation" = W1_1_OIDC_PROVIDER_* ]]; then
+    for pattern in discovery jwks-lifecycle exchange azp subject; do
+      case "$pattern" in
+        discovery) marker=W1_1_PROVIDER_DISCOVERY_REMOVED; expected='W1_1_OIDC_PROVIDER discovery issuer=true hosts=accounts.google.com,oauth2.googleapis.com,www.googleapis.com auth_path=/authorize mismatch=OIDC_DISCOVERY_ISSUER_REFUSED unresolved=OIDC_CLIENT_SECRET_UNRESOLVED before_fetch=true' ;;
+        jwks-lifecycle) marker=W1_1_PROVIDER_JWKS_REPLACE_REMOVED; expected='W1_1_OIDC_PROVIDER jwks first=a overlap=b unknown=c disappeared=accepted expired_refresh=d kids=a,b,c,d' ;;
+        exchange) marker=W1_1_PROVIDER_EXCHANGE_REMOVED; expected='W1_1_OIDC_PROVIDER exchange id_only=id_token verifier=false client=true negative=OIDC_CLIENT_REFUSED retained=0/0' ;;
+        azp) marker=W1_1_PROVIDER_AZP_REMOVED; expected='W1_1_OIDC_PROVIDER azp positive=accepted foreign=accepted' ;;
+        subject) marker=W1_1_PROVIDER_SUBJECT_REMOVED; expected='W1_1_OIDC_PROVIDER subject surface=aud,azp,email,exp,iss,nonce,sub issuer=true value=recorded-synthetic-sub' ;;
+      esac
+      base=$(assert_w1_1_oidc_provider "$root_dir" "$pattern")
+      variant="$mutation_dir/w1-1-oidc-provider-$pattern";make_w1_1_oidc_provider_variant "$variant" "$pattern" || { fail=1;continue; }
+      if grep -Rq "$marker" "$variant/packages/git-adapter/src";then applied=t;else applied=f;fi
+      log="$mutation_dir/w1-1-oidc-provider-$pattern.log";run_w1_1_oidc_provider "$variant" "$pattern" >"$log" 2>&1;after=$?
+      forbidden=f;grep -Fq "$expected" "$log"&&forbidden=t;[ "$forbidden" = t ]||cat "$log" >&2
+      restored=$(assert_w1_1_oidc_provider "$root_dir" "$pattern")
+      printf 'W1_1_OIDC_PROVIDER_%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "${pattern^^}" "$base" "$applied" "$after" "$forbidden" "$restored"
+      executed=$((executed+1));[ "$base" = 0 ]&&[ "$applied" = t ]&&[ "$after" != 0 ]&&[ "$forbidden" = t ]&&[ "$restored" = 0 ]||fail=1
+    done
+    continue
+  fi
   if [[ "$mutation" = W1_1_OIDC_DURABLE_* ]]; then
     for pattern in route same-name restart atomic expiry cleanup redaction; do
       case "$pattern" in
@@ -889,7 +927,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 98 ] || fail=1
+  [ "$executed" = 103 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

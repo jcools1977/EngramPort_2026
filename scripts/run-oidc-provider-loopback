@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+import { Miniflare, NoOpLog } from "miniflare";
+import path from "node:path";
+
+const root=path.resolve(import.meta.dirname,"..");
+const clientId="1074508038321-g7n86n4nj23858t9mm4r94fqmugkb0sd.apps.googleusercontent.com";
+const secret=process.env.OIDC_CLIENT_SECRET;
+if(typeof secret!=="string"||secret.length===0){
+  console.error("OIDC_CLIENT_SECRET_UNRESOLVED");
+  process.exit(1);
+}
+
+const mf=new Miniflare({
+  host:"127.0.0.1",
+  port:8787,
+  modules:true,
+  modulesRoot:root,
+  scriptPath:path.join(root,"tests/fixtures/oidc-provider-loopback-worker.mjs"),
+  compatibilityDate:"2026-05-22",
+  compatibilityFlags:["nodejs_compat"],
+  durableObjects:{OIDC_TRANSACTIONS:{className:"OidcTransactionDurableObject",useSQLite:true}},
+  bindings:{
+    OIDC_ISSUER:"https://accounts.google.com",
+    OIDC_CLIENT_ID:clientId,
+    OIDC_CLIENT_SECRET:secret,
+    OIDC_REDIRECT_URI:"http://localhost:8787/auth/callback",
+    OIDC_SCOPE:"openid",
+    OIDC_TRANSACTION_TTL_MS:"600000",
+  },
+  log:new NoOpLog(),
+});
+
+const ready=await mf.ready;
+if(ready.hostname!=="127.0.0.1"||ready.port!=="8787")throw new Error("OIDC_LOOPBACK_BINDING_REFUSED");
+console.log("OIDC_PROVIDER_LOOPBACK_READY http://localhost:8787/auth/start");
+
+let disposed=false;
+async function dispose(){if(disposed)return;disposed=true;await mf.dispose();}
+process.once("SIGINT",()=>{void dispose().finally(()=>process.exit(130));});
+process.once("SIGTERM",()=>{void dispose().finally(()=>process.exit(143));});
+process.once("beforeExit",()=>{void dispose();});
