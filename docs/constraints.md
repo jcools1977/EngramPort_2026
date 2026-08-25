@@ -2386,3 +2386,27 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Scope honoured**: no Cloudflare API call despite an available connector, documentation treated as reference rather than authorization, and local Wrangler emulation consistently distinguished from production isolate behaviour throughout. Cited repository files verified present.
 
 **Nothing dispatched and the thread is terminal.** The runtime is DeVere's deployment-shape decision; he now holds costs, a refutation and named consequences. When he chooses, a new thread carries the implementation and its ADR 0031 amendment.
+
+## F83. The OIDC client is registered; configuration recorded, with one item confirmable only by DeVere
+
+**Recorded 2026-08-25 by agent-a**, from DeVere's console work. Related: ADR 0029, ADR 0030, ADR 0031, F81. **Nothing closes; `executed=` holds at 91.**
+
+**Registered client configuration**, all non-secret and verified against Google Cloud:
+
+| Field | Value |
+|---|---|
+| Issuer | `https://accounts.google.com` |
+| Client ID | `1074508038321-g7n86n4nj23858t9mm4r94fqmugkb0sd.apps.googleusercontent.com` |
+| Project | `engramport-auth-506615`, number `1074508038321` |
+| Organization | `covenantsystems.ai`, `42964971699` — **verified org-parented** |
+| Canonical account | `luke@covenantsystems.ai` per ADR 0030 |
+| Redirect URI | `http://localhost:8787/auth/callback` (development only so far) |
+| Scope | `openid` only, per ADR 0029 |
+
+**A verification that caught a real placement error, twice.** A Google OAuth client ID's numeric prefix is its **project number**, so the prefix alone proves which project a client lives in. The first client returned prefix `110026539057`, which resolved to **`stunning-net-506615-i2` ("My First Project")** — the default project Google auto-creates on first Cloud ToS acceptance — rather than the intended one. It was recreated. The second returned `1074508038321`, which resolved to **`engramport-auth-506615`**, a **new console-created project** rather than the CLI-created `engramport-auth` (`92463392553`). **Both placements were caught by checking the prefix rather than by trusting the report**, and neither would have been visible from the client ID alone without that check.
+
+**Disposition: the second client is kept.** `engramport-auth-506615` is org-parented and purpose-named, so **Internal was available and the client is correctly backed**. Recreating a third time would buy only a tidier project ID, which is cosmetic. **The duplicate empty project `engramport-auth` (`92463392553`) was created by agent-a via CLI and is the artifact to remove**, since two projects sharing a display name is an operational hazard — the wrong one gets selected later.
+
+**One item agent-a cannot verify and DeVere must confirm**: that the consent screen **Audience is set to Internal**. It was *available*, since the project is org-parented, but availability is not configuration. `gcloud alpha iap oauth-brands list` would show `orgInternalOnly`, and the `alpha` component is not installed on cockpit; **installing CLI components for one check was declined as a machine change disproportionate to the verification.** Until DeVere confirms, **the register does not assert that the provider-side narrowing is in effect**, and ADR 0030's rule stands alone: authority comes from the exact enrolled `(iss, sub)`, never from the issuer.
+
+**Still outstanding**: the client secret's `op://` reference for ADR 0031; the production redirect URI, which waits on the F82 runtime decision; and the `sub` capture, which by ADR 0030 must come from a token issued to **this** client rather than any other Google token.
