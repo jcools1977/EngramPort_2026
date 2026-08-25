@@ -1,0 +1,43 @@
+# W1-1 OIDC principal-binding finding
+
+Reply to handoff `01a03679-3597-7495-a42d-ceffaecfdb53` on `wizard-w1-1-scope`.
+
+This is the dispatched reading, not an implementation. It claims no criterion, control, task, or C17 closure. The mutation total remains `executed=72` because no control was added or run.
+
+## Finding
+
+The synthetic OIDC verifier can validate signature, key rotation, algorithm, issuer, audience, expiry, and nonce, but the repository does not define how the resulting verified identity becomes the **internal** `principal_id` that `SetupSessionManager` requires. Implementing that conversion would settle a security design question inside code, which the handoff explicitly forbids.
+
+The two sides of the missing boundary are concrete:
+
+- An OIDC ID token identifies a subject under an issuer. The repository's own assessment therefore requires a mapping from verified issuer/subject to a canonical principal and names the configured account mapping as external-provider work (`artifacts/agent-b/w1-1-session-trust-assessment.md`, “What authenticated founder principal means today”).
+- `SetupSessionManager.start` accepts an authenticator result only when it contains exactly one string field, `principal_id`; verified issuer and subject cannot cross that interface (`packages/git-adapter/src/workspace-session.mjs`).
+- The durable identity model stores `external_issuer` and `external_subject`, but their uniqueness is scoped by `tenant_id`: `UNIQUE NULLS NOT DISTINCT (tenant_id, external_issuer, external_subject)` (`migrations/0001_canonical_core.sql`). There is no global issuer/subject-to-principal resolver.
+- Founder setup occurs before the tenant exists. `bootstrap_workspace` receives an already chosen `p_principal_id`, then creates the principal with the synthetic identity pair `('bootstrap', p_principal_id::text)`. It neither accepts nor stores the verified OIDC issuer/subject.
+- Pre-bootstrap authority is keyed only by internal `founder_authorities.principal_id`. No relation binds that id to an external issuer/subject before tenant creation.
+
+Consequently, the verifier has no authorized answer to return while preserving the required identity surface.
+
+## Rejected guesses
+
+1. **Return the token's `sub` as `principal_id`.** OIDC subjects are issuer-scoped opaque strings, not EngramPort principal UUIDs. This also drops the issuer half of the identity.
+2. **Derive a UUID from issuer and subject.** The repository defines no namespace, canonicalization, collision policy, migration rule, or recovery rule for such a derivation.
+3. **Look up `(issuer, subject)` in `principals`.** The lookup requires a tenant, but first-founder authentication precedes tenant creation; the uniqueness constraint is tenant-scoped.
+4. **Inject an arbitrary mapping callback.** That would merely move today's trusted-function precondition one level down. Without a defined trusted registry and binding rule it does not establish the authentication fact.
+5. **Return verified issuer and subject to the manager.** The accepted identity-surface control deliberately refuses any authenticator field other than `principal_id`.
+
+## Decision required
+
+The missing design must define, before implementation:
+
+1. the trusted pre-bootstrap registry or deterministic rule that binds verified `(issuer, subject)` to `founder_authorities.principal_id`;
+2. how that binding works before a tenant exists and how it is transferred into the tenant-scoped `principals` row during atomic bootstrap;
+3. whether one external identity may found multiple tenants and, if so, whether those tenants receive one principal id or distinct tenant-local principal ids;
+4. the failure codes for absent, ambiguous, disabled, and conflicting bindings;
+5. which component owns the mapping and how callers are prevented from asserting the internal id.
+
+Once decided, the synthetic cryptographic slice is implementable without network access. Signature and key-rotation controls can then prove the verifier, while separate mapping controls prove that verified claims resolve to exactly `{principal_id}` and that the credential and claims are not retained.
+
+## Scope and verification
+
+No production file, migration, fixture, test, mutation registry, or harness changed. No OIDC library was selected and no network or real provider was contacted. The required pre-consumption `npm run proof:verify` passed at 252 events; `main` was synchronized with `origin/main` at `358481e` before this reading. Full engineering suites were not run because this reading changes only its bound artifact and event.
