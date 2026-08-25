@@ -1,0 +1,98 @@
+# OIDC setup-session entry-point custody blocker
+
+Parent: `01a0395a-8a0a-7e9f-89dd-dbc49ebd900d`
+
+## Disposition
+
+No honest application route or CLI command can own first setup-session creation
+within the dispatched bounds. The client-secret/provider configuration question
+must be answered before the module-level composition can become a deployment
+entry point.
+
+This is the reading explicitly allowed by the handoff. No route, CLI command,
+control, fixture, mutation, or execution-count change is warranted.
+
+## Why an application route would be a dead path
+
+`createOidcClient` requires an exchange function and a verifier at construction.
+`createFounderSetupComposition` passes its configured OIDC boundary directly to
+that client. The repository has no production implementation for:
+
+- token exchange;
+- client authentication at the token endpoint;
+- client registration and exact deployed redirect URI;
+- discovery or a configured production JWKS lifecycle; or
+- runtime custody and rotation of the OIDC client secret.
+
+The threat model classifies the OIDC client secret as credential 3.2, Model B,
+consumed only by the token-exchange service. ADR 0030 says a confidential web
+client requires that secret in runtime secret management and leaves its holder
+and rotation as an open client-registration item. It also states that PKCE is
+not evidence that the secret is unnecessary.
+
+A route created now would therefore have only three possible behaviors:
+
+1. always refuse because exchange/provider configuration is absent;
+2. embed or accept a credential without its authorized custody boundary; or
+3. inject the synthetic exchange/verifier used by tests.
+
+The first is not a setup-session entry point; it is an unreachable stub. The
+second violates the explicit no-credential bound and C8. The third would make a
+test fixture look like deployment wiring and would repeat the unused/fake
+composition defect already accepted on this thread.
+
+## Why the CLI is not an alternative
+
+The OIDC transaction store is intentionally one-time, expiring, and
+process-local. Auth-start and callback occur at different times. Two ordinary
+CLI invocations cannot share the state, nonce, and PKCE verifier, so a CLI
+command cannot complete the flow without adding a durable transaction store or
+remaining alive as a callback server.
+
+Either choice exceeds this slice. A persistent CLI callback server would still
+need a registered redirect, network access, verifier/JWKS configuration, token
+exchange, and the client-secret custody decision. Persisting the transaction
+secrets would introduce a new credential-retention boundary not authorized by
+the handoff. Accepting an ID token or exchange module from the caller would
+bypass the client boundary rather than wire it.
+
+## Why the requested Postgres mutation is masked today
+
+The clean deployment positive required for a discriminating entry-point control
+does not exist. With no production exchange/verifier configuration, an entry
+point correctly refuses before it can begin a session whether Postgres is
+configured or not.
+
+If a Postgres-configuration guard were added and then removed, the missing OIDC
+exchange/provider configuration would catch the attempt next. The forbidden
+session would not start, so the mutation would not discriminate. Making it
+discriminate would require injecting the synthetic issuer boundary into the
+supposed production entry point. That would prove the injection fixture, not a
+deployed caller.
+
+Therefore no named Postgres-entry refusal is added yet, no mutation is counted,
+and `executed=` remains `91`.
+
+## Smallest prerequisite that changes the answer
+
+Authorize one concrete deployed OIDC client form and its runtime configuration:
+
+1. confidential or explicitly justified public-client semantics;
+2. exact issuer, client id, redirect URI, and verification-key/discovery policy;
+3. for a confidential client, the Model B secret location, consumer, holder,
+   rotation, and revocation path; and
+4. the application runtime that owns both auth-start and callback transaction
+   continuity.
+
+With those facts in scope, the real route can construct exactly one
+`createFounderSetupComposition`, refuse a named absent-Postgres configuration,
+prove a paired deployment positive, and run a guard-removal mutation that is no
+longer masked by an absent exchange.
+
+## Non-claims
+
+C17 remains closed under the accepted `[TEST-GATED]` reading. The existing
+module-level guarantee remains valid: callers entering through
+`createFounderSetupComposition` cannot select the in-memory store. This reading
+does not upgrade that guarantee to deployment wiring, does not contact or speak
+for a provider, and closes or reopens no task or control.
