@@ -40,7 +40,17 @@ Neither agent environment has `docker`, Docker Compose, PostgreSQL, or `psql`. a
 
 agent-b holds **one** active implementation item at a time. Further items may sit visible in the inbox as a queue, but are not claimed or started until the active item is returned and independently reviewed.
 
-Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
+Current state as of 2026-08-25T16:00Z, superseding the 2026-08-14 summary that stood here. **That summary was stale for eleven days and asserted W1-1 was closed and accepted, which was false** — a register whose own headline contradicts its findings is the defect this register exists to catch, so the correction is recorded rather than silently applied.
+
+**W1-1 stands at four of five criteria closed**: criterion 2 (F65), criterion 3 (F65), criterion 4 (F55), criterion 5 (F64). **Criterion 1 is open on its authentication half only**, and per F73 it can never become a pure technical control — its closure will be a tested technical chain plus a named operational trust statement.
+
+**C17 is CLOSED** (F71), by DeVere's decision, **conditional on the `[TEST-GATED]` capability reading** and not on an operational one; F72 records that no target currently has the sweep scheduled, so the production obligation remains unenforced prose. **C6 requirement 2 closed** in F58 on managed-scheduler evidence. **F59's `TRUNCATE` finding closed** in the same sweep that recovered it.
+
+**The trusted-session caveat on A6, A7 and A8 is undischarged**, and F66 records why: founder authentication precedes tenant creation, so nothing binds a verified external identity to founder authority until the ADR 0026/0027 binder exists.
+
+**Mutation harness at `executed=91`.** Google-side OIDC registration is complete (F83, F84): org-parented project, Internal audience, `openid` only, client ID and `op://` secret reference recorded. **Runtime decided as Durable Objects** (ADR 0032), implementation in flight on `oidc-durable-transactions`. **Carried, not fixed**: F80's `{issuer}/authorize` derivation is wrong for Google; the threat-model row owed for Cloudflare, account administrators and PITR as readers of transaction material; row 3.16's stale "in-memory today"; and the in-memory store still being `SetupSessionManager`'s default. **Revision 8 stays digest-pinned throughout.**
+
+Superseded summary, retained so the correction is auditable: Current state as of 2026-08-14T20:20Z: W0-1, W0-2, PW1, W1-1, W1-3 and W1-4 are closed and accepted. C3, F2, F7 and F8 are all closed. **W1-2 is CLOSED at revision 8**, accepted after four adversarial review rounds plus three post-close documentation corrections. W1-5, W1-6 and W1-7 are registered and undispatched. **Onboarding T1.5, Re:PORT R1, Re:PORT R2 and F16 are closed and accepted. C1 is CLOSED: the environment is available and the database controls are verified.**
 
 **W1-6 and W1-6a are closed, closing A3, A4, A5, A9, F9, F10 and F17.** F17 finished at 19 of 28 demonstrated and 9 of 28 structurally non-isolated.
 
@@ -2434,3 +2444,15 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Under ADR 0032's Worker amendment the reference is consumed exactly once, at deploy**, by an authorized operator or CI identity piping it directly into `wrangler secret put` — **no `.env`, no `.dev.vars`, no `--secrets-file`, no file at any point**. Cloudflare then holds the encrypted binding.
 
 **Google-side registration is now complete**: org-parented project, Internal audience confirmed by DeVere, `openid` scope only, client ID recorded in F83, secret stored and referenced here. **What remains for criterion 1 is not configuration but implementation and one capture** — the Durable Object transaction runtime dispatched on `oidc-durable-transactions`, then real discovery and exchange, then the `sub` capture that ADR 0030 requires come from a token issued to **this** client.
+
+## F85. The register's own current-state summary was eleven days stale and asserted something false
+
+**Found and corrected 2026-08-25 by agent-a**, during a gap while agent-b held the only active slice. **Nothing claimed, `executed=` holds at 91.**
+
+**The headline of this register said `Current state as of 2026-08-14T20:20Z` and listed W1-1 among tasks "closed and accepted".** That was false for eleven days and contradicted F55, F64, F65, F66, F71, F73, F79 and F83 sitting below it. **A register whose summary claims more than its findings support is the precise defect this register exists to catch**, and it went unexamined because the summary is read as orientation rather than as a claim.
+
+**Nobody would have caught it from the findings**, because each finding was individually accurate. **The error lived only in the aggregation**, which is the part with no author after the first day and no control over it.
+
+**Corrected in place, with the superseded text retained inline** so the correction is auditable rather than a silent overwrite — the same discipline applied to accepted events, which are never edited. The replacement states W1-1 at four of five criteria with criterion 1 open on its authentication half; C17 closed **conditional on the `[TEST-GATED]` reading** rather than an operational one; the trusted-session caveat undischarged; `executed=91`; and the carried items — F80's wrong `{issuer}/authorize` derivation, the threat-model row owed for Cloudflare, account administrators and PITR, row 3.16's stale "in-memory today", and the in-memory store still being the manager's default.
+
+**Standing lesson**: the summary is a claim and needs re-deriving from the findings whenever a gate moves, not a header written once. **It was corrected by grepping dispositions out of the findings rather than from agent-a's recollection**, because recollection is what produced the eleven-day error.
