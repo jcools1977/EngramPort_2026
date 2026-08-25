@@ -1,0 +1,4 @@
+schema_version: 0
+thread: oidc-runtime-continuity
+mode: strict_relay
+coordinator: null
