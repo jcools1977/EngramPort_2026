@@ -2198,3 +2198,27 @@ Architecture accepted in ADR 0029: one allowlisted issuer and client, Authorizat
 Three classes per ADR 0028, governed by: **agents may change implementation, not product meaning.** **ADR 0025's two codes were class two and should not have parked the workflow.** ADR 0027's tenancy model was class three and was correctly escalated. **Class-two changes are to be read adversarially by the other agent before acceptance rather than escalated** — the mechanism that caught both defects in agent-a's own ADRs, where escalation would not have.
 
 **`executed=` holds at 82.** No control, migration or accepted surface changed in this recording.
+
+## F72. The C17 refutation found a real gap in agent-a's own evidence: the scheduler is not currently scheduled
+
+**Reviewed 2026-08-25 by agent-a.** Readings `01a0390c-3ade-761f-a64c-b4d8ce091190` (C17 refutation) and result `01a03907-eae0-731a-b00c-38fa9bed873c` (registry). **Both accepted. C17 stays closed. `executed=` 82 to 86.** Related: F58, F71, ADR 0026, ADR 0027.
+
+**The objection agent-a missed, and it is about agent-a's own evidence.** agent-b found it in `artifacts/agent-a/c6-scheduling-evidence.md:96`: **the `pg_cron` job was unscheduled after the proof was collected.** agent-a then checked the live target — **`cron.job` returns `scheduled_jobs = 0`.** No deployment anywhere currently has the sweep enabled.
+
+**C6 requirement 2 is written as an ongoing operational property**, and F58 closed it on evidence of a mechanism **plus a demonstrated schedule**, after which agent-a removed the schedule. agent-b's analogy is exact: **a past schedule is no more a current control than a past successful authorization read is a current live session.** Under the operational reading **neither C6 requirement 2 nor C17 currently holds**, and **that objection lands on agent-a's F58 closure, not only on DeVere's C17 decision.**
+
+**The quantifier framing resolves it, and the resolution is recorded as conditional rather than absolute.** The traceability row marks C17 `[TEST-GATED]` gating the transition `first durable delegation`. DeVere's decision explicitly adopted that capability reading and explicitly imposed the obligation that **production must configure the PostgreSQL store and the scheduler**. **C17 therefore stays closed as decided — but its validity is conditional on the test-gate reading, and the register says so rather than implying an unconditional close.**
+
+agent-b's dispositions of the five parent objections are accepted: the memory default and stale row 3.16 are carried debt; the chronology objection is circular, since proving a datastore control requires creating rows in it; the 17.6-versus-16.15 split is a bounded evidence-composition limit.
+
+**Dispatched: convert DeVere's production obligation into a fail-closed control**, which agent-b identified as the single smallest item that changes the answer. One deployment-composition control refusing the first setup session unless **both** `PostgresSetupSessionStore` is explicitly configured **and the target reports the sweep schedule currently enabled**. **The schedule predicate must read current state, not history — agent-a's own evidence would have passed a weaker check.** Both facts in one control, the memory default unreachable in that composition, paired positive, and separate mutations removing each requirement. **If the local stack cannot exercise the schedule predicate, the structural-limitation exemption is to be taken rather than a fake scheduler invented** — the pattern this project already rejected once. **A production obligation living only in prose is the failure mode this register exists to distrust.**
+
+### The registry slice is accepted
+
+Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminating. **The product positive is ADR 0027's proof**: `same_identity_rows=2`, one external pair, two distinct tenant-local principals, with `assertions_ignored=true forced_rls=3 direct_read=42501`.
+
+**Three load-bearing properties verified in source rather than from markers.** `p_asserted_principal_id` and `p_asserted_tenant_id` appear **only in the signature and are never referenced in the body**. `identity_id` is **never returned**. The **global-disable check fires second**, before any binding or authorization resolution, which is the placement ADR 0027 required to keep `identity_id` out of authorization code.
+
+**`UNIQUE (identity_id, tenant_id)` rescues the refusal agent-a broke in ADR 0026** — one identity holds many bindings, so ambiguity is genuinely reachable and its mutation fires. Single use is datastore-enforced by `FOR UPDATE` plus a conditional `UPDATE ... WHERE consumed_at IS NULL`, with a concurrent one-shot fixture showing exactly one winner and `consumed=1`. Declining to join `principals` pre-bootstrap is correct and structurally backed by `FOREIGN KEY (tenant_id, principal_id)` against the pre-existing `UNIQUE (tenant_id, id)`.
+
+**agent-b's own finding is the more important half**: `founding_authorizations` is durable issuance **state**, not an issuance **authorization boundary**. Nothing establishes who may create one; the fixture plants it as database administrator. **The root of trust for tenant creation is currently "whoever can write that table."** Carried as a finding for a future threat-model revision; **revision 8 untouched.**
