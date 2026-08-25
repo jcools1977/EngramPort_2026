@@ -24,7 +24,7 @@ const outcome=async operation=>{try{return {outcome:"accepted",value:await opera
 function syntheticClient({clock=()=>new Date(NOW)}={}){
   const nonces=new Map(),verifiers=new Map();
   const client=createOidcClient({issuer:ISSUER,clientId:CLIENT,redirectUri:REDIRECT,verifier:verifier(),clock,transactionTtlMs:60_000,exchange:async request=>{verifiers.set(request.code,request.codeVerifier);return {id_token:token(nonces.get(request.code)),access_token:"synthetic-transient-access",refresh_token:"synthetic-transient-refresh"};}});
-  function begin(code){const attempt=client.start(),url=new URL(attempt.authorizationUrl);nonces.set(code,url.searchParams.get("nonce"));return {attempt,url};}
+  async function begin(code){const attempt=await client.start(),url=new URL(attempt.authorizationUrl);nonces.set(code,url.searchParams.get("nonce"));return {attempt,url};}
   return {client,begin,verifiers};
 }
 
@@ -48,7 +48,7 @@ class SyntheticPool{
 function check(name,operation){test(name,{skip:selected!=="all"&&selected!==name},operation);}
 
 check("auth-start",async()=>{
-  const fixture=syntheticClient(),a=fixture.begin("auth-a"),b=fixture.begin("auth-b");
+  const fixture=syntheticClient(),a=await fixture.begin("auth-a"),b=await fixture.begin("auth-b");
   await fixture.client.callback({state:a.attempt.state,code:"auth-a",redirectUri:REDIRECT});
   await fixture.client.callback({state:b.attempt.state,code:"auth-b",redirectUri:REDIRECT});
   const challenge=a.url.searchParams.get("code_challenge"),method=a.url.searchParams.get("code_challenge_method"),expected=createHash("sha256").update(fixture.verifiers.get("auth-a"),"ascii").digest("base64url");
@@ -58,19 +58,19 @@ check("auth-start",async()=>{
 });
 
 check("transaction-state",async()=>{
-  let now=NOW;const fixture=syntheticClient({clock:()=>new Date(now)}),positive=fixture.begin("fresh");
+  let now=NOW;const fixture=syntheticClient({clock:()=>new Date(now)}),positive=await fixture.begin("fresh");
   const accepted=(await outcome(()=>fixture.client.callback({state:positive.attempt.state,code:"fresh",redirectUri:REDIRECT}))).outcome;
-  const expired=fixture.begin("expired");now=NOW+61_000;
+  const expired=await fixture.begin("expired");now=NOW+61_000;
   const refusal=(await outcome(()=>fixture.client.callback({state:expired.attempt.state,code:"expired",redirectUri:REDIRECT}))).outcome,retained=fixture.client.transientInventory().transactions;
   console.log(`W1_1_OIDC_CLIENT transaction positive=${accepted} expired=${refusal} retained=${retained}`);
   assert.deepEqual({accepted,refusal,retained},{accepted:"accepted",refusal:"OIDC_TRANSACTION_EXPIRED",retained:0});
 });
 
 check("callback",async()=>{
-  const fixture=syntheticClient(),positive=fixture.begin("positive");
+  const fixture=syntheticClient(),positive=await fixture.begin("positive");
   const accepted=(await outcome(()=>fixture.client.callback({state:positive.attempt.state,code:"positive",redirectUri:REDIRECT}))).outcome;
   const mismatch=(await outcome(()=>fixture.client.callback({state:"unknown-state",code:"mismatch",redirectUri:REDIRECT}))).outcome;
-  const redirect=fixture.begin("redirect"),redirectOutcome=(await outcome(()=>fixture.client.callback({state:redirect.attempt.state,code:"redirect",redirectUri:"https://foreign.invalid/callback"}))).outcome;
+  const redirect=await fixture.begin("redirect"),redirectOutcome=(await outcome(()=>fixture.client.callback({state:redirect.attempt.state,code:"redirect",redirectUri:"https://foreign.invalid/callback"}))).outcome;
   const replay=(await outcome(()=>fixture.client.callback({state:positive.attempt.state,code:"positive",redirectUri:REDIRECT}))).outcome,inventory=fixture.client.transientInventory();
   console.log(`W1_1_OIDC_CLIENT callback positive=${accepted} mismatch=${mismatch} redirect=${redirectOutcome} replay=${replay} retained=${inventory.transactions}/${inventory.codes}/${inventory.tokens}/${inventory.verifiers}`);
   assert.deepEqual({accepted,mismatch,redirectOutcome,replay,inventory},{accepted:"accepted",mismatch:"OIDC_STATE_REFUSED",redirectOutcome:"OIDC_REDIRECT_URI_REFUSED",replay:"OIDC_STATE_REFUSED",inventory:{transactions:0,codes:0,tokens:0,verifiers:0}});
@@ -79,7 +79,7 @@ check("callback",async()=>{
 check("composition-store",async()=>{
   const pool=new SyntheticPool(),nonces=new Map();
   const composition=createFounderSetupComposition({pool,clock:()=>new Date(NOW),idFactory:()=>"61000000-0000-4000-8000-000000000001",oidc:{issuer:ISSUER,clientId:CLIENT,redirectUri:REDIRECT,verifier:verifier(),exchange:async request=>({id_token:token(nonces.get(request.code))})}});
-  const attempt=composition.beginAuth(),url=new URL(attempt.authorizationUrl);nonces.set("compose",url.searchParams.get("nonce"));
+  const attempt=await composition.beginAuth(),url=new URL(attempt.authorizationUrl);nonces.set("compose",url.searchParams.get("nonce"));
   const session=await composition.startSession({callback:{state:attempt.state,code:"compose",redirectUri:REDIRECT,binding_id:BINDING},scopes:["setup:repository"],expires_at:SESSION_EXPIRY});
   const assertedIgnored=session.founder_principal_id===PRINCIPAL&&!JSON.stringify(session).includes("caller-asserted"),identityAbsent=!JSON.stringify(session).includes("identity_id");
   console.log(`W1_1_OIDC_CLIENT composition status=${session.status} postgres_creates=${pool.createCalls} asserted_ignored=${assertedIgnored} identity_absent=${identityAbsent}`);

@@ -24,11 +24,11 @@ export class PostgresFounderResolver{
   async close(){if(this.#pool?.end)await this.#pool.end();}
 }
 
-export function createFounderSetupComposition({pool,connectionString,oidc,clock,idFactory}={}){
+export function createFounderSetupComposition({pool,connectionString,oidc,transactionStore,clock,idFactory}={}){
   if(!pool&&!connectionString)throw new TypeError("production setup composition requires Postgres");
   const resolver=new PostgresFounderResolver({pool,connectionString});
   const store=new PostgresSetupSessionStore({pool,connectionString});
-  const client=createOidcClient({...oidc,clock});
+  const client=createOidcClient({...oidc,transactionStore,clock});
   const manager=new SetupSessionManager({
     store, /* W1_1_OIDC_COMPOSITION_DURABLE_STORE */
     clock,

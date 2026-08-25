@@ -1,0 +1,126 @@
+# W1-1 durable OIDC transaction results
+
+Parent handoff: `01a039a7-00db-7e24-8b6c-9c3e971a89e7`
+
+## Implemented boundary
+
+The OIDC client now uses an asynchronous transaction-store seam. Authorization
+start writes `{state, nonce, codeVerifier, redirectUri, expiresAt, status}`
+before returning its redirect. The in-memory implementation preserves the
+existing synthetic client path; the Worker route injects a SQLite-backed
+Durable Object selected by the exact state name.
+
+The Durable Object serializes claim in one storage transaction, moves the row
+from `pending` to `claimed` before exchange or verification begins, and removes
+all storage after the attempt. Expiry is authoritative in claim, inspection,
+and alarm sweep. Claimed and abandoned rows both use `deleteAll()` cleanup; an
+alarm is scheduled just beyond expiry so an expired callback can still receive
+the named `OIDC_TRANSACTION_EXPIRED` refusal before abandoned-state cleanup.
+
+Transaction material crosses only the in-process reverse-RPC capability from
+the Durable Object to the request Worker. Create, claim, inspect, and cleanup
+responses contain status metadata only. The PKCE verifier appears in no
+response or log. The nonce appears only in the protocol-required authorization
+redirect and is absent from Durable Object/control responses, callback bodies,
+errors, logs, and diagnostics.
+
+`vite.config.ts` declares the `OIDC_TRANSACTIONS` SQLite class and migration,
+the production custom-domain route and callback, non-secret OIDC configuration,
+and the required client-secret binding. `worker/index.ts` exports the class and
+routes `/auth/start` and `/auth/callback` before the application fallback. The
+auth-start route is live. Callback is deliberately wired to the named
+`OIDC_PROVIDER_UNAVAILABLE` boundary until the separately authorized provider,
+credential, discovery, exchange, and verification composition is implemented.
+
+## Local workerd evidence
+
+All values below come from Miniflare running the production Worker route and
+Durable Object modules with synthetic exchange/verification only in the test
+fixture:
+
+```text
+W1_1_OIDC_DURABLE route start=302 callback=204 fallback=404
+W1_1_OIDC_DURABLE same_name pending=pending/true callback=204 clean=absent/false unknown=400
+W1_1_OIDC_DURABLE restart before=true callback=204 clean=false
+W1_1_OIDC_DURABLE atomic statuses=204/400 clean=false
+W1_1_OIDC_DURABLE expiry expired=410 clean=false fresh=204
+W1_1_OIDC_DURABLE cleanup scheduled=true claimed=204/false alarm=false
+W1_1_OIDC_DURABLE redaction nonce_only_redirect=true metadata=alarmAt,expiresAt,present,status callback_bytes=0
+```
+
+The restart control disposes one Miniflare instance, opens a second against the
+same persisted SQLite directory, and consumes the original state. The atomic
+control submits two concurrent callbacks while synthetic exchange is delayed;
+exactly one reaches exchange and the other refuses. The cleanup control
+observes both post-claim deletion and an explicit expired-row alarm sweep.
+
+This proves the modules under local workerd, including local SQLite persistence,
+transaction serialization, reverse RPC, routing, expiry, and cleanup. It only
+simulates Cloudflare production placement, global routing, alarm delivery,
+PITR restoration, replication, and multi-region behavior. It makes no external
+provider, credential, identity, network, deployment, or Cloudflare API claim.
+
+The synthetic exchange/verifier in `tests/fixtures/oidc-durable-worker.mjs` is
+not a provider simulator and is not reachable from the production Worker entry.
+The narrow `cloudflare:workers` Node loader shim in `rendered-html.test.mjs`
+exists only because that test imports the Worker bundle under Node to render
+the ordinary product page; all Durable Object/RPC evidence above runs against
+Miniflare's real Worker runtime, not that shim.
+
+## Discriminating mutations
+
+Seven controls each have a paired clean path and a targeted mutation:
+
+```text
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=1 forbidden=t restored=0
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: all controls discriminate (executed=98)
+```
+
+The expiry mutation removes both the Durable Object guard and the client's
+independent guard; removing only one would be a wrong-reason refusal. The total
+moves from 91 to 98 only after all seven clean, applied, forbidden, and restored
+observations execute.
+
+## Verification
+
+```text
+npm run verify:all        exit 0
+  npm test                application, Worker build, Miniflare, and Node render green
+  npm run db:test         live database suites and mutation harness green
+  npm run kms:test        live Vault differential green
+  npm run lint            exit 0
+proof before publication  281 events / 36 threads / 2 actors
+git diff --check          exit 0
+```
+
+The first repository-wide run correctly found that the Node-only HTML renderer
+could not load the Worker-native `cloudflare:workers` scheme. No failed run was
+counted. The renderer now installs a narrow test-only base-class shim, its test
+passes, the production bundle still retains the native external import, and the
+full repository-wide rerun exits zero.
+
+## Non-claims
+
+No task or control is closed by this slice. It performs no provider discovery,
+JWKS retrieval, token exchange, real identity verification, credential use,
+secret mutation, deployment, network call, or Cloudflare API call. W1-1 and any
+trusted-session/C17 disposition remain with agent-a.
+
+## Implementation digests
+
+```text
+7761e4a09fd2a2810d6575b2bdb3845139fb74127d818d7d57b4757f866a2d1f  packages/git-adapter/src/oidc-client.mjs
+e18621729154413da78fae5e0f4864a3724772bdb6407add68b840cf971ff3ab  packages/git-adapter/src/oidc-transaction-store.mjs
+f7bff5371c1b3102b1dc124257bc4a374746a1ef548b2d6a30ae154b6cb31deb  worker/entry.mjs
+9758fe1d127a45057f66c41e07822f194bdd31b09e58fd3184f7530f0a865c6b  worker/oidc-runtime.mjs
+9b2152282d8e380ee1739f1a97debfbe8797b254529b4c6cb5fdaedeba396a41  worker/oidc-transaction-durable-object.mjs
+a80dd8df5e3e793fd5ea6b39ee03477d7cce38be1835a8fe7c7865ea248bd0c9  vite.config.ts
+ca93a4d8dfa0ee808101e42c1e70868b06eb45252f09f064883c9ed4eeb0b51f  tests/workspace-oidc-durable.test.mjs
+6a38cd94d75a7d59295e1c340e7fbaa271fbff872efbeea41352ad95914f4801  scripts/run-d1-mutation-harness
+```

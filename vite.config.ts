@@ -13,7 +13,22 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
+  compatibility_date: "2026-05-22",
   compatibility_flags: ["nodejs_compat"],
+  routes: [{ pattern: "app.engramport.com", custom_domain: true }],
+  vars: {
+    OIDC_ISSUER: "https://accounts.google.com",
+    OIDC_AUTHORIZATION_ENDPOINT: "https://accounts.google.com/o/oauth2/v2/auth",
+    OIDC_CLIENT_ID: "1074508038321-g7n86n4nj23858t9mm4r94fqmugkb0sd.apps.googleusercontent.com",
+    OIDC_REDIRECT_URI: "https://app.engramport.com/auth/callback",
+    OIDC_SCOPE: "openid",
+    OIDC_TRANSACTION_TTL_MS: "600000",
+  },
+  durable_objects: {
+    bindings: [{ name: "OIDC_TRANSACTIONS", class_name: "OidcTransactionDurableObject" }],
+  },
+  migrations: [{ tag: "oidc-transactions-v1", new_sqlite_classes: ["OidcTransactionDurableObject"] }],
+  secrets: { required: ["OIDC_CLIENT_SECRET"] },
   d1_databases: d1
     ? [
         {

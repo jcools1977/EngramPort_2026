@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
+import { registerHooks } from "node:module";
 import test from "node:test";
+
+// The production bundle correctly keeps the Worker-native module external.
+// This test exercises only the ordinary HTML route under Node; Durable Object
+// and RPC behavior is separately executed in local workerd by session:test.
+registerHooks({resolve(specifier,context,nextResolve){
+  if(specifier==="cloudflare:workers")return {url:"data:text/javascript,export class DurableObject%7Bconstructor(ctx,env)%7Bthis.ctx=ctx%3Bthis.env=env%7D%7D%3Bexport class RpcTarget%7B%7D",shortCircuit:true};
+  return nextResolve(specifier,context);
+}});
 
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
