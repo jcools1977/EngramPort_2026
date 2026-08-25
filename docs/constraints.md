@@ -2472,3 +2472,23 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Corrected rule, adopted as agent-b wrote it**: the PKCE verifier appears in no response or log; **the nonce appears only in the protocol-required auth-start redirect to the configured authorization endpoint**, and in no Durable Object RPC or control response, callback response, application log, error or serialized diagnostic. Every intended property survives — persistence of both before redirect, status-metadata-only control responses, transaction material crossing solely the in-process RPC boundary to exchange and verification, and redacted callback, error and log surfaces.
 
 **Re-dispatched otherwise unchanged**, with item 5's real-caller requirement still non-optional and ADR 0032's local-versus-production proof distinction intact.
+
+## F87 ACCEPTED: the Durable Object transaction runtime lands in the production request path
+
+**Reviewed 2026-08-25 by agent-a.** Implementation `8c41151`, result `01a039c7-ac7d-7b70-9e7d-4f3060b5b7de`. **Accepted. `executed=` 91 to 98. Nothing closes.** Related: F76, F77, F79, F81, F82, F86, ADR 0032.
+
+**Reproduced independently**: `db:test` exit 0 at **`executed=98`**, all seven mutations `baseline=0 applied=t after=1 forbidden=t restored=0`, `npm test` **260 / 0 / 0 skipped**, `session:async-negative` `enumerated=t`, harness `--negative` exit 1, lint 0, proof 282, clean tree.
+
+**The unused-engine question was checked hardest and the answer is that this is the real path.** `worker/index.ts:62` is `export default createEngramPortWorker({fallback:applicationWorker})`, and `worker/entry.mjs` evaluates `isOidcRoute(url)` **before** delegating to the application worker. **The OIDC routes sit in the Worker's actual default export, ahead of the fallback.** F76 and F77 both terminated on a module with no caller; **the non-optional item 5 is genuinely satisfied here.**
+
+**The two requirements most easily faked are in source.** `await this.ctx.storage.put(RECORD_KEY,transaction)` precedes the redirect return, and claim moves the row to `claimed` inside one storage transaction before exchange begins.
+
+**The `cloudflare:workers` shim is correctly confined, verified rather than accepted.** It appears only in `tests/rendered-html.test.mjs`; both production modules use the native import, and **the built `dist/server/index.js` still contains `cloudflare:workers`**. A test-only shim leaking into production would have invalidated every Miniflare claim resting on it, which is why the disclosure was checked instead of taken.
+
+**Two unrequested improvements worth recording.** `Referrer-Policy: no-referrer` on the 302 keeps the nonce out of downstream `Referer` headers — **directly answering the hazard behind F86's corrected evidence rule**. And scheduling the cleanup alarm **just beyond expiry**, so an expired callback still receives a named `OIDC_TRANSACTION_EXPIRED` rather than a bare absence, is **the difference between a refusal and a silence**.
+
+**The callback boundary is honest rather than stubbed.** `/auth/callback` returns `OIDC_PROVIDER_UNAVAILABLE` at 503 until provider, credential, discovery, exchange and verification are separately authorized. **A route refusing for a named reason is a real route**; one wired to a test fixture would have reproduced the defect this slice exists to avoid.
+
+**Local-versus-production distinction accepted verbatim**: Miniflare establishes local workerd behaviour, SQLite persistence across a genuine instance restart, transaction serialization, reverse RPC, routing, expiry and cleanup, and **simulates** production placement, global routing, alarm delivery, PITR restoration and replication. **Ninth consecutive slice carrying a self-reported wrong-reason result** — the Node renderer's failure to load `cloudflare:workers` — uncounted.
+
+**Nothing dispatched.** Everything remaining requires the provider composition: real discovery, JWKS retrieval and token exchange, which need the client secret at deploy and **DeVere's authorization**. **WIP stays at one and no slice was manufactured to fill it.**
