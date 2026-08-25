@@ -35,7 +35,7 @@ function fixture(){
     clock:()=>new Date(),
     idFactory:kind=>kind==="session"?`44000000-0000-4000-8000-${String(++sessionSequence).padStart(12,"0")}`:`approval-${++approvalSequence}`,
   });
-  return {manager};
+  return {manager,store};
 }
 
 const start=manager=>manager.start({credential:"synthetic",scopes:["setup:plan:execute"],expires_at:atHours(12)});
@@ -43,7 +43,7 @@ const outcome=async operation=>{try{await operation();return "accepted";}catch(e
 
 async function runCase(name){
   await reset();
-  const {manager}=fixture();
+  const {manager,store}=fixture();
   if(name==="expired"){
     const session=await start(manager),compiled=plan(),approval=await manager.approvePlan(session.session_id,compiled);
     const positive=(await manager.executeApprovedStep(session.session_id,approval,compiled,"repository.connect")).status;
@@ -57,6 +57,17 @@ async function runCase(name){
     const negative=await outcome(()=>manager.authorize(session.session_id));
     console.log(`W1_1_CRITERION5 revoked positive=${positive} negative=${negative}`);
     assert.deepEqual({positive,negative},{positive:"active",negative:"SESSION_REVOKED"});
+  }else if(name==="revoked-execute"){
+    const positiveSession=await start(manager),compiled=plan(),positiveApproval=await manager.approvePlan(positiveSession.session_id,compiled);
+    const positive=(await manager.executeApprovedStep(positiveSession.session_id,positiveApproval,compiled,"repository.connect")).status;
+    const revokedSession=await start(manager),unreplayedApproval=await manager.approvePlan(revokedSession.session_id,compiled);
+    const externalStore=new PostgresSetupSessionStore({pool:maintenance,sessionBindings:[[revokedSession.session_id,principal]]});
+    const durable=(await externalStore.transition(revokedSession.session_id,"completed")).state;
+    const genuine=(await store.getApproval(revokedSession.session_id,unreplayedApproval.approval_id))?.approval===unreplayedApproval;
+    const unreplayed=!(await store.approvalRevoked(unreplayedApproval.approval_id));
+    const negative=await outcome(()=>manager.executeApprovedStep(revokedSession.session_id,unreplayedApproval,compiled,"repository.connect"));
+    console.log(`W1_1_CRITERION3 revoked_execute positive=${positive} negative=${negative} genuine=${genuine} unreplayed=${unreplayed} durable=${durable.status}`);
+    assert.deepEqual({positive,negative,genuine,unreplayed,durable:durable.status},{positive:"authorized",negative:"SESSION_REVOKED",genuine:true,unreplayed:true,durable:"completed"});
   }else if(name==="different"){
     const a=await start(manager),b=await start(manager),compiled=plan(),approval=await manager.approvePlan(a.session_id,compiled);
     const positive=(await manager.executeApprovedStep(a.session_id,approval,compiled,"repository.connect")).status;
@@ -73,9 +84,9 @@ async function runCase(name){
   }else throw new Error(`unknown W1_1_MANAGER_CASE ${name}`);
 }
 
-test(`W1-1 composed durable criterion 5: ${selected}`,async()=>{
+test(`W1-1 composed durable session controls: ${selected}`,async()=>{
   try{
-    const cases=selected==="all"?["expired","revoked","different","replay"]:[selected];
+    const cases=selected==="all"?["expired","revoked","revoked-execute","different","replay"]:[selected];
     for(const name of cases)await runCase(name);
   }finally{await reset().catch(()=>{});await maintenance.end();await admin.end();}
 });

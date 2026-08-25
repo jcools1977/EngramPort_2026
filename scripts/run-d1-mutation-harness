@@ -68,7 +68,7 @@ function replace(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");
 function replaceLast(file,anchor,replacement){let text=fs.readFileSync(file,"utf8"),index=text.lastIndexOf(anchor);if(index<0)throw new Error(`anchor absent: ${anchor}`);text=text.slice(0,index)+replacement+text.slice(index+anchor.length);fs.writeFileSync(file,text);}
 const liveAnchor='      return {session:null,state:normalizeRow(inspected)};';
 const liveReplacement='      return {session:normalizeRow({...inspected,active:true,effective_state:"active"}),state:normalizeRow(inspected)}; /* W1_1_MANAGER_LIVENESS_REMOVED */';
-const known=["expired","expired_guard_only","liveness_only","revoked","different","different_manager_only","different_store_only","replay","replay_guard_only","replay_retention_only"];
+const known=["expired","expired_guard_only","liveness_only","revoked","revoked-execute","different","different_manager_only","different_store_only","replay","replay_guard_only","replay_retention_only"];
 if(!known.includes(mode))throw new Error(`unknown manager variant ${mode}`);
 if(["expired","expired_guard_only"].includes(mode)){
   replace(managerFile,'    if(snapshot.state?.status==="expired")throw new SetupPlanError("SESSION_EXPIRED",session_id);','    if(false /* W1_1_MANAGER_EXPIRED_REMOVED */)throw new SetupPlanError("SESSION_EXPIRED",session_id);');
@@ -85,6 +85,9 @@ if(["replay","replay_guard_only"].includes(mode)){
 }
 if(["replay","replay_retention_only"].includes(mode)){
   replace(storeFile,'  #revokeApprovals(session_id){for(const id of this.#approvals.get(session_id)?.keys()??[])this.#revokedApprovals.add(id);this.#approvals.delete(session_id);}','  #revokeApprovals(session_id){for(const id of this.#approvals.get(session_id)?.keys()??[])this.#revokedApprovals.add(id);void session_id; /* W1_1_MANAGER_APPROVAL_RETENTION_REMOVED */}');
+}
+if(mode==="revoked-execute"){
+  replace(managerFile,'    this.#requireLive(session_id,snapshot);','    void snapshot; /* W1_1_MANAGER_EXECUTE_LIVENESS_REMOVED */');
 }
 NODE
 }
@@ -149,10 +152,11 @@ if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); 
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
-  if [[ "$mutation" = W1_1_MANAGER_CRITERION5_* ]]; then
+  if [[ "$mutation" = W1_1_MANAGER_CRITERION* ]]; then
     case "$mutation" in
       W1_1_MANAGER_CRITERION5_EXPIRED) pattern=expired; expected="W1_1_CRITERION5 expired positive=authorized negative=accepted" ;;
       W1_1_MANAGER_CRITERION5_REVOKED) pattern=revoked; expected="W1_1_CRITERION5 revoked positive=active negative=accepted" ;;
+      W1_1_MANAGER_CRITERION3_REVOKED_EXECUTE) pattern=revoked-execute; expected="W1_1_CRITERION3 revoked_execute positive=authorized negative=accepted genuine=true unreplayed=true durable=completed" ;;
       W1_1_MANAGER_CRITERION5_DIFFERENT) pattern=different; expected="W1_1_CRITERION5 different positive=authorized negative=accepted" ;;
       W1_1_MANAGER_CRITERION5_REPLAY) pattern=replay; expected="W1_1_CRITERION5 replay positive=authorized negative=accepted" ;;
     esac
@@ -176,6 +180,7 @@ for line in "${MUTATIONS[@]}"; do
     case "$pattern" in
       expired) grep -Rq 'W1_1_MANAGER_EXPIRED_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
       revoked) grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
+      revoked-execute) grep -Rq 'W1_1_MANAGER_EXECUTE_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
       different) grep -Rq 'W1_1_MANAGER_SESSION_MISMATCH_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_APPROVAL_SCOPE_REMOVED' "$variant" && applied=t || applied=f ;;
       replay) grep -Rq 'W1_1_MANAGER_REPLAY_GUARD_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_APPROVAL_RETENTION_REMOVED' "$variant" && applied=t || applied=f ;;
     esac
@@ -191,6 +196,8 @@ for line in "${MUTATIONS[@]}"; do
     elif [ "$pattern" = replay ]; then
       printf 'W1_1_MANAGER_REPLAY baseline=%s guard_only=%s liveness_only=%s retention_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$guard_only" "$live_only" "$retention_only" "$applied" "$after" "$forbidden" "$restored"
       [ "$guard_only" != 0 ] && [ "$live_only" = 0 ] && [ "$retention_only" = 0 ] || fail=1
+    elif [ "$pattern" = revoked-execute ]; then
+      printf 'W1_1_MANAGER_REVOKED_EXECUTE baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     else
       printf 'W1_1_MANAGER_REVOKED baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     fi
@@ -718,7 +725,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 71 ] || fail=1
+  [ "$executed" = 72 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
