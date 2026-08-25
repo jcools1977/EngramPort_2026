@@ -26,6 +26,8 @@ run_w1_1_manager(){ local module_root="$1" pattern="$2"; W1_1_MANAGER_MODULE_ROO
 assert_w1_1_manager(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_manager "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_oidc(){ local module="$1" pattern="$2"; W1_1_OIDC_VERIFIER_MODULE="$module" W1_1_OIDC_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-verifier.test.mjs"; }
 assert_w1_1_oidc(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_1_binding(){ local pattern="$1"; W1_1_BINDING_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_BINDING_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_BINDING_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/founder-binding-live.test.mjs"; }
+assert_w1_1_binding(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_binding "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
 assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -181,11 +183,29 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt" "$root_dir/tests/failure/w1-1-binding-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [[ "$mutation" = W1_1_BINDING_* ]]; then
+    case "$mutation" in
+      W1_1_BINDING_ABSENT) pattern=absent; anchor='AND b.identity_id=identity_row.identity_id /* W1_1_BINDING_ABSENT_GUARD */'; replacement='AND true /* W1_1_BINDING_ABSENT_REMOVED */'; marker=W1_1_BINDING_ABSENT_REMOVED; expected='W1_1_BINDING absent positive=54000000-0000-0000-0000-000000000001 negative=54000000-0000-0000-0000-000000000003' ;;
+      W1_1_BINDING_AMBIGUOUS) pattern=ambiguous; anchor='IF active_count>1 /* W1_1_BINDING_AMBIGUOUS_GUARD */ THEN'; replacement='IF false /* W1_1_BINDING_AMBIGUOUS_REMOVED */ THEN'; marker=W1_1_BINDING_AMBIGUOUS_REMOVED; expected='W1_1_BINDING ambiguous positive=54000000-0000-0000-0000-000000000001 negative=54000000-0000-0000-0000-000000000001' ;;
+      W1_1_BINDING_DISABLED) pattern=disabled; anchor='IF identity_row.disabled_at IS NOT NULL /* W1_1_BINDING_DISABLED_GUARD */ THEN'; replacement='IF false /* W1_1_BINDING_DISABLED_REMOVED */ THEN'; marker=W1_1_BINDING_DISABLED_REMOVED; expected='W1_1_BINDING disabled positive=54000000-0000-0000-0000-000000000001 negative=54000000-0000-0000-0000-000000000001' ;;
+      W1_1_BINDING_CONFLICT) pattern=conflict; anchor='IF binding_conflict /* W1_1_BINDING_CONFLICT_GUARD */ THEN'; replacement='IF false /* W1_1_BINDING_CONFLICT_REMOVED */ THEN'; marker=W1_1_BINDING_CONFLICT_REMOVED; expected='W1_1_BINDING conflict positive=54000000-0000-0000-0000-000000000004 negative=54000000-0000-0000-0000-000000000003 conflict_consumed=1' ;;
+    esac
+    build || { fail=1; continue; }
+    base=$(assert_w1_1_binding "$pattern")
+    psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','$replacement') WHERE oid='resolve_founder_principal(text,text,uuid,uuid,uuid,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
+    applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='resolve_founder_principal(text,text,uuid,uuid,uuid,uuid)'::regprocedure" | tr -d '[:space:]')
+    log="$mutation_dir/w1-1-binding-$pattern.log"; run_w1_1_binding "$pattern" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    build >/dev/null 2>&1; restored=$(assert_w1_1_binding "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [[ "$mutation" = W1_1_OIDC_* ]]; then
     case "$mutation" in
       W1_1_OIDC_SIGNATURE) pattern=signature; marker=W1_1_OIDC_SIGNATURE_REMOVED; expected='W1_1_OIDC signature positive=accepted negative=accepted' ;;
@@ -783,7 +803,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 82 ] || fail=1
+  [ "$executed" = 86 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
