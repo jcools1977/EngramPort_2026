@@ -2410,3 +2410,11 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **One item agent-a cannot verify and DeVere must confirm**: that the consent screen **Audience is set to Internal**. It was *available*, since the project is org-parented, but availability is not configuration. `gcloud alpha iap oauth-brands list` would show `orgInternalOnly`, and the `alpha` component is not installed on cockpit; **installing CLI components for one check was declined as a machine change disproportionate to the verification.** Until DeVere confirms, **the register does not assert that the provider-side narrowing is in effect**, and ADR 0030's rule stands alone: authority comes from the exact enrolled `(iss, sub)`, never from the issuer.
 
 **Still outstanding**: the client secret's `op://` reference for ADR 0031; the production redirect URI, which waits on the F82 runtime decision; and the `sub` capture, which by ADR 0030 must come from a token issued to **this** client rather than any other Google token.
+
+### F83 addendum: Internal audience confirmed by DeVere
+
+**2026-08-25.** DeVere confirmed the Audience page for `engramport-auth-506615` reads **Internal**. F83's one unverified item is closed by owner confirmation rather than by agent-a's measurement, and is recorded as such.
+
+**A sparse Audience page is the correct appearance, not a missing configuration.** Verification status, test users and publishing state are **External-only** concepts; an Internal app has none of them, so "Internal" alone is a fully configured audience.
+
+**What this buys, stated precisely.** Provider-side narrowing is now in effect: only `covenantsystems.ai` accounts can reach the consent screen. **It does not replace the registry allowlist and must never be treated as doing so.** ADR 0030's trap is unchanged — `iss` is `https://accounts.google.com` for personal and Workspace accounts alike, so **authority still comes from the exact enrolled `(iss, sub)`**. The two controls are independent layers: the consent screen narrows who may authenticate at Google, the registry decides whose subject is the founder. **Either alone would be insufficient, and neither is evidence for the other.**
