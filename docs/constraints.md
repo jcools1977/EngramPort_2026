@@ -2418,3 +2418,19 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **A sparse Audience page is the correct appearance, not a missing configuration.** Verification status, test users and publishing state are **External-only** concepts; an Internal app has none of them, so "Internal" alone is a fully configured audience.
 
 **What this buys, stated precisely.** Provider-side narrowing is now in effect: only `covenantsystems.ai` accounts can reach the consent screen. **It does not replace the registry allowlist and must never be treated as doing so.** ADR 0030's trap is unchanged — `iss` is `https://accounts.google.com` for personal and Workspace accounts alike, so **authority still comes from the exact enrolled `(iss, sub)`**. The two controls are independent layers: the consent screen narrows who may authenticate at Google, the registry decides whose subject is the founder. **Either alone would be insufficient, and neither is evidence for the other.**
+
+## F84. The client-secret reference is recorded; ADR 0031's open item closes
+
+**Recorded 2026-08-25 by agent-a**, from DeVere. Related: ADR 0031, ADR 0032, F83. **Nothing closes in the task sense; `executed=` holds at 91.**
+
+**Reference**: `op://AN2B/EngramPort Auth Google/password` — vault `AN2B`, item `EngramPort Auth Google`, field `password`.
+
+**This is a pointer, not a secret, and is recorded deliberately in the clear.** ADR 0031's rule is that configuration holds the reference and never the value. Knowing the address confers nothing without vault access, which is precisely why the arrangement works.
+
+**agent-a did not resolve it.** Verifying the reference by reading it would place the client secret in process memory, shell history and this session's transcript — **the exact outcome ADR 0031 exists to prevent**, and a reference is not made more correct by having been read. **First use validates it, and ADR 0031 and ADR 0032 both require that failure to be loud**: an unresolvable reference refuses startup or refuses the secret upload rather than proceeding.
+
+**Operational note that will otherwise bite once**: the item name contains spaces, so **every shell use must quote the reference**. Unquoted, `op read op://AN2B/EngramPort Auth Google/password` splits into three arguments and fails in a way that reads like a missing item rather than a quoting error.
+
+**Under ADR 0032's Worker amendment the reference is consumed exactly once, at deploy**, by an authorized operator or CI identity piping it directly into `wrangler secret put` — **no `.env`, no `.dev.vars`, no `--secrets-file`, no file at any point**. Cloudflare then holds the encrypted binding.
+
+**Google-side registration is now complete**: org-parented project, Internal audience confirmed by DeVere, `openid` scope only, client ID recorded in F83, secret stored and referenced here. **What remains for criterion 1 is not configuration but implementation and one capture** — the Durable Object transaction runtime dispatched on `oidc-durable-transactions`, then real discovery and exchange, then the `sub` capture that ADR 0030 requires come from a token issued to **this** client.
