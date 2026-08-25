@@ -29,7 +29,7 @@
     "kms:test": "bash scripts/run-kms-tests",
     "verify:all": "npm test && npm run db:test && npm run kms:test && npm run lint",
     "dry-run:test": "node --test tests/workspace-dry-run.test.mjs",
-    "session:test": "node --test tests/workspace-session.test.mjs",
+    "session:test": "node --test tests/workspace-session.test.mjs tests/workspace-oidc-verifier.test.mjs",
     "session:async-negative": "node scripts/run-session-async-negative",
     "approval:test": "node --test tests/workspace-approval.test.mjs",
     "report:test": "node --test tests/report-boundary.test.mjs",

@@ -19,6 +19,8 @@ run_w1_1_lifecycle(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_m
 assert_w1_1_lifecycle(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_lifecycle "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_manager(){ local module_root="$1" pattern="$2"; W1_1_MANAGER_MODULE_ROOT="$module_root" W1_1_MANAGER_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_MANAGER_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_MANAGER_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-session-criterion5-live.test.mjs"; }
 assert_w1_1_manager(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_manager "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_1_oidc(){ local module="$1" pattern="$2"; W1_1_OIDC_VERIFIER_MODULE="$module" W1_1_OIDC_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-verifier.test.mjs"; }
+assert_w1_1_oidc(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
 assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -91,6 +93,33 @@ if(mode==="revoked-execute"){
 }
 NODE
 }
+make_w1_1_oidc_variant(){
+  local target="$1" mode="$2"
+  mkdir -p "$(dirname "$target")"
+  cp "$root_dir/packages/git-adapter/src/oidc-verifier.mjs" "$target" || return 1
+  node - "$target" "$mode" <<'NODE'
+const fs=require("node:fs");const [file,mode]=process.argv.slice(2);let text=fs.readFileSync(file,"utf8");
+function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);}
+if(mode==="signature")replace('      if(!verifySignature("RSA-SHA256",signingInput,selected.key,signature))refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");','      if(false /* W1_1_OIDC_SIGNATURE_REMOVED */)refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");');
+else if(mode==="rotation")replace('      if(selected.status!=="active")refuse("OIDC_KEY_RETIRED","retired signing key refused");','      if(false /* W1_1_OIDC_ROTATION_REMOVED */)refuse("OIDC_KEY_RETIRED","retired signing key refused");');
+else if(mode==="alg-none"){
+  replace('      if(header.alg==="none")refuse("OIDC_ALGORITHM_NONE_REFUSED","unsigned tokens are refused");','      if(false /* W1_1_OIDC_ALG_NONE_GUARD_REMOVED */)refuse("OIDC_ALGORITHM_NONE_REFUSED","unsigned tokens are refused");');
+  replace('      if(header.alg!=="RS256")refuse("OIDC_ALGORITHM_CONFUSION_REFUSED","only RS256 is accepted");','      if(header.alg!=="RS256"&&header.alg!=="none" /* W1_1_OIDC_ALG_NONE_ALLOWLIST_REMOVED */)refuse("OIDC_ALGORITHM_CONFUSION_REFUSED","only RS256 is accepted");');
+  replace('      if(!verifySignature("RSA-SHA256",signingInput,selected.key,signature))refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");','      if(header.alg!=="none"&&!verifySignature("RSA-SHA256",signingInput,selected.key,signature) /* W1_1_OIDC_ALG_NONE_SIGNATURE_REMOVED */)refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");');
+}else if(mode==="alg-hs256"){
+  replace('import { createPublicKey, verify as verifySignature } from "node:crypto";','import { createHmac, createPublicKey, timingSafeEqual, verify as verifySignature } from "node:crypto";');
+  replace('      if(header.alg!=="RS256")refuse("OIDC_ALGORITHM_CONFUSION_REFUSED","only RS256 is accepted");','      if(header.alg!=="RS256"&&header.alg!=="HS256" /* W1_1_OIDC_ALG_HS256_ALLOWLIST_REMOVED */)refuse("OIDC_ALGORITHM_CONFUSION_REFUSED","only RS256 is accepted");');
+  replace('      if(!verifySignature("RSA-SHA256",signingInput,selected.key,signature))refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");','      const signatureValid=header.alg==="HS256"?timingSafeEqual(createHmac("sha256",selected.key.export({type:"spki",format:"pem"})).update(signingInput).digest(),signature):verifySignature("RSA-SHA256",signingInput,selected.key,signature);\n      if(!signatureValid /* W1_1_OIDC_ALG_HS256_KEY_CONFUSION */)refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");');
+}else if(mode==="issuer")replace('      if(payload.iss!==issuer)refuse("OIDC_ISSUER_REFUSED","issuer mismatch");','      if(false /* W1_1_OIDC_ISSUER_REMOVED */)refuse("OIDC_ISSUER_REFUSED","issuer mismatch");');
+else if(mode==="audience")replace('      if(!exactAudience(payload.aud,audience))refuse("OIDC_AUDIENCE_REFUSED","audience mismatch");','      if(false /* W1_1_OIDC_AUDIENCE_REMOVED */)refuse("OIDC_AUDIENCE_REFUSED","audience mismatch");');
+else if(mode==="expiry")replace('      if(!Number.isInteger(payload.exp)||payload.exp*1000<=clock().getTime())refuse("OIDC_EXPIRED","token expired");','      if(false /* W1_1_OIDC_EXPIRY_REMOVED */)refuse("OIDC_EXPIRED","token expired");');
+else if(mode==="nonce")replace('      if(typeof nonce!=="string"||nonce.length===0||payload.nonce!==nonce)refuse("OIDC_NONCE_REFUSED","nonce mismatch");','      if(false /* W1_1_OIDC_NONCE_REMOVED */)refuse("OIDC_NONCE_REFUSED","nonce mismatch");');
+else if(mode==="claims-surface")replace('      return freezeClaims(payload);','      return Object.freeze({...payload}); /* W1_1_OIDC_CLAIMS_SURFACE_REMOVED */');
+else if(mode==="retention")replace('    }finally{inFlight.delete(transient);}','    }finally{void transient; /* W1_1_OIDC_RETENTION_CLEANUP_REMOVED */}');
+else throw new Error(`unknown OIDC variant ${mode}`);
+fs.writeFileSync(file,text);
+NODE
+}
 make_canary_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target/packages/git-adapter" "$target/packages/port-watch" "$target/schemas"
@@ -147,11 +176,35 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [[ "$mutation" = W1_1_OIDC_* ]]; then
+    case "$mutation" in
+      W1_1_OIDC_SIGNATURE) pattern=signature; marker=W1_1_OIDC_SIGNATURE_REMOVED; expected='W1_1_OIDC signature positive=accepted negative=accepted' ;;
+      W1_1_OIDC_ROTATION) pattern=rotation; marker=W1_1_OIDC_ROTATION_REMOVED; expected='W1_1_OIDC rotation positive=accepted negative=accepted' ;;
+      W1_1_OIDC_ALG_NONE) pattern=alg-none; marker=W1_1_OIDC_ALG_NONE_SIGNATURE_REMOVED; expected='W1_1_OIDC alg-none positive=accepted negative=accepted' ;;
+      W1_1_OIDC_ALG_HS256) pattern=alg-hs256; marker=W1_1_OIDC_ALG_HS256_KEY_CONFUSION; expected='W1_1_OIDC alg-hs256 positive=accepted negative=accepted' ;;
+      W1_1_OIDC_ISSUER) pattern=issuer; marker=W1_1_OIDC_ISSUER_REMOVED; expected='W1_1_OIDC issuer positive=accepted negative=accepted' ;;
+      W1_1_OIDC_AUDIENCE) pattern=audience; marker=W1_1_OIDC_AUDIENCE_REMOVED; expected='W1_1_OIDC audience positive=accepted negative=accepted' ;;
+      W1_1_OIDC_EXPIRY) pattern=expiry; marker=W1_1_OIDC_EXPIRY_REMOVED; expected='W1_1_OIDC expiry positive=accepted negative=accepted' ;;
+      W1_1_OIDC_NONCE) pattern=nonce; marker=W1_1_OIDC_NONCE_REMOVED; expected='W1_1_OIDC nonce positive=accepted negative=accepted' ;;
+      W1_1_OIDC_CLAIMS_SURFACE) pattern=claims-surface; marker=W1_1_OIDC_CLAIMS_SURFACE_REMOVED; expected='W1_1_OIDC claims-surface positive=aud,exp,iss,nonce,principal_id,sub negative=principal_id' ;;
+      W1_1_OIDC_RETENTION) pattern=retention; marker=W1_1_OIDC_RETENTION_CLEANUP_REMOVED; expected='W1_1_OIDC retention positive=retained negative=retained' ;;
+    esac
+    source_module="$root_dir/packages/git-adapter/src/oidc-verifier.mjs"
+    base=$(assert_w1_1_oidc "$source_module" "$pattern")
+    variant="$mutation_dir/w1-1-oidc-$pattern.mjs"; make_w1_1_oidc_variant "$variant" "$pattern" || { fail=1; continue; }
+    if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/w1-1-oidc-$pattern.log"; run_w1_1_oidc "$variant" "$pattern" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_w1_1_oidc "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [[ "$mutation" = W1_1_MANAGER_CRITERION* ]]; then
     case "$mutation" in
       W1_1_MANAGER_CRITERION5_EXPIRED) pattern=expired; expected="W1_1_CRITERION5 expired positive=authorized negative=accepted" ;;
@@ -725,7 +778,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 72 ] || fail=1
+  [ "$executed" = 82 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
