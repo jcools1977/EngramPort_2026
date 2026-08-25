@@ -2064,3 +2064,23 @@ The first is exactly the hazard ADR 0024 was written about. Comparing a **set of
 **Nothing else closes.** C17 remains held for DeVere. W1-1 criterion 1's authentication half remains blocked on a real identity provider.
 
 **Dispatched: criterion 3's one remaining control**, the last unblocked item on W1-1 — `executeApprovedStep` refusing on a *durably revoked* session rather than on approval replay. **With an explicit escape**: if the composed path cannot produce that ordering because replay revocation fires first by construction, agent-b is to return a reading and agent-a will close criterion 3 on the existing evidence with the ordering recorded. **Accepted guards are not to be reordered to manufacture the observation** — which is the form this instruction has to take, because the alternative is a control shaped to fit a conclusion.
+
+## F65 ACCEPTED: criteria 3 and 2 CLOSE; W1-1 stands at four of five with only DeVere's half left
+
+**Reviewed 2026-08-25 by agent-a.** Implementation `e1266de`, result `01a0366e-d6c0-7c59-8244-c86984267c5a`, artifact `artifacts/agent-b/w1-1-criterion3-revoked-execution-results.md`. **Accepted. Criteria 3 and 2 CLOSE.** Related: F64, ADR 0020, ADR 0025.
+
+**Reproduced independently**: `db:test` exit 0 at **`executed=72`**, `npm test` **236 / 0 / 0 skipped**, `session:async-negative` `enumerated=t`, harness `--negative` exit 1, lint 0, proof 251, clean tree.
+
+**The escape hatch was offered and not needed.** agent-a's handoff allowed a reading if the composed path could not produce revoked-execution because replay revocation fires first by construction, and **explicitly forbade reordering accepted guards to manufacture it**. agent-b found the ordering without touching a guard. The shipped sequence really does run `approvalRevoked` before `#requireLive`, which is why the observation never existed; **two `PostgresSetupSessionStore` instances over one database with independent process-local approval registries** let the durable row go terminal while the issuing store's approval stays unmarked. That is the ordinary multi-process topology rather than a contrivance, which makes the observation stronger, not weaker.
+
+**The isolation is exact and was the thing checked hardest.** `unreplayed` is read from `approvalRevoked` — **the same predicate the replay guard consults** — so the refusal cannot be attributed to replay. `genuine` is an object-identity comparison against the issued approval. `durable=completed` is the second store's real transition. `W1_1_CRITERION3 revoked_execute positive=authorized negative=SESSION_REVOKED genuine=true unreplayed=true durable=completed`.
+
+**The mutation removes only `this.#requireLive(session_id,snapshot)`, leaving the replay guard intact**, so the forbidden execution succeeds precisely because liveness is gone; `applied=t` is confirmed by a marker grep in the variant. **No accepted guard reordered, no production module changed**, verified by diff.
+
+**Criterion 3 CLOSES.** Expired cannot execute (`SESSION_EXPIRED`); durably revoked cannot execute a genuine unreplayed approval (`SESSION_REVOKED`). Both named, both through the composed durable path, both mutation-defended. **agent-a's refusal in F64 to close this on adjacent evidence is vindicated**: the missing observation was real, and it existed to be found.
+
+**Criterion 2 CLOSES**, recorded rather than left in limbo. "No standing wizard principal or actor exists in any code path, proven by a test asserting no identity outlives a session" holds twice: `identityInventory` returns `wizard_principals:0, wizard_actors:0` and drops bindings, delegations and credentials to zero after completion and abandonment, in accepted controls that now run against **both** adapters; and ADR 0020 gave `setup_session_delegations` **no actor column**, so it survives by construction.
+
+**W1-1 stands at four of five criteria closed — 2, 3, 4, 5.** Criterion 1's authentication half is the only remainder and it is DeVere's. **C17 remains held for DeVere.**
+
+**Dispatched: the OIDC verifier against synthetic fixtures only** — the half of criterion 1 needing no authorization. Synthetic JWKS with **key rotation**, **algorithm-confusion refusals for `alg: none` and RS256-key-as-HS256** since those are what turn a verifier into a rubber stamp, and issuer, audience, expiry and nonce each refused **independently so no check carries another's weight**, with the identity surface remaining exactly `principal_id`. **A reading is required rather than a guess if the token-to-`principal_id` binding is underdetermined**, because that is a design question and not an implementation detail. `executed=` moves from 72 on observed execution.
