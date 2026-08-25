@@ -2046,3 +2046,21 @@ The first is exactly the hazard ADR 0024 was written about. Comparing a **set of
 **C17 remains held for DeVere**; its evidence looks complete, the default store is still `InMemorySetupSessionStore`, and row 3.16 stays carried under F18. **W1-1's remainder is blocked on DeVere, not on agent-b**: criterion 1's authentication half needs a real identity provider.
 
 **Dispatched: F59's carried `TRUNCATE` finding**, picked up now that WIP frees rather than left to be rediscovered. `BEFORE TRUNCATE ... FOR EACH STATEMENT` triggers on `events` and `event_recipients` in one forward-only migration after `0020`, **with the negative control run with the `TRUNCATE` grant deliberately present** — because a refusal observed while no role holds the privilege proves only that the privilege is missing. **The guard and the absent grant must be distinguishable, and today they are not.** `executed=` moves from 70 on observed execution.
+
+## F59 CLOSED: the TRUNCATE guard exists and is proven by a mutation that succeeds when it is removed
+
+**Reviewed 2026-08-25 by agent-a.** Implementation `38e208e`, result `01a03654-b1ec-7f7d-8ac1-a00910b2b363`, artifact `artifacts/agent-b/f59-canonical-truncate-guard-results.md`, migration `0021_canonical_truncate_guards.sql`. **Accepted. F59's `TRUNCATE` finding CLOSES.**
+
+**Reproduced independently**: `db:test` exit 0 with **`executed=71`**, `npm test` **236 / 0 / 0 skipped**, `session:async-negative` `enumerated=t`, harness `--negative` exit 1, lint 0, proof 249, clean tree.
+
+**The mutated run is the entire discharge.** In the clean run the control reports `PASS maintenance holds deliberate TRUNCATE grants` and then both refusals at SQLSTATE `55000` with their exact `<table> is append-only` messages. In the mutated run, with both statement triggers dropped and **the privilege still granted**, the fixture reports `statement unexpectedly succeeded`. **`TRUNCATE` genuinely succeeds once the guard is gone**, so the clean-run refusal is attributable to the trigger and to nothing else.
+
+**This is what the finding demanded and what it did not have before.** The 2026-08-14 original asked for a `BEFORE TRUNCATE ... FOR EACH STATEMENT` trigger *and* a negative control. F59 found neither existed and that immutability on `events` rested entirely on nobody holding one privilege, **with no control that would fail if somebody granted it**. The guard and the absent grant are now distinguishable.
+
+**Three construction details carry the result.** Expecting **`55000` plus the exact message** means a privilege refusal at `42501` cannot satisfy the control, which a weaker assertion would have allowed. **`reject_canonical_mutation()` is reused rather than reimplemented** — valid at statement level because it references only `TG_TABLE_NAME` and raises unconditionally — so there is no second copy of a guard to drift, which is the exact defect agent-a raised against `PrincipalSessionBinding.transaction` in F63. And the fixture **asserts `has_table_privilege(...,'TRUNCATE')` and raises if absent**, inside a transaction that rolls back; migration `0021` changes no privileges.
+
+**Fourth consecutive slice with a self-reported wrong-reason result**: two development probes stopped at the `events` foreign-key dependency and at a missing cascade-target privilege, and neither was counted.
+
+**Nothing else closes.** C17 remains held for DeVere. W1-1 criterion 1's authentication half remains blocked on a real identity provider.
+
+**Dispatched: criterion 3's one remaining control**, the last unblocked item on W1-1 — `executeApprovedStep` refusing on a *durably revoked* session rather than on approval replay. **With an explicit escape**: if the composed path cannot produce that ordering because replay revocation fires first by construction, agent-b is to return a reading and agent-a will close criterion 3 on the existing evidence with the ordering recorded. **Accepted guards are not to be reordered to manufacture the observation** — which is the form this instruction has to take, because the alternative is a control shaped to fit a conclusion.
