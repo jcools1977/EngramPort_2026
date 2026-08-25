@@ -1,0 +1,4 @@
+schema_version: 0
+thread: founder-tenancy-model
+mode: strict_relay
+coordinator: null
