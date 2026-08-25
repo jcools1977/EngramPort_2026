@@ -17,6 +17,10 @@ run_w1_1(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance
 assert_w1_1(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1 "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_lifecycle(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_LIFECYCLE_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-1-session-lifecycle.test.mjs"; }
 assert_w1_1_lifecycle(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_lifecycle "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_w1_1_manager(){ local module_root="$1" pattern="$2"; W1_1_MANAGER_MODULE_ROOT="$module_root" W1_1_MANAGER_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_MANAGER_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_MANAGER_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-session-criterion5-live.test.mjs"; }
+assert_w1_1_manager(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_manager "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
+assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 m3_probe(){
   local expected="$1" out rc landed
@@ -37,6 +41,9 @@ make_d2_variant(){
   node - "$root_dir/packages/git-adapter/src/d2-session-binding.mjs" "$1" "$2" <<'NODE'
 const fs=require("node:fs"); const [source,target,mode]=process.argv.slice(2); let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){ if(!text.includes(anchor)) throw new Error(`anchor absent: ${anchor}`); text=text.split(anchor).join(replacement); }
+function replaceFirst(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
+if(mode==="transaction_unbound") replaceFirst('    if (!session?.verified || typeof session.principalId !== "string" || typeof session.sessionId !== "string") throw new SessionBindingError("SESSION_UNBOUND");','    if (false /* D2_TRANSACTION_UNBOUND_REMOVED */) throw new SessionBindingError("SESSION_UNBOUND");');
+if(mode==="transaction_role") replaceFirst('      if (role.rows[0]?.session_user !== "engram_maintenance") throw new SessionBindingError("SESSION_ROLE_INVALID");','      if (false /* D2_TRANSACTION_ROLE_REMOVED */) throw new SessionBindingError("SESSION_ROLE_INVALID");');
 if(mode==="substitution"){replace("[session.principalId]","[request.principalId ?? session.principalId]");replace("[session.sessionId]","[request.sessionId ?? session.sessionId]");}
 if(["local_false","joint","dirty_fault","dirty_weakened"].includes(mode)) replace("SELECT set_config('app.principal_id', $1, true)","SELECT set_config('app.principal_id', $1, false)");
 if(["no_scrub","joint"].includes(mode)) replace('      try { await client.query("DISCARD ALL"); } catch (error) { scrubError = error; }',"");
@@ -47,6 +54,37 @@ if(mode==="rollback_mint") replace('      await client.query("COMMIT");','      
 if(mode==="swallow_refusal") replace("      throw error;",'      return { reference: "epr:credential:01a02095-c806-7000-8000-000000000001", principalId: session.principalId };');
 if(mode==="caller_reference") replace('      const result = await client.query(\n        "SELECT mint_custody_reference','      if (typeof request.reference === "string") await client.query("SELECT set_config(\'app.d1f_forced_reference\', $1, true)", [request.reference]);\n      const result = await client.query(\n        "SELECT mint_custody_reference');
 fs.writeFileSync(target,text);
+NODE
+}
+make_w1_1_manager_variant(){
+  local target="$1" mode="$2"
+  mkdir -p "$target/packages/git-adapter"
+  cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
+  node - "$target" "$mode" <<'NODE'
+const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
+const managerFile=path.join(root,"packages/git-adapter/src/workspace-session.mjs"),storeFile=path.join(root,"packages/git-adapter/src/workspace-session-store.mjs");
+function replace(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);fs.writeFileSync(file,text.replace(anchor,replacement));}
+function replaceLast(file,anchor,replacement){let text=fs.readFileSync(file,"utf8"),index=text.lastIndexOf(anchor);if(index<0)throw new Error(`anchor absent: ${anchor}`);text=text.slice(0,index)+replacement+text.slice(index+anchor.length);fs.writeFileSync(file,text);}
+const liveAnchor='      return {session:null,state:normalizeRow(inspected)};';
+const liveReplacement='      return {session:normalizeRow({...inspected,active:true,effective_state:"active"}),state:normalizeRow(inspected)}; /* W1_1_MANAGER_LIVENESS_REMOVED */';
+const known=["expired","expired_guard_only","liveness_only","revoked","different","different_manager_only","different_store_only","replay","replay_guard_only","replay_retention_only"];
+if(!known.includes(mode))throw new Error(`unknown manager variant ${mode}`);
+if(["expired","expired_guard_only"].includes(mode)){
+  replace(managerFile,'    if(snapshot.state?.status==="expired")throw new SetupPlanError("SESSION_EXPIRED",session_id);','    if(false /* W1_1_MANAGER_EXPIRED_REMOVED */)throw new SetupPlanError("SESSION_EXPIRED",session_id);');
+}
+if(["expired","liveness_only","revoked","replay"].includes(mode))replace(storeFile,liveAnchor,liveReplacement);
+if(["different","different_manager_only"].includes(mode)){
+  replace(managerFile,'    if(approval.session_id!==session_id)throw new SetupPlanError("APPROVAL_SESSION_MISMATCH",approval.approval_id);','    if(false /* W1_1_MANAGER_SESSION_MISMATCH_REMOVED */)throw new SetupPlanError("APPROVAL_SESSION_MISMATCH",approval.approval_id);');
+}
+if(["different","different_store_only"].includes(mode)){
+  replaceLast(storeFile,'  async getApproval(session_id,approval_id){return this.#approvals.get(session_id)?.get(approval_id)??null;}','  async getApproval(session_id,approval_id){const scoped=this.#approvals.get(session_id)?.get(approval_id);if(scoped)return scoped;for(const approvals of this.#approvals.values()){const found=approvals.get(approval_id);if(found)return found;}return null; /* W1_1_MANAGER_APPROVAL_SCOPE_REMOVED */}');
+}
+if(["replay","replay_guard_only"].includes(mode)){
+  replace(managerFile,'    if(await this.#call(()=>this.#store.approvalRevoked(approval.approval_id)))throw new SetupPlanError("APPROVAL_REPLAY_REFUSED",approval.approval_id);','    if(false /* W1_1_MANAGER_REPLAY_GUARD_REMOVED */)throw new SetupPlanError("APPROVAL_REPLAY_REFUSED",approval.approval_id);');
+}
+if(["replay","replay_retention_only"].includes(mode)){
+  replace(storeFile,'  #revokeApprovals(session_id){for(const id of this.#approvals.get(session_id)?.keys()??[])this.#revokedApprovals.add(id);this.#approvals.delete(session_id);}','  #revokeApprovals(session_id){for(const id of this.#approvals.get(session_id)?.keys()??[])this.#revokedApprovals.add(id);void session_id; /* W1_1_MANAGER_APPROVAL_RETENTION_REMOVED */}');
+}
 NODE
 }
 make_canary_variant(){
@@ -105,11 +143,59 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt")
+mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [[ "$mutation" = W1_1_MANAGER_CRITERION5_* ]]; then
+    case "$mutation" in
+      W1_1_MANAGER_CRITERION5_EXPIRED) pattern=expired; expected="W1_1_CRITERION5 expired positive=authorized negative=accepted" ;;
+      W1_1_MANAGER_CRITERION5_REVOKED) pattern=revoked; expected="W1_1_CRITERION5 revoked positive=active negative=accepted" ;;
+      W1_1_MANAGER_CRITERION5_DIFFERENT) pattern=different; expected="W1_1_CRITERION5 different positive=authorized negative=accepted" ;;
+      W1_1_MANAGER_CRITERION5_REPLAY) pattern=replay; expected="W1_1_CRITERION5 replay positive=authorized negative=accepted" ;;
+    esac
+    build || { fail=1; continue; }
+    base=$(assert_w1_1_manager "$root_dir" "$pattern")
+    if [ "$pattern" = expired ]; then
+      guard_variant="$mutation_dir/w1-1-manager-expired-guard"; live_variant="$mutation_dir/w1-1-manager-expired-live"
+      make_w1_1_manager_variant "$guard_variant" expired_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
+      make_w1_1_manager_variant "$live_variant" liveness_only || { fail=1; continue; }; live_only=$(assert_w1_1_manager "$live_variant" "$pattern")
+    elif [ "$pattern" = different ]; then
+      guard_variant="$mutation_dir/w1-1-manager-different-guard"; store_variant="$mutation_dir/w1-1-manager-different-store"
+      make_w1_1_manager_variant "$guard_variant" different_manager_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
+      make_w1_1_manager_variant "$store_variant" different_store_only || { fail=1; continue; }; store_only=$(assert_w1_1_manager "$store_variant" "$pattern")
+    elif [ "$pattern" = replay ]; then
+      guard_variant="$mutation_dir/w1-1-manager-replay-guard"; live_variant="$mutation_dir/w1-1-manager-replay-live"; retention_variant="$mutation_dir/w1-1-manager-replay-retention"
+      make_w1_1_manager_variant "$guard_variant" replay_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
+      make_w1_1_manager_variant "$live_variant" liveness_only || { fail=1; continue; }; live_only=$(assert_w1_1_manager "$live_variant" "$pattern")
+      make_w1_1_manager_variant "$retention_variant" replay_retention_only || { fail=1; continue; }; retention_only=$(assert_w1_1_manager "$retention_variant" "$pattern")
+    fi
+    variant="$mutation_dir/w1-1-manager-$pattern-combined"; make_w1_1_manager_variant "$variant" "$pattern" || { fail=1; continue; }
+    case "$pattern" in
+      expired) grep -Rq 'W1_1_MANAGER_EXPIRED_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
+      revoked) grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
+      different) grep -Rq 'W1_1_MANAGER_SESSION_MISMATCH_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_APPROVAL_SCOPE_REMOVED' "$variant" && applied=t || applied=f ;;
+      replay) grep -Rq 'W1_1_MANAGER_REPLAY_GUARD_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_APPROVAL_RETENTION_REMOVED' "$variant" && applied=t || applied=f ;;
+    esac
+    log="$mutation_dir/w1-1-manager-$pattern.log"; run_w1_1_manager "$variant" "$pattern" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    build >/dev/null 2>&1; restored=$(assert_w1_1_manager "$root_dir" "$pattern")
+    if [ "$pattern" = expired ]; then
+      printf 'W1_1_MANAGER_EXPIRED baseline=%s guard_only=%s liveness_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$guard_only" "$live_only" "$applied" "$after" "$forbidden" "$restored"
+      [ "$guard_only" = 0 ] && [ "$live_only" = 0 ] || fail=1
+    elif [ "$pattern" = different ]; then
+      printf 'W1_1_MANAGER_DIFFERENT baseline=%s manager_only=%s store_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$guard_only" "$store_only" "$applied" "$after" "$forbidden" "$restored"
+      [ "$guard_only" != 0 ] && [ "$store_only" = 0 ] || fail=1
+    elif [ "$pattern" = replay ]; then
+      printf 'W1_1_MANAGER_REPLAY baseline=%s guard_only=%s liveness_only=%s retention_only=%s applied=%s combined=%s forbidden=%s restored=%s\n' "$base" "$guard_only" "$live_only" "$retention_only" "$applied" "$after" "$forbidden" "$restored"
+      [ "$guard_only" != 0 ] && [ "$live_only" = 0 ] && [ "$retention_only" = 0 ] || fail=1
+    else
+      printf 'W1_1_MANAGER_REVOKED baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
+    fi
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = W1_1_REPEAT_SAFETY ]; then
     build || { fail=1; continue; }
     base=$(assert_w1_1_lifecycle repeat-safety)
@@ -327,6 +413,23 @@ for line in "${MUTATIONS[@]}"; do
     log="$mutation_dir/role.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'D2_ROLE_GUARD maintenance=accepted app=' "$log" && grep -Fq 'postgres=accepted' "$log" && forbidden=t
     restored=$(assert_d2 "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = D2_MODULE_TRANSACTION_UNBOUND ] || [ "$mutation" = D2_MODULE_TRANSACTION_ROLE ]; then
+    source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"
+    if [ "$mutation" = D2_MODULE_TRANSACTION_UNBOUND ]; then
+      pattern=unbound; mode=transaction_unbound; marker=D2_TRANSACTION_UNBOUND_REMOVED; expected='D2_TRANSACTION_UNBOUND positive=accepted negative=accepted no_checkout=false'
+    else
+      pattern=role; mode=transaction_role; marker=D2_TRANSACTION_ROLE_REMOVED; expected='D2_TRANSACTION_ROLE positive=accepted negative=accepted released=true'
+    fi
+    base=$(assert_d2_transaction "$source_module" "$pattern")
+    variant="$mutation_dir/d2-transaction-$pattern.mjs"; make_d2_variant "$variant" "$mode" || { fail=1; continue; }
+    if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/d2-transaction-$pattern.log"; run_d2_transaction "$variant" "$pattern" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_d2_transaction "$source_module" "$pattern")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
@@ -614,7 +717,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 64 ] || fail=1
+  [ "$executed" = 70 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
