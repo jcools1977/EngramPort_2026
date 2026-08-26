@@ -2644,3 +2644,11 @@ Separately and deliberately not treated as a defect: a non-Markdown file in an u
 **The reasoning agent-a used to accept the non-Markdown case does not carry over, and is weaker than it appeared even there.** The standard F101 established is not "inert to tooling" but "does not read as evidence to a human or agent browsing the repository." Common Markdown viewers, GitHub included, match the extension case-insensitively, so a `.MD` file in an actor's directory is expected to render as a formatted, attributable decision while `proof:verify` reports the log sound. **This should be confirmed against the actual hosting surface before it is relied on**, but the fix does not depend on it: a completeness property that hinges on the case of two characters is not a property.
 
 **Severity is low and is recorded as low.** It requires a writer with repository access, it is invisible to every tool in the project, and it is narrower than F101 or F102. It is logged because the difference between this and F102 is not one of kind, and F102 existed because a neighboring case was dismissed by analogy rather than checked.
+
+### F97 addendum
+
+**The deadlock is permanent and produces a standing false signal, which is worse than the stalled thread itself.** `npm run engram -- inbox --actor agent-c` reports `events/agent-a/20260826T150525Z_01a03e9a-c544-...` as open work indefinitely: no lawful event can answer it, because the tip names agent-c as the only permitted responder and the supervisor refuses any target that is not a `handoff`.
+
+The consequence is not cosmetic. **`inbox` is the mechanism by which an actor discovers work**, and DeVere's stated goal is agent-c picking up its own turns automatically. Any poller wired to that inbox would find this item on every pass, forever, with no way to complete or dismiss it, and would either spin on it or require a suppression list that then hides real work by the same mechanism.
+
+Recorded rather than repaired: repairing it would mean editing or deleting an accepted event, which is the one thing the protocol does not permit, and **the cost of the rule is supposed to be paid here rather than waived.** The fix belongs in the supervisor accepting a `reply` target, not in the log.
