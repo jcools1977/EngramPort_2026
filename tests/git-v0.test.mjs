@@ -83,6 +83,14 @@ test("valid registered-actor relay verifies", async () => {
   assert.ok(result.threads >= 1, `expected at least the v0 architecture thread, saw ${result.threads}`);
 });
 
+test("actor record filename is bound to its declared slug", async () => {
+  const directory = await fixture();
+  try {
+    await mutate(directory, "actors/agent-b.yaml", (source) => source.replace("slug: agent-b", "slug: agent-renamed"));
+    await assert.rejects(verifyLog(directory), /actors\/agent-b\.yaml: filename must match declared slug agent-renamed/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test("verification refuses unregistered Markdown event files while ignoring empty directories", async () => {
   const directory = await fixture();
   const rogueDirectory = path.join(directory, "events", "agent-rogue");

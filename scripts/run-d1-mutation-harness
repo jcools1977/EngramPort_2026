@@ -44,14 +44,14 @@ assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(m
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_install_policy(){ local page="$1" out rc; out=$(mktemp); run_site_install_policy "$page" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_repository_surface_policy(){
-  local rules="$1" actor_root="${2:-$root_dir/actors}" index="${3:-}"
+  local rules="$1" actor_root="${2:-$root_dir/actors}" index="${3:-}" verifier="${4:-$root_dir/packages/git-adapter/src/verify-log.mjs}"
   if [ -n "$index" ]; then
-    REPOSITORY_RULES_FILE="$rules" REPOSITORY_ACTOR_ROOT="$actor_root" GIT_INDEX_FILE="$index" node --test --test-reporter=tap "$root_dir/tests/repository-surface-policy.test.mjs"
+    REPOSITORY_RULES_FILE="$rules" REPOSITORY_ACTOR_ROOT="$actor_root" GIT_INDEX_FILE="$index" GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$verifier")" node --test --test-reporter=tap "$root_dir/tests/repository-surface-policy.test.mjs"
   else
-    REPOSITORY_RULES_FILE="$rules" REPOSITORY_ACTOR_ROOT="$actor_root" node --test --test-reporter=tap "$root_dir/tests/repository-surface-policy.test.mjs"
+    REPOSITORY_RULES_FILE="$rules" REPOSITORY_ACTOR_ROOT="$actor_root" GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$verifier")" node --test --test-reporter=tap "$root_dir/tests/repository-surface-policy.test.mjs"
   fi
 }
-assert_repository_surface_policy(){ local rules="$1" actor_root="${2:-$root_dir/actors}" index="${3:-}" out rc; out=$(mktemp); run_repository_surface_policy "$rules" "$actor_root" "$index" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+assert_repository_surface_policy(){ local rules="$1" actor_root="${2:-$root_dir/actors}" index="${3:-}" verifier="${4:-$root_dir/packages/git-adapter/src/verify-log.mjs}" out rc; out=$(mktemp); run_repository_surface_policy "$rules" "$actor_root" "$index" "$verifier" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
 assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -294,6 +294,16 @@ text=text.replace(anchor,"artifact_prefix: artifacts # ACTOR_REGISTRY_PREFIX_TAK
 fs.writeFileSync(target,text);
 NODE
 }
+make_actor_registry_verifier_variant(){
+  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$2" <<'NODE'
+const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
+function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);}
+if(mode==="slug")replace('    if (name !== `${slug}.yaml`) throw new Error(`actors/${name}: filename must match declared slug ${slug}`); /* ACTOR_SLUG_FILENAME_BINDING */','    if (false /* ACTOR_SLUG_FILENAME_BINDING_REMOVED */) throw new Error(`actors/${name}: filename must match declared slug ${slug}`);');
+else if(mode==="normalization")replace('export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION */\n  return value.normalize("NFKC").toLocaleLowerCase("en-US");\n}','export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION_REMOVED */\n  return value;\n}');
+else throw new Error(`unknown actor registry verifier variant ${mode}`);
+fs.writeFileSync(target,text);
+NODE
+}
 make_event_directory_completeness_variant(){
   node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
@@ -524,21 +534,41 @@ for line in "${MUTATIONS[@]}"; do
     GIT_INDEX_FILE="$variant" git update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,secrets/creds.env || { fail=1; continue; }
     if GIT_INDEX_FILE="$variant" git ls-files --error-unmatch secrets/creds.env >/dev/null 2>&1; then applied=t; else applied=f; fi
     log="$mutation_dir/repository-unexpected-path.log"; run_repository_surface_policy "$source_rules" "$root_dir/actors" "$variant" >"$log" 2>&1; after=$?
-    forbidden=f; grep -Eq 'not ok [0-9]+ - tracked repository paths are covered only by explicit written surfaces' "$log" && grep -Eq 'REPOSITORY_SURFACE_POLICY tracked=[0-9]+ actor_rule=true protected_rule=true shared_rule=true unaccounted=[1-9][0-9]*' "$log" && grep -Fq 'secrets/creds.env' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    forbidden=f; grep -Eq 'not ok [0-9]+ - tracked repository paths are covered only by explicit written surfaces' "$log" && grep -Eq 'REPOSITORY_SURFACE_POLICY tracked=[0-9]+ actor_rule=true drift_rule=true shared_rule=true unaccounted=[1-9][0-9]*' "$log" && grep -Fq 'secrets/creds.env' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_repository_surface_policy "$source_rules")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
-  if [ "$mutation" = ACTOR_REGISTRY_PROTECTION ]; then
+  if [ "$mutation" = ACTOR_REGISTRY_DRIFT_CHECK ]; then
     source_rules="$root_dir/AGENTS.md"
     base=$(assert_repository_surface_policy "$source_rules")
     variant="$mutation_dir/actors"; make_actor_registry_variant "$variant" || { fail=1; continue; }
     if grep -Fq ACTOR_REGISTRY_PREFIX_TAKEOVER "$variant/agent-b.yaml"; then applied=t; else applied=f; fi
-    log="$mutation_dir/actor-registry-protection.log"; run_repository_surface_policy "$source_rules" "$variant" >"$log" 2>&1; after=$?
-    forbidden=f; grep -Eq 'not ok [0-9]+ - actor registry is protected and actor-owned prefixes are disjoint' "$log" && grep -Fq 'actor registry is protected: actors/agent-b.yaml differs from HEAD' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    log="$mutation_dir/actor-registry-drift.log"; run_repository_surface_policy "$source_rules" "$variant" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Eq 'not ok [0-9]+ - actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint' "$log" && grep -Fq 'actor registry dirty-tree drift detected: actors/agent-b.yaml differs from HEAD' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_repository_surface_policy "$source_rules")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = ACTOR_SLUG_FILENAME_BINDING ]; then
+    source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"; pattern='actor record filename is bound to its declared slug'
+    base=0; variant="$mutation_dir/actor-slug-filename.mjs"; make_actor_registry_verifier_variant "$variant" slug || { fail=1; continue; }
+    if grep -Fq ACTOR_SLUG_FILENAME_BINDING_REMOVED "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/actor-slug-filename.log"; GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$variant")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Eq "not ok [0-9]+ - $pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=0; printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = ACTOR_PREFIX_NORMALIZATION ]; then
+    source_rules="$root_dir/AGENTS.md"; source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
+    base=$(assert_repository_surface_policy "$source_rules"); variant="$mutation_dir/actor-prefix-normalization.mjs"; make_actor_registry_verifier_variant "$variant" normalization || { fail=1; continue; }
+    if grep -Fq ACTOR_PREFIX_NORMALIZATION_REMOVED "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/actor-prefix-normalization.log"; run_repository_surface_policy "$source_rules" "$root_dir/actors" "" "$variant" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Eq 'not ok [0-9]+ - actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_repository_surface_policy "$source_rules"); printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
@@ -1217,7 +1247,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 121 ] || fail=1
+  [ "$executed" = 123 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

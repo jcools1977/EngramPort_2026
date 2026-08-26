@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readFile, readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -120,8 +120,43 @@ async function readThreadConfigs(root, actors, errors) {
   return configs;
 }
 
-async function readActors(root) {
-  const actorDir = path.join(root, "actors");
+function inSurface(candidate, prefix) {
+  return candidate === prefix || candidate.startsWith(`${prefix}/`);
+}
+
+export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION */
+  return value.normalize("NFKC").toLocaleLowerCase("en-US");
+}
+
+async function actorSurfaceIdentity(root, relative, source) {
+  if (path.isAbsolute(relative)) throw new Error(`${source}: actor-owned prefix must be repository-relative`);
+  const rootReal = await realpath(root);
+  const absolute = path.resolve(root, relative);
+  let surfaceReal;
+  try { surfaceReal = await realpath(absolute); }
+  catch {
+    const portable = normalizeActorSurfaceIdentity(relative);
+    surfaceReal = await realpath(path.resolve(root, portable));
+  }
+  const repositoryRelative = path.relative(rootReal, surfaceReal);
+  if (repositoryRelative === ".." || repositoryRelative.startsWith(`..${path.sep}`) || path.isAbsolute(repositoryRelative)) {
+    throw new Error(`${source}: actor-owned prefix escapes repository root`);
+  }
+  return normalizeActorSurfaceIdentity(repositoryRelative.split(path.sep).join("/"));
+}
+
+function assertActorSurfacesDisjoint(actors, field, label) {
+  const records = [...actors.values()];
+  for (let index = 0; index < records.length; index += 1) {
+    for (let other = index + 1; other < records.length; other += 1) {
+      if (inSurface(records[index][field], records[other][field]) || inSurface(records[other][field], records[index][field])) {
+        throw new Error(`${label} must be disjoint after realpath, case-folding, and Unicode normalization: ${records[index].slug} overlaps ${records[other].slug}`);
+      }
+    }
+  }
+}
+
+export async function readActors(root, actorDir = path.join(root, "actors"), { strictSlugs = true } = {}) {
   const actors = new Map();
   for (const name of await readdir(actorDir)) {
     if (!name.endsWith(".yaml")) continue;
@@ -130,9 +165,17 @@ async function readActors(root) {
     const eventDirectory = text.match(/^event_directory:\s*([^\s]+)\s*$/m)?.[1];
     const artifactPrefix = text.match(/^artifact_prefix:\s*([^\s]+)\s*$/m)?.[1];
     if (!slug || !eventDirectory || !artifactPrefix) throw new Error(`actors/${name}: incomplete actor record`);
+    if (name !== `${slug}.yaml`) throw new Error(`actors/${name}: filename must match declared slug ${slug}`); /* ACTOR_SLUG_FILENAME_BINDING */
+    if (strictSlugs && !SLUG.test(slug)) throw new Error(`actors/${name}: invalid actor slug ${slug}`);
+    if (eventDirectory !== `events/${slug}`) throw new Error(`actors/${name}: event_directory must match the append path for ${slug}`);
+    if (artifactPrefix !== `artifacts/${slug}`) throw new Error(`actors/${name}: artifact_prefix must remain actor-specific`);
     if (actors.has(slug)) throw new Error(`actors/${name}: duplicate actor slug ${slug}`);
-    actors.set(slug, { slug, eventDirectory, artifactPrefix });
+    const eventSurfaceIdentity = await actorSurfaceIdentity(root, eventDirectory, `actors/${name}`);
+    const artifactSurfaceIdentity = await actorSurfaceIdentity(root, artifactPrefix, `actors/${name}`);
+    actors.set(slug, { slug, eventDirectory, artifactPrefix, eventSurfaceIdentity, artifactSurfaceIdentity });
   }
+  assertActorSurfacesDisjoint(actors, "eventSurfaceIdentity", "actor event directories");
+  assertActorSurfacesDisjoint(actors, "artifactSurfaceIdentity", "actor artifact prefixes");
   return actors;
 }
 
