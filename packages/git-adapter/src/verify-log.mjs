@@ -5,9 +5,15 @@ import path from "node:path";
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
-const TYPES = new Set(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"]);
+export const EVENT_TYPES = Object.freeze(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"]);
+const TYPES = new Set(EVENT_TYPES);
 const KEYS = new Set(["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256", "thread_config_sha256", "artifacts"]);
 const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
+
+export function assertAcceptedEventTypes(types, surface = "event-type surface") {
+  for (const type of types) if (!TYPES.has(type)) throw new Error(`${surface}: unknown event type ${type}`);
+  return true;
+}
 
 function scalar(raw) {
   const value = raw.trim();

@@ -3,6 +3,10 @@ import { access, readFile } from "node:fs/promises";
 import { registerHooks } from "node:module";
 import test from "node:test";
 
+const siteEventTypesOnly = process.env.SITE_EVENT_TYPES_ONLY === "1";
+const eventTypesModule = process.env.SITE_EVENT_TYPES_MODULE ?? new URL("../packages/git-adapter/src/verify-log.mjs", import.meta.url).href;
+const { assertAcceptedEventTypes } = await import(eventTypesModule);
+
 // The production bundle correctly keeps the Worker-native module external.
 // This test exercises only the ordinary HTML route under Node; Durable Object
 // and RPC behavior is separately executed in local workerd by session:test.
@@ -20,7 +24,7 @@ async function render() {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("server-renders the EngramPort product site", async () => {
+test("server-renders the EngramPort product site", { skip: siteEventTypesOnly }, async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
@@ -28,12 +32,16 @@ test("server-renders the EngramPort product site", async () => {
   assert.match(html, /<title>EngramPort — The project remembers<\/title>/i);
   assert.match(html, /Shared state infrastructure for humans \+ AI/);
   assert.match(html, /Different agents\.<br\/>One continuous thread\./);
+  assert.match(html, /CONFLICTS SURFACED, NEVER SILENT/);
+  assert.match(html, /Port Watch delivers new work through durable cursors\./);
+  assert.match(html, /<b>EXAMPLE<\/b>/);
+  assert.doesNotMatch(html, /CONFLICT-FREE BY DESIGN|<b>LIVE<\/b>|handoff\.created|handoff\.claimed|artifact\.registered|handoff\.completed/);
   assert.match(html, /POSTGRESQL/);
   assert.match(html, /npm install @engramport\/sdk/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
-test("ships product metadata and removes the starter preview", async () => {
+test("ships product metadata and removes the starter preview", { skip: siteEventTypesOnly }, async () => {
   const [page, layout, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -45,4 +53,19 @@ test("ships product metadata and removes the starter preview", async () => {
   assert.match(packageJson, /"name": "engramport"/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
+});
+
+test("site console event types remain linked to the verifier vocabulary", async () => {
+  const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const eventBlock = page.match(/const events = \[([\s\S]*?)\n\];/)?.[1];
+  assert.ok(eventBlock, "site event console declaration must remain statically auditable");
+  const types = [...eventBlock.matchAll(/\btype:\s*"([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(types.length, 4, "site event console must expose all four example event types to the drift control");
+  const fabricated = process.env.SITE_EVENT_TYPE_OVERRIDE;
+  if (fabricated) types[0] = fabricated;
+  let outcome = "accepted";
+  try { assertAcceptedEventTypes(types, "site event console"); }
+  catch { outcome = "refused"; }
+  console.log(`SITE_EVENT_TYPES ${fabricated ?? types.join(",") }=${outcome}`);
+  assert.equal(outcome, fabricated ? "refused" : "accepted");
 });

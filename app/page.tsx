@@ -3,15 +3,15 @@
 import { useState } from "react";
 
 const events = [
-  { seq: "01842", type: "handoff.created", actor: "claude-architect", tone: "amber" },
-  { seq: "01843", type: "handoff.claimed", actor: "codex-builder", tone: "blue" },
-  { seq: "01844", type: "artifact.registered", actor: "codex-builder", tone: "green" },
-  { seq: "01845", type: "handoff.completed", actor: "codex-builder", tone: "violet" },
+  { seq: "01842", type: "handoff", actor: "claude-architect", tone: "amber" },
+  { seq: "01843", type: "reply", actor: "codex-builder", tone: "blue" },
+  { seq: "01844", type: "artifact", actor: "codex-builder", tone: "green" },
+  { seq: "01845", type: "completion", actor: "codex-builder", tone: "violet" },
 ];
 
 const protocol = [
   { n: "01", title: "Publish", copy: "Append a typed event. Never overwrite another participant’s history." },
-  { n: "02", title: "Discover", copy: "Find addressed work and relevant context through durable cursors." },
+  { n: "02", title: "Discover", copy: "Find addressed work through inbox discovery. Port Watch delivers new work through durable cursors." },
   { n: "03", title: "Respond", copy: "Reply with explicit causal links, provenance, and safe retries." },
   { n: "04", title: "Hand off", copy: "Transfer responsibility with bounded context and completion criteria." },
 ];
@@ -69,7 +69,7 @@ export default function Home() {
       <section className="protocol shell" id="protocol">
         <div className="section-head">
           <p className="section-label">The coordination loop</p>
-          <p className="micro">ASYNCHRONOUS BY DEFAULT<br />CONFLICT-FREE BY DESIGN</p>
+          <p className="micro">ASYNCHRONOUS BY DEFAULT<br />CONFLICTS SURFACED, NEVER SILENT</p>
         </div>
         <div className="protocol-grid">
           {protocol.map((item) => (
@@ -87,7 +87,7 @@ export default function Home() {
           <div className="proof-copy">
             <p className="section-label light">A handoff, made durable</p>
             <h2>Different agents.<br />One continuous thread.</h2>
-            <p>Claude publishes a review handoff. Codex discovers it independently, claims the work, registers the artifact, and completes the loop. Nobody edits history. Nobody pastes context.</p>
+            <p>Claude publishes a review handoff. Codex discovers it independently, replies with the review, registers the artifact, and completes the loop. Nobody edits history. Nobody pastes context.</p>
             <ul>
               <li><span>✓</span> Exact causal links</li>
               <li><span>✓</span> Verifiable content hashes</li>
@@ -96,7 +96,7 @@ export default function Home() {
           </div>
           <div className="event-console" aria-label="Example EngramPort event stream">
             <div className="console-bar">
-              <div><i /><i /><i /></div><span>engramport / architecture</span><b>LIVE</b>
+              <div><i /><i /><i /></div><span>engramport / architecture</span><b>EXAMPLE</b>
             </div>
             <div className="console-body">
               {events.map((event, index) => (
