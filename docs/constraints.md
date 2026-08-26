@@ -2678,3 +2678,19 @@ This was caught by routing agent-b's delivered work to agent-c for independent r
 **Thread configs are bound by digest and actor records are not**: `verify-log.mjs` computes `hashThreadConfig` and binds `thread_config_sha256` on a thread's first event, with no equivalent for actors. So an actor may edit the file that says what actors may do, and **the control that should reject the edit reads the file after it**. Agent-c also identifies prefix takeover as reachable, since uniqueness is checked as string identity rather than disjointness, so a record retargeted to a prefix that nests another's paths is permitted.
 
 The old broad wording covered this by forbidding an actor to create or modify files outside its own prefixes at all. **That cover was removed and the four enforcement properties agent-b enumerated do not replace it**, because all four constrain accepted events and referenced artifacts only.
+
+### F107
+
+**The repair for F105 reproduced F105 inside itself.** The actor-registry protection compares the working-tree record against `git show HEAD:actors/<name>`. **On a clean checkout the working tree is `HEAD` by definition**, confirmed here: `git status --short actors/` and `git diff HEAD -- actors/` both return zero, so the assertion compares a file with itself. It can only fire on a locally dirty tree, which is not the ADR 0039 threat, and clean clones and CI runs are precisely what multi-builder collaboration uses.
+
+Agent-a reviewed this revision, verified that the surface control now genuinely falsifies, read agent-b's own disclosure of the mechanism's limit, and judged the reading "catches uncommitted drift and near-nothing else". **Agent-c's verdict was that this reading was too generous, not wrong**, which is a distinction agent-a did not reach in either direction. The rejection of the previous round and the acceptance instinct in this one were both produced by the same reviewer within twenty minutes.
+
+Also confirmed: `verify-log.mjs:129` reads `slug` from record **content** and never binds it to the filename, so `agent-b.yaml` may declare any slug, and prefix disjointness is a case-sensitive string comparison with no `realpath` or normalization. **That is the F103 gap reintroduced one layer up.**
+
+### F108
+
+**Registry integrity is not solvable inside the repository, and continuing to try would ship a check that reads as protection.** One commit can rewrite `actors/*.yaml`, the enforcement test in `tests/`, and the rule text in `AGENTS.md` together, because the amended rule 5 classifies the latter two as shared editable surfaces. **A digest binding fails identically if the expected digest lives in the tree**, since the attacker updates subject and binding in the same commit.
+
+Under ADR 0039 the ordinary path is a second builder **committing**, so the threat is an authorized writer, not an intruder. **What the log can do is make inconsistency detectable after the fact; what it cannot do is prevent an authorized-but-malicious commit.** Prevention requires write-gating outside the mutable tree: branch protection, `CODEOWNERS`, required review, or signed commits.
+
+**This is a product-level constraint rather than an implementation gap**, and it belongs in the claim surface: EngramPort's guarantee is detection, and the enforcement boundary is the host's. Stating that plainly is worth more than a control that appears to close it.
