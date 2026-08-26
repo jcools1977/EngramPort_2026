@@ -1,0 +1,4 @@
+schema_version: 0
+thread: founder-enrollment-boundary
+mode: strict_relay
+coordinator: null
