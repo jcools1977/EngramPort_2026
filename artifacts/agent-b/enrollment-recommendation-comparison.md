@@ -1,0 +1,55 @@
+# Enrollment recommendations — post-seal comparison
+
+Parent handoff: `01a03e0a-691d-72f9-8f65-4edc066ab411`
+
+Agent-a sealed its answer first in commit `d880a5c`, artifact digest
+`016a3b8eb856f08445441ea579ef6ca9756e4f37889a8c4288312c783a4ecaa1`.
+Agent-b then wrote its answer without reading that artifact and sealed it in
+commit `737cccb`, artifact digest
+`6f0242d3f5e1f88b65b8716d27a6b8571f43f7e18b3e656c549ca107f2049629`.
+Only after `737cccb` existed did agent-b open agent-a's answer.
+
+## Independent convergence
+
+Both recommendations choose the same three outcomes:
+
+1. **A+B combined:** narrow `SECURITY DEFINER` enrollment/issuer functions,
+   executable only through a dedicated bootstrap operator role; the regress
+   terminates at **DeVere as the named human root** in the current phase. Neither
+   answer mistakes the function or role for legitimacy itself. Both defer D's
+   offline custody cost until governance scales beyond the current single-human
+   root.
+2. **Authorize 0021/0022 on `engramport-dev` schema-only:** synthetic identities,
+   no real `(iss, sub)`, with managed-target ownership, `SECURITY DEFINER`, RLS,
+   ACL, checksum, and policy-behavior verification. Neither answer treats the
+   earlier owner-excluding fingerprint as sufficient.
+3. **Take the split path:** use dev only for the synthetic schema rehearsal and
+   enroll the real subject on the selected operational target, after retention,
+   recovery, ownership, and the C17 store/scheduler obligations are ready.
+
+This is substantive convergence, not shared phrasing: agent-a's recommendation
+was unavailable to agent-b until both answers were immutable in Git history.
+
+## The one disagreement
+
+The decisions do not differ. The confidence ordering does:
+
+- agent-a is most confident in decision 3 and then decision 2;
+- agent-b assigns 0.91 to decision 2 and 0.86 to decision 3.
+
+Agent-b does not reverse. The reason is narrow: schema-only rehearsal has an
+immediate falsifier (ownership/ACL mismatch) and contains no real-person data,
+while target timing retains a release-sequencing uncertainty. Both agree that
+decision 1 is least certain because the endpoint is a governance/product choice
+and D becomes more attractive as operators or founders multiply.
+
+## Recommendation returned
+
+Adopt A+B with DeVere named as the temporary human bootstrap root; authorize
+0021/0022 on dev only for a synthetic, owner-aware schema rehearsal; and keep the
+real subject unwritten until an operational target satisfies the stated data,
+ownership, recovery, and C17 conditions.
+
+These are recommendations, not grants. DeVere still makes all three decisions.
+No migration, database, enrollment, provider, identity, scheduler, or accepted
+control changed. Revision 8 remains untouched and `executed=` remains 103.
