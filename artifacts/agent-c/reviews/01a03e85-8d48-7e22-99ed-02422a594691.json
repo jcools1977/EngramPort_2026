@@ -1,0 +1,36 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a03e85-8d48-7e22-99ed-02422a594691",
+  "target_thread": "preflight-sdk-dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-26T14:46:49.085Z",
+  "review_completed_at": "2026-08-26T14:50:07.914Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 8571,
+    "output_tokens": 741,
+    "total_tokens": 19098
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 793440000,
+    "cost_usd": 0.079344
+  },
+  "summary": "The dispatch is infeasible: agent-b cannot create a real @engramport/sdk under AGENTS.md write limits; no-publish bounds leave the site install CTA false; required hash-mismatch evidence contradicts SDK-computed digests; executed=107 and “34 tests vs an SDK log” are unexecutable/unfalsifiable. The four bullets also do not make the site’s actual claims true.",
+  "findings": [
+    "AGENTS.md confines new files to events/<slug>/ and the actor’s artifact prefix; event text cannot grant extra rights. Building a publishable @engramport/sdk under packages/ (or any other production path) is therefore outside the named actor’s authority, so the mandatory deliverable cannot be completed in the current repository state.",
+    "Bounds forbid npm publish and network, so a visitor who copies the site’s `npm install @engramport/sdk` still gets nothing. Framing the work as fixing that CTA while banning publish makes the motivating requirement unsatisfiable; a local folder named publishable does not make the live install claim true.",
+    "Requirement 1 has the SDK compute content_sha256. Required evidence also demands refusal of a body/digest mismatch. If callers cannot supply the digest, that negative cannot fire on append—the same class of protocol-impossible evidence rule already seen in this project. A control that only exists on an unspecified verify/ingest API is not a discriminating test of the specified append API.",
+    "`executed=` must move from 107 on observed execution, but nothing in the supplied tree defines executed=, where 107 was observed, or which command would move it. That is an unexecutable evidence count, not an observable gate.",
+    "“The existing 34 Git-v0 tests … must pass unchanged against a log the SDK produced” is not evidenced (no test inventory) and is internally at odds with itself: fixture tests cannot target a new log unless changed; if they already scan the live log, they passing after extra valid files does not discriminate SDK behavior.",
+    "The site’s four claims are not the four bullets. Copy also requires never-overwrite, Port Watch durable cursors, safe retries, and bounded context; the architecture presents SDK as a client of PostgreSQL EngramPort. Inbox-without-cursors on a Git-v0 writer leaves those claims false. packages/port-watch already exists for the omitted cursor claim, so the objective can be “met” without the site becoming true.",
+    "verify-log.mjs only accepts events from registered actors, matching filenames, ownership, next, and optional thread_config_sha256. The dispatch never requires that envelope, yet demands a verifier-clean SDK log and forbids protocol/verifier changes. Visitor-facing SDK use cannot pass that verifier without forging `from` or adding actors.",
+    "No API surface, workspace wiring, or reuse-vs-reimplement decision is given, while git-adapter already exports EVENT_TYPES, hashBody, and verifyLog. Inventing @engramport/sdk’s public contract is a product decision this dispatch does not have authority to settle. The claim that git-adapter/port-watch have no package.json is also not in the supplied files and is at odds with packages/git-adapter/src/.",
+    "The proposed body names no recipient, next hop, or independent acceptor. Under strict_relay, agent-b cannot both author the package and close the loop; self-attested paired mutations are not a discriminating proof that the site’s claims hold."
+  ]
+}
