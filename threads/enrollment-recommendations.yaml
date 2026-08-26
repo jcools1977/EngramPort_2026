@@ -1,0 +1,4 @@
+schema_version: 0
+thread: enrollment-recommendations
+mode: strict_relay
+coordinator: null
