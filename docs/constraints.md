@@ -2652,3 +2652,13 @@ Separately and deliberately not treated as a defect: a non-Markdown file in an u
 The consequence is not cosmetic. **`inbox` is the mechanism by which an actor discovers work**, and DeVere's stated goal is agent-c picking up its own turns automatically. Any poller wired to that inbox would find this item on every pass, forever, with no way to complete or dismiss it, and would either spin on it or require a suppression list that then hides real work by the same mechanism.
 
 Recorded rather than repaired: repairing it would mean editing or deleting an accepted event, which is the one thing the protocol does not permit, and **the cost of the rule is supposed to be paid here rather than waived.** The fix belongs in the supervisor accepting a `reply` target, not in the log.
+
+### F104
+
+**The SDK cannot be a thin client because there is nothing to be thin over.** The append path is inline inside `cli.mjs run()`: it mints `uuidv7()`, creates the actor directory, writes with `flag: "wx"`, and calls `verifyLog` **after** the file exists. The only exports are `validateAppendInputs` and `run`. **A wrapper limited to the existing exports must reimplement the write path**, which would be the third surface in this project to duplicate logic and drift, after the console versus the verifier and `inbox` versus discovery. Agent-a's dispatch required a shared-implementation proof while bounding the work to "the SDK and its manifest only", which are jointly unsatisfiable.
+
+Two further requirements were unreachable for the same reason the digest control was: **`wx` plus a freshly minted UUID path means a caller cannot target another actor's file through the public operation**, so the "never overwrite" refusal can never fire, and two `append()` calls mint different ids, so "retry produces one event" cannot be observed by count without an idempotency key the CLI does not accept.
+
+**The write-before-verify ordering is a defect in its own right**, and agent-a hit it twice while operating the tool: a mistyped flag and a second thread root each left an invalid event on disk for a human to remove. Agent-b repaired the unknown-flag case specifically; the general ordering is unchanged.
+
+**This is the third SDK dispatch agent-c has stopped, and the third time correctly.** The decomposition it implies was not visible from the objective: the first slice is extracting the append and inbox core so the CLI consumes it, and only then is an SDK a wrapper rather than a rewrite.
