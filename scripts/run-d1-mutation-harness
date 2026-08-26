@@ -240,6 +240,15 @@ text=text.replace(anchor,'for (const type of types) if (false /* SITE_EVENT_TYPE
 fs.writeFileSync(target,text);
 NODE
 }
+make_event_directory_completeness_variant(){
+  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
+const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
+const anchor='  for (const relative of await findUnregisteredEventFiles(root, actors)) { /* EVENT_DIRECTORY_COMPLETENESS */';
+if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
+text=text.replace(anchor,'  for (const relative of [] /* EVENT_DIRECTORY_COMPLETENESS_REMOVED */) {');
+fs.writeFileSync(target,text);
+NODE
+}
 make_canary_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target/packages/git-adapter" "$target/packages/port-watch" "$target/schemas"
@@ -332,6 +341,20 @@ for line in "${MUTATIONS[@]}"; do
     forbidden=f; grep -Eq 'not ok [0-9]+ - append refuses an unrecognized flag' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=0
     printf 'CLI_ARGUMENT_REFUSAL baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = EVENT_DIRECTORY_COMPLETENESS ]; then
+    source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
+    test_pattern='verification refuses unregistered event files by path while ignoring empty directories'
+    base=0
+    variant="$mutation_dir/event-directory-completeness.mjs"; make_event_directory_completeness_variant "$variant" || { fail=1; continue; }
+    if grep -Fq EVENT_DIRECTORY_COMPLETENESS_REMOVED "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/event-directory-completeness.log"
+    GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$variant")" node --test --test-reporter=tap --test-name-pattern="$test_pattern" "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=0
+    printf 'EVENT_DIRECTORY_COMPLETENESS baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
@@ -1023,7 +1046,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 112 ] || fail=1
+  [ "$executed" = 113 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

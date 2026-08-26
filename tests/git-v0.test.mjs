@@ -4,9 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import test from "node:test";
-import { hashBody, hashThreadConfig, verifyLog } from "../packages/git-adapter/src/verify-log.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+const verifierSpecifier = process.env.GIT_ADAPTER_VERIFY_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href;
+const { hashBody, hashThreadConfig, verifyLog } = await import(verifierSpecifier);
 const cliSpecifier = process.env.GIT_ADAPTER_CLI_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/cli.mjs")).href;
 const { run } = await import(cliSpecifier);
 const surfaces = ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml"];
@@ -78,6 +79,24 @@ test("valid registered-actor relay verifies", async () => {
   // The log is append-only, so counts grow. Assert the floor set by the v0 relay, not a frozen census.
   assert.ok(result.events >= 3, `expected at least the 3 v0 relay events, saw ${result.events}`);
   assert.ok(result.threads >= 1, `expected at least the v0 architecture thread, saw ${result.threads}`);
+});
+
+test("verification refuses unregistered event files by path while ignoring empty directories", async () => {
+  const directory = await fixture();
+  const rogueDirectory = path.join(directory, "events", "agent-rogue");
+  const rogueEvent = path.join(rogueDirectory, "forged-decision.md");
+  try {
+    await mkdir(rogueDirectory);
+    assert.equal((await verifyLog(directory)).ok, true);
+    await writeFile(path.join(rogueDirectory, ".gitkeep"), "");
+    assert.equal((await verifyLog(directory)).ok, true);
+    await writeFile(rogueEvent, "forged event data\n");
+    const forged = await verifyLog(directory);
+    assert.equal(forged.ok, false);
+    assert.match(forged.errors.join("\n"), /events\/agent-rogue\/forged-decision\.md: event file is outside every registered actor event_directory/);
+    await rm(rogueEvent);
+    assert.equal((await verifyLog(directory)).ok, true);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test("append with an empty artifacts flag preserves artifact-free append behavior", async () => {

@@ -132,6 +132,30 @@ async function readActors(root) {
   return actors;
 }
 
+async function discoverEventFiles(directory) {
+  let entries;
+  try { entries = await readdir(directory, { withFileTypes: true }); }
+  catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+  const files = [];
+  for (const entry of entries) {
+    const absolute = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await discoverEventFiles(absolute));
+    else if (entry.isFile() && entry.name.endsWith(".md")) files.push(absolute);
+  }
+  return files;
+}
+
+async function findUnregisteredEventFiles(root, actors) {
+  const registeredDirectories = [...actors.values()].map((actor) => path.resolve(root, actor.eventDirectory));
+  const eventFiles = await discoverEventFiles(path.join(root, "events"));
+  return eventFiles
+    .filter((file) => !registeredDirectories.some((directory) => file.startsWith(`${directory}${path.sep}`)))
+    .map((file) => path.relative(root, file));
+}
+
 function validateShape(event, relative, errors) {
   const m = event.meta;
   for (const key of ["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256"]) {
@@ -154,6 +178,9 @@ function validateShape(event, relative, errors) {
 export async function verifyLog(root, options = {}) {
   const errors = [];
   const actors = await readActors(root);
+  for (const relative of await findUnregisteredEventFiles(root, actors)) { /* EVENT_DIRECTORY_COMPLETENESS */
+    errors.push(`${relative}: event file is outside every registered actor event_directory`);
+  }
   const projectConfig = await readProjectConfig(root, errors);
   const threadConfigs = await readThreadConfigs(root, actors, errors);
   const events = [];
