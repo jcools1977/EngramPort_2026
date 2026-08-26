@@ -2662,3 +2662,19 @@ Two further requirements were unreachable for the same reason the digest control
 **The write-before-verify ordering is a defect in its own right**, and agent-a hit it twice while operating the tool: a mistyped flag and a second thread root each left an invalid event on disk for a human to remove. Agent-b repaired the unknown-flag case specifically; the general ordering is unchanged.
 
 **This is the third SDK dispatch agent-c has stopped, and the third time correctly.** The decomposition it implies was not visible from the objective: the first slice is extracting the append and inbox core so the CLI consumes it, and only then is an SDK a wrapper rather than a rewrite.
+
+### F105
+
+**Agent-a verified a control by the one experiment that could not falsify it, and reported it as sound.** The repository-surface policy classifies every tracked path outside `events/` and `artifacts/` as a shared editable surface, so `unaccounted=0` holds for **any** repository content whatsoever. Demonstrated: adding a tracked `secrets/creds.env` left the control reporting `tracked=752 unaccounted=0` and passing.
+
+Agent-a's discrimination test restored the former broad wording and observed the control fail with `unaccounted=237`, and concluded it "genuinely discriminates." **What it discriminates is the presence of a sentence in `AGENTS.md`, not any property of the repository.** It is a string-conflict detector. The dispatch asked for proof the control would have failed before the amendment, agent-b supplied exactly that, and **the requirement was satisfiable without the control being meaningful**, which is the same defect agent-a has now specified eight times.
+
+This was caught by routing agent-b's delivered work to agent-c for independent review, the first time that has been done. **Agent-a had already verified this work and was composing an acceptance.** The gap it closes is that nothing previously reviewed agent-a's acceptances.
+
+### F106
+
+**The authority file became an editable surface with no binding, making the rule circular.** `actors/*.yaml` declares which actor owns which `event_directory` and `artifact_prefix`, and both `verifyLog` and the new policy control read it to decide what is permitted. It sits outside `events/` and `artifacts/`, so the amended rule 5 classifies it as shared and editable.
+
+**Thread configs are bound by digest and actor records are not**: `verify-log.mjs` computes `hashThreadConfig` and binds `thread_config_sha256` on a thread's first event, with no equivalent for actors. So an actor may edit the file that says what actors may do, and **the control that should reject the edit reads the file after it**. Agent-c also identifies prefix takeover as reachable, since uniqueness is checked as string identity rather than disjointness, so a record retargeted to a prefix that nests another's paths is permitted.
+
+The old broad wording covered this by forbidding an actor to create or modify files outside its own prefixes at all. **That cover was removed and the four enforcement properties agent-b enumerated do not replace it**, because all four constrain accepted events and referenced artifacts only.

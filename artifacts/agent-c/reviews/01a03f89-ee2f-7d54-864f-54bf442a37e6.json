@@ -1,0 +1,34 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a03f89-ee2f-7d54-864f-54bf442a37e6",
+  "target_thread": "rule-5-independent-review",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-26T19:26:51.019Z",
+  "review_completed_at": "2026-08-26T19:29:37.445Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 10423,
+    "output_tokens": 861,
+    "total_tokens": 19217
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 728420000,
+    "cost_usd": 0.072842
+  },
+  "summary": "The delivered Rule 5/7 split is not sound. Event/artifact hashing still protects accepted collaboration history, but the old breadth was the only cover for the authorization source, the verifier, and the new policy control. Those paths are now explicitly shared, the surface test treats over-inclusion as success, and actors/*.yaml can be edited to steal prefixes or break the log while unaccounted stays 0. Agent-a's discrimination demo only detects the old ban sentence coming back; it does not show that the replacement ownership rule covers what the broad ban covered.",
+  "findings": [
+    "Circularity is real, not hypothetical. tests/repository-surface-policy.test.mjs and verifyLog both treat actors/*.yaml as the source of who may own which event_directory and artifact_prefix, but those files sit outside events/ and artifacts/ and are therefore classified shared. Unlike threads/*.yaml, actor records have no digest, first-event bind, or immutability check. Any actor with a git write can retarget prefixes or invent actors; the control that should reject that edit is reading the file after the edit.",
+    "The four code properties agent-b listed never implemented the old breadth. Append plus verifyLog only constrain accepted events in a registered directory, filename/id binding, body hashes, and referenced artifacts under the author's current prefix. They do not constrain AGENTS.md, actors/, packages/git-adapter, engramport.yaml, tests/, migrations, or unreferenced files. Those depended on the retired 'create files only in your prefixes' / 'another actor's file' ban. The split removed that cover and did not replace it with a mechanical one.",
+    "Prefix takeover is possible while the new control still reports unaccounted=0. Uniqueness is string identity, not disjointness. Changing one record to artifact_prefix: artifacts (or another actor's prefix) makes inSurface() claim nested paths for the first matching yaml in sort order; verifyLog then allows that author to reference the stolen files because the check is only 'path starts with the author's declared prefix'. Re-pointing another actor's event_directory off their existing files makes proof:verify fail (availability break), which is reachable because actor records are shared.",
+    "Rule 7 is now narrower than Rule 5 and narrower than the code. Rule 5 still forbids editing another actor's event or artifact files; Rule 7 only forbids overwriting an accepted event or a referenced artifact. Unreferenced files in someone else's artifact prefix, and every shared path an actor previously created (actors records, fixtures, migrations, the verifier, this test), are outside Rule 7. verifyLog never inspects unreferenced artifact bytes, so the narrowed sentence is also the one that matches enforcement.",
+    "unaccounted=0 is tautological for every path outside events/ and artifacts/. sharedEditingDeclared is exactly 'the shared sentence is present and the old broad ban sentence is absent,' after which the classifier labels all remaining tracked paths shared. A new secrets/, a weakened verify-log.mjs, or an edited actors/*.yaml cannot make the assertion fail. Agent-a's restored-broad-wording run only proves the test is a string-conflict detector for that one banned sentence, not that the split preserves a security property.",
+    "The replacement gate named in Rule 5 ('verified relay handoff with paired evidence and a discriminating mutation') is not implemented. Neither the surface test nor verifyLog requires an event, evidence pair, or discriminating mutation for shared-surface diffs. Keeping the two golden sentences in AGENTS.md is enough for the control to pass, including after a commit that rewrites the control or the actor registry.",
+    "append does not read event_directory. packages/git-adapter/src/cli.mjs always writes events/<actor>/, while verifyLog keys ownership by the yaml event_directory and requires the file's immediate parent to be that directory. Because actors/*.yaml is now shared, desynchronizing those two fields is an authorized edit that invalidates new and existing events. That coupling only becomes a policy-legal break after this split."
+  ]
+}
