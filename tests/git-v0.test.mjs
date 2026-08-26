@@ -81,7 +81,7 @@ test("valid registered-actor relay verifies", async () => {
   assert.ok(result.threads >= 1, `expected at least the v0 architecture thread, saw ${result.threads}`);
 });
 
-test("verification refuses unregistered event files by path while ignoring empty directories", async () => {
+test("verification refuses unregistered Markdown event files while ignoring empty directories", async () => {
   const directory = await fixture();
   const rogueDirectory = path.join(directory, "events", "agent-rogue");
   const rogueEvent = path.join(rogueDirectory, "forged-decision.md");
@@ -93,8 +93,30 @@ test("verification refuses unregistered event files by path while ignoring empty
     await writeFile(rogueEvent, "forged event data\n");
     const forged = await verifyLog(directory);
     assert.equal(forged.ok, false);
-    assert.match(forged.errors.join("\n"), /events\/agent-rogue\/forged-decision\.md: event file is outside every registered actor event_directory/);
+    assert.match(forged.errors.join("\n"), /events\/agent-rogue\/forged-decision\.md: event file is not directly enumerated by a registered actor event_directory/);
     await rm(rogueEvent);
+    assert.equal((await verifyLog(directory)).ok, true);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("verification aligns recursive Markdown discovery with validation and ignores non-events", async () => {
+  const directory = await fixture();
+  const nestedDirectory = path.join(directory, "events", "agent-a", "sneaky");
+  const nestedEvent = path.join(nestedDirectory, "forged.md");
+  const nonEventDirectory = path.join(directory, "events", "rogue2");
+  try {
+    await mkdir(nestedDirectory);
+    const generated = await event(directory, { actor: "agent-a", thread: "nested-forgery", id: ids[0], type: "decision" });
+    await rename(generated, nestedEvent);
+    const nested = await verifyLog(directory);
+    assert.equal(nested.ok, false);
+    assert.match(nested.errors.join("\n"), /events\/agent-a\/sneaky\/forged\.md: event file is not directly enumerated by a registered actor event_directory/);
+    await rm(nestedEvent);
+    assert.equal((await verifyLog(directory)).ok, true);
+
+    // Non-Markdown files are not event candidates, so accepting them is deliberate rather than an enumeration gap.
+    await mkdir(nonEventDirectory);
+    await writeFile(path.join(nonEventDirectory, "forged.txt"), "not an event\n");
     assert.equal((await verifyLog(directory)).ok, true);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });

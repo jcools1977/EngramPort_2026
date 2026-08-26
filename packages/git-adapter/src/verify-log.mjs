@@ -148,14 +148,6 @@ async function discoverEventFiles(directory) {
   return files;
 }
 
-async function findUnregisteredEventFiles(root, actors) {
-  const registeredDirectories = [...actors.values()].map((actor) => path.resolve(root, actor.eventDirectory));
-  const eventFiles = await discoverEventFiles(path.join(root, "events"));
-  return eventFiles
-    .filter((file) => !registeredDirectories.some((directory) => file.startsWith(`${directory}${path.sep}`)))
-    .map((file) => path.relative(root, file));
-}
-
 function validateShape(event, relative, errors) {
   const m = event.meta;
   for (const key of ["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256"]) {
@@ -178,31 +170,41 @@ function validateShape(event, relative, errors) {
 export async function verifyLog(root, options = {}) {
   const errors = [];
   const actors = await readActors(root);
-  for (const relative of await findUnregisteredEventFiles(root, actors)) { /* EVENT_DIRECTORY_COMPLETENESS */
-    errors.push(`${relative}: event file is outside every registered actor event_directory`);
+  const eventDirectoryActors = new Map();
+  for (const actor of actors.values()) {
+    const directory = path.resolve(root, actor.eventDirectory);
+    try {
+      if (!(await stat(directory)).isDirectory()) throw new Error("not a directory");
+    } catch {
+      errors.push(`${actor.eventDirectory}: missing actor event directory`);
+    }
+    eventDirectoryActors.set(directory, actor);
+  }
+  const discoveredEventFiles = await discoverEventFiles(path.resolve(root, "events")); /* EVENT_DIRECTORY_COMPLETENESS */
+  const validationPlan = [];
+  // Discovery is the sole source for validation: every Markdown file is planned exactly once or fails by path.
+  for (const absolute of discoveredEventFiles) {
+    const relative = path.relative(root, absolute);
+    const actor = eventDirectoryActors.get(path.dirname(absolute));
+    if (!actor) errors.push(`${relative}: event file is not directly enumerated by a registered actor event_directory`);
+    else validationPlan.push({ absolute, relative, actor });
   }
   const projectConfig = await readProjectConfig(root, errors);
   const threadConfigs = await readThreadConfigs(root, actors, errors);
   const events = [];
-  for (const actor of actors.values()) {
-    const directory = path.join(root, actor.eventDirectory);
-    let names = [];
-    try { names = await readdir(directory); } catch { errors.push(`${actor.eventDirectory}: missing actor event directory`); continue; }
-    for (const name of names.filter((item) => item.endsWith(".md"))) {
-      const absolute = path.join(directory, name);
-      const relative = path.relative(root, absolute);
-      try {
-        const parsed = parseEvent(await readFile(absolute, "utf8"), relative);
-        validateShape(parsed, relative, errors);
-        const compact = String(parsed.meta.occurred_at ?? "").replace(/[-:]/g, "").replace(".000", "");
-        const expectedPrefix = compact.replace("Z", "Z_");
-        if (!name.startsWith(expectedPrefix)) errors.push(`${relative}: filename timestamp does not match occurred_at`);
-        if (!name.endsWith(`_${parsed.meta.id}.md`)) errors.push(`${relative}: filename UUID does not match event id`);
-        if (parsed.meta.from !== actor.slug) errors.push(`${relative}: actor-directory ownership violation`);
-        if (hashBody(parsed.body) !== parsed.meta.content_sha256) errors.push(`${relative}: content hash mismatch`);
-        events.push({ ...parsed, relative });
-      } catch (error) { errors.push(error.message); }
-    }
+  for (const { absolute, relative, actor } of validationPlan) {
+    const name = path.basename(absolute);
+    try {
+      const parsed = parseEvent(await readFile(absolute, "utf8"), relative);
+      validateShape(parsed, relative, errors);
+      const compact = String(parsed.meta.occurred_at ?? "").replace(/[-:]/g, "").replace(".000", "");
+      const expectedPrefix = compact.replace("Z", "Z_");
+      if (!name.startsWith(expectedPrefix)) errors.push(`${relative}: filename timestamp does not match occurred_at`);
+      if (!name.endsWith(`_${parsed.meta.id}.md`)) errors.push(`${relative}: filename UUID does not match event id`);
+      if (parsed.meta.from !== actor.slug) errors.push(`${relative}: actor-directory ownership violation`);
+      if (hashBody(parsed.body) !== parsed.meta.content_sha256) errors.push(`${relative}: content hash mismatch`);
+      events.push({ ...parsed, relative });
+    } catch (error) { errors.push(error.message); }
   }
 
   const byId = new Map();
