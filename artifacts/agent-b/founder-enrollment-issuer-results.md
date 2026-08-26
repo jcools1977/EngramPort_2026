@@ -1,0 +1,53 @@
+# Founder enrollment issuer result
+
+Implemented the bounded ADR 0038 step-3 enrollment mechanism without enrolling
+an external identity or choosing an operational identity policy.
+
+## Delivered boundary
+
+- Added the dormant `engram_bootstrap_operator` role as `NOLOGIN`,
+  `NOSUPERUSER`, and `NOBYPASSRLS`. No role membership or operational login is
+  provisioned.
+- Added the additive migration `0023_founder_authorization_issuer.sql` rather
+  than rewriting the already accepted and checksum-recorded migrations 0021 or
+  0022. Migrations 0001 through 0022 remain byte-for-byte untouched.
+- Added `issue_founding_authorization(...)` as a `SECURITY DEFINER` function
+  owned by the migration role. It accepts only authorization, existing identity,
+  reserved principal, reserved tenant, and expiry identifiers. It has no issuer
+  or subject argument and writes only `founding_authorizations`.
+- Revoked function execution from `PUBLIC`, `engram_app`, and
+  `engram_maintenance`; granted it only to `engram_bootstrap_operator`.
+- Kept real enrollment open: the role is dormant, the migration contains no
+  identity rows, and every live fixture uses synthetic identifiers inside a
+  rolled-back transaction.
+
+## Negative and discriminating evidence
+
+`tests/failure/founder-enrollment-issuer.sql` switches to `engram_app` and calls
+the issuer. The shipped ACL produces `insufficient_privilege`, and the test
+asserts that the refused call leaves no authorization residue. It then switches
+to `engram_bootstrap_operator` and proves the positive issuance path.
+
+The `W1_1_ENROLLMENT_ISSUER_APP_EXECUTE` mutation grants the same function to
+`engram_app`. The identical live call then succeeds and the negative control
+fails with:
+
+`engram_app unexpectedly executed founding issuer`
+
+The shipped role state restores the refusal. The complete mutation harness
+passes with `executed=124`, one above the repository's immediately preceding
+observed 123. The handoff's quoted 121 predated the two accepted Rule 5
+mutations already on `main`.
+
+## Verification
+
+- `npm run db:test`: passed; all database controls and the new grant-widening
+  mutation discriminate, `executed=124`.
+- `npm test`: passed in full after running with the Docker access required by
+  the W1-7 canary.
+- `npm run lint`: passed.
+- `node --test tests/app-role-grants-static.test.mjs`: 8 passed.
+- `git diff --check`: passed.
+
+No SDK, site, protocol, actor record, real identity, `actor_delegations`, or
+`agent_sessions` change is included.
