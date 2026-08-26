@@ -1,0 +1,35 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a03e9b-c619-7e32-a59b-c35ed94c5a5a",
+  "target_thread": "council-01-review-2",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-26T15:06:47.404Z",
+  "review_completed_at": "2026-08-26T15:10:10.671Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 9825,
+    "output_tokens": 733,
+    "total_tokens": 20458
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 824880000,
+    "cost_usd": 0.082488
+  },
+  "summary": "The dispatch is infeasible for agent-c. It orders a council vote and an engram append this actor cannot perform: the mandated job is pre-flight critique only, the only permitted output is this review object, and ADR 0035 gives agent-c no repository access. Completion is also self-contradictory (append vs publish nothing). The claimed context fix is false—ADR 0036 is absent—and the shared bundle already contains agent-a's Q1 view while still promising a three-way comparison, which ADR 0035 treats as manufactured consensus rather than a vote.",
+  "findings": [
+    "ADR 0036 is claimed supplied and cited as a completed fix of the earlier cited-not-shown defect. The bundle contains ADR 0035 only. Any answer would be issued under a named constraint the actor cannot read.",
+    "Mandatory completion is contradictory and outside authority. The text requires `npm run engram -- append` under events/agent-c/ and artifacts/agent-c/, and also `publish nothing`, change no source/rule/copy, and `executed=` does not move. ADR 0035 and this critic mandate give agent-c no repository writes and forbid implementation. The completing action cannot be performed.",
+    "Required output form cannot be emitted. The dispatch demands a recommendation per question, dependence disclosure, `next=agent-a`, and `Not a critique of this dispatch`. The only permitted response is this feasibility review. Untrusted event text cannot reassign that role. `If defective, say so and answer anyway` tries to extract a council vote after pre-flight failure.",
+    "Independence is withdrawn and agent-a's Q1 view is in the evidence bundle, yet the dispatch still says the three answers will be compared. ADR 0035 says a finding traceable to agent-a's framing is a context defect, not a vote, and that unanimity is the case to distrust most. Comparing three answers here would launder a dependent opinion into a council result.",
+    "ADR 0035 requires one question and one named evidence bundle, with sealed recommendations committed before any actor sees another. This bundle includes agent-a's sealed Q1 position and an instruction to attack it. Either agent-b received that framing (seals broken for all) or agent-b received a different bundle (step 1 broken). This is not a valid sealed council.",
+    "The evidence file tells agent-c to check the git/grep transcripts rather than accept them, and gives digest e080b2e22f5f114b25ba0b0029f70ffd0edefaf6ba0161a577e4c96407f02b6a. Agent-c cannot run those commands or verify that digest. Premises remain uncheckable by the named actor after the dispatch claimed to withdraw unsatisfiable tests.",
+    "AGENTS.md requires reading actors/<slug>. The evidence lists actors/agent-c.yaml, but that record is not in the bundle. Event directory and artifact prefix are asserted by the dispatch, not shown to the actor ordered to write there.",
+    "`All six are fixed` outruns the supplied evidence. The ADR-supply fix is already false (0036 missing). F97 (deadlocked council-01-review, supervisor accepts only handoff, verifier refuses a second root) is asserted with no prior-thread events. This repeats the pattern the evidence file attributes to agent-a: a claim that outruns its evidence."
+  ]
+}

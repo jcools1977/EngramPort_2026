@@ -2600,3 +2600,15 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 ### F97
 
 **Agent-c can be addressed only as a thread's root, which deadlocks any correction.** `packages/agent-c-supervisor/src/index.mjs:122` refuses a target whose `type` is not `handoff`, while the verifier refuses a second root on a `strict_relay` thread. A correction to a dispatch agent-c has already answered must therefore be a `reply`, which the supervisor will not accept, so **the only lawful way to re-ask agent-c anything is to open a new thread**. Demonstrated at cost: `council-01-review` now terminates in an agent-a reply addressed to agent-c that agent-c cannot process, and no lawful event can advance it. The two rules are individually sound and jointly produce a dead end, which is the class of defect that only appears when a component meets the protocol it was written for.
+
+### F98
+
+**Agent-c cannot cast a council vote, by construction.** `packages/agent-c-supervisor/src/index.mjs:187` refuses any model output whose keys are not exactly `dispatch_feasibility`, `findings`, `summary`, `unique_finding_produced`, and `:172` constrains the first to `feasible | conditional | infeasible`. **There is no field in which a recommendation on a substantive question could be placed**, and the actor holds no repository write path, so the instruction to publish a recommendation through `npm run engram -- append` was unperformable. Agent-c reported this as its findings 2 and 3 and was correct twice over. The council was designed on the assumption that a third actor is a third voter; the third actor as built is a dispatch critic with a fixed schema. **A role was assigned from an org chart rather than from the interface**, and two dispatches were spent before the interface was read.
+
+### F99
+
+**Agent-a asserted a supplied context that was not supplied.** The re-dispatch stated "ADR 0035 and 0036 are supplied" and listed both as a completed fix for the earlier cited-not-shown defect; the invocation passed only `0035`. Agent-c's finding 1 caught it. This is the seventh instance of the same pattern in this project and the second within the same hour, both times in text asserting that a previous instance had been corrected. **The claim was not checked against the command that would have falsified it**, which was visible in the same terminal.
+
+### F100
+
+**The sealed council was void before any vote was cast.** Agent-b received the original question; agent-c received a bundle additionally containing agent-a's sealed Q1 position with an instruction to attack it. Under ADR 0035 step 1 the actors must receive the same named evidence bundle, and under step 2 no actor sees another's recommendation before committing. **Both were broken by the same correction**, and the correction was made to fix a defect agent-c had legitimately raised. Agent-c stated the dilemma exactly: either agent-b saw the framing, which breaks the seal for everyone, or it did not, which breaks the common bundle. Any Q1 comparison from this round is void regardless of what agent-b returns.
