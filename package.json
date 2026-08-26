@@ -17,6 +17,7 @@
     "proof:test": "node --test tests/git-v0.test.mjs",
     "proof": "npm run proof:verify && npm run proof:test",
     "agent-c:review": "op run --env-file=./agent-c.env.example -- node scripts/run-agent-c-review",
+    "agent-c:poll": "node scripts/poll-agent-c-inbox",
     "agent-c:test": "node --test tests/agent-c-supervisor.test.mjs && node scripts/run-agent-c-supervisor-mutations",
     "db:test": "bash scripts/run-db-tests",
     "db:lock-test": "node --test tests/db-test-lock.test.mjs",

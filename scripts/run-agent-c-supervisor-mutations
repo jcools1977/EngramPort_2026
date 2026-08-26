@@ -18,6 +18,8 @@ const mutations = [
     ['if (!boundaryReal.startsWith(`${rootReal}${path.sep}`) || (parentReal !== boundaryReal && !parentReal.startsWith(`${boundaryReal}${path.sep}`))) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");']
   ]],
   ["turn-enforcement", [['if (event.meta.next !== AGENT_C) refuse("TURN_REFUSED");', 'if (false) refuse("TURN_REFUSED");']]],
+  ["reply-target", [['  if (event.meta.from !== REVIEWER || !["handoff", "reply"].includes(event.meta.type)) refuse("TARGET_REFUSED"); /* AGENT_C_REVIEW_TARGET_TYPES */', '  if (event.meta.from !== REVIEWER || event.meta.type !== "handoff") refuse("TARGET_REFUSED"); /* AGENT_C_REPLY_TARGET_REMOVED */']]],
+  ["result-review", [['  const contract = REVIEW_CONTRACTS[reviewMode]; /* AGENT_C_REVIEW_MODE_CONTRACT */', '  const contract = REVIEW_CONTRACTS.dispatch; /* AGENT_C_RESULT_REVIEW_REMOVED */']]],
   ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code);', 'if (false) refuse(code);']]],
   ["provider-diagnosis", [['      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });', '      refuse("MODEL_CALL_FAILED");']]],
   ["provider-error-egress", [['      assertNoCredential(responseText, this.credential);', '      void responseText;']]]

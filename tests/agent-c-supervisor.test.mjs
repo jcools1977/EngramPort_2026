@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -17,30 +18,69 @@ const fixedReview = {
   summary: "One explicit prerequisite remains.",
   findings: ["The dispatch requires a named prerequisite before execution."]
 };
+const fixedResultReview = {
+  result_verdict: "conditional",
+  unique_finding_produced: true,
+  summary: "The delivered result still needs one named proof.",
+  findings: ["The result evidence omits the required negative control."]
+};
 const fixedUsage = { input_tokens: 41, output_tokens: 17, total_tokens: 58, cost_in_usd_ticks: 158500 };
 
 function check(name, operation) { test(name, { skip: selected !== "all" && selected !== name }, operation); }
 function stubModel(review = fixedReview) { return { review: async () => ({ review, model: "grok-synthetic", usage: fixedUsage }) }; }
 
-async function fixture({ next = "agent-c" } = {}) {
+async function fixture({ next = "agent-c", targetType = "handoff", isolated = false } = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "engramport-agent-c-"));
   for (const surface of ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml", "AGENTS.md"]) await cp(path.join(repository, surface), path.join(root, surface), { recursive: true });
+  if (isolated) {
+    await rm(path.join(root, "events"), { recursive: true, force: true });
+    await rm(path.join(root, "threads"), { recursive: true, force: true });
+    for (const actor of ["agent-a", "agent-b", "agent-c"]) await mkdir(path.join(root, "events", actor), { recursive: true });
+    await mkdir(path.join(root, "threads"), { recursive: true });
+  }
   await mkdir(path.join(root, "docs", "design"), { recursive: true });
   await cp(path.join(repository, "docs/design/agent-c-review-prompt.md"), path.join(root, "docs/design/agent-c-review-prompt.md"));
   await mkdir(path.join(root, "scripts"), { recursive: true });
   await cp(path.join(repository, "scripts/engram"), path.join(root, "scripts/engram"));
   await mkdir(path.join(root, "packages"), { recursive: true });
   await cp(path.join(repository, "packages/git-adapter"), path.join(root, "packages/git-adapter"), { recursive: true });
-  const thread = `agent-c-synthetic-${next}`;
+  const thread = `agent-c-synthetic-${targetType}-${next}`;
   const declaration = { schema_version: 0, thread, mode: "strict_relay", coordinator: null };
   await writeFile(path.join(root, "threads", `${thread}.yaml`), `schema_version: 0\nthread: ${thread}\nmode: strict_relay\ncoordinator: null\n`);
-  const id = next === "agent-c" ? "01a03e50-0000-7000-8000-000000000001" : "01a03e50-0000-7000-8000-000000000002";
-  const occurredAt = next === "agent-c" ? "2026-08-26T14:00:01Z" : "2026-08-26T14:00:02Z";
-  const body = "Review whether this synthetic dispatch has all prerequisites.\n";
-  const source = `---\nschema_version: 0\nid: ${id}\nthread: ${thread}\nfrom: agent-a\ntype: handoff\noccurred_at: ${occurredAt}\nin_reply_to: null\nnext: ${next}\ncontent_sha256: ${hashBody(body)}\nthread_config_sha256: ${hashThreadConfig(declaration)}\n---\n${body}`;
-  const relative = `events/agent-a/${occurredAt.replace(/[-:]/g, "")}_${id}.md`;
-  await writeFile(path.join(root, relative), source);
+  async function writeEvent({ actor, id, occurredAt, type, reply = null, eventNext, body, rootEvent = false }) {
+    const binding = rootEvent ? `\nthread_config_sha256: ${hashThreadConfig(declaration)}` : "";
+    const source = `---\nschema_version: 0\nid: ${id}\nthread: ${thread}\nfrom: ${actor}\ntype: ${type}\noccurred_at: ${occurredAt}\nin_reply_to: ${reply ?? "null"}\nnext: ${eventNext ?? "null"}\ncontent_sha256: ${hashBody(body)}${binding}\n---\n${body}`;
+    const relative = `events/${actor}/${occurredAt.replace(/[-:]/g, "")}_${id}.md`;
+    await writeFile(path.join(root, relative), source);
+    return relative;
+  }
+  let id;
+  let relative;
+  if (targetType === "reply") {
+    const rootId = "01a03e50-0000-7000-8000-000000000101";
+    const reviewId = "01a03e50-0000-7000-8000-000000000102";
+    id = "01a03e50-0000-7000-8000-000000000103";
+    await writeEvent({ actor: "agent-a", id: rootId, occurredAt: "2026-08-26T13:59:59Z", type: "handoff", eventNext: "agent-c", body: "Initial synthetic review request.\n", rootEvent: true });
+    await writeEvent({ actor: "agent-c", id: reviewId, occurredAt: "2026-08-26T14:00:00Z", type: "reply", reply: rootId, eventNext: "agent-a", body: "Synthetic review finding.\n" });
+    relative = await writeEvent({ actor: "agent-a", id, occurredAt: "2026-08-26T14:00:01Z", type: "reply", reply: reviewId, eventNext: next, body: "Review the corrected synthetic result.\n" });
+  } else {
+    id = next === "agent-c" ? "01a03e50-0000-7000-8000-000000000001" : "01a03e50-0000-7000-8000-000000000002";
+    const occurredAt = next === "agent-c" ? "2026-08-26T14:00:01Z" : "2026-08-26T14:00:02Z";
+    relative = await writeEvent({ actor: "agent-a", id, occurredAt, type: "handoff", eventNext: next, body: "Review whether this synthetic dispatch has all prerequisites.\n", rootEvent: true });
+  }
   return { root, relative, id, thread };
+}
+
+async function runPoller(root) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(repository, "scripts/poll-agent-c-inbox")], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.once("error", reject);
+    child.once("close", (code) => resolve({ code, stdout, stderr }));
+  });
 }
 
 check("credential-reference", async () => {
@@ -73,6 +113,69 @@ check("turn-enforcement", async () => {
   try {
     assert.equal((await supervisor.assertOpenAgentCTurn(positive.root, positive.relative)).event.meta.next, "agent-c");
     await assert.rejects(supervisor.assertOpenAgentCTurn(negative.root, negative.relative), (error) => error.code === "TURN_REFUSED");
+  } finally {
+    await rm(positive.root, { recursive: true, force: true });
+    await rm(negative.root, { recursive: true, force: true });
+  }
+});
+
+check("reply-target", async () => {
+  const { root, relative } = await fixture({ targetType: "reply", isolated: true });
+  try {
+    const turn = await supervisor.assertOpenAgentCTurn(root, relative);
+    assert.equal(turn.event.meta.type, "reply");
+    assert.equal(turn.event.meta.next, "agent-c");
+    assert.equal(turn.relayCount, 2);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("result-review", async () => {
+  const { root, relative } = await fixture({ targetType: "reply", isolated: true });
+  try {
+    let requestBody;
+    const resultPayload = { model: "grok-synthetic", choices: [{ message: { content: JSON.stringify(fixedResultReview) } }], usage: { prompt_tokens: 41, completion_tokens: 17, total_tokens: 58, cost_in_usd_ticks: 158500 } };
+    const client = new supervisor.XaiResponsesClient({ credential, model: "grok-synthetic", fetchImpl: async (_url, init) => { requestBody = JSON.parse(init.body); return new Response(JSON.stringify(resultPayload)); } });
+    assert.deepEqual((await client.review("Review delivered synthetic work.", "result")).review, fixedResultReview);
+    const resultSchema = requestBody.response_format.json_schema.schema;
+    assert.ok(resultSchema.required.includes("result_verdict"));
+    assert.equal(Object.hasOwn(resultSchema.properties, "dispatch_feasibility"), false);
+
+    const appended = [];
+    const result = await supervisor.runAgentCReview({
+      root,
+      targetRelative: relative,
+      reviewMode: "result",
+      env: { XAI_API_KEY: credential },
+      modelClient: stubModel(fixedResultReview),
+      appendEvent: async (_root, input) => appended.push({ ...input, bodyText: await readFile(path.join(root, input.body), "utf8") })
+    });
+    assert.equal(appended.length, 1);
+    assert.equal(result.measurement.review_mode, "result");
+    assert.equal(result.measurement.result_verdict, "conditional");
+    assert.equal(Object.hasOwn(result.measurement, "dispatch_feasibility"), false);
+    assert.match(appended[0].bodyText, /^# Agent-c result review\n/);
+
+    const unknownKeyReview = { ...fixedResultReview, dispatch_feasibility: "feasible" };
+    await assert.rejects(
+      supervisor.runAgentCReview({ root, targetRelative: relative, reviewMode: "result", env: { XAI_API_KEY: credential }, modelClient: stubModel(unknownKeyReview), appendEvent: async () => assert.fail("invalid result review must not append") }),
+      (error) => error.code === "MODEL_OUTPUT_INVALID"
+    );
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("inbox-poller", async () => {
+  const positive = await fixture({ targetType: "reply", isolated: true });
+  const negative = await fixture({ next: "agent-b", isolated: true });
+  try {
+    const actionable = await runPoller(positive.root);
+    assert.equal(actionable.code, 0);
+    assert.equal(actionable.stderr, "");
+    assert.equal(actionable.stdout, `${positive.relative}\n`);
+
+    const silent = await runPoller(negative.root);
+    assert.equal(silent.code, 0);
+    assert.equal(silent.stderr, "");
+    assert.equal(silent.stdout, "", "poller must stay silent when agent-c has no actionable turn");
   } finally {
     await rm(positive.root, { recursive: true, force: true });
     await rm(negative.root, { recursive: true, force: true });

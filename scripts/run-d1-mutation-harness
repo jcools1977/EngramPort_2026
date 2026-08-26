@@ -224,6 +224,8 @@ else if(mode==="write-prefix"){
   replace('if (!boundaryReal.startsWith(`${rootReal}${path.sep}`) || (parentReal !== boundaryReal && !parentReal.startsWith(`${boundaryReal}${path.sep}`))) refuse("WRITE_PREFIX_REFUSED");','if (false /* AGENT_C_WRITE_PREFIX_REMOVED */) refuse("WRITE_PREFIX_REFUSED");');
 }
 else if(mode==="turn-enforcement")replace('if (event.meta.next !== AGENT_C) refuse("TURN_REFUSED");','if (false /* AGENT_C_TURN_ENFORCEMENT_REMOVED */) refuse("TURN_REFUSED");');
+else if(mode==="reply-target")replace('  if (event.meta.from !== REVIEWER || !["handoff", "reply"].includes(event.meta.type)) refuse("TARGET_REFUSED"); /* AGENT_C_REVIEW_TARGET_TYPES */','  if (event.meta.from !== REVIEWER || event.meta.type !== "handoff") refuse("TARGET_REFUSED"); /* AGENT_C_REPLY_TARGET_REMOVED */');
+else if(mode==="result-review")replace('  const contract = REVIEW_CONTRACTS[reviewMode]; /* AGENT_C_REVIEW_MODE_CONTRACT */','  const contract = REVIEW_CONTRACTS.dispatch; /* AGENT_C_RESULT_REVIEW_REMOVED */');
 else if(mode==="credential-egress")replace('if (credential && serialized.includes(credential)) refuse(code);','if (false /* AGENT_C_CREDENTIAL_EGRESS_REMOVED */) refuse(code);');
 else if(mode==="provider-diagnosis")replace('      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });','      refuse("MODEL_CALL_FAILED"); /* AGENT_C_PROVIDER_DIAGNOSIS_REMOVED */');
 else if(mode==="provider-error-egress")replace('      assertNoCredential(responseText, this.credential);','      void responseText; /* AGENT_C_PROVIDER_ERROR_EGRESS_REMOVED */');
@@ -398,6 +400,8 @@ for line in "${MUTATIONS[@]}"; do
       AGENT_C_CREDENTIAL_SHAPE) pattern=credential-shape; marker=AGENT_C_CREDENTIAL_SHAPE_REMOVED ;;
       AGENT_C_WRITE_PREFIX) pattern=write-prefix; marker=AGENT_C_WRITE_PREFIX_REMOVED ;;
       AGENT_C_TURN_ENFORCEMENT) pattern=turn-enforcement; marker=AGENT_C_TURN_ENFORCEMENT_REMOVED ;;
+      AGENT_C_REPLY_TARGET) pattern=reply-target; marker=AGENT_C_REPLY_TARGET_REMOVED ;;
+      AGENT_C_RESULT_REVIEW) pattern=result-review; marker=AGENT_C_RESULT_REVIEW_REMOVED ;;
       AGENT_C_CREDENTIAL_EGRESS) pattern=credential-egress; marker=AGENT_C_CREDENTIAL_EGRESS_REMOVED ;;
       AGENT_C_PROVIDER_DIAGNOSIS) pattern=provider-diagnosis; marker=AGENT_C_PROVIDER_DIAGNOSIS_REMOVED ;;
       AGENT_C_PROVIDER_ERROR_EGRESS) pattern=provider-error-egress; marker=AGENT_C_PROVIDER_ERROR_EGRESS_REMOVED ;;
@@ -1213,7 +1217,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 119 ] || fail=1
+  [ "$executed" = 121 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

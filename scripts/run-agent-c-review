@@ -2,10 +2,11 @@
 import { runAgentCReview } from "../packages/agent-c-supervisor/src/index.mjs";
 
 function options(argv) {
-  const result = { context: [] };
+  const result = { context: [], mode: "dispatch" };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--event") result.event = argv[++index];
     else if (argv[index] === "--context") result.context.push(argv[++index]);
+    else if (argv[index] === "--mode") result.mode = argv[++index];
     else throw new Error("ARGUMENT_REFUSED");
   }
   return result;
@@ -14,7 +15,7 @@ function options(argv) {
 try {
   const parsed = options(process.argv.slice(2));
   if (!parsed.event) throw new Error("EVENT_REQUIRED");
-  const result = await runAgentCReview({ targetRelative: parsed.event, contextPaths: parsed.context });
+  const result = await runAgentCReview({ targetRelative: parsed.event, contextPaths: parsed.context, reviewMode: parsed.mode });
   console.log(`agent-c review appended; measurement=${result.artifact.relative}#sha256=${result.artifact.sha256}`);
 } catch (error) {
   console.error(`agent-c supervisor: ${error.code ?? error.message ?? "REFUSED"}`);

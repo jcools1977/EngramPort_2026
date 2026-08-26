@@ -119,7 +119,7 @@ export async function assertOpenAgentCTurn(root, targetRelative) {
   try { event = parseEvent(await readFile(targetPath, "utf8"), targetRelative); }
   catch { refuse("TARGET_REFUSED"); }
   if (event.meta.next !== AGENT_C) refuse("TURN_REFUSED");
-  if (event.meta.from !== REVIEWER || event.meta.type !== "handoff") refuse("TARGET_REFUSED");
+  if (event.meta.from !== REVIEWER || !["handoff", "reply"].includes(event.meta.type)) refuse("TARGET_REFUSED"); /* AGENT_C_REVIEW_TARGET_TYPES */
   if (await effectiveMode(root, event.meta.thread) !== "strict_relay") refuse("MODE_REFUSED");
   const parsed = [];
   for (const file of await actorEventFiles(root)) parsed.push(parseEvent(await readFile(file, "utf8"), path.relative(root, file)));
@@ -143,7 +143,8 @@ async function readBoundedContextFile(root, relative) {
   return { relative: slash(path.relative(root, fileReal)), content };
 }
 
-export async function buildReviewPrompt(root, turn, contextPaths = []) {
+export async function buildReviewPrompt(root, turn, contextPaths = [], reviewMode = "dispatch") {
+  if (!Object.hasOwn(REVIEW_CONTRACTS, reviewMode)) refuse("REVIEW_MODE_REFUSED");
   const prompt = await readBoundedContextFile(root, "docs/design/agent-c-review-prompt.md");
   const fixed = ["AGENTS.md", "engramport.yaml", ...contextPaths];
   const seen = new Set();
@@ -157,35 +158,62 @@ export async function buildReviewPrompt(root, turn, contextPaths = []) {
   const artifactPaths = (turn.event.meta.artifacts ?? []).map((reference) => reference.split("#", 1)[0]);
   for (const relative of artifactPaths) if (!seen.has(relative)) records.push(await readBoundedContextFile(root, relative));
   const context = records.map(({ relative, content }) => `\n<repository-file path=${JSON.stringify(relative)}>\n${content}\n</repository-file>`).join("");
-  const combined = `${prompt.content}\n\nTarget event metadata:\n${JSON.stringify({ id: turn.event.meta.id, thread: turn.event.meta.thread, from: turn.event.meta.from, next: turn.event.meta.next })}\n${context}`;
+  const modeInstruction = reviewMode === "dispatch"
+    ? "Review mode: dispatch. Assess whether the proposed dispatch is feasible. Return dispatch_feasibility."
+    : "Review mode: result. Assess the delivered work and supplied evidence against its requirements, not the feasibility of its instructions. Return result_verdict.";
+  const combined = `${prompt.content}\n\n${modeInstruction}\n\nTarget event metadata:\n${JSON.stringify({ id: turn.event.meta.id, thread: turn.event.meta.thread, from: turn.event.meta.from, next: turn.event.meta.next })}\n${context}`;
   if (Buffer.byteLength(combined) > MAX_CONTEXT_BYTES) refuse("CONTEXT_TOO_LARGE");
   return combined;
 }
 
-const REVIEW_SCHEMA = {
-  name: "agent_c_dispatch_review",
-  strict: true,
-  schema: {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-      dispatch_feasibility: { type: "string", enum: ["feasible", "conditional", "infeasible"] },
-      unique_finding_produced: { type: "boolean" },
-      summary: { type: "string", maxLength: 4000 },
-      findings: { type: "array", maxItems: 20, items: { type: "string", maxLength: 4000 } }
-    },
-    required: ["dispatch_feasibility", "unique_finding_produced", "summary", "findings"]
-  }
+const commonReviewProperties = {
+  unique_finding_produced: { type: "boolean" },
+  summary: { type: "string", maxLength: 4000 },
+  findings: { type: "array", maxItems: 20, items: { type: "string", maxLength: 4000 } }
 };
 
-function parseReview(value, credential) {
+const REVIEW_CONTRACTS = Object.freeze({
+  dispatch: {
+    verdictKey: "dispatch_feasibility",
+    verdicts: ["feasible", "conditional", "infeasible"],
+    schema: {
+      name: "agent_c_dispatch_review",
+      strict: true,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: { dispatch_feasibility: { type: "string", enum: ["feasible", "conditional", "infeasible"] }, ...commonReviewProperties },
+        required: ["dispatch_feasibility", "unique_finding_produced", "summary", "findings"]
+      }
+    }
+  },
+  result: {
+    verdictKey: "result_verdict",
+    verdicts: ["verified", "conditional", "rejected"],
+    schema: {
+      name: "agent_c_result_review",
+      strict: true,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: { result_verdict: { type: "string", enum: ["verified", "conditional", "rejected"] }, ...commonReviewProperties },
+        required: ["result_verdict", "unique_finding_produced", "summary", "findings"]
+      }
+    }
+  }
+});
+
+function parseReview(value, credential, reviewMode = "dispatch") {
   assertNoCredential(value, credential);
+  const contract = REVIEW_CONTRACTS[reviewMode]; /* AGENT_C_REVIEW_MODE_CONTRACT */
+  if (!contract) refuse("REVIEW_MODE_REFUSED");
   let review;
   try { review = typeof value === "string" ? JSON.parse(value) : value; }
   catch { refuse("MODEL_OUTPUT_INVALID"); }
   const keys = Object.keys(review ?? {}).sort();
-  if (JSON.stringify(keys) !== JSON.stringify(["dispatch_feasibility", "findings", "summary", "unique_finding_produced"])) refuse("MODEL_OUTPUT_INVALID");
-  if (!["feasible", "conditional", "infeasible"].includes(review.dispatch_feasibility)) refuse("MODEL_OUTPUT_INVALID");
+  const expectedKeys = [contract.verdictKey, "findings", "summary", "unique_finding_produced"].sort();
+  if (JSON.stringify(keys) !== JSON.stringify(expectedKeys)) refuse("MODEL_OUTPUT_INVALID");
+  if (!contract.verdicts.includes(review[contract.verdictKey])) refuse("MODEL_OUTPUT_INVALID");
   if (typeof review.unique_finding_produced !== "boolean" || typeof review.summary !== "string" || !Array.isArray(review.findings) || review.findings.some((item) => typeof item !== "string")) refuse("MODEL_OUTPUT_INVALID");
   if (review.unique_finding_produced !== (review.findings.length > 0)) refuse("MODEL_OUTPUT_INVALID");
   if (Buffer.byteLength(JSON.stringify(review)) > MAX_OUTPUT_BYTES) refuse("MODEL_OUTPUT_INVALID");
@@ -195,15 +223,17 @@ function parseReview(value, credential) {
 export class XaiResponsesClient {
   constructor({ credential, model = "grok-4.6", fetchImpl = globalThis.fetch }) { this.credential = credential; this.model = model; this.fetchImpl = fetchImpl; }
 
-  async review(prompt) {
+  async review(prompt, reviewMode = "dispatch") {
     assertNoCredential(prompt, this.credential, "CREDENTIAL_CONTEXT_REFUSED");
+    const contract = REVIEW_CONTRACTS[reviewMode];
+    if (!contract) refuse("REVIEW_MODE_REFUSED");
     let response;
     try {
       response = await this.fetchImpl("https://api.x.ai/v1/chat/completions", {
         method: "POST",
         redirect: "error",
         headers: { Authorization: `Bearer ${this.credential}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: this.model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_schema", json_schema: REVIEW_SCHEMA } })
+        body: JSON.stringify({ model: this.model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_schema", json_schema: contract.schema } })
       });
     } catch { refuse("MODEL_CALL_FAILED"); }
     if (!response?.ok) {
@@ -230,7 +260,7 @@ export class XaiResponsesClient {
     assertNoCredential(payload, this.credential);
     const usage = payload.usage ?? {};
     for (const key of ["prompt_tokens", "completion_tokens", "total_tokens", "cost_in_usd_ticks"]) if (!Number.isSafeInteger(usage[key]) || usage[key] < 0) refuse("MODEL_METRICS_MISSING");
-    const review = parseReview(payload.choices?.[0]?.message?.content, this.credential);
+    const review = parseReview(payload.choices?.[0]?.message?.content, this.credential, reviewMode);
     return { review, model: payload.model ?? this.model, usage: { input_tokens: usage.prompt_tokens, output_tokens: usage.completion_tokens, total_tokens: usage.total_tokens, cost_in_usd_ticks: usage.cost_in_usd_ticks } };
   }
 }
@@ -247,29 +277,32 @@ export async function appendEventWithCli(root, { thread, reply, next, body, arti
   });
 }
 
-function eventBody(review, measurement) {
+function eventBody(review, measurement, reviewMode) {
   const findings = review.findings.length ? review.findings.map((finding) => `- ${finding}`).join("\n") : "- None.";
-  return `# Agent-c pre-flight review\n\nDispatch feasibility: **${review.dispatch_feasibility}**  \nUnique finding produced: **${review.unique_finding_produced}**  \nFinding disposition: **pending**\n\n${review.summary}\n\n## Findings\n\n${findings}\n\nMeasurement: ${measurement.token_use.total_tokens} tokens, ${measurement.provider_cost.cost_in_usd_ticks} USD ticks, relay count ${measurement.relay_count}.\n`;
+  const verdict = reviewMode === "dispatch" ? `Dispatch feasibility: **${review.dispatch_feasibility}**` : `Result verdict: **${review.result_verdict}**`;
+  const heading = reviewMode === "dispatch" ? "Agent-c pre-flight review" : "Agent-c result review";
+  return `# ${heading}\n\n${verdict}  \nUnique finding produced: **${review.unique_finding_produced}**  \nFinding disposition: **pending**\n\n${review.summary}\n\n## Findings\n\n${findings}\n\nMeasurement: ${measurement.token_use.total_tokens} tokens, ${measurement.provider_cost.cost_in_usd_ticks} USD ticks, relay count ${measurement.relay_count}.\n`;
 }
 
-export async function runAgentCReview({ root = process.cwd(), targetRelative, contextPaths = [], env = process.env, modelClient = null, appendEvent = appendEventWithCli, clock = () => new Date() }) {
+export async function runAgentCReview({ root = process.cwd(), targetRelative, contextPaths = [], reviewMode = "dispatch", env = process.env, modelClient = null, appendEvent = appendEventWithCli, clock = () => new Date() }) {
   const credential = requireResolvedCredential(env);
   const turn = await assertOpenAgentCTurn(root, targetRelative);
-  const prompt = await buildReviewPrompt(root, turn, contextPaths);
+  const prompt = await buildReviewPrompt(root, turn, contextPaths, reviewMode);
   const client = modelClient ?? new XaiResponsesClient({ credential, model: env.XAI_MODEL ?? "grok-4.6" });
   const startedAt = clock().toISOString();
-  const result = await client.review(prompt);
+  const result = await client.review(prompt, reviewMode);
   const completedAt = clock().toISOString();
-  const review = parseReview(result.review, credential);
+  const review = parseReview(result.review, credential, reviewMode);
   const usage = result.usage ?? {};
   for (const key of ["input_tokens", "output_tokens", "total_tokens", "cost_in_usd_ticks"]) if (!Number.isSafeInteger(usage[key]) || usage[key] < 0) refuse("MODEL_METRICS_MISSING");
   const measurement = {
     schema_version: 0,
     target_event_id: turn.event.meta.id,
     target_thread: turn.event.meta.thread,
+    review_mode: reviewMode,
     provider: "xai",
     model: result.model ?? env.XAI_MODEL ?? "grok-4.6",
-    dispatch_feasibility: review.dispatch_feasibility,
+    [REVIEW_CONTRACTS[reviewMode].verdictKey]: review[REVIEW_CONTRACTS[reviewMode].verdictKey],
     unique_finding_produced: review.unique_finding_produced,
     finding_disposition: "pending",
     review_started_at: startedAt,
@@ -286,10 +319,39 @@ export async function runAgentCReview({ root = process.cwd(), targetRelative, co
   const stem = turn.event.meta.id;
   const artifact = await store.writeArtifact(`${ARTIFACT_PREFIX}/reviews/${stem}.json`, measurement, credential);
   const pending = `${ARTIFACT_PREFIX}/.pending-${stem}.md`;
-  await store.writeArtifact(pending, eventBody(review, measurement), credential);
+  await store.writeArtifact(pending, eventBody(review, measurement, reviewMode), credential);
   try {
     await assertOpenAgentCTurn(root, targetRelative);
     await appendEvent(root, { thread: turn.event.meta.thread, reply: turn.event.meta.id, next: REVIEWER, body: pending, artifact });
   } finally { await store.removeArtifact(pending); }
   return { artifact, measurement };
+}
+
+async function readAgentCInboxWithCli(root) {
+  const script = path.join(root, "scripts", "engram");
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [script, "inbox", "--actor", AGENT_C], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => { if (stdout.length < MAX_OUTPUT_BYTES) stdout += chunk; });
+    child.stderr.on("data", (chunk) => { if (stderr.length < 4096) stderr += chunk; });
+    child.once("error", () => reject(new AgentCSupervisorError("INBOX_FAILED")));
+    child.once("close", (code) => {
+      if (code !== 0) reject(new AgentCSupervisorError(stderr.includes("invalid") ? "LOG_INVALID" : "INBOX_FAILED"));
+      else resolve(stdout.split(/\r?\n/).filter((line) => line.startsWith("events/")));
+    });
+  });
+}
+
+export async function pollAgentCInbox({ root = process.cwd() } = {}) {
+  const actionable = [];
+  for (const relative of await readAgentCInboxWithCli(root)) {
+    try {
+      await assertOpenAgentCTurn(root, relative);
+      actionable.push(relative);
+    } catch (error) {
+      if (!["TARGET_REFUSED", "MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error;
+    }
+  }
+  return actionable;
 }

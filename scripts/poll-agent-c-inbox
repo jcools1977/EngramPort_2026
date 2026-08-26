@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+import { pollAgentCInbox } from "../packages/agent-c-supervisor/src/index.mjs";
+
+try {
+  for (const relative of await pollAgentCInbox()) console.log(relative);
+} catch (error) {
+  console.error(`agent-c inbox poller: ${error.code ?? error.message ?? "REFUSED"}`);
+  process.exitCode = 1;
+}
