@@ -10,6 +10,10 @@ const TYPES = new Set(EVENT_TYPES);
 const KEYS = new Set(["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256", "thread_config_sha256", "artifacts"]);
 const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
 
+export function isMarkdownEventFile(name) { /* EVENT_EXTENSION_CASE_INSENSITIVE */
+  return path.extname(name).toLowerCase() === ".md";
+}
+
 export function assertAcceptedEventTypes(types, surface = "event-type surface") {
   for (const type of types) if (!TYPES.has(type)) throw new Error(`${surface}: unknown event type ${type}`);
   return true;
@@ -132,7 +136,7 @@ async function readActors(root) {
   return actors;
 }
 
-async function discoverEventFiles(directory) {
+export async function discoverEventFiles(directory) {
   let entries;
   try { entries = await readdir(directory, { withFileTypes: true }); }
   catch (error) {
@@ -143,7 +147,7 @@ async function discoverEventFiles(directory) {
   for (const entry of entries) {
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await discoverEventFiles(absolute));
-    else if (entry.isFile() && entry.name.endsWith(".md")) files.push(absolute);
+    else if (entry.isFile() && isMarkdownEventFile(entry.name)) files.push(absolute);
   }
   return files;
 }
@@ -200,7 +204,7 @@ export async function verifyLog(root, options = {}) {
       const compact = String(parsed.meta.occurred_at ?? "").replace(/[-:]/g, "").replace(".000", "");
       const expectedPrefix = compact.replace("Z", "Z_");
       if (!name.startsWith(expectedPrefix)) errors.push(`${relative}: filename timestamp does not match occurred_at`);
-      if (!name.endsWith(`_${parsed.meta.id}.md`)) errors.push(`${relative}: filename UUID does not match event id`);
+      if (!name.toLowerCase().endsWith(`_${parsed.meta.id}.md`)) errors.push(`${relative}: filename UUID does not match event id`);
       if (parsed.meta.from !== actor.slug) errors.push(`${relative}: actor-directory ownership violation`);
       if (hashBody(parsed.body) !== parsed.meta.content_sha256) errors.push(`${relative}: content hash mismatch`);
       events.push({ ...parsed, relative });

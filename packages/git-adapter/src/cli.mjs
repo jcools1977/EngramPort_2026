@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { hashBody, hashThreadConfig, parseEvent, parseRecord, verifyLog } from "./verify-log.mjs";
+import { discoverEventFiles, hashBody, hashThreadConfig, parseEvent, parseRecord, verifyLog } from "./verify-log.mjs";
 import { verifyWelcome } from "./welcome-verify.mjs";
 import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
@@ -60,13 +60,9 @@ export async function validateAppendInputs({ body, artifacts = [], cwd = process
 const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
 
 async function threadHasEvents(cwd, thread) {
-  const actorDirectories = await readdir(path.join(cwd, "events"));
-  for (const actor of actorDirectories) {
-    for (const name of await readdir(path.join(cwd, "events", actor))) {
-      if (!name.endsWith(".md")) continue;
-      const event = parseEvent(await readFile(path.join(cwd, "events", actor, name), "utf8"), name);
-      if (event.meta.thread === thread) return true;
-    }
+  for (const file of await discoverEventFiles(path.join(cwd, "events"))) {
+    const event = parseEvent(await readFile(file, "utf8"), path.relative(cwd, file));
+    if (event.meta.thread === thread) return true;
   }
   return false;
 }
@@ -135,9 +131,7 @@ export async function run(argv, cwd = process.cwd()) {
   if (command === "inbox") {
     if (!options.actor) throw new Error("inbox requires --actor");
     const result = await verifyLog(cwd, { throwOnError: true });
-    const { readdir } = await import("node:fs/promises");
-    const files = [];
-    for (const actor of await readdir(path.join(cwd, "events"))) for (const name of await readdir(path.join(cwd, "events", actor))) if (name.endsWith(".md")) files.push(path.join(cwd, "events", actor, name));
+    const files = await discoverEventFiles(path.join(cwd, "events"));
     const parsed = await Promise.all(files.sort().map(async (file) => ({ file, event: parseEvent(await readFile(file, "utf8"), path.relative(cwd, file)) })));
     const answered = new Set(parsed.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
     let found = 0;

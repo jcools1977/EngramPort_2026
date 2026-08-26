@@ -121,6 +121,45 @@ test("verification aligns recursive Markdown discovery with validation and ignor
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
+test("uppercase Markdown forgery is accounted for and fails by path", async () => {
+  const directory = await fixture();
+  const nestedDirectory = path.join(directory, "events", "agent-a", "sneaky2");
+  const uppercaseEvent = path.join(nestedDirectory, "FORGED.MD");
+  try {
+    await mkdir(nestedDirectory);
+    const generated = await event(directory, { actor: "agent-a", thread: "uppercase-forgery", id: ids[0], type: "decision" });
+    await rename(generated, uppercaseEvent);
+    const result = await verifyLog(directory);
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join("\n"), /events\/agent-a\/sneaky2\/FORGED\.MD: event file is not directly enumerated by a registered actor event_directory/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("event extension policy is shared by inbox while normal append stays lowercase", async () => {
+  const directory = await fixture();
+  const output = [];
+  const originalLog = console.log;
+  try {
+    const uppercaseGenerated = await event(directory, { actor: "agent-a", thread: "uppercase-open", id: ids[0], next: "agent-b" });
+    const uppercaseEvent = uppercaseGenerated.replace(/\.md$/, ".MD");
+    await rename(uppercaseGenerated, uppercaseEvent);
+    const nonEventDirectory = path.join(directory, "events", "rogue2");
+    await mkdir(nonEventDirectory);
+    await writeFile(path.join(nonEventDirectory, "forged.txt"), "deliberately not an event\n");
+
+    const body = path.join(directory, "normal-lowercase-body.txt");
+    await writeFile(body, "normal lowercase append\n");
+    console.log = (...parts) => output.push(parts.join(" "));
+    assert.equal(await run(["append", "--actor", "agent-a", "--thread", "lowercase-open", "--type", "message", "--body", body, "--next", "agent-b"], directory), 0);
+    assert.equal(await run(["inbox", "--actor", "agent-b"], directory), 0);
+    assert.ok(output.includes(path.relative(directory, uppercaseEvent)), "uppercase Markdown event must appear in inbox");
+    assert.ok(output.some((line) => /^events\/agent-a\/.*\.md$/.test(line)), "normal append must remain lowercase and appear in inbox");
+  } finally {
+    console.log = originalLog;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("append with an empty artifacts flag preserves artifact-free append behavior", async () => {
   const directory = await fixture();
   try {
