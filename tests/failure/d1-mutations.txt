@@ -4,4 +4,8 @@ G3|UPDATE pg_proc SET prosrc=replace(prosrc,'IF NOT(required=ANY(g.scopes)) THEN
 G4|UPDATE pg_proc SET prosrc=replace(prosrc,'IF p_namespace IN (''shape'',''installation'') THEN RAISE EXCEPTION ''NAMESPACE_REFUSED'' USING ERRCODE=''42501'';END IF;','') WHERE proname='mint_custody_reference';|SELECT position('NAMESPACE_REFUSED' in prosrc)=0 FROM pg_proc WHERE proname='mint_custody_reference'
 D1F_TENANT_CONTEXT|FIXTURE_REMOVE_TENANT_CONTEXT|SELECT true
 F59_TRUNCATE_GUARD|DROP TRIGGER events_truncate_immutable ON events; DROP TRIGGER event_recipients_truncate_immutable ON event_recipients;|SELECT count(*)=0 FROM pg_trigger WHERE tgname IN ('events_truncate_immutable','event_recipients_truncate_immutable')
+AGENT_C_CREDENTIAL_REFERENCE|AGENT_C_CREDENTIAL_REFERENCE|SELECT true
+AGENT_C_WRITE_PREFIX|AGENT_C_WRITE_PREFIX|SELECT true
+AGENT_C_TURN_ENFORCEMENT|AGENT_C_TURN_ENFORCEMENT|SELECT true
+AGENT_C_CREDENTIAL_EGRESS|AGENT_C_CREDENTIAL_EGRESS|SELECT true
 NOOP|SELECT 1;|SELECT false
