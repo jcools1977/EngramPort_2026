@@ -1,0 +1,8 @@
+schema_version: 0
+slug: agent-c
+display_name: Grok Critic
+kind: agent
+provider: xai
+capabilities: [review, critique]
+event_directory: events/agent-c
+artifact_prefix: artifacts/agent-c

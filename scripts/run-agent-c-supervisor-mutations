@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const root = path.resolve(import.meta.dirname, "..");
+const sourceFile = path.join(root, "packages/agent-c-supervisor/src/index.mjs");
+const temporary = mkdtempSync(path.join(tmpdir(), "agent-c-mutations-"));
+const mutations = [
+  ["credential-reference", [['if (!credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");', 'if (!credential) refuse("CREDENTIAL_UNRESOLVED");']]],
+  ["write-prefix", [
+    ['if (!(relative === ARTIFACT_PREFIX || relative.startsWith(`${ARTIFACT_PREFIX}/`) || relative === EVENT_PREFIX || relative.startsWith(`${EVENT_PREFIX}/`))) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");'],
+    ['if (absolute !== boundary && !absolute.startsWith(`${boundary}${path.sep}`)) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");'],
+    ['if (!boundaryReal.startsWith(`${rootReal}${path.sep}`) || (parentReal !== boundaryReal && !parentReal.startsWith(`${boundaryReal}${path.sep}`))) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");']
+  ]],
+  ["turn-enforcement", [['if (event.meta.next !== AGENT_C) refuse("TURN_REFUSED");', 'if (false) refuse("TURN_REFUSED");']]],
+  ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code);', 'if (false) refuse(code);']]]
+];
+
+try {
+  const original = readFileSync(sourceFile, "utf8")
+    .replace("../../git-adapter/src/credential-boundary.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/credential-boundary.mjs")).href)
+    .replace("../../git-adapter/src/verify-log.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href);
+  for (const [name, replacements] of mutations) {
+    let mutated = original;
+    for (const [before, after] of replacements) {
+      assert.equal(mutated.includes(before), true, `mutation target changed: ${name}`);
+      mutated = mutated.replace(before, after);
+    }
+    const module = path.join(temporary, `${name}.mjs`);
+    writeFileSync(module, mutated);
+    const result = spawnSync(process.execPath, ["--test", "--test-reporter=tap", "tests/agent-c-supervisor.test.mjs"], { cwd: root, encoding: "utf8", env: { ...process.env, AGENT_C_SUPERVISOR_MODULE: pathToFileURL(module).href, AGENT_C_TEST_CASE: name } });
+    const output = `${result.stdout}${result.stderr}`;
+    assert.notEqual(result.status, 0, `${name} mutation unexpectedly survived`);
+    assert.match(output, new RegExp(`not ok \\d+ - ${name}`), `${name} did not fail its discriminating control`);
+    console.log(`AGENT_C_MUTATION ${name}=killed`);
+  }
+} finally { rmSync(temporary, { recursive: true, force: true }); }

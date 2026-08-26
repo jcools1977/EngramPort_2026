@@ -70,9 +70,9 @@ async function addActor(directory, slug) {
   await writeFile(path.join(directory, "actors", `${slug}.yaml`), `schema_version: 0\nslug: ${slug}\ndisplay_name: Test Worker\nkind: agent\nprovider: test\ncapabilities: [testing]\nevent_directory: events/${slug}\nartifact_prefix: artifacts/${slug}\n`);
 }
 
-test("valid two-agent relay verifies", async () => {
+test("valid registered-actor relay verifies", async () => {
   const result = await verifyLog(root);
-  assert.deepEqual({ ok: result.ok, actors: result.actors }, { ok: true, actors: 2 });
+  assert.deepEqual({ ok: result.ok, actors: result.actors }, { ok: true, actors: 3 });
   // The log is append-only, so counts grow. Assert the floor set by the v0 relay, not a frozen census.
   assert.ok(result.events >= 3, `expected at least the 3 v0 relay events, saw ${result.events}`);
   assert.ok(result.threads >= 1, `expected at least the v0 architecture thread, saw ${result.threads}`);
