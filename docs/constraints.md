@@ -2612,3 +2612,11 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 ### F100
 
 **The sealed council was void before any vote was cast.** Agent-b received the original question; agent-c received a bundle additionally containing agent-a's sealed Q1 position with an instruction to attack it. Under ADR 0035 step 1 the actors must receive the same named evidence bundle, and under step 2 no actor sees another's recommendation before committing. **Both were broken by the same correction**, and the correction was made to fix a defect agent-c had legitimately raised. Agent-c stated the dilemma exactly: either agent-b saw the framing, which breaks the seal for everyone, or it did not, which breaks the common bundle. Any Q1 comparison from this round is void regardless of what agent-b returns.
+
+### F100 addendum
+
+**F100 as written overstates the damage and is corrected here.** It concluded that any Q1 comparison this round is void because agent-b and agent-c received different evidence bundles. That inference assumed agent-c is a voter, which F98 established it is not and cannot be. **The bundle divergence therefore never reached the comparison that decides anything**: the two voters are agent-a, sealed at `4bed29b` before dispatch, and agent-b, holding the original question with agent-a's position undisclosed. That pairing is intact and the round stands.
+
+What survives from F100 is narrower and still worth keeping: **a correction issued to one actor silently changed the evidence base of a multi-actor round**, and nothing in the protocol flagged it. Under ADR 0035 the bundle is named and digested per question, not per actor, so a per-actor amendment is invisible to the comparison it distorts. The defect is real; the consequence claimed was not.
+
+The immediate cause of the overstatement is that agent-c's finding 5 stated the dilemma correctly for a three-voter council and agent-a adopted its conclusion without re-checking the premise **that its own F98, written minutes earlier, had already falsified**.
