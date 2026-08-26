@@ -15,10 +15,17 @@ const MAX_CONTEXT_BYTES = 1_000_000;
 const MAX_OUTPUT_BYTES = 128_000;
 
 export class AgentCSupervisorError extends Error {
-  constructor(code) { super(`${code}: refused`); this.name = "AgentCSupervisorError"; this.code = code; }
+  constructor(code, { providerStatus, providerError } = {}) {
+    const diagnosis = providerError ? `: ${providerError}` : "";
+    super(`${code}: refused${diagnosis}`);
+    this.name = "AgentCSupervisorError";
+    this.code = code;
+    if (providerStatus !== undefined) this.providerStatus = providerStatus;
+    if (providerError !== undefined) this.providerError = providerError;
+  }
 }
 
-function refuse(code) { throw new AgentCSupervisorError(code); }
+function refuse(code, details) { throw new AgentCSupervisorError(code, details); }
 function slash(value) { return value.replaceAll(path.sep, "/"); }
 
 function scrubReferences(value) {
@@ -35,7 +42,8 @@ function assertNoCredential(value, credential, code = "CREDENTIAL_OUTPUT_REFUSED
 
 export function requireResolvedCredential(env = process.env) {
   const credential = env.XAI_API_KEY;
-  if (!credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");
+  if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");
+  if (/\s/.test(credential) || /^[A-Za-z_][A-Za-z0-9_]*=/.test(credential)) refuse("CREDENTIAL_MALFORMED");
   return credential;
 }
 
@@ -198,7 +206,20 @@ export class XaiResponsesClient {
         body: JSON.stringify({ model: this.model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_schema", json_schema: REVIEW_SCHEMA } })
       });
     } catch { refuse("MODEL_CALL_FAILED"); }
-    if (!response?.ok) refuse("MODEL_CALL_FAILED");
+    if (!response?.ok) {
+      let responseText;
+      try { responseText = await response?.text(); }
+      catch { refuse("MODEL_CALL_FAILED", { providerStatus: response?.status }); }
+      if (Buffer.byteLength(responseText) > MAX_OUTPUT_BYTES) refuse("MODEL_RESPONSE_INVALID");
+      assertNoCredential(responseText, this.credential);
+      let providerError = responseText;
+      try {
+        const parsed = JSON.parse(responseText);
+        providerError = parsed?.error?.message ?? parsed?.error ?? parsed?.message ?? responseText;
+        if (typeof providerError !== "string") providerError = JSON.stringify(providerError);
+      } catch { providerError = responseText; }
+      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });
+    }
     let payload;
     try {
       const responseText = await response.text();

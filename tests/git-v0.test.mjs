@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import test from "node:test";
 import { hashBody, hashThreadConfig, verifyLog } from "../packages/git-adapter/src/verify-log.mjs";
-import { run } from "../packages/git-adapter/src/cli.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+const cliSpecifier = process.env.GIT_ADAPTER_CLI_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/cli.mjs")).href;
+const { run } = await import(cliSpecifier);
 const surfaces = ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml"];
 
 async function fixture() {
@@ -93,6 +95,24 @@ test("append with an empty artifacts flag preserves artifact-free append behavio
     const appended = sources.find((source) => source.includes("thread: empty-artifacts"));
     assert.ok(appended);
     assert.doesNotMatch(appended, /^artifacts:/m);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("append refuses an unrecognized flag before writing and preserves known-good behavior", async () => {
+  const directory = await fixture();
+  try {
+    await declare(directory, "argument-refusal", "free_form");
+    const body = path.join(directory, "argument-refusal-body.txt");
+    await writeFile(body, "synthetic append with strict arguments\n");
+    const eventDirectory = path.join(directory, "events", "agent-b");
+    const before = await readdir(eventDirectory);
+    await assert.rejects(
+      run(["append", "--actor", "agent-b", "--thread", "argument-refusal", "--type", "message", "--body", body, "--in-reply-to", ids[0]], directory),
+      (error) => error.code === "ARGUMENT_REFUSED" && error.message.includes("--in-reply-to")
+    );
+    assert.deepEqual(await readdir(eventDirectory), before);
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "argument-refusal", "--type", "message", "--body", body], directory), 0);
+    assert.equal((await readdir(eventDirectory)).length, before.length + 1);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 

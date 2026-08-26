@@ -7,12 +7,30 @@ import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setu
 import { executeDryRun } from "./workspace-dry-run.mjs";
 import { detectCredential } from "./credential-boundary.mjs";
 
+const ARGUMENT_PROFILES = new Map([
+  ["welcome verify", new Set(["package"])],
+  ["setup compile", new Set(["file"])],
+  ["setup dry-run", new Set(["file", "temp-dir"])],
+  ["verify", new Set()],
+  ["thread declare", new Set(["thread", "mode", "coordinator"])],
+  ["inbox", new Set(["actor"])],
+  ["append", new Set(["actor", "thread", "type", "body", "reply", "next", "artifacts"])]
+]);
+
+function argumentRefused(flag) {
+  const error = new Error(`ARGUMENT_REFUSED: unrecognized flag --${flag}`);
+  error.code = "ARGUMENT_REFUSED";
+  throw error;
+}
+
 function args(argv) {
   const out = { _: [] };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i].startsWith("--")) out[argv[i].slice(2)] = argv[++i];
     else out._.push(argv[i]);
   }
+  const profile = ARGUMENT_PROFILES.get(out._.slice(0, 2).join(" ")) ?? ARGUMENT_PROFILES.get(out._[0]);
+  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_")) if (!profile.has(flag)) argumentRefused(flag);
   return out;
 }
 

@@ -49,6 +49,13 @@ check("credential-reference", async () => {
   assert.throws(() => supervisor.requireResolvedCredential({}), (error) => error.code === "CREDENTIAL_UNRESOLVED");
 });
 
+check("credential-shape", () => {
+  assert.equal(supervisor.requireResolvedCredential({ XAI_API_KEY: credential }), credential);
+  for (const malformed of [`XAI_API_KEY=${credential}`, `${credential} trailing`, `${credential}\n`]) {
+    assert.throws(() => supervisor.requireResolvedCredential({ XAI_API_KEY: malformed }), (error) => error.code === "CREDENTIAL_MALFORMED" && !error.message.includes(credential));
+  }
+});
+
 check("write-prefix", async () => {
   const { root } = await fixture();
   try {
@@ -76,6 +83,10 @@ check("credential-egress", async () => {
   const positive = await fixture();
   const negative = await fixture();
   try {
+    const artifactDirectory = path.join(negative.root, "artifacts", "agent-c");
+    const eventDirectory = path.join(negative.root, "events", "agent-c");
+    const artifactBaseline = (await readdir(artifactDirectory, { recursive: true })).sort();
+    const eventBaseline = (await readdir(eventDirectory, { recursive: true })).sort();
     const appended = [];
     await supervisor.runAgentCReview({ root: positive.root, targetRelative: positive.relative, env: { XAI_API_KEY: credential }, modelClient: stubModel(), appendEvent: async (_root, input) => appended.push(input) });
     assert.equal(appended.length, 1);
@@ -85,10 +96,8 @@ check("credential-egress", async () => {
     catch (error) { failure = error; }
     assert.equal(failure?.code, "CREDENTIAL_OUTPUT_REFUSED");
     assert.equal(JSON.stringify(failure).includes(credential), false);
-    const artifactFiles = await readdir(path.join(negative.root, "artifacts", "agent-c"));
-    const eventFiles = await readdir(path.join(negative.root, "events", "agent-c"));
-    assert.deepEqual(artifactFiles.filter((name) => name !== ".gitkeep"), []);
-    assert.deepEqual(eventFiles.filter((name) => name !== ".gitkeep"), []);
+    assert.deepEqual((await readdir(artifactDirectory, { recursive: true })).sort(), artifactBaseline);
+    assert.deepEqual((await readdir(eventDirectory, { recursive: true })).sort(), eventBaseline);
   } finally {
     await rm(positive.root, { recursive: true, force: true });
     await rm(negative.root, { recursive: true, force: true });
@@ -98,12 +107,15 @@ check("credential-egress", async () => {
 check("stubbed-review-appends-through-cli", async () => {
   const { root, relative, id } = await fixture();
   try {
+    const eventDirectory = path.join(root, "events", "agent-c");
+    const before = (await readdir(eventDirectory)).filter((name) => name.endsWith(".md"));
     const moments = [new Date("2026-08-26T14:01:00Z"), new Date("2026-08-26T14:01:02Z")];
     const result = await supervisor.runAgentCReview({ root, targetRelative: relative, env: { XAI_API_KEY: credential, XAI_MODEL: "grok-synthetic" }, modelClient: stubModel(), clock: () => moments.shift() });
     assert.equal((await verifyLog(root)).ok, true);
-    const names = (await readdir(path.join(root, "events", "agent-c"))).filter((name) => name.endsWith(".md"));
-    assert.equal(names.length, 1);
-    const event = parseEvent(await readFile(path.join(root, "events", "agent-c", names[0]), "utf8"));
+    const names = (await readdir(eventDirectory)).filter((name) => name.endsWith(".md"));
+    assert.equal(names.length, before.length + 1);
+    const appendedName = names.find((name) => !before.includes(name));
+    const event = parseEvent(await readFile(path.join(eventDirectory, appendedName), "utf8"));
     assert.equal(event.meta.in_reply_to, id);
     assert.equal(event.meta.next, "agent-a");
     assert.deepEqual(result.measurement.token_use, { input_tokens: 41, output_tokens: 17, total_tokens: 58 });
@@ -121,4 +133,31 @@ check("xai-client-metrics", async () => {
   assert.equal(authorization, `Bearer ${credential}`);
   assert.deepEqual(result.usage, fixedUsage);
   assert.deepEqual(result.review, fixedReview);
+});
+
+check("provider-diagnosis", async () => {
+  const client = new supervisor.XaiResponsesClient({
+    credential,
+    fetchImpl: async () => new Response(JSON.stringify({ error: { message: "Incorrect API key provided." } }), { status: 401 })
+  });
+  await assert.rejects(client.review("Synthetic repository context without credentials."), (error) => {
+    assert.equal(error.code, "MODEL_CALL_FAILED");
+    assert.equal(error.providerStatus, 401);
+    assert.equal(error.providerError, "Incorrect API key provided.");
+    assert.match(error.message, /Incorrect API key provided\./);
+    return true;
+  });
+});
+
+check("provider-error-egress", async () => {
+  const client = new supervisor.XaiResponsesClient({
+    credential,
+    fetchImpl: async () => new Response(JSON.stringify({ error: { message: `Provider echoed ${credential}` } }), { status: 401 })
+  });
+  await assert.rejects(client.review("Synthetic repository context without credentials."), (error) => {
+    assert.equal(error.code, "CREDENTIAL_OUTPUT_REFUSED");
+    assert.equal(error.message.includes(credential), false);
+    assert.equal(JSON.stringify(error).includes(credential), false);
+    return true;
+  });
 });

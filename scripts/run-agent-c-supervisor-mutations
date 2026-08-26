@@ -10,14 +10,17 @@ const root = path.resolve(import.meta.dirname, "..");
 const sourceFile = path.join(root, "packages/agent-c-supervisor/src/index.mjs");
 const temporary = mkdtempSync(path.join(tmpdir(), "agent-c-mutations-"));
 const mutations = [
-  ["credential-reference", [['if (!credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");', 'if (!credential) refuse("CREDENTIAL_UNRESOLVED");']]],
+  ["credential-reference", [['if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");', 'if (typeof credential !== "string" || !credential) refuse("CREDENTIAL_UNRESOLVED");']]],
+  ["credential-shape", [['  if (/\\s/.test(credential) || /^[A-Za-z_][A-Za-z0-9_]*=/.test(credential)) refuse("CREDENTIAL_MALFORMED");', '  void credential;']]],
   ["write-prefix", [
     ['if (!(relative === ARTIFACT_PREFIX || relative.startsWith(`${ARTIFACT_PREFIX}/`) || relative === EVENT_PREFIX || relative.startsWith(`${EVENT_PREFIX}/`))) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");'],
     ['if (absolute !== boundary && !absolute.startsWith(`${boundary}${path.sep}`)) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");'],
     ['if (!boundaryReal.startsWith(`${rootReal}${path.sep}`) || (parentReal !== boundaryReal && !parentReal.startsWith(`${boundaryReal}${path.sep}`))) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");']
   ]],
   ["turn-enforcement", [['if (event.meta.next !== AGENT_C) refuse("TURN_REFUSED");', 'if (false) refuse("TURN_REFUSED");']]],
-  ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code);', 'if (false) refuse(code);']]]
+  ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code);', 'if (false) refuse(code);']]],
+  ["provider-diagnosis", [['      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });', '      refuse("MODEL_CALL_FAILED");']]],
+  ["provider-error-egress", [['      assertNoCredential(responseText, this.credential);', '      void responseText;']]]
 ];
 
 try {
