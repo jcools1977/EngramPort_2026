@@ -193,13 +193,22 @@ export async function verifyLog(root, options = {}) {
     if (!actor) errors.push(`${relative}: event file is not directly enumerated by a registered actor event_directory`);
     else validationPlan.push({ absolute, relative, actor });
   }
+  if (options.candidateEvent) {
+    const relative = options.candidateEvent.relative;
+    const absolute = path.resolve(root, relative);
+    const actor = eventDirectoryActors.get(path.dirname(absolute));
+    if (!absolute.startsWith(path.resolve(root) + path.sep)) errors.push(`${relative}: candidate event escapes repository root`);
+    else if (discoveredEventFiles.includes(absolute)) errors.push(`${relative}: candidate event path already exists`);
+    else if (!actor) errors.push(`${relative}: event file is not directly enumerated by a registered actor event_directory`);
+    else validationPlan.push({ absolute, relative, actor, source: options.candidateEvent.source });
+  }
   const projectConfig = await readProjectConfig(root, errors);
   const threadConfigs = await readThreadConfigs(root, actors, errors);
   const events = [];
-  for (const { absolute, relative, actor } of validationPlan) {
+  for (const { absolute, relative, actor, source } of validationPlan) {
     const name = path.basename(absolute);
     try {
-      const parsed = parseEvent(await readFile(absolute, "utf8"), relative);
+      const parsed = parseEvent(source ?? await readFile(absolute, "utf8"), relative);
       validateShape(parsed, relative, errors);
       const compact = String(parsed.meta.occurred_at ?? "").replace(/[-:]/g, "").replace(".000", "");
       const expectedPrefix = compact.replace("Z", "Z_");

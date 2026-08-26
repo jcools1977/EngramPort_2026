@@ -1,0 +1,32 @@
+# SDK core extraction results
+
+## Scope
+
+Implemented the bounded `sdk-core-extraction` handoff in `git-adapter` and its tests only. No SDK, manifest, `ACTOR_UNREGISTERED`, idempotency key, Port Watch integration, protocol change, actor-record change, or site-copy change was made.
+
+## Delivered surface
+
+- Added `packages/git-adapter/src/event-core.mjs` with exported `appendEvent`, `listInbox`, and `validateAppendInputs` functions.
+- Made the CLI the first and only consumer of the extracted append/inbox core.
+- Added candidate-event validation to `verifyLog`, so credential checks and full event/log/relay validation complete before the event file is created.
+- Preserved event path, filename, frontmatter order and values, artifact handling, refusal exit status, and inbox output. A deterministic wire-surface test asserts the exact event bytes.
+- Corrected one false refusal message from `Event written but log is invalid` to `Event refused because log would be invalid`. Preserving the old text would have falsely claimed a write after the ordering fix; the refusal and exit code remain unchanged.
+
+## Red evidence and no-write proof
+
+The non-unknown-flag rejection is a second root in a declared `free_form` thread.
+
+Before the implementation, `append refuses a second thread root without writing an event` failed: the second append returned exit code 1 but increased the actor event directory count, tripping `refused append must leave the event count unchanged`. After the implementation, the same test passes and the event directory listing is byte-for-byte unchanged across that refusal.
+
+## Core-consumer discrimination
+
+Added `GIT_ADAPTER_CORE_DELEGATION` to the D1 registry. Its genuine mutation removes the extracted core's event write. The CLI delegation test then fails with `CLI append must land the event written by the core`; the shipped core restores the test. The D1 observed baseline was `executed=118`; the verified result is `executed=119`.
+
+## Verification
+
+- `node --test tests/git-v0.test.mjs`: 42 passed, 0 failed.
+- `npm run lint`: passed.
+- `npm run db:test`: passed; D1 mutation harness reported `all controls discriminate (executed=119)`.
+- `npm test`: passed after rerunning with Docker access; the initial sandboxed run was blocked only by Docker socket permission at the W1-7 canary.
+- `npm run proof:verify` before publishing the reply: 344 events, 52 threads, 3 actors.
+- Repository DB-test lock and `.d2-mutations.*` scratch gates were clear after the suites.

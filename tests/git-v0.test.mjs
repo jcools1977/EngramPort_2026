@@ -10,6 +10,8 @@ const verifierSpecifier = process.env.GIT_ADAPTER_VERIFY_MODULE ?? pathToFileURL
 const { hashBody, hashThreadConfig, verifyLog } = await import(verifierSpecifier);
 const cliSpecifier = process.env.GIT_ADAPTER_CLI_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/cli.mjs")).href;
 const { run } = await import(cliSpecifier);
+const coreSpecifier = pathToFileURL(path.join(root, "packages/git-adapter/src/event-core.mjs")).href;
+const { appendEvent, listInbox } = await import(coreSpecifier);
 const surfaces = ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml"];
 
 async function fixture() {
@@ -194,6 +196,69 @@ test("append refuses an unrecognized flag before writing and preserves known-goo
     assert.equal(await run(["append", "--actor", "agent-b", "--thread", "argument-refusal", "--type", "message", "--body", body], directory), 0);
     assert.equal((await readdir(eventDirectory)).length, before.length + 1);
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("append refuses a second thread root without writing an event", async () => {
+  const directory = await fixture();
+  const errors = [];
+  const originalError = console.error;
+  try {
+    await declare(directory, "second-root-refusal", "free_form");
+    const firstBody = path.join(directory, "first-root-body.txt");
+    const secondBody = path.join(directory, "second-root-body.txt");
+    await writeFile(firstBody, "first root\n");
+    await writeFile(secondBody, "second root\n");
+    const eventDirectory = path.join(directory, "events", "agent-b");
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "second-root-refusal", "--type", "message", "--body", firstBody], directory), 0);
+    const afterFirst = await readdir(eventDirectory);
+    console.error = (...parts) => errors.push(parts.join(" "));
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "second-root-refusal", "--type", "message", "--body", secondBody], directory), 1);
+    assert.deepEqual(await readdir(eventDirectory), afterFirst, "refused append must leave the event count unchanged");
+    assert.match(errors.join("\n"), /thread already has a root/);
+  } finally {
+    console.error = originalError;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("exported append and inbox core preserve the event wire surface", async () => {
+  const directory = await fixture();
+  const id = "01a03fb0-0000-7000-8000-000000000001";
+  const now = Date.parse("2026-08-26T20:00:00Z");
+  try {
+    await declare(directory, "core-wire-surface", "free_form");
+    const body = "core wire body\n";
+    const result = await appendEvent({ actor: "agent-b", thread: "core-wire-surface", type: "handoff", body, next: "agent-a" }, { cwd: directory, id, now });
+    const relative = `events/agent-b/20260826T200000Z_${id}.md`;
+    assert.deepEqual(result, { ok: true, errors: [], relative });
+    assert.equal(await readFile(path.join(directory, relative), "utf8"), `---\nschema_version: 0\nid: ${id}\nthread: core-wire-surface\nfrom: agent-b\ntype: handoff\noccurred_at: 2026-08-26T20:00:00Z\nin_reply_to: null\nnext: agent-a\ncontent_sha256: ${hashBody(body)}\nthread_config_sha256: ${hashThreadConfig({ schema_version: 0, thread: "core-wire-surface", mode: "free_form", coordinator: null })}\n---\n${body}`);
+    assert.ok((await listInbox({ actor: "agent-a", cwd: directory })).includes(relative));
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("CLI append and inbox delegate to the exported core", async () => {
+  const directory = await fixture();
+  const output = [];
+  const originalLog = console.log;
+  try {
+    await declare(directory, "core-cli-delegation", "free_form");
+    const body = path.join(directory, "core-cli-body.txt");
+    await writeFile(body, "CLI delegation body\n");
+    const eventDirectory = path.join(directory, "events", "agent-b");
+    const before = await readdir(eventDirectory);
+    console.log = (...parts) => output.push(parts.join(" "));
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "core-cli-delegation", "--type", "handoff", "--body", body, "--next", "agent-a"], directory), 0);
+    const after = await readdir(eventDirectory);
+    assert.equal(after.length, before.length + 1, "CLI append must land the event written by the core");
+    const relative = output.at(-1);
+    assert.match(relative, /^events\/agent-b\/.*\.md$/);
+    const beforeInboxOutput = output.length;
+    assert.equal(await run(["inbox", "--actor", "agent-a"], directory), 0);
+    assert.ok(output.slice(beforeInboxOutput).includes(relative), "CLI inbox must print the core result");
+  } finally {
+    console.log = originalLog;
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 await rejects("modified content is rejected", (d) => mutate(d, "events/agent-a/20260814T141000Z_0198f2a1-1000-7000-8000-000000000001.md", (s) => `${s}\nchanged\n`), /content hash mismatch/);

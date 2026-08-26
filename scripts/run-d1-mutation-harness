@@ -37,6 +37,8 @@ assert_w1_1_binding(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_bindin
 agent_c_url(){ node -e 'console.log(require("node:url").pathToFileURL(process.argv[1]).href)' "$1"; }
 run_agent_c(){ local module="$1" pattern="$2"; AGENT_C_SUPERVISOR_MODULE="$(agent_c_url "$module")" AGENT_C_TEST_CASE="$pattern" node --test --test-reporter=tap "$root_dir/tests/agent-c-supervisor.test.mjs"; }
 assert_agent_c(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_agent_c "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_git_adapter_core(){ local module="$1"; GIT_ADAPTER_CORE_MODULE="$module" node --test --test-reporter=tap --test-name-pattern='CLI append and inbox delegate to the exported core' "$root_dir/tests/git-v0.test.mjs"; }
+assert_git_adapter_core(){ local module="$1" out rc; out=$(mktemp); run_git_adapter_core "$module" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_ONLY=1 SITE_EVENT_TYPES_MODULE="$(agent_c_url "$module")" SITE_EVENT_TYPE_OVERRIDE="$fabricated" node --test "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(mktemp); run_site_event_types "$module" "$fabricated" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
@@ -236,9 +238,21 @@ const [source,target,root]=process.argv.slice(2);let text=fs.readFileSync(source
 const anchor='  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_")) if (!profile.has(flag)) argumentRefused(flag);';
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,'  void profile; /* CLI_ARGUMENT_REFUSAL_REMOVED */');
-for(const name of ["verify-log.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs"]){
-  text=text.replace(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
+for(const name of ["verify-log.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs","event-core.mjs"]){
+  text=text.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
 }
+fs.writeFileSync(target,text);
+NODE
+}
+make_git_adapter_core_variant(){
+  local target="$1"
+  mkdir -p "$target"
+  cp -R "$root_dir/packages/git-adapter/src/." "$target/"
+  node - "$target/event-core.mjs" <<'NODE'
+const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
+const anchor='  await writeFile(file, source, { flag: "wx" });';
+if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
+text=text.replace(anchor,'  await Promise.resolve(); /* GIT_ADAPTER_CORE_WRITE_REMOVED */');
 fs.writeFileSync(target,text);
 NODE
 }
@@ -297,18 +311,23 @@ fs.writeFileSync(target,text);
 NODE
 }
 make_event_extension_case_variant(){
-  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$root_dir/packages/git-adapter/src/cli.mjs" "$2" "$root_dir" <<'NODE'
+  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$root_dir/packages/git-adapter/src/cli.mjs" "$2" "$root_dir/packages/git-adapter/src/event-core.mjs" "$3" "$root_dir" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
-const [verifySource,verifyTarget,cliSource,cliTarget,root]=process.argv.slice(2);
+const [verifySource,verifyTarget,cliSource,cliTarget,coreSource,coreTarget,root]=process.argv.slice(2);
 let verifier=fs.readFileSync(verifySource,"utf8");
 const anchor='export function isMarkdownEventFile(name) { /* EVENT_EXTENSION_CASE_INSENSITIVE */\n  return path.extname(name).toLowerCase() === ".md";\n}';
 if(!verifier.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 verifier=verifier.replace(anchor,'export function isMarkdownEventFile(name) { /* EVENT_EXTENSION_CASE_REMOVED */\n  return path.extname(name) === ".md";\n}');
 fs.writeFileSync(verifyTarget,verifier);
+let core=fs.readFileSync(coreSource,"utf8")
+  .replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(verifyTarget).href))
+  .replace('"./credential-boundary.mjs"',JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src/credential-boundary.mjs")).href));
+fs.writeFileSync(coreTarget,core);
 let cli=fs.readFileSync(cliSource,"utf8").replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(verifyTarget).href));
 for(const name of ["welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs"]){
-  cli=cli.replace(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
+  cli=cli.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
 }
+cli=cli.replaceAll('"./event-core.mjs"',JSON.stringify(pathToFileURL(coreTarget).href));
 fs.writeFileSync(cliTarget,cli);
 NODE
 }
@@ -407,6 +426,22 @@ for line in "${MUTATIONS[@]}"; do
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
+  if [ "$mutation" = GIT_ADAPTER_CORE_DELEGATION ]; then
+    source_module="$root_dir/packages/git-adapter/src/event-core.mjs"
+    base=$(assert_git_adapter_core "$source_module")
+    variant_root="$mutation_dir/git-adapter-core"; make_git_adapter_core_variant "$variant_root" || { fail=1; continue; }
+    variant="$variant_root/event-core.mjs"
+    if grep -Fq GIT_ADAPTER_CORE_WRITE_REMOVED "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/git-adapter-core.log"
+    run_git_adapter_core "$variant" >"$log" 2>&1; after=$?
+    forbidden=f
+    if grep -Eq 'not ok [0-9]+ - CLI append and inbox delegate to the exported core' "$log" && grep -Fq 'CLI append must land the event written by the core' "$log"; then forbidden=t; fi
+    [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_git_adapter_core "$source_module")
+    printf 'GIT_ADAPTER_CORE_DELEGATION baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [ "$mutation" = EVENT_DIRECTORY_COMPLETENESS ]; then
     source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
     test_pattern='verification refuses unregistered Markdown event files while ignoring empty directories'
@@ -438,7 +473,8 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = EVENT_EXTENSION_CASE ]; then
     verifier_variant="$mutation_dir/event-extension-case-verify.mjs"
     cli_variant="$mutation_dir/event-extension-case-cli.mjs"
-    make_event_extension_case_variant "$verifier_variant" "$cli_variant" || { fail=1; continue; }
+    core_variant="$mutation_dir/event-extension-case-core.mjs"
+    make_event_extension_case_variant "$verifier_variant" "$cli_variant" "$core_variant" || { fail=1; continue; }
     if grep -Fq EVENT_EXTENSION_CASE_REMOVED "$verifier_variant"; then applied=t; else applied=f; fi
     test_pattern='uppercase Markdown forgery|event extension policy is shared by inbox'
     log="$mutation_dir/event-extension-case.log"
@@ -1177,7 +1213,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 118 ] || fail=1
+  [ "$executed" = 119 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

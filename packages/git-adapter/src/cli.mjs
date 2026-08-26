@@ -1,11 +1,13 @@
-import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { discoverEventFiles, hashBody, hashThreadConfig, parseEvent, parseRecord, verifyLog } from "./verify-log.mjs";
+import { discoverEventFiles, parseEvent, verifyLog } from "./verify-log.mjs";
 import { verifyWelcome } from "./welcome-verify.mjs";
 import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
-import { detectCredential } from "./credential-boundary.mjs";
+
+export { appendEvent, listInbox, validateAppendInputs } from "./event-core.mjs";
+const coreSpecifier = process.env.GIT_ADAPTER_CORE_MODULE ?? new URL("./event-core.mjs", import.meta.url).href;
+const eventCore = await import(coreSpecifier);
 
 const ARGUMENT_PROFILES = new Map([
   ["welcome verify", new Set(["package"])],
@@ -34,28 +36,7 @@ function args(argv) {
   return out;
 }
 
-function uuidv7(now = Date.now()) {
-  const bytes = randomBytes(16);
-  let value = BigInt(now);
-  for (let i = 5; i >= 0; i--) { bytes[i] = Number(value & 255n); value >>= 8n; }
-  bytes[6] = 0x70 | (bytes[6] & 0x0f);
-  bytes[8] = 0x80 | (bytes[8] & 0x3f);
-  const hex = bytes.toString("hex");
-  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
-}
-
-function compact(iso) { return iso.replace(/[-:]/g, "").replace(".000", ""); }
 function line(key, value) { return `${key}: ${value === null ? "null" : Array.isArray(value) ? `[${value.join(", ")}]` : value}`; }
-
-export async function validateAppendInputs({ body, artifacts = [], cwd = process.cwd() }) {
-  const bodyFinding = detectCredential(body);
-  if (bodyFinding.hit) { const error = new Error("CREDENTIAL_INPUT_REFUSED: event body refused"); error.code = "CREDENTIAL_INPUT_REFUSED"; throw error; }
-  for (const reference of artifacts.filter(Boolean)) {
-    const artifactPath = reference.split("#", 1)[0];
-    const artifact = await readFile(path.resolve(cwd, artifactPath), "utf8");
-    if (detectCredential(artifact).hit) { const error = new Error("CREDENTIAL_INPUT_REFUSED: artifact refused"); error.code = "CREDENTIAL_INPUT_REFUSED"; throw error; }
-  }
-}
 
 const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
 
@@ -65,16 +46,6 @@ async function threadHasEvents(cwd, thread) {
     if (event.meta.thread === thread) return true;
   }
   return false;
-}
-
-async function readThreadDeclaration(cwd, thread) {
-  try {
-    const file = path.join(cwd, "threads", `${thread}.yaml`);
-    return parseRecord(await readFile(file, "utf8"), path.relative(cwd, file));
-  } catch (error) {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  }
 }
 
 export async function run(argv, cwd = process.cwd()) {
@@ -129,36 +100,18 @@ export async function run(argv, cwd = process.cwd()) {
     return 0;
   }
   if (command === "inbox") {
-    if (!options.actor) throw new Error("inbox requires --actor");
-    const result = await verifyLog(cwd, { throwOnError: true });
-    const files = await discoverEventFiles(path.join(cwd, "events"));
-    const parsed = await Promise.all(files.sort().map(async (file) => ({ file, event: parseEvent(await readFile(file, "utf8"), path.relative(cwd, file)) })));
-    const answered = new Set(parsed.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
-    let found = 0;
-    for (const { file, event } of parsed) if (event.meta.next === options.actor && !answered.has(event.meta.id)) { console.log(path.relative(cwd, file)); found++; }
-    if (!found) console.log(`No open events addressed to ${options.actor}.`);
-    return result.ok ? 0 : 1;
+    const files = await eventCore.listInbox({ actor: options.actor, cwd });
+    for (const file of files) console.log(file);
+    if (!files.length) console.log(`No open events addressed to ${options.actor}.`);
+    return 0;
   }
   if (command === "append") {
     for (const required of ["actor", "thread", "type", "body"]) if (!options[required]) throw new Error(`append requires --${required}`);
     const body = await readFile(path.resolve(cwd, options.body), "utf8");
     const artifacts = options.artifacts ? options.artifacts.split(",").filter(Boolean) : [];
-    await validateAppendInputs({ body, artifacts, cwd });
-    const occurredAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-    const id = uuidv7();
-    const meta = [line("schema_version", 0), line("id", id), line("thread", options.thread), line("from", options.actor), line("type", options.type), line("occurred_at", occurredAt), line("in_reply_to", options.reply ?? null), line("next", options.next ?? null), line("content_sha256", hashBody(body))];
-    if (!options.reply) {
-      const declaration = await readThreadDeclaration(cwd, options.thread);
-      if (declaration) meta.push(line("thread_config_sha256", hashThreadConfig(declaration)));
-    }
-    if (artifacts.length) meta.push(line("artifacts", artifacts));
-    const directory = path.join(cwd, "events", options.actor);
-    await mkdir(directory, { recursive: true });
-    const file = path.join(directory, `${compact(occurredAt)}_${id}.md`);
-    await writeFile(file, `---\n${meta.join("\n")}\n---\n${body.trimEnd()}\n`, { flag: "wx" });
-    const result = await verifyLog(cwd);
-    if (!result.ok) { console.error(`Event written but log is invalid:\n${result.errors.join("\n")}`); return 1; }
-    console.log(path.relative(cwd, file)); return 0;
+    const result = await eventCore.appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next: options.next, artifacts }, { cwd });
+    if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
+    console.log(result.relative); return 0;
   }
   console.log("EngramPort Git v0\n\nCommands:\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--reply UUID] [--next SLUG] [--artifacts REF,...]");
   return command ? 1 : 0;
