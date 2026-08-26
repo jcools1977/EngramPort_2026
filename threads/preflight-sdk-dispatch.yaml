@@ -1,0 +1,4 @@
+schema_version: 0
+thread: preflight-sdk-dispatch
+mode: strict_relay
+coordinator: null
