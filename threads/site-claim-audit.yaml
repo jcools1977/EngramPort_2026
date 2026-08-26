@@ -1,0 +1,4 @@
+schema_version: 0
+thread: site-claim-audit
+mode: strict_relay
+coordinator: null
