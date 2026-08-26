@@ -2532,3 +2532,21 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Non-claims accepted verbatim**: nothing enrolls the subject, closes criterion 1, discharges the trusted-session caveat on A6/A7/A8, proves Google's enrollment judgement, or authorizes deployment.
 
 **Nothing dispatched.** Enrollment is a decision plus a privileged write, belonging to agent-a's disposition under ADR 0027 and ADR 0030 with DeVere's involvement.
+
+## F90 ACCEPTED: the enrollment roots are costed; enrollment is not the C17 transition but crosses the boundary that made it safe
+
+**Reviewed 2026-08-26 by agent-a.** Reading-only result `01a03df4-b48a-72f7-9f1d-976212134a18`. **Accepted. Thread terminal. `executed=` holds at 103. Nothing closes.** Related: F70, F89, ADR 0027, ADR 0030, ADR 0033, C17.
+
+**agent-a's C17 worry was wrong in mechanism and the correction is better than the worry.** An external-identity row **is not literally a setup-session delegation**: C17 names `setup_session_delegations` and gates the first durable *delegation*, so **relabelling a founder identity as that object would blur two controls**. Enrollment alone is therefore **not** the C17 transition.
+
+**The half agent-a would not have reached**: enrollment is nonetheless the first durable **operational identity** use and **crosses the boundary that made C17's conditional `[TEST-GATED]` reading safe**. agent-b's formulation — *an empty `cron.job` cannot be hidden by calling enrollment "not a delegation"* — is the governing sentence. **Before an enrolled identity may create a durable setup session, the target must meet the store-and-scheduler obligation.**
+
+**ADR 0033's scope is confirmed as agent-a read it**: it authorizes discovery, exchange, verification and **capture**, and makes enrollment a later condition rather than part of the grant. **Persisting a real `(iss, sub)` in any database is a separate authorization from DeVere.** The pair is not a bearer secret but **is a stable global account identifier and the root input to founder binding**, so target, retention, disable and recovery must be chosen before it is written.
+
+**Four roots costed, each judged on whether it terminates or relocates the regress.** **A**, a `SECURITY DEFINER` issuer behind a gate, is *a mechanism, not a root*, terminating only when the upstream deployment authority is named. **B**, a dedicated operator role, ends the regress at control-plane provisioning without eliminating it. **C**, a bootstrap-only latch, carries the sharpest line in the reading — **an empty-database `NOT EXISTS` check is "first caller wins, not authorization"** — and solves only the first ceremony, since ADR 0027 permits later tenants. **D**, an offline-signed environment-bound envelope, terminates at an offline key custodian at materially higher key-management cost. **A and B are not exclusive**, and a narrow issuer function executable only by a dedicated bootstrap operator is the likeliest smallest shape.
+
+**Two findings agent-a had not anticipated.** **Migration 0022's ownership is security-relevant** — its resolver is `SECURITY DEFINER` and its RLS policies name `current_user='engram_migrator'` — so **the earlier owner-excluding fingerprint from the C6 evidence is not sufficient** for a managed application, which must verify ownership, ACLs and policy behaviour rather than function bodies alone. And **project deletion is not automatically evidence of erasure**, so a disposable staging project does not make a real subject write synthetic.
+
+**A third path agent-a had not proposed**: rehearse `0021`/`0022` on `engramport-dev` with **synthetic identities only and no real `(iss, sub)` write**, enrolling later on the selected operational target. **That separates a reversible schema proof from an irreversible decision about a real person** — a distinction agent-a had collapsed into a single question.
+
+**Three decisions remain DeVere's and no default was picked**: which root may enroll identities and issue founding authorizations, including how the first ceremony is legitimate; whether `0021`/`0022` are authorized on `engramport-dev`, schema-only or also permitting durable real identity; and whether real enrollment waits for an operational target or takes the split path.
