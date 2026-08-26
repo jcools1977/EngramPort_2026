@@ -41,6 +41,8 @@ run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_
 assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(mktemp); run_site_event_types "$module" "$fabricated" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_install_policy(){ local page="$1" out rc; out=$(mktemp); run_site_install_policy "$page" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_repository_surface_policy(){ local rules="$1"; REPOSITORY_RULES_FILE="$rules" node --test --test-reporter=tap "$root_dir/tests/repository-surface-policy.test.mjs"; }
+assert_repository_surface_policy(){ local rules="$1" out rc; out=$(mktemp); run_repository_surface_policy "$rules" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
 assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -257,6 +259,20 @@ text=text.replace(anchor,`          <div className="install-card" data-mutation=
 fs.writeFileSync(target,text);
 NODE
 }
+make_repository_surface_policy_variant(){
+  node - "$root_dir/AGENTS.md" "$1" <<'NODE'
+const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
+const anchor=`5. Keep collaboration history actor-owned and append-only:
+   - Actor-owned surfaces are the \`event_directory\` and \`artifact_prefix\` declared in each \`actors/*.yaml\` record. Create accepted events only through \`npm run engram -- append ...\` in your own event directory, and create artifacts only in your own artifact prefix. Never edit or delete an accepted event, a referenced artifact, or another actor's event or artifact files.
+   - Shared editable surfaces are every tracked path outside \`events/\` and \`artifacts/\`: source, tests, documentation, configuration, and migrations. Any actor may create or edit them through a verified relay handoff with paired evidence and a discriminating mutation.`;
+if(text.split(anchor).length-1!==1)throw new Error("surface-policy amendment anchor must occur exactly once");
+text=text.replace(anchor,"5. Create files only in `events/<your-slug>/` and artifacts only in your assigned artifact prefix. <!-- REPOSITORY_SURFACE_POLICY_REVERTED -->");
+const pullRule="7. Pull with rebase before pushing. Never force-push. Never overwrite another actor's accepted event or referenced artifact.";
+if(text.split(pullRule).length-1!==1)throw new Error("surface-policy pull rule must occur exactly once");
+text=text.replace(pullRule,"7. Pull with rebase before pushing. Never force-push or overwrite another actor's file.");
+fs.writeFileSync(target,text);
+NODE
+}
 make_event_directory_completeness_variant(){
   node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
@@ -451,6 +467,18 @@ for line in "${MUTATIONS[@]}"; do
     log="$mutation_dir/site-unpublished-install-claim.log"; run_site_install_policy "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - site install claims require a publishable package manifest' "$log" && grep -Fq 'site advertises unpublished package @engramport/sdk' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_site_install_policy "$source_page")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = REPOSITORY_SURFACE_POLICY ]; then
+    source_rules="$root_dir/AGENTS.md"
+    base=$(assert_repository_surface_policy "$source_rules")
+    variant="$mutation_dir/repository-surface-policy.md"; make_repository_surface_policy_variant "$variant" || { fail=1; continue; }
+    if grep -Fq REPOSITORY_SURFACE_POLICY_REVERTED "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/repository-surface-policy.log"; run_repository_surface_policy "$variant" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Eq 'not ok [0-9]+ - tracked repository paths are accounted for by the written surface rules' "$log" && grep -Eq 'REPOSITORY_SURFACE_POLICY tracked=[0-9]+ actor_rule=true shared_rule=false broad_ban=true unaccounted=[1-9][0-9]*' "$log" && grep -Fq 'app/page.tsx' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_repository_surface_policy "$source_rules")
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
@@ -1130,7 +1158,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 116 ] || fail=1
+  [ "$executed" = 117 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
