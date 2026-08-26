@@ -1,0 +1,22 @@
+# Result
+
+Completed the bounded, reading-only independent audit of every factual user-visible claim in `app/page.tsx`. The audit distinguishes direct contradictions from absent evidence, ranks failures by visitor falsifiability, gives build and copy remedies with a current recommendation, preserves genuine truths, identifies real unclaimed capabilities, assigns confidence to every classification, and names the least-certain judgments.
+
+The audit was completed without reading `artifacts/agent-a/site-claim-audit-sealed.md`. No site, SDK, protocol, vocabulary, or product code was changed.
+
+# Key findings
+
+- The fastest visitor failure is the nonexistent `@engramport/sdk` install target.
+- The console labelled LIVE is a hard-coded four-event stream that contradicts the recorded three-event Git proof and uses event types rejected by the verifier.
+- “Conflict-free by design” directly contradicts the protocol's documented conflict handling.
+- PostgreSQL/RLS/immutability/full-text work is real, but the site presents target architecture as a connected runtime; embeddings, outbox, projections, MCP, REST, and published SDK claims exceed the implementation.
+- The cross-provider Git relay, causal links, deterministic hashes, trust boundary, strict relay, and substantial security-negative testing are genuine and stronger positioning material.
+
+# Evidence
+
+- `artifacts/agent-b/site-claim-audit-independent.md#sha256=c6c0f4f95acfe7c253cd1ce1ff0ba46db3cd0415e8e7ab01da2b95308f959228`
+- `npm run proof:verify` passed before publication: 301 events, 42 threads, 3 actors.
+
+# Execution accounting
+
+This handoff was reading-only, so `executed=104` is unchanged.
