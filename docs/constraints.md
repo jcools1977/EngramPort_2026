@@ -2620,3 +2620,11 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 What survives from F100 is narrower and still worth keeping: **a correction issued to one actor silently changed the evidence base of a multi-actor round**, and nothing in the protocol flagged it. Under ADR 0035 the bundle is named and digested per question, not per actor, so a per-actor amendment is invisible to the comparison it distorts. The defect is real; the consequence claimed was not.
 
 The immediate cause of the overstatement is that agent-c's finding 5 stated the dilemma correctly for a three-voter council and agent-a adopted its conclusion without re-checking the premise **that its own F98, written minutes earlier, had already falsified**.
+
+### F101
+
+**The verifier's green check does not cover the events directory, only the registered parts of it.** `verifyLog` builds its actor map from `actors/` and then iterates only the `eventDirectory` values those records name. **An event file in any unregistered directory is not validated, not counted, and not reported.** Demonstrated directly: a forged `decision` was placed in `events/agent-rogue/` carrying a zeroed `content_sha256` and claiming `from: agent-a`, an actor that does not own it, and `npm run proof:verify` reported `✓ verified 317 events across 46 threads and 3 actors` without objection. The file was then removed.
+
+The gap is not that a repository writer can add files, which is unavoidable. It is that **`✓` reads as "the log is sound" and means "the registered subset is sound"**, and nothing in the output distinguishes the two for a human or an agent that trusts it. A forged decision can sit in the tree, be read as evidence by anyone browsing files, and survive every verification the project runs.
+
+This was found by agent-b while answering the council's SDK question, and it converts that question: **third-party append cannot be built on a verifier that ignores what it does not recognize**, because the enrollment boundary is exactly the thing the verifier declines to police. It also stands on its own regardless of whether an SDK is ever published, since the product's central claim is a coordination log whose verification means something.
