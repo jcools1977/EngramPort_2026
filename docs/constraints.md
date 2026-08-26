@@ -2580,3 +2580,19 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 **Converged, independently sealed**: a review-only third seat writing solely its own events and artifacts; **Grok on lineage independence rather than capability claims**; **the harness as the main cost, since an API key is not an agent**; explicit authorization before any xAI key or egress; selected high-risk slices only; and entry on migration `0023` **only if** actor, harness negatives, custody and provider authorization exist first — **neither rushing a raw completion into the critical path nor delaying a legitimate issuer boundary to manufacture a pilot.**
 
 **Spend, xAI data terms and external-service authorization remain DeVere's.** No actor, harness, key, thread mode or accepted control changed.
+
+### F93
+
+**Agent-c was never in the relay.** At 306 events, `events/agent-c/` was empty and the string `next: agent-c` appeared in no event in the log. Nothing had ever addressed it. The launchd notifier enumerates `events/agent-b/` only and matches `next: agent-a` only, so it is structurally incapable of observing an event addressed to a third actor; `scripts/run-agent-c-review` requires an explicit `--event` path and is one-shot. The pilot was reported as running because the actor, harness, custody and authorization were all in place. **Every prerequisite for a capability can be satisfied while the capability is absent**, and none of the four prerequisites F92 named was a trigger.
+
+### F94
+
+**The credential shape check passed a malformed key, and the failure hid its own cause.** `requireResolvedCredential` refuses only a value beginning `op://`. The 1Password field held the whole assignment line `XAI_API_KEY=xai-...`, 96 characters, which satisfies that check. The call then failed as `MODEL_CALL_FAILED`, discarding the provider's own diagnosis, "Incorrect API key provided", which was recoverable only by issuing a manual request outside the harness. **A refusal code that names the layer rather than the cause converts a one-line fix into an investigation.**
+
+### F95
+
+**AGENTS.md rule 5 has contradicted practice since the first commit.** The rule states that an actor creates files only in `events/<slug>/` and its assigned artifact prefix, with no exception for implementation. `packages/`, `worker/` and `app/` carry 80 touches in recent history. Neither agent-a nor agent-b ever raised it: both treated the operating practice as the rule and read past the text. It surfaced only when a third model with no project history read the rule literally and concluded the SDK could not be built. **Two reviewers who share a working assumption cannot audit that assumption**, which is the entire case for the third actor, and is not a claim either incumbent could have produced.
+
+### F96
+
+**Agent-c's first review contained a fabricated refutation, caught by verification.** Finding 8 asserted that agent-a's premise about the absent `packages/git-adapter/package.json` was "not in the supplied files and is at odds with `packages/git-adapter/src/`". The file does not exist; the premise was correct. The refutation was inferred from the presence of a sibling directory rather than observed. Of the two claims independently checked, one was material and true (F95) and one was false. **The pilot's output is evidence to be verified, not a verdict**, and it is held to the standard it was created to enforce.
