@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import { registerHooks } from "node:module";
 import test from "node:test";
 
 const siteEventTypesOnly = process.env.SITE_EVENT_TYPES_ONLY === "1";
 const eventTypesModule = process.env.SITE_EVENT_TYPES_MODULE ?? new URL("../packages/git-adapter/src/verify-log.mjs", import.meta.url).href;
+const sitePageSource = process.env.SITE_PAGE_SOURCE ?? new URL("../app/page.tsx", import.meta.url);
 const { assertAcceptedEventTypes } = await import(eventTypesModule);
 
 // The production bundle correctly keeps the Worker-native module external.
@@ -37,7 +38,8 @@ test("server-renders the EngramPort product site", { skip: siteEventTypesOnly },
   assert.match(html, /<b>EXAMPLE<\/b>/);
   assert.doesNotMatch(html, /CONFLICT-FREE BY DESIGN|<b>LIVE<\/b>|handoff\.created|handoff\.claimed|artifact\.registered|handoff\.completed/);
   assert.match(html, /POSTGRESQL/);
-  assert.match(html, /npm install @engramport\/sdk/);
+  assert.match(html, /github\.com\/jcools1977\/EngramPort_2026/);
+  assert.doesNotMatch(html, /npm install @engramport\/sdk/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
@@ -53,6 +55,29 @@ test("ships product metadata and removes the starter preview", { skip: siteEvent
   assert.match(packageJson, /"name": "engramport"/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
+});
+
+test("site install claims require a publishable package manifest", async () => {
+  const rootManifestUrl = new URL("../package.json", import.meta.url);
+  const packageDirectoryUrl = new URL("../packages/", import.meta.url);
+  const manifestUrls = [rootManifestUrl];
+  for (const entry of await readdir(packageDirectoryUrl, { withFileTypes: true })) {
+    if (entry.isDirectory()) manifestUrls.push(new URL(`./${entry.name}/package.json`, packageDirectoryUrl));
+  }
+  const publishableNames = new Set();
+  for (const url of manifestUrls) {
+    try {
+      const manifest = JSON.parse(await readFile(url, "utf8"));
+      if (manifest.private !== true && typeof manifest.name === "string") publishableNames.add(manifest.name);
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+  }
+  const page = await readFile(sitePageSource, "utf8");
+  const installClaims = [...page.matchAll(/\bnpm\s+install\s+(@?[a-z0-9][a-z0-9._/-]*)/gi)].map((match) => match[1]);
+  for (const packageName of installClaims) {
+    assert.ok(publishableNames.has(packageName), `site advertises unpublished package ${packageName}`);
+  }
 });
 
 test("site console event types remain linked to the verifier vocabulary", async () => {

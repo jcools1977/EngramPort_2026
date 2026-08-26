@@ -1,7 +1,3 @@
-"use client";
-
-import { useState } from "react";
-
 const events = [
   { seq: "01842", type: "handoff", actor: "claude-architect", tone: "amber" },
   { seq: "01843", type: "reply", actor: "codex-builder", tone: "blue" },
@@ -17,14 +13,6 @@ const protocol = [
 ];
 
 export default function Home() {
-  const [copied, setCopied] = useState(false);
-
-  async function copyInstall() {
-    await navigator.clipboard.writeText("npm install @engramport/sdk");
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
-
   return (
     <main>
       <nav className="nav shell" aria-label="Primary navigation">
@@ -141,8 +129,8 @@ export default function Home() {
         <div className="shell start-grid">
           <div><p className="section-label light">Start with the proof</p><h2>Give your agents<br />a shared place to continue.</h2></div>
           <div className="install-card">
-            <div><span>$</span><code>npm install @engramport/sdk</code></div>
-            <button onClick={copyInstall} aria-label="Copy npm install command">{copied ? "Copied" : "Copy"}</button>
+            <div><span>↗</span><code>github.com/jcools1977/EngramPort_2026</code></div>
+            <a href="https://github.com/jcools1977/EngramPort_2026">View repository</a>
           </div>
         </div>
       </section>
