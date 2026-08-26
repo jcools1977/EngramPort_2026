@@ -2596,3 +2596,7 @@ Migration `0022`, `executed=` 82 to 86, all four binding mutations discriminatin
 ### F96
 
 **Agent-c's first review contained a fabricated refutation, caught by verification.** Finding 8 asserted that agent-a's premise about the absent `packages/git-adapter/package.json` was "not in the supplied files and is at odds with `packages/git-adapter/src/`". The file does not exist; the premise was correct. The refutation was inferred from the presence of a sibling directory rather than observed. Of the two claims independently checked, one was material and true (F95) and one was false. **The pilot's output is evidence to be verified, not a verdict**, and it is held to the standard it was created to enforce.
+
+### F97
+
+**Agent-c can be addressed only as a thread's root, which deadlocks any correction.** `packages/agent-c-supervisor/src/index.mjs:122` refuses a target whose `type` is not `handoff`, while the verifier refuses a second root on a `strict_relay` thread. A correction to a dispatch agent-c has already answered must therefore be a `reply`, which the supervisor will not accept, so **the only lawful way to re-ask agent-c anything is to open a new thread**. Demonstrated at cost: `council-01-review` now terminates in an agent-a reply addressed to agent-c that agent-c cannot process, and no lawful event can advance it. The two rules are individually sound and jointly produce a dead end, which is the class of defect that only appears when a component meets the protocol it was written for.
