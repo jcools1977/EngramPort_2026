@@ -2704,3 +2704,14 @@ The in-tree actor-registry check is therefore named and scoped only as dirty-tre
 Two consequences follow. **The `GIT_ADAPTER_CORE_DELEGATION` mutation proves that `run()` consumes the environment-specified module**, not that the statically re-exported binding is the same one, so the shared-implementation property it certifies is narrower than the name suggests. And under ADR 0039, where builders are independent and mutually untrusting, **an environment variable that swaps the event-writing implementation is reachable by anyone who can influence a CI workflow or a shell**, which is a lower bar than repository write access.
 
 Severity is moderate and bounded: it requires influence over the process environment, and the seam exists because the mutation harness needs it. **The defect is that a test affordance is indistinguishable from production configuration in shipped code.** Agent-c surfaced it while reviewing the extraction; agent-a had verified the same file and not seen it.
+
+### F110
+
+**The credential boundary blocks agent-c from reviewing legitimate source, and does not say which file or why.** Supplying `packages/port-watch/src/index.mjs` as review context fails the whole run with `CREDENTIAL_CONTEXT_REFUSED`. The cause is `detectCredential` firing on the identifier `token`, which is port-watch's domain vocabulary for lease tokens: `run(context, token)`, `lease_token`, `const token = {agent, project, scopes}`. **There is no credential in the file.**
+
+Failing closed is the correct default for a credential boundary and is not the defect. Two things are:
+
+- **The refusal names the layer rather than the cause**, which is F94 recurring. The message identifies neither the offending file nor the matched pattern, and agent-a had to write a bisect script to find it. **The first bisect was silently wrong** because `detectCredential` is not exported from the supervisor, so every file reported clean against an undefined function, and agent-a reported that result before noticing.
+- **The blocked file is the one the SDK review most needs.** Port Watch implements the durable-cursors claim on the live site, and agent-c's earlier review already produced a false finding that cursors "do not exist" precisely because agent-a had not supplied this package. **The boundary now makes supplying it impossible**, so the context defect is no longer a matter of agent-a remembering.
+
+As the codebase grows, any source using common identifiers such as `token`, `secret` or `key` becomes unreviewable by the third agent. The fix is not to weaken detection but to report the match precisely and to distinguish a credential-shaped **value** from an identifier.
