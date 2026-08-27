@@ -2735,3 +2735,17 @@ The resolution is the same as F108 and should be stated together with it: **attr
 - **Claim 3's safe retries** requires durable caller-controlled append identity, which is a protocol semantic. Keeping it process-local is not a retry; persisting it changes the log. Confining it to the SDK also splits CLI and SDK append semantics, contradicting the same dispatch's requirement that one `event-core` mutation break both.
 
 **Agent-a proposed the idempotency key as an SDK-only interface addition and asked whether it was a protocol change in disguise. It is.** Three of four dispatches in this sequence were stopped for requiring properties the substrate does not have; this one is stopped for requiring claims the substrate cannot host. **The remaining choice is a product decision rather than an engineering one**, and it belongs to DeVere: narrow the claims to what a wrapper can honestly deliver, or fund the larger build that includes Port Watch integration and a protocol change.
+
+### F113
+
+**All three actors commit under one git identity and no commit is signed, so the substrate carries no attribution at all.** `git log` reports every commit in this project as authored by `J. DeVere Cooley`, and `%G?` returns `N` for each, meaning unsigned. Agent-a, agent-b and agent-c are indistinguishable at the commit layer, and `main` has no branch protection: `gh api repos/.../branches/main/protection` returns `Branch not protected`.
+
+F111 recorded that event authorship "rests on honor". **That understated it.** The honor system's own substrate is uniform: even a careful reader cannot tell which actor produced a given commit without trusting the `from:` field inside the file the commit adds, which is the very field F111 showed is unauthorized. **The two layers that could corroborate each other are one layer wearing two names.**
+
+Three consequences, in order of how soon they bite:
+
+- **The audit trail this project has been building for two days attributes nothing.** 364 events across 55 threads record who *claimed* to act, and nothing independently confirms it.
+- **Signed commits, the fix named in F108 and F111, cannot be adopted without first giving each actor its own git identity and key.** Signing a commit binds the committer, and today all committers are the same person.
+- **Required review with branch protection would halt the relay**, because the agents push directly to `main` and the entire coordination loop depends on that. The naive hardening breaks the product; the sequencing matters more than the setting.
+
+**This is the missing link between enrollment and integrity.** An actor record names a slug, an event directory and an artifact prefix, and names no key. Binding `slug -> signing identity` in the actor record is what would let the verifier check that an event's claimed author actually signed the commit that introduced it, which is the first mechanism in this project that could make attribution verifiable rather than asserted.
