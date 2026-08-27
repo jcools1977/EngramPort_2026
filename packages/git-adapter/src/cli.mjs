@@ -1,13 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { appendEvent, listInbox, validateAppendInputs } from "./event-core.mjs";
 import { discoverEventFiles, parseEvent, verifyLog } from "./verify-log.mjs";
 import { verifyWelcome } from "./welcome-verify.mjs";
 import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
 
-export { appendEvent, listInbox, validateAppendInputs } from "./event-core.mjs";
-const coreSpecifier = process.env.GIT_ADAPTER_CORE_MODULE ?? new URL("./event-core.mjs", import.meta.url).href;
-const eventCore = await import(coreSpecifier);
+// SDK consumers import event-core.mjs directly; the CLI re-exports these exact
+// bindings for compatibility and adapts argv without a second swappable core.
+export { appendEvent, listInbox, validateAppendInputs };
 
 const ARGUMENT_PROFILES = new Map([
   ["welcome verify", new Set(["package"])],
@@ -100,7 +101,7 @@ export async function run(argv, cwd = process.cwd()) {
     return 0;
   }
   if (command === "inbox") {
-    const files = await eventCore.listInbox({ actor: options.actor, cwd });
+    const files = await listInbox({ actor: options.actor, cwd });
     for (const file of files) console.log(file);
     if (!files.length) console.log(`No open events addressed to ${options.actor}.`);
     return 0;
@@ -109,7 +110,7 @@ export async function run(argv, cwd = process.cwd()) {
     for (const required of ["actor", "thread", "type", "body"]) if (!options[required]) throw new Error(`append requires --${required}`);
     const body = await readFile(path.resolve(cwd, options.body), "utf8");
     const artifacts = options.artifacts ? options.artifacts.split(",").filter(Boolean) : [];
-    const result = await eventCore.appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next: options.next, artifacts }, { cwd });
+    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next: options.next, artifacts }, { cwd });
     if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(result.relative); return 0;
   }

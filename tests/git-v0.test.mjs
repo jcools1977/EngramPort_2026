@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -9,7 +10,7 @@ const root = path.resolve(import.meta.dirname, "..");
 const verifierSpecifier = process.env.GIT_ADAPTER_VERIFY_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href;
 const { hashBody, hashThreadConfig, verifyLog } = await import(verifierSpecifier);
 const cliSpecifier = process.env.GIT_ADAPTER_CLI_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/cli.mjs")).href;
-const { run } = await import(cliSpecifier);
+const { run, appendEvent: cliAppendEvent, listInbox: cliListInbox } = await import(cliSpecifier);
 const coreSpecifier = pathToFileURL(path.join(root, "packages/git-adapter/src/event-core.mjs")).href;
 const { appendEvent, listInbox } = await import(coreSpecifier);
 const surfaces = ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml"];
@@ -18,6 +19,23 @@ async function fixture() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "engramport-v0-"));
   for (const surface of surfaces) await cp(path.join(root, surface), path.join(directory, surface), { recursive: true });
   return directory;
+}
+
+async function runCliModule(module, argv, cwd, env = {}) {
+  const source = "const {run}=await import(process.env.ENGRAMPORT_TEST_CLI_MODULE);try{process.exitCode=await run(process.argv.slice(1));}catch(error){console.error(`engram: ${error.message}`);process.exitCode=1;}";
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ["--input-type=module", "--eval", source, ...argv], {
+      cwd,
+      env: { ...process.env, ...env, ENGRAMPORT_TEST_CLI_MODULE: module },
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.once("error", reject);
+    child.once("close", (code) => resolve({ code, stdout, stderr }));
+  });
 }
 
 async function mutate(directory, relative, transform) {
@@ -241,6 +259,24 @@ test("exported append and inbox core preserve the event wire surface", async () 
     assert.deepEqual(result, { ok: true, errors: [], relative });
     assert.equal(await readFile(path.join(directory, relative), "utf8"), `---\nschema_version: 0\nid: ${id}\nthread: core-wire-surface\nfrom: agent-b\ntype: handoff\noccurred_at: 2026-08-26T20:00:00Z\nin_reply_to: null\nnext: agent-a\ncontent_sha256: ${hashBody(body)}\nthread_config_sha256: ${hashThreadConfig({ schema_version: 0, thread: "core-wire-surface", mode: "free_form", coordinator: null })}\n---\n${body}`);
     assert.ok((await listInbox({ actor: "agent-a", cwd: directory })).includes(relative));
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("CLI re-exports the same event-core binding the SDK must consume", () => {
+  assert.equal(cliAppendEvent, appendEvent);
+  assert.equal(cliListInbox, listInbox);
+});
+
+test("normal CLI execution cannot activate the harness core override", async () => {
+  const directory = await fixture();
+  const replacement = path.join(directory, "untrusted-event-core.mjs");
+  try {
+    await writeFile(replacement, 'throw new Error("UNGUARDED_CORE_OVERRIDE");\n');
+    const result = await runCliModule(cliSpecifier, ["inbox", "--actor", "agent-a"], directory, {
+      GIT_ADAPTER_CORE_MODULE: pathToFileURL(replacement).href
+    });
+    assert.equal(result.code, 0, `normal CLI must ignore the override; stderr=${result.stderr}`);
+    assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /UNGUARDED_CORE_OVERRIDE/);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
