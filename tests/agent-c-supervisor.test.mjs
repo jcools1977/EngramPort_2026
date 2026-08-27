@@ -29,7 +29,7 @@ const fixedUsage = { input_tokens: 41, output_tokens: 17, total_tokens: 58, cost
 function check(name, operation) { test(name, { skip: selected !== "all" && selected !== name }, operation); }
 function stubModel(review = fixedReview) { return { review: async () => ({ review, model: "grok-synthetic", usage: fixedUsage }) }; }
 
-async function fixture({ next = "agent-c", targetType = "handoff", isolated = false } = {}) {
+async function fixture({ next = "agent-c", targetType = "handoff", isolated = false, actor = "agent-a" } = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "engramport-agent-c-"));
   for (const surface of ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml", "AGENTS.md"]) await cp(path.join(repository, surface), path.join(root, surface), { recursive: true });
   if (isolated) {
@@ -66,7 +66,7 @@ async function fixture({ next = "agent-c", targetType = "handoff", isolated = fa
   } else {
     id = next === "agent-c" ? "01a03e50-0000-7000-8000-000000000001" : "01a03e50-0000-7000-8000-000000000002";
     const occurredAt = next === "agent-c" ? "2026-08-26T14:00:01Z" : "2026-08-26T14:00:02Z";
-    relative = await writeEvent({ actor: "agent-a", id, occurredAt, type: "handoff", eventNext: next, body: "Review whether this synthetic dispatch has all prerequisites.\n", rootEvent: true });
+    relative = await writeEvent({ actor, id, occurredAt, type: "handoff", eventNext: next, body: "Review whether this synthetic dispatch has all prerequisites.\n", rootEvent: true });
   }
   return { root, relative, id, thread };
 }
@@ -165,7 +165,7 @@ check("result-review", async () => {
 
 check("inbox-poller", async () => {
   const positive = await fixture({ targetType: "reply", isolated: true });
-  const negative = await fixture({ next: "agent-b", isolated: true });
+  const negative = await fixture({ actor: "agent-b", isolated: true });
   try {
     const actionable = await runPoller(positive.root);
     assert.equal(actionable.code, 0);
@@ -176,6 +176,11 @@ check("inbox-poller", async () => {
     assert.equal(silent.code, 0);
     assert.equal(silent.stderr, "");
     assert.equal(silent.stdout, "", "poller must stay silent when agent-c has no actionable turn");
+    assert.deepEqual(
+      await supervisor.pollAgentCInbox({ root: negative.root }),
+      [],
+      "injected supervisor must preserve the same non-actionable-turn silence boundary"
+    );
   } finally {
     await rm(positive.root, { recursive: true, force: true });
     await rm(negative.root, { recursive: true, force: true });
