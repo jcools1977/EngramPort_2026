@@ -2715,3 +2715,23 @@ Failing closed is the correct default for a credential boundary and is not the d
 - **The blocked file is the one the SDK review most needs.** Port Watch implements the durable-cursors claim on the live site, and agent-c's earlier review already produced a false finding that cursors "do not exist" precisely because agent-a had not supplied this package. **The boundary now makes supplying it impossible**, so the context defect is no longer a matter of agent-a remembering.
 
 As the codebase grows, any source using common identifiers such as `token`, `secret` or `key` becomes unreviewable by the third agent. The fix is not to weaken detection but to report the match precisely and to distinguish a credential-shaped **value** from an identifier.
+
+### F111
+
+**Event authorship is asserted by the caller and never authorized.** `event-core.mjs:50` requires only that `actor` be present; `:58` writes it into `from:` and `:68` derives the destination as `events/<input.actor>/`. `verifyLog` with a candidate event checks that the file sits in the declared actor's directory and that `from` matches, which is **consistency, not authorization**. Nothing prevents a caller from passing another actor's slug and producing a well-formed, verifying event attributed to them.
+
+Under single ownership this is unremarkable: every actor belongs to DeVere. **Under ADR 0039 it is impersonation**, and it is the central threat rather than an edge case, because the product is defined as independent builders sharing one repository. Builder B can author events as builder A, and the log will verify.
+
+This is F101 relocated from the read path to the write path. F101 asked whether a forged file is *detected*; this asks whether a forgery is *prevented*, and the answer is that the protocol never attempts it. **The product's claim is a coordination log whose events are attributable, and attribution currently rests on honor.**
+
+The resolution is the same as F108 and should be stated together with it: **attribution comes from the host's identity layer, not from the log.** Signed commits bind an author to a commit; branch protection binds who may write. An in-tree check cannot establish either, because the same commit that forges the event can amend whatever would have caught it. Agent-c surfaced this while reviewing an SDK dispatch, in a paragraph agent-a's own framing had steered away from.
+
+### F112
+
+**The site's four claims cannot be made true by a wrapper over `event-core`, and three of them cannot be made true without changes agent-a ruled out.** Agent-c's fourth stop of the SDK dispatch is a scope finding rather than a defect list:
+
+- **Claim 2 is a conjunction** and its second half, Port Watch delivering work through durable cursors, lives in `packages/port-watch`. `listInbox` is a full-log scan with no cursor, lease or `(agent, project)` store. A wrapper over `event-core` cannot make it true.
+- **Claim 4**, bounded context and completion criteria, has no model in the adapter, which exposes `next` and a free-text body. Prose in a body does not make the claim true and cannot host a discriminating mutation.
+- **Claim 3's safe retries** requires durable caller-controlled append identity, which is a protocol semantic. Keeping it process-local is not a retry; persisting it changes the log. Confining it to the SDK also splits CLI and SDK append semantics, contradicting the same dispatch's requirement that one `event-core` mutation break both.
+
+**Agent-a proposed the idempotency key as an SDK-only interface addition and asked whether it was a protocol change in disguise. It is.** Three of four dispatches in this sequence were stopped for requiring properties the substrate does not have; this one is stopped for requiring claims the substrate cannot host. **The remaining choice is a product decision rather than an engineering one**, and it belongs to DeVere: narrow the claims to what a wrapper can honestly deliver, or fund the larger build that includes Port Watch integration and a protocol change.
