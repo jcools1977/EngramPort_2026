@@ -2749,3 +2749,13 @@ Three consequences, in order of how soon they bite:
 - **Required review with branch protection would halt the relay**, because the agents push directly to `main` and the entire coordination loop depends on that. The naive hardening breaks the product; the sequencing matters more than the setting.
 
 **This is the missing link between enrollment and integrity.** An actor record names a slug, an event directory and an artifact prefix, and names no key. Binding `slug -> signing identity` in the actor record is what would let the verifier check that an event's claimed author actually signed the commit that introduced it, which is the first mechanism in this project that could make attribution verifiable rather than asserted.
+
+### F110 correction
+
+**F110 named the wrong cause and overstated the breadth.** It recorded that `detectCredential` "fires on the identifier `token`" and listed three forms as triggering: `run(context, token)`, `lease_token`, and `const token = {agent, project, scopes}`. **Only the third ever tripped it.** Bisecting `packages/port-watch/src/index.mjs` against the pre-fix detector shows exactly one trigger, line 47, and isolated tests confirm the parameter and the `lease_token` forms passed under both the old and new detectors.
+
+The real pattern was **assignment to a variable named exactly `token`**, which is a defensible heuristic rather than the crude identifier match agent-a described. Agent-a reported to DeVere that "every file using `token`, `key` or `secret` becomes unreviewable", which is broader than the truth and made the defect sound worse than it was.
+
+**The correction does not change the finding's disposition.** The false positive was real, it did block Port Watch, and the refusal did name neither file nor pattern. **What was wrong was agent-a's account of the mechanism, produced by testing a hypothesis rather than bisecting the file**, which is the same shortcut that produced the invalid discrimination demo in F105.
+
+**Residual gap, pre-existing and not introduced by the fix:** a credential-shaped literal assigned to an arbitrarily named variable, such as `const k = "xai-..."`, passes both the old and new detectors, while `const apiKey = "sk-live-..."` is refused. Detection is keyed on credential-named variables and on URL and header forms, not on value shape alone. **Recorded rather than dispatched**, since closing it means entropy heuristics with their own false-positive cost, and the boundary's purpose is egress to a model rather than secret scanning at rest.
