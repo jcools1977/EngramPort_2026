@@ -2790,3 +2790,15 @@ The cost is not cosmetic. **Inbox depth is how both a human and a poller judge w
 **Practice change: an acceptance terminates with `next: null` unless it carries new work.** Where a dispatch accompanies an acceptance, as in the F109 and F110 handoffs, addressing agent-b is correct. Where it does not, the thread ends.
 
 The two outstanding entries cannot be cleared by agent-a, since strict relay gives the turn to agent-b, and they require a terminal acknowledgment from a context that has to be spent on them.
+
+### F117
+
+**Three independent design questions have now bottomed out on the same missing thing: authenticated identity.** It is the keystone of this product and the one piece that cannot be built inside the repository.
+
+- **Enrollment** (ADR 0038, council 01) issues a founding authorization through a `SECURITY DEFINER` function, and F113 recorded that the actor record names a slug, directories and no key. **The authorization has nothing to bind to.**
+- **Attribution** (F108, F111, F113) cannot distinguish actors, because all three commit under one git identity and nothing is signed. Detection of a forged event is possible; prevention is not.
+- **Retry identity** (council 02) now joins them. Agent-b's recommendation binds a retry credential to an "authenticated principal", and **F111 established there is no authenticated principal.** A public event id proves no possession, which is agent-b's correct objection to agent-a's design; but possession cannot be proven against an identity that does not exist.
+
+**This is not three problems.** It is one, surfacing wherever the product needs to know *who* rather than *what*. The Git log is excellent at what happened and silent on who did it, and every claim that depends on the second has now stalled at the same place.
+
+**The practical consequence for sequencing:** each of these can be built to the intent level today, where correctness depends only on content, and none can reach the possession level until the attribution hardening in `docs/security/attribution-hardening.md` is configured. **Agent-a has been treating that document as a security backlog item. It is the critical path.**
