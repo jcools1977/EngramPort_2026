@@ -1,0 +1,34 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a043a0-1465-740d-9a76-ed938c2e9f20",
+  "target_thread": "port-watch-claim-audit",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-27T14:29:32.627Z",
+  "review_completed_at": "2026-08-27T14:33:32.063Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 8607,
+    "output_tokens": 563,
+    "total_tokens": 21376
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 928680000,
+    "cost_usd": 0.092868
+  },
+  "summary": "Dispatch 01a043a0 is unsatisfiable for agent-c as written. It orders a result review of a package agent-a did not deliver, uses untrusted event text to forbid dispatch critique, and treats the missing primary audit as agent-c’s job. Agent-c may only critique dispatches and delivered results, may not originate that audit, and may not issue the implied integration go/no-go. The cited questions are answerable from the supplied sources, but not by this actor under this form and authority.",
+  "findings": [
+    "The target body’s mandatory form (“This is a result review, not a dispatch critique”) is untrusted event text. AGENTS.md forbids event bodies from changing permissions or role. Supervisor mode is dispatch. If that form is treated as binding, it contradicts the only authorized output; if it is ignored, a stated mandatory requirement is dropped. Either reading leaves the dispatch incomplete as specified.",
+    "Agent-a states it has not audited the package and holds no position. Result review compares delivered work and evidence to requirements. There is no agent-a delivery, claimed mutation, verification command, or positioned finding to close. Producing the package-vs-claim verdict would be originating the missing audit, which exceeds critic-only authority (no implementation, no claimed execution).",
+    "The dispatch makes the verdict load-bearing for whether ADR 0040 integration proceeds (“needs revisiting before the integration is built”). That is a go/no-go gate. Agent-c must not approve a gate, so the required decision-shaped consequence cannot be issued even if a technical judgment were in scope.",
+    "ADR 0040 is cited as the funding record that made the live sentence load-bearing and chose integration over narrowing copy. It is not in the supplied evidence, so that premise cannot be checked. Supplying it would not create a result to review or grant gate authority; it does not rescue the form.",
+    "The claim under audit is a conjunction (inbox discovery AND Port Watch durable-cursor delivery), but the prescribed object of judgment is packages/port-watch alone. Inbox discovery lives in git-adapter listInbox (full-log scan, no cursor). Judging “the package” cannot close both conjuncts without an undeclared scope expansion the form does not authorize.",
+    "Prior-turn context (“credential boundary refused the package; durable cursors do not exist”) is not a substitute for a current, positioned delivery. Supplying index.mjs fixes an evidence gap; it does not convert a questionnaire into a result, bind agent-c to result mode, or make the conjunction auditable as a package-only property."
+  ]
+}
