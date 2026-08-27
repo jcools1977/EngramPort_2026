@@ -25,7 +25,12 @@ const mutations = [
   ["inbox-poller", [['      if (!["TARGET_REFUSED", "MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error;', '      if (!["MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error; /* AGENT_C_POLLER_SILENCE_REMOVED */']]],
   ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code, { ...details, matchedPattern: "resolved-credential" });', 'if (false) refuse(code, { ...details, matchedPattern: "resolved-credential" });']]],
   ["provider-diagnosis", [['      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });', '      refuse("MODEL_CALL_FAILED");']]],
-  ["provider-error-egress", [['      assertNoCredential(responseText, this.credential);', '      void responseText;']]]
+  ["provider-error-egress", [['      assertNoCredential(responseText, this.credential);', '      void responseText;']]],
+  ["scheduled-poller-silence", [['  if (!actionable.length) return { status: "idle", actionable: [] }; /* AGENT_C_SCHEDULED_SILENCE */', '  if (false) return { status: "idle", actionable: [] }; /* AGENT_C_SCHEDULED_SILENCE_REMOVED */']]],
+  ["credential-unavailable-reporting", [[
+    '    await log("ERROR CREDENTIAL_UNAVAILABLE"); /* AGENT_C_CREDENTIAL_FAILURE_REPORT */\n    await notify("Agent C credential unavailable; review was not started.");',
+    '    void log; /* AGENT_C_CREDENTIAL_FAILURE_REPORT_REMOVED */\n    void notify;'
+  ]]]
 ];
 
 try {

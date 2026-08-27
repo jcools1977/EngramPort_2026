@@ -361,3 +361,42 @@ export async function pollAgentCInbox({ root = process.cwd() } = {}) {
   }
   return actionable;
 }
+
+export async function processScheduledAgentCPoll({ poll = () => pollAgentCInbox(), readSeen, writeSeen, log, notify }) {
+  let actionable;
+  try { actionable = await poll(); }
+  catch {
+    await log("ERROR POLL_FAILED");
+    await notify("Agent C poll failed; inspect the bounded poller log.");
+    return { status: "failed", code: "POLL_FAILED", actionable: [] };
+  }
+  if (!actionable.length) return { status: "idle", actionable: [] }; /* AGENT_C_SCHEDULED_SILENCE */
+  const signature = createHash("sha256").update(actionable.join("\n")).digest("hex");
+  if (await readSeen() === signature) return { status: "unchanged", actionable };
+  await writeSeen(signature);
+  await log(`PENDING ${actionable.length} actionable agent-c turn(s)`);
+  await notify(`${actionable.length} Agent C review turn${actionable.length === 1 ? "" : "s"} pending.`);
+  return { status: "pending", actionable };
+}
+
+export async function runAgentCWithServiceAccount({ readToken, invoke, log, notify }) {
+  let token;
+  try { token = await readToken(); }
+  catch { token = null; }
+  if (typeof token !== "string" || !token.startsWith("ops_") || /\s/.test(token)) {
+    await log("ERROR CREDENTIAL_UNAVAILABLE"); /* AGENT_C_CREDENTIAL_FAILURE_REPORT */
+    await notify("Agent C credential unavailable; review was not started.");
+    return { status: "failed", code: "CREDENTIAL_UNAVAILABLE" };
+  }
+  let exitCode;
+  try { exitCode = await invoke(token); }
+  catch { exitCode = 1; }
+  finally { token = null; }
+  if (exitCode !== 0) {
+    await log("ERROR REVIEW_FAILED");
+    await notify("Agent C review failed; inspect the bounded runner log.");
+    return { status: "failed", code: "REVIEW_FAILED" };
+  }
+  await log("REVIEW_COMPLETED");
+  return { status: "completed" };
+}

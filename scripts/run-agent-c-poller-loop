@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+ROOT="/Users/an2b/an2b/products/EngramPORT"
+POLLER="$ROOT/scripts/run-agent-c-scheduled-poll"
+INTERVAL="${ENGRAMPORT_AGENT_C_POLL_INTERVAL:-300}"
+
+[ -x "$POLLER" ] || { echo "agent-c poller loop: executable missing" >&2; exit 1; }
+
+while true; do
+  "$POLLER" || true
+  sleep "$INTERVAL"
+done

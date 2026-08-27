@@ -290,3 +290,54 @@ check("provider-error-egress", async () => {
     return true;
   });
 });
+
+check("scheduled-poller-silence", async () => {
+  const effects = { logs: [], notifications: [], writes: [] };
+  let seen = "";
+  const dependencies = {
+    readSeen: async () => seen,
+    writeSeen: async (value) => { seen = value; effects.writes.push(value); },
+    log: async (value) => effects.logs.push(value),
+    notify: async (value) => effects.notifications.push(value)
+  };
+  const idle = await supervisor.processScheduledAgentCPoll({ ...dependencies, poll: async () => [] });
+  assert.deepEqual(idle, { status: "idle", actionable: [] });
+  assert.deepEqual(effects, { logs: [], notifications: [], writes: [] }, "no actionable turn must produce no scheduled-poller output");
+
+  const relative = "events/agent-a/20260827T000000Z_synthetic.md";
+  const pending = await supervisor.processScheduledAgentCPoll({ ...dependencies, poll: async () => [relative] });
+  assert.equal(pending.status, "pending");
+  assert.deepEqual(effects.logs, ["PENDING 1 actionable agent-c turn(s)"]);
+  assert.deepEqual(effects.notifications, ["1 Agent C review turn pending."]);
+  assert.equal(effects.writes.length, 1);
+
+  const unchanged = await supervisor.processScheduledAgentCPoll({ ...dependencies, poll: async () => [relative] });
+  assert.equal(unchanged.status, "unchanged");
+  assert.equal(effects.logs.length, 1, "an unchanged actionable set must not notify repeatedly");
+  assert.equal(effects.notifications.length, 1);
+});
+
+check("credential-unavailable-reporting", async () => {
+  const effects = { logs: [], notifications: [], invoked: 0 };
+  const unavailable = await supervisor.runAgentCWithServiceAccount({
+    readToken: async () => { throw new Error("synthetic keychain locked"); },
+    invoke: async () => { effects.invoked += 1; return 0; },
+    log: async (value) => effects.logs.push(value),
+    notify: async (value) => effects.notifications.push(value)
+  });
+  assert.deepEqual(unavailable, { status: "failed", code: "CREDENTIAL_UNAVAILABLE" });
+  assert.deepEqual(effects.logs, ["ERROR CREDENTIAL_UNAVAILABLE"]);
+  assert.deepEqual(effects.notifications, ["Agent C credential unavailable; review was not started."]);
+  assert.equal(effects.invoked, 0, "a missing credential must not reach the model runner");
+
+  let received;
+  const available = await supervisor.runAgentCWithServiceAccount({
+    readToken: async () => "ops_synthetic_service_account_token",
+    invoke: async (value) => { received = value; return 0; },
+    log: async (value) => effects.logs.push(value),
+    notify: async (value) => effects.notifications.push(value)
+  });
+  assert.deepEqual(available, { status: "completed" });
+  assert.equal(received, "ops_synthetic_service_account_token");
+  assert.equal(effects.logs.at(-1), "REVIEW_COMPLETED");
+});
