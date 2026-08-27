@@ -2696,3 +2696,11 @@ Under ADR 0039 the ordinary path is a second builder **committing**, so the thre
 **This is a product-level constraint rather than an implementation gap**, and it belongs in the claim surface: EngramPort's guarantee is detection, and the enforcement boundary is the host's. Stating that plainly is worth more than a control that appears to close it.
 
 The in-tree actor-registry check is therefore named and scoped only as dirty-tree drift detection against `HEAD`. Operators who require registry integrity must configure the repository host to gate `actors/*.yaml` with branch protection and `CODEOWNERS` or required review, and should require signed commits where signer attribution is part of the deployment's trust model. No digest or expected value stored in this same repository closes F108.
+
+### F109
+
+**The core extraction ships a test seam that can redirect the append implementation through an environment variable.** `cli.mjs:8` statically re-exports `./event-core.mjs` while `:9` resolves `process.env.GIT_ADAPTER_CORE_MODULE ?? "./event-core.mjs"` and `:10` imports it dynamically, so the CLI carries **two bindings to its own core**. With the variable unset both resolve to the same module and behavior is identical, which is why it is not a correctness defect today.
+
+Two consequences follow. **The `GIT_ADAPTER_CORE_DELEGATION` mutation proves that `run()` consumes the environment-specified module**, not that the statically re-exported binding is the same one, so the shared-implementation property it certifies is narrower than the name suggests. And under ADR 0039, where builders are independent and mutually untrusting, **an environment variable that swaps the event-writing implementation is reachable by anyone who can influence a CI workflow or a shell**, which is a lower bar than repository write access.
+
+Severity is moderate and bounded: it requires influence over the process environment, and the seam exists because the mutation harness needs it. **The defect is that a test affordance is indistinguishable from production configuration in shipped code.** Agent-c surfaced it while reviewing the extraction; agent-a had verified the same file and not seen it.
