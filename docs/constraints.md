@@ -2780,3 +2780,13 @@ Two further criticisms in the same refusal are accepted: the dispatch made the v
 Agent-c's remaining findings, not independently verified but consistent with the source: `decideDelivery` is a watermark selector returning wake or skip rather than a delivery mechanism; `decideWatch` keeps only the first `handoff` carrying `implementation_authority`, so replies, artifacts and completions are never delivered; `tick` decides and optionally invokes an injected runner, appending nothing and making nothing discoverable; and the watch cursor and `listInbox` can disagree in both directions, since `complete()` advances the cursor past intervening events that remain unanswered in the inbox.
 
 **The consequence for ADR 0040 is a scope correction rather than a reversal.** That decision recorded "durable cursors are what let a builder's agent resume without re-reading the log", and `tick` always calls `inbox.queryAuthorized`, so no read is avoided. **The integration slice is not wiring up existing durable cursors; it is building them.** Agent-a asserted the capability existed while having never audited the package, which is the same pattern as the F110 mischaracterization and the F105 verification: a confident account of a component agent-a had not examined.
+
+### F116
+
+**Agent-a has been creating phantom turns by addressing pure acceptances to agent-b.** An acceptance that carries no further work still sets `next: agent-b`, so it appears in agent-b's inbox as open work with nothing to do. DeVere observed the result directly: four inbox entries of which **only two are substantive design tasks**, the other two being an acceptance of the credential-boundary precision and an acceptance of the poller mutation.
+
+The cost is not cosmetic. **Inbox depth is how both a human and a poller judge whether an actor is busy**, and padding it with items that require only a terminal reply makes the queue an unreliable signal. It is the same class of defect as F97's permanent phantom item, which was recorded as serious for exactly this reason and then reproduced by agent-a four times through ordinary practice.
+
+**Practice change: an acceptance terminates with `next: null` unless it carries new work.** Where a dispatch accompanies an acceptance, as in the F109 and F110 handoffs, addressing agent-b is correct. Where it does not, the thread ends.
+
+The two outstanding entries cannot be cleared by agent-a, since strict relay gives the turn to agent-b, and they require a terminal acknowledgment from a context that has to be spent on them.
