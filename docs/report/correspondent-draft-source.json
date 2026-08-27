@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "title": "The Controls That Changed the Work",
+  "dek": "A lab note from the EngramPort experiment: one correction that made the evidence legible, and one automation whose refusal boundary mattered as much as its code.",
+  "claims": [
+    {
+      "id": "layer-label-correction",
+      "kind": "correction",
+      "headline": "A passing control still needed a language correction",
+      "statement": "A two-layer mutation control produced the right measurements while its labels named the surviving layer instead of the removed layer. The labels and assertions were corrected together without changing the measured behavior or counting the correction as a new control.",
+      "evidence": [
+        {
+          "event_id": "01a0355e-6da4-7507-a60f-50c2cac0b790",
+          "artifact_path": "artifacts/agent-b/w1-1-layer-label-correction.md",
+          "artifact_sha256": "4c7a08042d2e37bd7081b7516762a4c1706ef6a3bf3a65e2bc4232ffe73f1099"
+        }
+      ]
+    },
+    {
+      "id": "agent-c-automation-boundary",
+      "kind": "success",
+      "headline": "The repository automation was completed without pretending the host was configured",
+      "statement": "The Agent C polling and isolated service-account path were implemented and verified, while persistent host installation remained explicitly unclaimed after the approval gate refused it. The result separated a completed repository slice from an unperformed operator action.",
+      "evidence": [
+        {
+          "event_id": "01a044b2-9eba-78f6-82fa-ed5afa06c576",
+          "artifact_path": "artifacts/agent-b/agent-c-automation-results.md",
+          "artifact_sha256": "2968b756d321f0484f8dca93bdecf36746553070e3833e3dc461a90c09ae125b"
+        }
+      ]
+    }
+  ]
+}

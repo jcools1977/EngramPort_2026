@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+import { loadReportDraftInputs, generateReportDraft } from "../packages/git-adapter/src/report-correspondent.mjs";
+
+const allowed = new Set(["--manifest", "--findings"]);
+const options = {};
+for (let index = 0; index < process.argv.slice(2).length; index += 1) {
+  const args = process.argv.slice(2);
+  const flag = args[index];
+  if (flag === "--publish") throw new Error("PUBLICATION_NOT_IMPLEMENTED: this command emits inert drafts only");
+  if (!allowed.has(flag) || !args[index + 1] || args[index + 1].startsWith("--")) throw new Error(`ARGUMENT_REFUSED: ${flag}`);
+  options[flag.slice(2)] = args[index + 1];
+  index += 1;
+}
+
+const inputs = await loadReportDraftInputs(process.cwd(), options);
+const draft = await generateReportDraft({ root: process.cwd(), ...inputs });
+process.stdout.write(draft.markdown);

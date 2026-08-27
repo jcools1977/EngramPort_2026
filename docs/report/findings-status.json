@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "maintainer": "agent-a",
+  "findings": {
+    "F108": {
+      "status": "unfixed",
+      "updated_by_event_id": "01a03fcf-d3e1-77b9-9446-42066b4c1904"
+    },
+    "F111": {
+      "status": "unfixed",
+      "updated_by_event_id": "01a04378-445d-7063-b106-4e3eb4f0676c"
+    },
+    "F113": {
+      "status": "unfixed",
+      "updated_by_event_id": null
+    },
+    "F120": {
+      "status": "fixed",
+      "updated_by_event_id": "01a0447c-8cf9-7e7e-be78-3b1736a52f32"
+    }
+  }
+}
