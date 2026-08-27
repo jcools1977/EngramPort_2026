@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 
 export class BoundaryError extends Error { constructor(code, message = "refused") { super(`${code}: ${message}`); this.code = code; } }
 
-const SECRET = /(?:^|\b)(?:gh[pousr]_[A-Za-z0-9_-]{20,}|hvs\.[A-Za-z0-9_-]{20,}|hvb\.[A-Za-z0-9_-]{20,}|s\.[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9._~-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\s*[:=]\s*[^\s]{8,})/i;
+const KNOWN_CREDENTIAL = /(?:^|\b)(?:gh[pousr]_[A-Za-z0-9_-]{20,}|hvs\.[A-Za-z0-9_-]{20,}|hvb\.[A-Za-z0-9_-]{20,}|s\.[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9._~-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/i;
+const CREDENTIAL_ASSIGNMENT = /(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\s*[:=]\s*(?:"[A-Za-z0-9._~+/-]{8,}"|'[A-Za-z0-9._~+/-]{8,}'|(?=[A-Za-z0-9._~+/-]{8,}(?:[\s,;}\]]|$))(?=[A-Za-z0-9._~+/-]*[._~+/-])[A-Za-z0-9._~+/-]+|(?=[A-Za-z0-9]{20,}(?:[\s,;}\]]|$))(?=[A-Za-z0-9]*[a-z])(?=[A-Za-z0-9]*[A-Z])(?=[A-Za-z0-9]*[0-9])[A-Za-z0-9]+)/i; /* CREDENTIAL_IDENTIFIER_PRECISION */
+const SECRET = new RegExp(`(?:${KNOWN_CREDENTIAL.source}|${CREDENTIAL_ASSIGNMENT.source})`, "i");
 const REF = /^epr:(installation|credential|shape):[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const CRED_QUERY = /(?:token|secret|password|api[_-]?key|access[_-]?token)=/i;
@@ -22,7 +24,20 @@ export function detectCredential(record, { maxBytes = 64 * 1024, maxDepth = 16 }
     else if (v && typeof v === "object") for (const x of Object.values(v)) { const hit = walk(x, depth + 1); if (hit) return hit; }
     return null;
   };
-  const code = walk(record, 0); return code ? { hit: true, code } : { hit: false };
+  const code = walk(record, 0);
+  if (!code) return { hit: false };
+  if (code !== "CREDENTIAL_DETECTED") return { hit: true, code };
+  const classify = v => {
+    if (typeof v === "string") {
+      if (KNOWN_CREDENTIAL.test(v)) return "known-credential-shape";
+      if (CREDENTIAL_ASSIGNMENT.test(v)) return "credential-assignment";
+      return null;
+    }
+    if (Array.isArray(v)) for (const x of v) { const pattern = classify(x); if (pattern) return pattern; }
+    else if (v && typeof v === "object") for (const x of Object.values(v)) { const pattern = classify(x); if (pattern) return pattern; }
+    return null;
+  };
+  return { hit: true, code, pattern: classify(record) ?? "credential-shape" };
 }
 
 function reject(code) { return { ok: false, code }; }

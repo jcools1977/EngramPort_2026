@@ -15,13 +15,17 @@ const MAX_CONTEXT_BYTES = 1_000_000;
 const MAX_OUTPUT_BYTES = 128_000;
 
 export class AgentCSupervisorError extends Error {
-  constructor(code, { providerStatus, providerError } = {}) {
+  constructor(code, { providerStatus, providerError, contextFile, matchedPattern } = {}) {
+    const context = [contextFile && `file=${contextFile}`, matchedPattern && `pattern=${matchedPattern}`].filter(Boolean).join(" ");
+    const contextDiagnosis = context ? `: ${context}` : "";
     const diagnosis = providerError ? `: ${providerError}` : "";
-    super(`${code}: refused${diagnosis}`);
+    super(`${code}: refused${contextDiagnosis}${diagnosis}`);
     this.name = "AgentCSupervisorError";
     this.code = code;
     if (providerStatus !== undefined) this.providerStatus = providerStatus;
     if (providerError !== undefined) this.providerError = providerError;
+    if (contextFile !== undefined) this.contextFile = contextFile;
+    if (matchedPattern !== undefined) this.matchedPattern = matchedPattern;
   }
 }
 
@@ -34,10 +38,11 @@ function scrubReferences(value) {
     .replace(/op:\/\/[^\s"']+/g, "OP_REFERENCE");
 }
 
-function assertNoCredential(value, credential, code = "CREDENTIAL_OUTPUT_REFUSED") {
+function assertNoCredential(value, credential, code = "CREDENTIAL_OUTPUT_REFUSED", details = {}) {
   const serialized = typeof value === "string" ? value : JSON.stringify(value);
-  if (credential && serialized.includes(credential)) refuse(code);
-  if (detectCredential(scrubReferences(serialized)).hit) refuse(code);
+  if (credential && serialized.includes(credential)) refuse(code, { ...details, matchedPattern: "resolved-credential" });
+  const finding = detectCredential(scrubReferences(serialized));
+  if (finding.hit) refuse(code, { ...details, matchedPattern: finding.pattern ?? finding.code });
 }
 
 export function requireResolvedCredential(env = process.env) {
@@ -140,7 +145,7 @@ async function readBoundedContextFile(root, relative) {
   if (!fileReal.startsWith(`${rootReal}${path.sep}`) || fileReal.includes(`${path.sep}.git${path.sep}`)) refuse("CONTEXT_PATH_REFUSED");
   const content = await readFile(fileReal, "utf8");
   if (Buffer.byteLength(content) > MAX_CONTEXT_BYTES) refuse("CONTEXT_TOO_LARGE");
-  return { relative: slash(path.relative(root, fileReal)), content };
+  return { relative: slash(path.relative(rootReal, fileReal)), content };
 }
 
 export async function buildReviewPrompt(root, turn, contextPaths = [], reviewMode = "dispatch") {
@@ -157,6 +162,7 @@ export async function buildReviewPrompt(root, turn, contextPaths = [], reviewMod
   records.push({ relative: turn.event.relative ?? "target-event", content: turn.event.body });
   const artifactPaths = (turn.event.meta.artifacts ?? []).map((reference) => reference.split("#", 1)[0]);
   for (const relative of artifactPaths) if (!seen.has(relative)) records.push(await readBoundedContextFile(root, relative));
+  for (const record of records) assertNoCredential(record.content, null, "CREDENTIAL_CONTEXT_REFUSED", { contextFile: record.relative });
   const context = records.map(({ relative, content }) => `\n<repository-file path=${JSON.stringify(relative)}>\n${content}\n</repository-file>`).join("");
   const modeInstruction = reviewMode === "dispatch"
     ? "Review mode: dispatch. Assess whether the proposed dispatch is feasible. Return dispatch_feasibility."

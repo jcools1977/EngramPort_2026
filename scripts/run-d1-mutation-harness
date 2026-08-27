@@ -215,8 +215,18 @@ NODE
 make_agent_c_variant(){
   node - "$root_dir/packages/agent-c-supervisor/src/index.mjs" "$1" "$2" "$root_dir" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
-const [source,target,mode,root]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8")
-  .replace("../../git-adapter/src/credential-boundary.mjs",pathToFileURL(path.join(root,"packages/git-adapter/src/credential-boundary.mjs")).href)
+const [source,target,mode,root]=process.argv.slice(2);
+let boundary=path.join(root,"packages/git-adapter/src/credential-boundary.mjs");
+if(mode==="credential-context"){
+  let boundaryText=fs.readFileSync(boundary,"utf8");
+  const anchors=boundaryText.split("\n").filter(line=>line.includes("/* CREDENTIAL_IDENTIFIER_PRECISION */"));
+  if(anchors.length!==1)throw new Error("credential identifier precision anchor not exact");
+  boundaryText=boundaryText.replace(anchors[0],'const CREDENTIAL_ASSIGNMENT = /(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\\s*[:=]\\s*[^\\s]{8,}/i; /* AGENT_C_CREDENTIAL_CONTEXT_REMOVED */');
+  boundary=path.join(path.dirname(target),"agent-c-credential-context-boundary.mjs");
+  fs.writeFileSync(boundary,boundaryText);
+}
+let text=fs.readFileSync(source,"utf8")
+  .replace("../../git-adapter/src/credential-boundary.mjs",pathToFileURL(boundary).href)
   .replace("../../git-adapter/src/verify-log.mjs",pathToFileURL(path.join(root,"packages/git-adapter/src/verify-log.mjs")).href);
 function replace(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="credential-reference")replace('if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");','if (typeof credential !== "string" || !credential /* AGENT_C_CREDENTIAL_REFERENCE_REMOVED */) refuse("CREDENTIAL_UNRESOLVED");');
@@ -230,7 +240,8 @@ else if(mode==="turn-enforcement")replace('if (event.meta.next !== AGENT_C) refu
 else if(mode==="reply-target")replace('  if (event.meta.from !== REVIEWER || !["handoff", "reply"].includes(event.meta.type)) refuse("TARGET_REFUSED"); /* AGENT_C_REVIEW_TARGET_TYPES */','  if (event.meta.from !== REVIEWER || event.meta.type !== "handoff") refuse("TARGET_REFUSED"); /* AGENT_C_REPLY_TARGET_REMOVED */');
 else if(mode==="result-review")replace('  const contract = REVIEW_CONTRACTS[reviewMode]; /* AGENT_C_REVIEW_MODE_CONTRACT */','  const contract = REVIEW_CONTRACTS.dispatch; /* AGENT_C_RESULT_REVIEW_REMOVED */');
 else if(mode==="inbox-poller")replace('      if (!["TARGET_REFUSED", "MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error;','      if (!["MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error; /* AGENT_C_POLLER_SILENCE_REMOVED */');
-else if(mode==="credential-egress")replace('if (credential && serialized.includes(credential)) refuse(code);','if (false /* AGENT_C_CREDENTIAL_EGRESS_REMOVED */) refuse(code);');
+else if(mode==="credential-context"){ /* credential boundary variant prepared above */ }
+else if(mode==="credential-egress")replace('if (credential && serialized.includes(credential)) refuse(code, { ...details, matchedPattern: "resolved-credential" });','if (false /* AGENT_C_CREDENTIAL_EGRESS_REMOVED */) refuse(code, { ...details, matchedPattern: "resolved-credential" });');
 else if(mode==="provider-diagnosis")replace('      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });','      refuse("MODEL_CALL_FAILED"); /* AGENT_C_PROVIDER_DIAGNOSIS_REMOVED */');
 else if(mode==="provider-error-egress")replace('      assertNoCredential(responseText, this.credential);','      void responseText; /* AGENT_C_PROVIDER_ERROR_EGRESS_REMOVED */');
 else throw new Error(`unknown agent-c variant ${mode}`);
@@ -424,6 +435,7 @@ for line in "${MUTATIONS[@]}"; do
     case "$mutation" in
       AGENT_C_CREDENTIAL_REFERENCE) pattern=credential-reference; marker=AGENT_C_CREDENTIAL_REFERENCE_REMOVED ;;
       AGENT_C_CREDENTIAL_SHAPE) pattern=credential-shape; marker=AGENT_C_CREDENTIAL_SHAPE_REMOVED ;;
+      AGENT_C_CREDENTIAL_CONTEXT) pattern=credential-context; marker=AGENT_C_CREDENTIAL_CONTEXT_REMOVED ;;
       AGENT_C_WRITE_PREFIX) pattern=write-prefix; marker=AGENT_C_WRITE_PREFIX_REMOVED ;;
       AGENT_C_TURN_ENFORCEMENT) pattern=turn-enforcement; marker=AGENT_C_TURN_ENFORCEMENT_REMOVED ;;
       AGENT_C_REPLY_TARGET) pattern=reply-target; marker=AGENT_C_REPLY_TARGET_REMOVED ;;
@@ -436,7 +448,9 @@ for line in "${MUTATIONS[@]}"; do
     source_module="$root_dir/packages/agent-c-supervisor/src/index.mjs"
     base=$(assert_agent_c "$source_module" "$pattern")
     variant="$mutation_dir/agent-c-$pattern.mjs"; make_agent_c_variant "$variant" "$pattern" || { fail=1; continue; }
-    if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
+    marker_target="$variant"
+    [ "$pattern" = credential-context ] && marker_target="$mutation_dir/agent-c-credential-context-boundary.mjs"
+    if grep -Fq "$marker" "$marker_target"; then applied=t; else applied=f; fi
     log="$mutation_dir/agent-c-$pattern.log"; run_agent_c "$variant" "$pattern" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq "not ok [0-9]+ - $pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_agent_c "$source_module" "$pattern")
@@ -1292,7 +1306,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 126 ] || fail=1
+  [ "$executed" = 127 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

@@ -96,6 +96,27 @@ check("credential-shape", () => {
   }
 });
 
+check("credential-context", async () => {
+  const { root, relative } = await fixture();
+  const portWatch = "packages/port-watch/src/index.mjs";
+  const genuine = "packages/credential-fixture.txt";
+  const secret = "synthetic-review-secret-1234567890";
+  try {
+    await mkdir(path.join(root, "packages", "port-watch", "src"), { recursive: true });
+    await cp(path.join(repository, portWatch), path.join(root, portWatch));
+    await writeFile(path.join(root, genuine), `token=${secret}\n`);
+    const turn = await supervisor.assertOpenAgentCTurn(root, relative);
+    assert.match(await supervisor.buildReviewPrompt(root, turn, [portWatch]), /<repository-file path="packages\/port-watch\/src\/index\.mjs">/);
+    await assert.rejects(supervisor.buildReviewPrompt(root, turn, [genuine]), (error) => {
+      assert.equal(error.code, "CREDENTIAL_CONTEXT_REFUSED");
+      assert.match(error.message, /file=packages\/credential-fixture\.txt/);
+      assert.match(error.message, /pattern=credential-assignment/);
+      assert.equal(error.message.includes(secret), false);
+      return true;
+    });
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 check("write-prefix", async () => {
   const { root } = await fixture();
   try {

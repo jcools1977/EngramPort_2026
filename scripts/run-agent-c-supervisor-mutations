@@ -8,10 +8,12 @@ import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
 const sourceFile = path.join(root, "packages/agent-c-supervisor/src/index.mjs");
+const boundaryFile = path.join(root, "packages/git-adapter/src/credential-boundary.mjs");
 const temporary = mkdtempSync(path.join(tmpdir(), "agent-c-mutations-"));
 const mutations = [
   ["credential-reference", [['if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");', 'if (typeof credential !== "string" || !credential) refuse("CREDENTIAL_UNRESOLVED");']]],
   ["credential-shape", [['  if (/\\s/.test(credential) || /^[A-Za-z_][A-Za-z0-9_]*=/.test(credential)) refuse("CREDENTIAL_MALFORMED");', '  void credential;']]],
+  ["credential-context", [], [['const CREDENTIAL_ASSIGNMENT = /(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\\s*[:=]\\s*(?:"[A-Za-z0-9._~+/-]{8,}"|\'[A-Za-z0-9._~+/-]{8,}\'|(?=[A-Za-z0-9._~+/-]{8,}(?:[\\s,;}\\]]|$))(?=[A-Za-z0-9._~+/-]*[._~+/-])[A-Za-z0-9._~+/-]+|(?=[A-Za-z0-9]{20,}(?:[\\s,;}\\]]|$))(?=[A-Za-z0-9]*[a-z])(?=[A-Za-z0-9]*[A-Z])(?=[A-Za-z0-9]*[0-9])[A-Za-z0-9]+)/i; /* CREDENTIAL_IDENTIFIER_PRECISION */', 'const CREDENTIAL_ASSIGNMENT = /(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\\s*[:=]\\s*[^\\s]{8,}/i; /* CREDENTIAL_IDENTIFIER_PRECISION_REMOVED */']]],
   ["write-prefix", [
     ['if (!(relative === ARTIFACT_PREFIX || relative.startsWith(`${ARTIFACT_PREFIX}/`) || relative === EVENT_PREFIX || relative.startsWith(`${EVENT_PREFIX}/`))) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");'],
     ['if (absolute !== boundary && !absolute.startsWith(`${boundary}${path.sep}`)) refuse("WRITE_PREFIX_REFUSED");', 'if (false) refuse("WRITE_PREFIX_REFUSED");'],
@@ -21,17 +23,25 @@ const mutations = [
   ["reply-target", [['  if (event.meta.from !== REVIEWER || !["handoff", "reply"].includes(event.meta.type)) refuse("TARGET_REFUSED"); /* AGENT_C_REVIEW_TARGET_TYPES */', '  if (event.meta.from !== REVIEWER || event.meta.type !== "handoff") refuse("TARGET_REFUSED"); /* AGENT_C_REPLY_TARGET_REMOVED */']]],
   ["result-review", [['  const contract = REVIEW_CONTRACTS[reviewMode]; /* AGENT_C_REVIEW_MODE_CONTRACT */', '  const contract = REVIEW_CONTRACTS.dispatch; /* AGENT_C_RESULT_REVIEW_REMOVED */']]],
   ["inbox-poller", [['      if (!["TARGET_REFUSED", "MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error;', '      if (!["MODE_REFUSED", "TURN_REFUSED"].includes(error.code)) throw error; /* AGENT_C_POLLER_SILENCE_REMOVED */']]],
-  ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code);', 'if (false) refuse(code);']]],
+  ["credential-egress", [['if (credential && serialized.includes(credential)) refuse(code, { ...details, matchedPattern: "resolved-credential" });', 'if (false) refuse(code, { ...details, matchedPattern: "resolved-credential" });']]],
   ["provider-diagnosis", [['      refuse("MODEL_CALL_FAILED", { providerStatus: response.status, providerError });', '      refuse("MODEL_CALL_FAILED");']]],
   ["provider-error-egress", [['      assertNoCredential(responseText, this.credential);', '      void responseText;']]]
 ];
 
 try {
-  const original = readFileSync(sourceFile, "utf8")
-    .replace("../../git-adapter/src/credential-boundary.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/credential-boundary.mjs")).href)
-    .replace("../../git-adapter/src/verify-log.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href);
-  for (const [name, replacements] of mutations) {
-    let mutated = original;
+  const original = readFileSync(sourceFile, "utf8");
+  const originalBoundary = readFileSync(boundaryFile, "utf8");
+  for (const [name, replacements, boundaryReplacements = []] of mutations) {
+    let mutatedBoundary = originalBoundary;
+    for (const [before, after] of boundaryReplacements) {
+      assert.equal(mutatedBoundary.includes(before), true, `boundary mutation target changed: ${name}`);
+      mutatedBoundary = mutatedBoundary.replace(before, after);
+    }
+    const boundaryModule = path.join(temporary, `${name}-credential-boundary.mjs`);
+    writeFileSync(boundaryModule, mutatedBoundary);
+    let mutated = original
+      .replace("../../git-adapter/src/credential-boundary.mjs", pathToFileURL(boundaryModule).href)
+      .replace("../../git-adapter/src/verify-log.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href);
     for (const [before, after] of replacements) {
       assert.equal(mutated.includes(before), true, `mutation target changed: ${name}`);
       mutated = mutated.replace(before, after);
