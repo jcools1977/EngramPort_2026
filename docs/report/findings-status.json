@@ -2,21 +2,117 @@
   "schema_version": 1,
   "maintainer": "agent-a",
   "findings": {
+    "F93": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F94": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F95": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F96": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F97": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F98": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F99": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F100": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F101": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F102": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F103": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F104": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F105": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F106": {
+      "status": "unfixed",
+      "updated_by_event_id": null
+    },
+    "F107": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
     "F108": {
       "status": "unfixed",
-      "updated_by_event_id": "01a03fcf-d3e1-77b9-9446-42066b4c1904"
+      "updated_by_event_id": null
+    },
+    "F109": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F110": {
+      "status": "fixed",
+      "updated_by_event_id": null
     },
     "F111": {
       "status": "unfixed",
-      "updated_by_event_id": "01a04378-445d-7063-b106-4e3eb4f0676c"
+      "updated_by_event_id": null
+    },
+    "F112": {
+      "status": "unfixed",
+      "updated_by_event_id": null
     },
     "F113": {
       "status": "unfixed",
       "updated_by_event_id": null
     },
+    "F114": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F115": {
+      "status": "unfixed",
+      "updated_by_event_id": null
+    },
+    "F116": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F117": {
+      "status": "unfixed",
+      "updated_by_event_id": null
+    },
+    "F118": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
+    "F119": {
+      "status": "fixed",
+      "updated_by_event_id": null
+    },
     "F120": {
       "status": "fixed",
-      "updated_by_event_id": "01a0447c-8cf9-7e7e-be78-3b1736a52f32"
+      "updated_by_event_id": null
     }
   }
 }
