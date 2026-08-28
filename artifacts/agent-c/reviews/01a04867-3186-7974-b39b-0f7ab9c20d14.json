@@ -1,0 +1,36 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a04867-3186-7974-b39b-0f7ab9c20d14",
+  "target_thread": "preflight-cursor",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-28T12:45:31.717Z",
+  "review_completed_at": "2026-08-28T12:48:14.289Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 9201,
+    "output_tokens": 1007,
+    "total_tokens": 18485
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 733380000,
+    "cost_usd": 0.073338
+  },
+  "summary": "The proposed Port Watch dispatch is infeasible as written. Work-only, log-derived eligibility is implementable; the mandatory conjunction is not. Observation deliveries need a subscriber key, a durable disposition, and an authorization decision that do not exist in the Port Log, while the bounds forbid enrollment, new event types, envelope changes, and a cache that affects correctness. After-the-fact observability of a delivery occurrence is a log append, which those same bounds plus actor-owned event directories block. Sharing one resolver with listInbox cannot cover both delivery classes without either turning observations into a turn-claim surface or leaving a second predicate untested. Several required tests are undiscriminating or self-contradictory, and the dispatch never names an implementer with authority to close the protocol gaps it creates.",
+  "findings": [
+    "Observation durable dispositions contradict derived-only position. Work can key on next plus an answering in_reply_to. Observations are required to fire while another actor holds the turn and to grant no turn, so reply cannot be the disposition. No stored cursor, no new event type, and a cache that must not change the delivery set leave nowhere to record that an observation was already delivered. That is an unsatisfiable conjunction, not a missing file.",
+    "Thread membership is not an authorized subscription source. Current events expose from, next, thread, and in_reply_to only. Treating anyone who ever appeared in a thread as an observer is a leak path for artifacts and completions, not authorization. threads/*.yaml is not Port Log; using it as a roster is enrollment, which the bounds forbid. Causal chains still do not name a third-party subscriber. Agent-a's half-designed observation key has no sound source in this repository.",
+    "Delivery observable after the fact requires a Port Log append the bounds forbid. The cited defect is that tick appends nothing discoverable. FileWatchStore kinds are not the log. A fresh clone cannot reproduce a delivery occurrence unless that occurrence is an event. New event types and envelope changes are out of scope, and writing into events/<woken-actor>/ violates actor-owned surfaces. Runner invocation is process-local and dies with the process, so it cannot satisfy the clone/F115 evidence the dispatch itself demands.",
+    "One resolver cannot serve listInbox and both delivery classes. listInbox is addressed and unanswered and returns git-adapter file paths over {type,next,id}. Observations are defined to occur when the turn is held elsewhere. Unifying them either makes inbox return non-actionable items that look like a claimable turn, or keeps two predicates and makes the required mutate-once test blind to observations. decideWatch still consumes a different model ({kind,project_seq,implementation_authority,event_id}) that git events do not have; there is no shared type to extract.",
+    "Concurrent non-divergence is tautological for sets and silent for side effects. Two pure reads of the same log cannot disagree on the eligible set, so that test cannot fail. FileWatchStore's real invariant was single-writer side effects (active_run, wip_limit, leases). Removing stored position removes the lock. Two ticks will both invoke the runner for the same work; a set-only test will green-wash that duplicate wake.",
+    "The disposable-cache test is either trivial or a contradiction. If the cache holds no semantic state, deleting it and comparing sets always passes, and 'only slower' is unasserted or a flaky clock. If it holds watermarks or dispositions, deletion changes the delivery set and the test must fail. A discriminating version needs a deterministic cost probe and log-backed dispositions, which observations cannot have under the other bounds.",
+    "New work without a watermark is the full historical observation set. Unanswered addressed work is naturally 'new.' Observation events stay eligible forever unless disposed. Every poll and every clone would re-offer the entire thread history, which satisfies 'same set on clone' while falsifying the site claim used as the objective and flooding subscribers.",
+    "Framing hides authority, authz, and executor gaps. Untrusted event text treats Council 03 / DeVere funding as build authority; it is not. app/page.tsx marketing is not a protocol grant. port-family.md puts authorization-before-retrieval in a core Port Watch does not own; implementing 'authorized' observations inside Port Watch is the second authz implementation that document forbids. supervisor_scopes is accepted and unused. The dispatch names no implementing actor; agent-c cannot implement. executed= moving from 129 is an undefined extra-surface requirement outside 'Port Watch and the shared resolver.' Existing local leases/cursors have no log equivalent; discarding them can double-run in-flight work, and 'say what happens' does not make that a projection."
+  ]
+}
