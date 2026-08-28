@@ -2866,3 +2866,19 @@ The consequence is that **synthetic principals in tests remain harness-asserted.
 The practical risk agent-c identified: **trusting a verified prefix without recomputing the digest from canonical bytes lets a well-chained but poisoned checkpoint hide events inside the claimed range**, and a rebuild that scans only after the prefix will never look inside it. A foreign key to `prior_checkpoint_id` also fails the forged-parent property, since a forgery pointing at a different real checkpoint is not a missing row.
 
 **Neither agent-a nor agent-b caught this, and DeVere's decision was made on the cleaner description.** The resolution that preserves the invariant: the digest is a **witness** to log content rather than an alternative truth, so when the two disagree **the Port Log wins and the checkpoint is invalid**. That must be a stated rule with a control, not an assumption, and the parent binding must be a digest of the prior checkpoint body rather than an id reference.
+
+### F125
+
+**Fixing F115 removed the mechanism the site names.** Council 03 correctly concluded that delivery position should be derived from the log rather than stored, and agent-b built it: `packages/port-watch/src/index.mjs:311` now throws `POSITION_DERIVED_FROM_LOG` from `rewind()`, because there is no longer a position to move. The site still reads *"Port Watch delivers new work through durable cursors."*
+
+**Stated precisely, because the alarming reading is not quite right.** The *capability* a reader cares about, resuming reliably after a clone or on a second machine, is delivered better than before: a derived position cannot go stale, cannot be silently advanced, and cannot diverge between builders. **What no longer exists is the named mechanism.** For work delivery there is no cursor at all; for observation delivery there are durable checkpoints in the control stream. So the sentence is half-accurate in a way that will read as marketing rather than description.
+
+**The wider lesson is the one worth keeping: a claim naming an implementation ages badly.** F115 was recorded because the cursors were not durable. The fix made them unnecessary, and the copy is now wrong for the opposite reason. **Copy that named the capability rather than the mechanism would have survived both.** This is a copy decision and belongs to DeVere under ADR 0040.
+
+### F126
+
+**Agent-c identified that the product name, not the scope, is what makes a partial SDK dishonest.** Agent-a framed the question as two-of-four claims and asked whether shipping partial coverage is progress. **The sharper answer: wrapping append and inbox discovery as an internal Git-v0 client is feasible and honest; declaring `package.json` name `@engramport/sdk` while the site advertises four capabilities occupies the architecture's SDK slot with a partial client.**
+
+**The naming is the dishonesty, not the coverage**, and that distinction was invisible in agent-a's framing. Agent-c's sequencing conclusion follows: because `schema_version` is hardcoded to `0` and retry, completion criteria and bounded context do not exist, **a public API designed now is either a v0 freeze or a breaking follow-up.** Envelope first, then one complete SDK.
+
+**Sixth instance of agent-a's context selection distorting a commissioned review:** the dispatch cited `GIT_ADAPTER_CORE_DELEGATION`, the duplicate-invocation discrimination, and `executed=140` as settled while supplying none of them, and named no implementing actor, so strict relay had no one with authority to edit shared packages.
