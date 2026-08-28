@@ -19,7 +19,7 @@ Specification section 2.3 states EngramPort v1 is not "an autonomous-agent frame
 
 Two further reconciliations:
 
-- Section 4.4 requires a pull cursor and supports webhooks in v1. Webhook-first with polling recovery is consistent, with polling as the correctness floor rather than an optimization.
+- Section 4.4 requires a pull cursor for the future service API. Git v0 has no server cursor, so its work-delivery position is derived from accepted events: addressed and unanswered means eligible. Webhook-first with polling recovery remains the service design.
 - Section 16 fixes delivery semantics: at-least-once, HMAC-signed webhooks, retry at 10s, 1m, 5m, 30m, 2h, 12h, then dead letter. Port Watch inherits these rather than inventing its own.
 
 ## 3. The security thesis
@@ -38,9 +38,11 @@ Three controls carry this, and none is optional:
 
 ## 4. Components
 
-### 4.1 Durable per-agent cursors
+### 4.1 Log-derived Git v0 work position
 
-One cursor per `(agent, project)`, persisted, advanced only after a run reaches a terminal state. Cursor advance and run completion are one transaction; a crash between them must re-deliver rather than skip. Delivery is at-least-once per section 4.4, so runners MUST deduplicate by event id. A cursor never moves backward except by explicit operator action, which is itself an audited event.
+For Git v0, the accepted event log is the position. A work event is eligible when it is addressed to the actor and no accepted event replies to its id. Runner completion does not advance a separate cursor and does not dispose work; only an accepted reply does. Delivery is therefore at-least-once, and runners MUST tolerate re-delivery by event id.
+
+The inbox cache is disposable and keyed to the relevant Git log state. Removing it may cost a rescan but cannot change the work set. Local WIP claims prevent duplicate runner invocation between processes that share a claim root, but are deliberately separate from delivery position. Legacy active runs require explicit operator expiry before migration; inactive cursors are ignored and audited. Observation delivery is not inferred from work rules and remains out of scope pending a protocol decision.
 
 ### 4.2 Webhook-first with polling recovery
 
@@ -102,7 +104,7 @@ Metrics per section 19: poll count, skip rate, wake count, time to claim, lease 
 
 This plan is the single source of truth for Port Watch scope. Status and open findings are tracked in `docs/constraints.md`; that register does not restate this list.
 
-- **PW1. Watch decision loop, durable cursors, and the unchanged-inbox guarantee.** Runnable now with stubbed adapters. **Complete and accepted 2026-08-14.** Delivered the decision core only; every item below remains outstanding.
+- **PW1. Watch decision loop, Git v0 log-derived work position, and the unchanged-inbox guarantee.** Runnable now with stubbed adapters. **Complete and accepted 2026-08-14; corrected for Git v0 work-delivery semantics 2026-08-28.** Delivered the decision core only; every item below remains outstanding.
 - **PW2. Webhook receiver with signature verification and polling recovery**, including a silently broken webhook path detected by polling. Also owns the server-side authorized-inbox predicate that PW1's branded interface cannot itself guarantee.
 - **PW3. Atomic claims, leases, and fencing tokens.** Blocked on a database host. Closes finding F5, the single-process-only store.
 - **PW4. Runner adapters and worktree isolation**, including the no-default-branch-push control.

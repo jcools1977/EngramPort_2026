@@ -11,8 +11,10 @@ const verifierSpecifier = process.env.GIT_ADAPTER_VERIFY_MODULE ?? pathToFileURL
 const { hashBody, hashThreadConfig, verifyLog } = await import(verifierSpecifier);
 const cliSpecifier = process.env.GIT_ADAPTER_CLI_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/cli.mjs")).href;
 const { run, appendEvent: cliAppendEvent, listInbox: cliListInbox } = await import(cliSpecifier);
-const coreSpecifier = pathToFileURL(path.join(root, "packages/git-adapter/src/event-core.mjs")).href;
-const { appendEvent, listInbox } = await import(coreSpecifier);
+const coreSpecifier = process.env.GIT_ADAPTER_EVENT_CORE_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/event-core.mjs")).href;
+const { appendEvent, listInbox, listInboxEntries, resolveWorkInbox } = await import(coreSpecifier);
+const portWatchSpecifier = process.env.PORT_WATCH_MODULE ?? pathToFileURL(path.join(root, "packages/port-watch/src/index.mjs")).href;
+const { FileWatchStore, PortWatch, RecordingRunner, gitAuthorizedInboxSource } = await import(portWatchSpecifier);
 const surfaces = ["actors", "events", "artifacts", "schemas", "threads", "engramport.yaml"];
 
 async function fixture() {
@@ -265,6 +267,52 @@ test("exported append and inbox core preserve the event wire surface", async () 
 test("CLI re-exports the same event-core binding the SDK must consume", () => {
   assert.equal(cliAppendEvent, appendEvent);
   assert.equal(cliListInbox, listInbox);
+});
+
+test("listInbox and Port Watch consume the same answered-work resolver", async () => {
+  const { directory, config } = await modeFixture("shared-work-resolver", "strict_relay");
+  const store = new FileWatchStore(path.join(directory, "watch.json"));
+  const runner = new RecordingRunner();
+  try {
+    const opened = await event(directory, { actor: "agent-a", thread: "shared-work-resolver", id: ids[0], config, type: "handoff", next: "agent-b" });
+    const relative = path.relative(directory, opened);
+    const source = gitAuthorizedInboxSource({ cwd: directory, state: async () => "log-before-reply" });
+    const watch = new PortWatch({ store, inbox: source, runner });
+    await watch.configure("agent-b", "project", { enabled: true });
+    assert.ok((await listInbox({ actor: "agent-b", cwd: directory })).includes(relative));
+    assert.ok((await listInboxEntries({ actor: "agent-b", cwd: directory })).some((entry) => entry.relative === relative));
+    const wake = await watch.tick("agent-b", "project");
+    assert.equal(wake.event.relative, relative);
+    await watch.complete("agent-b", "project", { run_id: wake.run_id });
+
+    await event(directory, { actor: "agent-b", thread: "shared-work-resolver", id: ids[1], reply: ids[0], type: "reply", next: null });
+    assert.equal((await listInbox({ actor: "agent-b", cwd: directory })).includes(relative), false);
+    const after = await source.queryAuthorized({ agent: "agent-b", project: "project" });
+    assert.equal(after.deliveries.some((entry) => entry.event_id === ids[0]), false);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("fresh copies reproduce the identical derived work-delivery set", async () => {
+  const { directory, config } = await modeFixture("clone-work-resolver", "strict_relay");
+  const clone = await mkdtemp(path.join(os.tmpdir(), "engramport-v0-clone-"));
+  try {
+    await event(directory, { actor: "agent-a", thread: "clone-work-resolver", id: ids[0], config, type: "handoff", next: "agent-b" });
+    for (const surface of surfaces) await cp(path.join(directory, surface), path.join(clone, surface), { recursive: true });
+    const original = await listInboxEntries({ actor: "agent-b", cwd: directory });
+    const copied = await listInboxEntries({ actor: "agent-b", cwd: clone });
+    assert.deepEqual(copied, original);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+    await rm(clone, { recursive: true, force: true });
+  }
+});
+
+test("pure work resolver excludes an answered event without project sequence fields", () => {
+  const entries = [
+    { file: "events/agent-a/open.md", event: { meta: { id: ids[0], thread: "pure", from: "agent-a", type: "handoff", occurred_at: "2026-08-17T13:00:01Z", in_reply_to: null, next: "agent-b", content_sha256: "0".repeat(64) }, body: "open\n" } },
+    { file: "events/agent-b/reply.md", event: { meta: { id: ids[1], thread: "pure", from: "agent-b", type: "reply", occurred_at: "2026-08-17T13:00:02Z", in_reply_to: ids[0], next: null, content_sha256: "1".repeat(64) }, body: "reply\n" } },
+  ];
+  assert.deepEqual(resolveWorkInbox({ actor: "agent-b", entries }), []);
 });
 
 test("normal CLI execution cannot activate the harness core override", async () => {

@@ -44,6 +44,10 @@ run_git_adapter_core(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$
 assert_git_adapter_core(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_git_adapter_core_guard(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$cli")" node --test --test-reporter=tap --test-name-pattern='normal CLI execution cannot activate the harness core override' "$root_dir/tests/git-v0.test.mjs"; }
 assert_git_adapter_core_guard(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core_guard "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_port_watch(){ local module="$1" pattern="$2"; PORT_WATCH_MODULE="$(agent_c_url "$module")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/port-watch.test.mjs"; }
+assert_port_watch(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_port_watch_shared(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_EVENT_CORE_MODULE="$(agent_c_url "$module_root/packages/git-adapter/src/event-core.mjs")" PORT_WATCH_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs"; }
+assert_port_watch_shared(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch_shared "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_ONLY=1 SITE_EVENT_TYPES_MODULE="$(agent_c_url "$module")" SITE_EVENT_TYPE_OVERRIDE="$fabricated" node --test "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(mktemp); run_site_event_types "$module" "$fabricated" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
@@ -300,6 +304,23 @@ text=text.replace(anchor,'const coreSpecifier = process.env.GIT_ADAPTER_CORE_MOD
 fs.writeFileSync(target,text);
 NODE
 }
+make_port_watch_variant(){
+  local target="$1" mode="$2"
+  mkdir -p "$target/packages/git-adapter" "$target/packages/port-watch"
+  cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
+  cp -R "$root_dir/packages/port-watch/src" "$target/packages/port-watch/" || return 1
+  node - "$target" "$mode" <<'NODE'
+const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
+const core=path.join(root,"packages/git-adapter/src/event-core.mjs"),watch=path.join(root,"packages/port-watch/src/index.mjs");
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
+else if(mode==="position")mutate(watch,'    await this.claim_store.release(agent, project, { run_id });\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });','    await this.claim_store.release(agent, project, { run_id });\n    await this.store.transaction((state) => { state.agents[key(agent, project)].cursor = claim.event_id; return state; }); /* PORT_WATCH_LOG_DERIVED_POSITION_REMOVED */\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });');
+else if(mode==="cache")mutate(watch,'    if (cached?.log_state === log_state && Array.isArray(cached.deliveries)) {','    if (cached && Array.isArray(cached.deliveries) /* PORT_WATCH_CACHE_LOG_STATE_REMOVED */) {');
+else if(mode==="claim")mutate(watch,'    if (!reservation.acquired) {','    if (false && !reservation.acquired /* PORT_WATCH_ATOMIC_CLAIM_REMOVED */) {');
+else if(mode==="legacy")mutate(watch,'  if (watch.active_run) throw new Error("LEGACY_ACTIVE_RUN_REQUIRES_RESOLUTION");','  if (false /* PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD_REMOVED */) throw new Error("LEGACY_ACTIVE_RUN_REQUIRES_RESOLUTION");');
+else throw new Error(`unknown Port Watch variant ${mode}`);
+NODE
+}
 make_site_event_types_variant(){
   node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
@@ -446,6 +467,27 @@ if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); 
 executed=0
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
+  if [[ "$mutation" = PORT_WATCH_* ]]; then
+    case "$mutation" in
+      PORT_WATCH_SHARED_ELIGIBILITY) mode=shared; marker=PORT_WATCH_SHARED_ELIGIBILITY_REMOVED; test_pattern='listInbox and Port Watch consume the same answered-work resolver'; suite=shared ;;
+      PORT_WATCH_LOG_DERIVED_POSITION) mode=position; marker=PORT_WATCH_LOG_DERIVED_POSITION_REMOVED; test_pattern='completion stores no position and an unanswered work item remains eligible at least once'; suite=watch ;;
+      PORT_WATCH_CACHE_LOG_STATE) mode=cache; marker=PORT_WATCH_CACHE_LOG_STATE_REMOVED; test_pattern='changed log state cannot reuse a stale cached work set'; suite=watch ;;
+      PORT_WATCH_ATOMIC_CLAIM) mode=claim; marker=PORT_WATCH_ATOMIC_CLAIM_REMOVED; test_pattern='concurrent ticks reserve one invocation slot before either runner call'; suite=watch ;;
+      PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD) mode=legacy; marker=PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD_REMOVED; test_pattern='legacy active run requires explicit expiry before log-derived migration'; suite=watch ;;
+    esac
+    source_root="$root_dir"
+    if [ "$suite" = shared ]; then base=$(assert_port_watch_shared "$source_root" "$test_pattern"); else base=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
+    variant_root="$mutation_dir/port-watch-$mode"; make_port_watch_variant "$variant_root" "$mode" || { fail=1; continue; }
+    variant_module="$variant_root/packages/port-watch/src/index.mjs"
+    if grep -R -Fq "$marker" "$variant_root/packages"; then applied=t; else applied=f; fi
+    log="$mutation_dir/port-watch-$mode.log"
+    if [ "$suite" = shared ]; then run_port_watch_shared "$variant_root" "$test_pattern" >"$log" 2>&1; else run_port_watch "$variant_module" "$test_pattern" >"$log" 2>&1; fi; after=$?
+    forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    if [ "$suite" = shared ]; then restored=$(assert_port_watch_shared "$source_root" "$test_pattern"); else restored=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
   if [[ "$mutation" = AGENT_C_* ]]; then
     case "$mutation" in
       AGENT_C_CREDENTIAL_REFERENCE) pattern=credential-reference; marker=AGENT_C_CREDENTIAL_REFERENCE_REMOVED ;;
@@ -1335,7 +1377,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 130 ] || fail=1
+  [ "$executed" = 135 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

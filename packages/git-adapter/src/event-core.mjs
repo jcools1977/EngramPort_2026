@@ -81,16 +81,38 @@ export async function appendEvent(input, options = {}) {
   return { ok: true, errors: [], relative };
 }
 
-export async function listInbox({ actor, cwd = process.cwd() }) {
+export function resolveWorkInbox({ actor, entries }) { /* PORT_WATCH_SHARED_ELIGIBILITY */
+  if (!actor) throw new Error("inbox requires --actor");
+  if (!Array.isArray(entries)) throw new TypeError("inbox entries must be an array");
+  const answered = new Set(entries.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
+  return entries
+    .filter(({ event }) => event.meta.next === actor && !answered.has(event.meta.id))
+    .map(({ file, event }) => Object.freeze({
+      relative: file,
+      event_id: event.meta.id,
+      thread: event.meta.thread,
+      from: event.meta.from,
+      type: event.meta.type,
+      occurred_at: event.meta.occurred_at,
+      in_reply_to: event.meta.in_reply_to,
+      next: event.meta.next,
+      content_sha256: event.meta.content_sha256,
+      artifacts: Object.freeze([...(event.meta.artifacts ?? [])]),
+      body: event.body,
+    }));
+}
+
+export async function listInboxEntries({ actor, cwd = process.cwd() }) {
   if (!actor) throw new Error("inbox requires --actor");
   await verifyLog(cwd, { throwOnError: true });
   const files = await discoverEventFiles(path.join(cwd, "events"));
-  const parsed = await Promise.all(files.sort().map(async (file) => ({
-    file,
-    event: parseEvent(await readFile(file, "utf8"), path.relative(cwd, file)),
-  })));
-  const answered = new Set(parsed.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
-  return parsed
-    .filter(({ event }) => event.meta.next === actor && !answered.has(event.meta.id))
-    .map(({ file }) => path.relative(cwd, file));
+  const entries = await Promise.all(files.sort().map(async (file) => {
+    const relative = path.relative(cwd, file);
+    return { file: relative, event: parseEvent(await readFile(file, "utf8"), relative) };
+  }));
+  return resolveWorkInbox({ actor, entries });
+}
+
+export async function listInbox({ actor, cwd = process.cwd() }) {
+  return (await listInboxEntries({ actor, cwd })).map(({ relative }) => relative);
 }
