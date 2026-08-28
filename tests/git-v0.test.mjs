@@ -8,7 +8,7 @@ import test from "node:test";
 
 const root = path.resolve(import.meta.dirname, "..");
 const verifierSpecifier = process.env.GIT_ADAPTER_VERIFY_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href;
-const { hashBody, hashThreadConfig, verifyLog } = await import(verifierSpecifier);
+const { discoverEventFiles, hashAppendIntent, hashBody, hashThreadConfig, verifyLog } = await import(verifierSpecifier);
 const cliSpecifier = process.env.GIT_ADAPTER_CLI_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/cli.mjs")).href;
 const { run, appendEvent: cliAppendEvent, listInbox: cliListInbox } = await import(cliSpecifier);
 const coreSpecifier = process.env.GIT_ADAPTER_EVENT_CORE_MODULE ?? pathToFileURL(path.join(root, "packages/git-adapter/src/event-core.mjs")).href;
@@ -251,15 +251,17 @@ test("append refuses a second thread root without writing an event", async () =>
 
 test("exported append and inbox core preserve the event wire surface", async () => {
   const directory = await fixture();
-  const id = "01a03fb0-0000-7000-8000-000000000001";
-  const now = Date.parse("2026-08-26T20:00:00Z");
+  const id = "01a03fa8-7600-7000-8000-000000000001";
   try {
     await declare(directory, "core-wire-surface", "free_form");
     const body = "core wire body\n";
-    const result = await appendEvent({ actor: "agent-b", thread: "core-wire-surface", type: "handoff", body, next: "agent-a" }, { cwd: directory, id, now });
+    const boundedContext = [{ type: "event", event_id: "0198f2a1-1000-7000-8000-000000000001" }];
+    const completionCriteria = [{ id: "wire-proof", statement: "Return event evidence.", evidence_classes: ["event"] }];
+    const result = await appendEvent({ actor: "agent-b", thread: "core-wire-surface", type: "handoff", body, next: "agent-a", boundedContext, completionCriteria }, { cwd: directory, id });
     const relative = `events/agent-b/20260826T200000Z_${id}.md`;
-    assert.deepEqual(result, { ok: true, errors: [], relative });
-    assert.equal(await readFile(path.join(directory, relative), "utf8"), `---\nschema_version: 0\nid: ${id}\nthread: core-wire-surface\nfrom: agent-b\ntype: handoff\noccurred_at: 2026-08-26T20:00:00Z\nin_reply_to: null\nnext: agent-a\ncontent_sha256: ${hashBody(body)}\nthread_config_sha256: ${hashThreadConfig({ schema_version: 0, thread: "core-wire-surface", mode: "free_form", coordinator: null })}\n---\n${body}`);
+    assert.deepEqual(result, { ok: true, errors: [], relative, event_id: id, reused: false });
+    const intent = hashAppendIntent({ actor: "agent-b", thread: "core-wire-surface", type: "handoff", reply: null, next: "agent-a", content_sha256: hashBody(body), artifacts: [], bounded_context: boundedContext, completion_criteria: completionCriteria, criteria_results: null });
+    assert.equal(await readFile(path.join(directory, relative), "utf8"), `---\nschema_version: 1\nid: ${id}\nthread: core-wire-surface\nfrom: agent-b\ntype: handoff\noccurred_at: 2026-08-26T20:00:00Z\nin_reply_to: null\nnext: agent-a\ncontent_sha256: ${hashBody(body)}\nintent_sha256: ${intent}\nthread_config_sha256: ${hashThreadConfig({ schema_version: 0, thread: "core-wire-surface", mode: "free_form", coordinator: null })}\nbounded_context: ${JSON.stringify(boundedContext)}\ncompletion_criteria: ${JSON.stringify(completionCriteria)}\n---\n${body}`);
     assert.ok((await listInbox({ actor: "agent-a", cwd: directory })).includes(relative));
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
@@ -267,6 +269,82 @@ test("exported append and inbox core preserve the event wire surface", async () 
 test("CLI re-exports the same event-core binding the SDK must consume", () => {
   assert.equal(cliAppendEvent, appendEvent);
   assert.equal(cliListInbox, listInbox);
+});
+
+test("version-1 retry returns the existing event and preserves event count", async () => {
+  const directory = await fixture();
+  const id = "01a03fa8-7601-7000-8000-000000000010";
+  try {
+    await declare(directory, "intent-retry", "free_form");
+    const before = (await discoverEventFiles(path.join(directory, "events"))).length;
+    const input = { actor: "agent-b", thread: "intent-retry", type: "message", body: "retry once\n", next: null };
+    const first = await appendEvent(input, { cwd: directory, id });
+    const second = await appendEvent(input, { cwd: directory, id });
+    const after = (await discoverEventFiles(path.join(directory, "events"))).length;
+    assert.equal(first.reused, false);
+    assert.equal(second.reused, true); /* V1_RETRY_COUNT_ASSERTION */
+    assert.equal(second.relative, first.relative);
+    assert.equal(after, before + 1, "matching retry must produce exactly one event");
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("version-1 retry identity collision raises a distinct error without writing", async () => {
+  const directory = await fixture();
+  const id = "01a03fa8-7602-7000-8000-000000000011";
+  try {
+    await declare(directory, "intent-collision", "free_form");
+    await appendEvent({ actor: "agent-b", thread: "intent-collision", type: "message", body: "first intent\n" }, { cwd: directory, id });
+    const before = (await discoverEventFiles(path.join(directory, "events"))).length;
+    await assert.rejects(
+      appendEvent({ actor: "agent-b", thread: "intent-collision", type: "message", body: "different intent\n" }, { cwd: directory, id }),
+      (error) => error.code === "APPEND_INTENT_COLLISION" && /different canonical intent/.test(error.message),
+    ); /* V1_RETRY_COLLISION_ASSERTION */
+    assert.equal((await discoverEventFiles(path.join(directory, "events"))).length, before);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("version-1 completion requires exact criterion evidence coverage", async () => {
+  const directory = await fixture();
+  const handoffId = "01a03fa8-7603-7000-8000-000000000012";
+  const completionId = "01a03fa8-7604-7000-8000-000000000013";
+  try {
+    await declare(directory, "criteria-coverage", "free_form");
+    const boundedContext = [{ type: "event", event_id: "0198f2a1-1000-7000-8000-000000000001" }];
+    const completionCriteria = [
+      { id: "c1", statement: "Prove the first condition.", evidence_classes: ["event"] },
+      { id: "c2", statement: "Prove the second condition.", evidence_classes: ["event"] },
+    ];
+    const handoff = await appendEvent({ actor: "agent-a", thread: "criteria-coverage", type: "handoff", body: "bounded work\n", next: "agent-b", boundedContext, completionCriteria }, { cwd: directory, id: handoffId });
+    assert.equal(handoff.ok, true);
+    const before = (await discoverEventFiles(path.join(directory, "events"))).length;
+    const refused = await appendEvent({
+      actor: "agent-b", thread: "criteria-coverage", type: "completion", body: "claimed complete\n", reply: handoffId,
+      criteriaResults: [{ criterion_id: "c1", status: "satisfied", evidence: [{ type: "event", event_id: handoffId }] }],
+    }, { cwd: directory, id: completionId });
+    assert.equal(refused.ok, false);
+    assert.match(refused.errors.join("\n"), /completion missing criterion ids c2/); /* V1_CRITERIA_COVERAGE_ASSERTION */
+    assert.equal((await discoverEventFiles(path.join(directory, "events"))).length, before, "missing coverage must not write an event");
+    const accepted = await appendEvent({
+      actor: "agent-b", thread: "criteria-coverage", type: "completion", body: "claimed complete\n", reply: handoffId,
+      criteriaResults: completionCriteria.map(({ id }) => ({ criterion_id: id, status: "satisfied", evidence: [{ type: "event", event_id: handoffId }] })),
+    }, { cwd: directory, id: completionId });
+    assert.equal(accepted.ok, true, "exact criterion coverage must produce the completion event");
+    assert.equal((await discoverEventFiles(path.join(directory, "events"))).length, before + 1);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("live writer refuses version-0 append after cutover while historical v0 verifies", async () => {
+  const directory = await fixture();
+  const id = "01a03fa8-7605-7000-8000-000000000014";
+  try {
+    assert.equal((await verifyLog(directory)).ok, true, "historical version-0 events remain valid");
+    const before = (await discoverEventFiles(path.join(directory, "events"))).length;
+    await assert.rejects(
+      appendEvent({ actor: "agent-b", thread: "cutover-refusal", type: "message", body: "legacy write\n", schemaVersion: 0 }, { cwd: directory, id }),
+      (error) => error.code === "EVENT_VERSION_REFUSED",
+    ); /* V1_WRITER_CUTOVER_ASSERTION */
+    assert.equal((await discoverEventFiles(path.join(directory, "events"))).length, before);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test("listInbox and Port Watch consume the same answered-work resolver", async () => {
@@ -335,11 +413,15 @@ test("CLI append and inbox delegate to the exported core", async () => {
   try {
     await declare(directory, "core-cli-delegation", "free_form");
     const body = path.join(directory, "core-cli-body.txt");
+    const context = path.join(directory, "core-cli-context.json");
+    const criteria = path.join(directory, "core-cli-criteria.json");
     await writeFile(body, "CLI delegation body\n");
+    await writeFile(context, JSON.stringify([{ type: "event", event_id: "0198f2a1-1000-7000-8000-000000000001" }]));
+    await writeFile(criteria, JSON.stringify([{ id: "delegated", statement: "Return event evidence.", evidence_classes: ["event"] }]));
     const eventDirectory = path.join(directory, "events", "agent-b");
     const before = await readdir(eventDirectory);
     console.log = (...parts) => output.push(parts.join(" "));
-    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "core-cli-delegation", "--type", "handoff", "--body", body, "--next", "agent-a"], directory), 0);
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "core-cli-delegation", "--type", "handoff", "--body", body, "--next", "agent-a", "--bounded-context", context, "--completion-criteria", criteria], directory), 0);
     const after = await readdir(eventDirectory);
     assert.equal(after.length, before.length + 1, "CLI append must land the event written by the core");
     const relative = output.at(-1);

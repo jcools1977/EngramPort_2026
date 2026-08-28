@@ -17,7 +17,7 @@ const ARGUMENT_PROFILES = new Map([
   ["verify", new Set()],
   ["thread declare", new Set(["thread", "mode", "coordinator"])],
   ["inbox", new Set(["actor"])],
-  ["append", new Set(["actor", "thread", "type", "body", "reply", "next", "artifacts"])]
+  ["append", new Set(["actor", "thread", "type", "body", "reply", "next", "artifacts", "id", "schema-version", "bounded-context", "completion-criteria", "criteria-results"])]
 ]);
 
 function argumentRefused(flag) {
@@ -110,10 +110,20 @@ export async function run(argv, cwd = process.cwd()) {
     for (const required of ["actor", "thread", "type", "body"]) if (!options[required]) throw new Error(`append requires --${required}`);
     const body = await readFile(path.resolve(cwd, options.body), "utf8");
     const artifacts = options.artifacts ? options.artifacts.split(",").filter(Boolean) : [];
-    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next: options.next, artifacts }, { cwd });
+    const readJsonArray = async (flag) => {
+      if (!options[flag]) return undefined;
+      const value = JSON.parse(await readFile(path.resolve(cwd, options[flag]), "utf8"));
+      if (!Array.isArray(value)) throw new Error(`append requires --${flag} to contain a JSON array`);
+      return value;
+    };
+    const boundedContext = await readJsonArray("bounded-context");
+    const completionCriteria = await readJsonArray("completion-criteria");
+    const criteriaResults = await readJsonArray("criteria-results");
+    const schemaVersion = options["schema-version"] === undefined ? undefined : Number(options["schema-version"]);
+    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next: options.next, artifacts, schemaVersion, boundedContext, completionCriteria, criteriaResults }, { cwd, id: options.id });
     if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(result.relative); return 0;
   }
-  console.log("EngramPort Git v0\n\nCommands:\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--reply UUID] [--next SLUG] [--artifacts REF,...]");
+  console.log("EngramPort Git\n\nCommands:\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUID] [--next SLUG] [--artifacts REF,...] [--bounded-context JSON] [--completion-criteria JSON] [--criteria-results JSON]");
   return command ? 1 : 0;
 }
