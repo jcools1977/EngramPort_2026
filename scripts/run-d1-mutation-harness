@@ -48,6 +48,8 @@ run_port_watch(){ local module="$1" pattern="$2"; PORT_WATCH_MODULE="$(agent_c_u
 assert_port_watch(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_port_watch_shared(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_EVENT_CORE_MODULE="$(agent_c_url "$module_root/packages/git-adapter/src/event-core.mjs")" PORT_WATCH_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs"; }
 assert_port_watch_shared(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch_shared "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_observation_live(){ local module_root="$1"; OBSERVATION_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" OBSERVATION_DATABASE_URL="postgres://127.0.0.1:55432/$SDB" OBSERVATION_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-timeout=10000 "$root_dir/tests/port-watch-observation-live.test.mjs"; }
+assert_observation_live(){ local module_root="$1" out rc; out=$(mktemp); run_observation_live "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_ONLY=1 SITE_EVENT_TYPES_MODULE="$(agent_c_url "$module")" SITE_EVENT_TYPE_OVERRIDE="$fabricated" node --test "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(mktemp); run_site_event_types "$module" "$fabricated" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
@@ -311,13 +313,17 @@ make_port_watch_variant(){
   cp -R "$root_dir/packages/port-watch/src" "$target/packages/port-watch/" || return 1
   node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
-const core=path.join(root,"packages/git-adapter/src/event-core.mjs"),watch=path.join(root,"packages/port-watch/src/index.mjs");
+const core=path.join(root,"packages/git-adapter/src/event-core.mjs"),watch=path.join(root,"packages/port-watch/src/index.mjs"),observation=path.join(root,"packages/port-watch/src/observation.mjs");
 function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
 if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
 else if(mode==="position")mutate(watch,'    await this.claim_store.release(agent, project, { run_id });\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });','    await this.claim_store.release(agent, project, { run_id });\n    await this.store.transaction((state) => { state.agents[key(agent, project)].cursor = claim.event_id; return state; }); /* PORT_WATCH_LOG_DERIVED_POSITION_REMOVED */\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });');
 else if(mode==="cache")mutate(watch,'    if (cached?.log_state === log_state && Array.isArray(cached.deliveries)) {','    if (cached && Array.isArray(cached.deliveries) /* PORT_WATCH_CACHE_LOG_STATE_REMOVED */) {');
 else if(mode==="claim")mutate(watch,'    if (!reservation.acquired) {','    if (false && !reservation.acquired /* PORT_WATCH_ATOMIC_CLAIM_REMOVED */) {');
 else if(mode==="legacy")mutate(watch,'  if (watch.active_run) throw new Error("LEGACY_ACTIVE_RUN_REQUIRES_RESOLUTION");','  if (false /* PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD_REMOVED */) throw new Error("LEGACY_ACTIVE_RUN_REQUIRES_RESOLUTION");');
+else if(mode==="observation-authority")mutate(observation,'    if (outcome?.claim_turn || outcome?.grant_authority || outcome?.scopes?.length) throw new Error("OBSERVATION_AUTHORITY_REFUSED"); /* OBSERVATION_NO_TURN_AUTHORITY */','    if (false /* OBSERVATION_NO_TURN_AUTHORITY_REMOVED */) throw new Error("OBSERVATION_AUTHORITY_REFUSED");');
+else if(mode==="observation-canonical")mutate(observation,'canonicalBatchDigest(canonical) !== checkpoint.batch_digest','checkpoint.batch_digest !== checkpoint.batch_digest /* OBSERVATION_CANONICAL_RANGE_DIGEST_REMOVED */');
+else if(mode==="observation-prior")mutate(observation,'(checkpoint.prior_checkpoint_digest ?? null) !== (previous?.checkpoint_digest ?? null)','false /* OBSERVATION_PRIOR_BODY_DIGEST_REMOVED */');
+else if(mode==="observation-delivery")mutate(observation,'export function stableDeliveryId({ tenant_id, subscription_id, subscriber_id, selector_revision, covered_from, covered_to, batch_digest }) {\n  return digestFields(["observation-delivery-v1", tenant_id, subscription_id, subscriber_id, selector_revision, covered_from, covered_to, batch_digest]);\n}','export function stableDeliveryId() { return randomUUID(); /* OBSERVATION_STABLE_DELIVERY_DEDUP_REMOVED */ }');
 else throw new Error(`unknown Port Watch variant ${mode}`);
 NODE
 }
@@ -474,16 +480,33 @@ for line in "${MUTATIONS[@]}"; do
       PORT_WATCH_CACHE_LOG_STATE) mode=cache; marker=PORT_WATCH_CACHE_LOG_STATE_REMOVED; test_pattern='changed log state cannot reuse a stale cached work set'; suite=watch ;;
       PORT_WATCH_ATOMIC_CLAIM) mode=claim; marker=PORT_WATCH_ATOMIC_CLAIM_REMOVED; test_pattern='concurrent ticks reserve one invocation slot before either runner call'; suite=watch ;;
       PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD) mode=legacy; marker=PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD_REMOVED; test_pattern='legacy active run requires explicit expiry before log-derived migration'; suite=watch ;;
+      PORT_WATCH_OBSERVATION_AUTHORITY) mode=observation-authority; marker=OBSERVATION_NO_TURN_AUTHORITY_REMOVED; test_pattern='observation delivery cannot obtain a turn through the real consumer call site'; suite=watch ;;
+      PORT_WATCH_OBSERVATION_CANONICAL) mode=observation-canonical; marker=OBSERVATION_CANONICAL_RANGE_DIGEST_REMOVED; test_pattern='checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected'; suite=watch ;;
+      PORT_WATCH_OBSERVATION_PRIOR) mode=observation-prior; marker=OBSERVATION_PRIOR_BODY_DIGEST_REMOVED; test_pattern='checkpoint chain binds the prior checkpoint body digest'; suite=watch ;;
+      PORT_WATCH_OBSERVATION_DELIVERY) mode=observation-delivery; marker=OBSERVATION_STABLE_DELIVERY_DEDUP_REMOVED; test_pattern='PostgreSQL observation disposition is durable, deduplicated, and subject isolated'; suite=observation_live ;;
+      PORT_WATCH_OBSERVATION_RLS) mode=observation-rls; marker=OBSERVATION_FORCED_RLS_SUBJECT_REMOVED; test_pattern='PostgreSQL observation disposition is durable, deduplicated, and subject isolated'; suite=observation_rls ;;
     esac
     source_root="$root_dir"
-    if [ "$suite" = shared ]; then base=$(assert_port_watch_shared "$source_root" "$test_pattern"); else base=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
+    if [ "$suite" = observation_rls ]; then
+      build || { fail=1; continue; }
+      base=$(assert_observation_live "$source_root")
+      psql_as postgres "$SDB" -c "CREATE OR REPLACE FUNCTION observation_subject_matches(p_tenant_id uuid,p_subscriber_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS \$\$ SELECT true /* OBSERVATION_FORCED_RLS_SUBJECT_REMOVED */ \$\$; CREATE OR REPLACE FUNCTION get_observation_checkpoint(p_checkpoint_id uuid) RETURNS SETOF observation_checkpoints LANGUAGE sql SECURITY DEFINER SET search_path=public AS \$\$ SELECT * FROM observation_checkpoints WHERE checkpoint_id=p_checkpoint_id \$\$; ALTER FUNCTION get_observation_checkpoint(uuid) OWNER TO postgres;" >/dev/null 2>&1
+      applied=$(psql_as postgres "$SDB" -Atc "SELECT position('OBSERVATION_FORCED_RLS_SUBJECT_REMOVED' in prosrc)>0 FROM pg_proc WHERE oid='observation_subject_matches(uuid,uuid)'::regprocedure" | tr -d '[:space:]')
+      log="$mutation_dir/port-watch-observation-rls.log"; run_observation_live "$source_root" >"$log" 2>&1; after=$?
+      forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern|✖ $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+      build >/dev/null 2>&1; restored=$(assert_observation_live "$source_root")
+      printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+      executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+      continue
+    fi
+    if [ "$suite" = observation_live ]; then build || { fail=1; continue; }; base=$(assert_observation_live "$source_root"); elif [ "$suite" = shared ]; then base=$(assert_port_watch_shared "$source_root" "$test_pattern"); else base=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
     variant_root="$mutation_dir/port-watch-$mode"; make_port_watch_variant "$variant_root" "$mode" || { fail=1; continue; }
     variant_module="$variant_root/packages/port-watch/src/index.mjs"
     if grep -R -Fq "$marker" "$variant_root/packages"; then applied=t; else applied=f; fi
     log="$mutation_dir/port-watch-$mode.log"
-    if [ "$suite" = shared ]; then run_port_watch_shared "$variant_root" "$test_pattern" >"$log" 2>&1; else run_port_watch "$variant_module" "$test_pattern" >"$log" 2>&1; fi; after=$?
-    forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
-    if [ "$suite" = shared ]; then restored=$(assert_port_watch_shared "$source_root" "$test_pattern"); else restored=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
+    if [ "$suite" = observation_live ]; then run_observation_live "$variant_root" >"$log" 2>&1; elif [ "$suite" = shared ]; then run_port_watch_shared "$variant_root" "$test_pattern" >"$log" 2>&1; else run_port_watch "$variant_module" "$test_pattern" >"$log" 2>&1; fi; after=$?
+    forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern|✖ $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    if [ "$suite" = observation_live ]; then restored=$(assert_observation_live "$source_root"); elif [ "$suite" = shared ]; then restored=$(assert_port_watch_shared "$source_root" "$test_pattern"); else restored=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
     printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
@@ -1377,7 +1400,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 135 ] || fail=1
+  [ "$executed" = 140 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

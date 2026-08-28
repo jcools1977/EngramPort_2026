@@ -7,8 +7,78 @@ import test from "node:test";
 const portWatchSpecifier = process.env.PORT_WATCH_MODULE ?? pathToFileURL(path.resolve(import.meta.dirname, "../packages/port-watch/src/index.mjs")).href;
 const {
   FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, RecordingRunner,
-  authorizedInboxSource, decideWatch, nextPollDelay,
+  ObservationConsumer, authorizedInboxSource, authorizedObservationSource,
+  canonicalBatchDigest, checkpointDigest, decideWatch, nextPollDelay, stableDeliveryId,
 } = await import(portWatchSpecifier);
+
+const observationSubscription = Object.freeze({
+  tenant_id: "10000000-0000-0000-0000-000000000001",
+  subscription_id: "91000000-0000-0000-0000-000000000001",
+  subscriber_id: "11000000-0000-0000-0000-000000000001",
+  selector_revision: "a".repeat(64),
+});
+const observed = [
+  { position: "events/agent-a/001.md", event_id: "event-a", canonical_bytes: Buffer.from("alpha\n") },
+  { position: "events/agent-a/002.md", event_id: "event-b", canonical_bytes: Buffer.from("beta\n") },
+];
+
+function observationFixture({ events = observed, sink = { async deliver() { return { accepted: true }; } } } = {}) {
+  const rows = [];
+  const source = authorizedObservationSource({
+    query: async ({ after }) => events.filter((entry) => after === null || entry.position > after),
+    readRange: async ({ from, to }) => events.filter((entry) => entry.position >= from && entry.position <= to),
+  });
+  const store = {
+    rows,
+    async list() { return structuredClone(rows); },
+    async append(checkpoint) {
+      const existing = rows.find((row) => row.delivery_id === checkpoint.delivery_id);
+      if (existing) return structuredClone(existing);
+      rows.push(structuredClone(checkpoint));
+      return structuredClone(checkpoint);
+    },
+  };
+  return { rows, source, store, consumer: new ObservationConsumer({ source, store, sink }) };
+}
+
+test("observation delivery cannot obtain a turn through the real consumer call site", async () => {
+  const f = observationFixture({ sink: { async deliver({ capability }) {
+    assert.deepEqual(capability, { kind: "observation", can_grant_turn: false, scopes: [] });
+    return { claim_turn: true };
+  } } });
+  await assert.rejects(f.consumer.poll(observationSubscription), /OBSERVATION_AUTHORITY_REFUSED/);
+  assert.equal(f.rows.length, 0);
+});
+
+test("checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected", async () => {
+  const f = observationFixture();
+  await f.consumer.poll(observationSubscription);
+  const poisoned = [{ ...observed[0], canonical_bytes: Buffer.from("poison\n") }, observed[1]];
+  const restarted = observationFixture({ events: poisoned });
+  restarted.store.rows.push(...structuredClone(f.rows));
+  await assert.rejects(restarted.consumer.poll(observationSubscription), /OBSERVATION_CANONICAL_RANGE_INVALID/);
+});
+
+test("checkpoint chain binds the prior checkpoint body digest", async () => {
+  const f = observationFixture();
+  await f.consumer.poll(observationSubscription);
+  f.rows[0].prior_checkpoint_digest = "f".repeat(64);
+  await assert.rejects(f.consumer.poll(observationSubscription), /OBSERVATION_PRIOR_DIGEST_INVALID/);
+});
+
+test("stable delivery id deduplicates the same canonical batch", async () => {
+  const f = observationFixture();
+  const batch_digest = canonicalBatchDigest(observed);
+  const common = {
+    ...observationSubscription, covered_from: observed[0].position, covered_to: observed.at(-1).position,
+    event_count: observed.length, batch_digest, prior_checkpoint_digest: null,
+  };
+  common.delivery_id = stableDeliveryId(common);
+  common.checkpoint_digest = checkpointDigest(common);
+  await f.store.append({ ...common, checkpoint_id: "92000000-0000-0000-0000-000000000001" });
+  await f.store.append({ ...common, checkpoint_id: "92000000-0000-0000-0000-000000000002" });
+  assert.equal(f.rows.length, 1);
+});
 
 const work = (id = "event-1") => ({
   relative: `events/agent-a/${id}.md`, event_id: id, thread: "work", from: "agent-a",

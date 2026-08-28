@@ -5,6 +5,11 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { listInboxEntries } from "../../git-adapter/src/event-core.mjs";
 
+export {
+  ObservationConsumer, PostgresObservationDispositionStore, authorizedObservationSource,
+  canonicalBatchDigest, checkpointDigest, stableDeliveryId,
+} from "./observation.mjs";
+
 const execFileAsync = promisify(execFile);
 const AUTHORIZED = Symbol("authorized-work-inbox-source");
 const key = (agent, project) => `${agent}:${project}`;
