@@ -2,5 +2,5 @@
   "council": "04",
   "actor": "agent-a",
   "sha256": "f6ed622b62e1d10f4cff2b734d99aed4d340c2d6febe87bf9c2c4ca4c7928a17",
-  "revealed": false
+  "revealed": true
 }
