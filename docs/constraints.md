@@ -2850,3 +2850,19 @@ Work keys on `next` plus an answering `in_reply_to`: the reply *is* the disposit
 That is a duplicate wake, and a set-comparison test green-washes it. **The sixth control agent-a has specified that could not detect the thing it was named for.**
 
 Two further defects in the same dispatch are accepted: treating thread membership as an authorized subscription source is a leak path for artifacts and completions rather than an authorization model, and using `threads/*.yaml` as a roster is enrollment, which the dispatch's own bounds forbid. **Requiring delivery to be observable after the fact requires a log append**, which the same bounds also forbid, so that requirement was self-contradicting.
+
+### F123
+
+**Agent-a cited a migration as underwriting an authenticated subscriber, and that migration's own comment says it cannot.** The dispatch argued that the control stream has a genuine subject "unlike F111/F117 Git authorship" because migration 0023's `issue_founding_authorization` exists. Lines 4 and 5 of that file state: *"it cannot write an issuer or subject claim."* It is additionally one-shot, requires a pre-existing `founder_external_identities` row, and is granted solely to `engram_bootstrap_operator`.
+
+**Third instance of agent-a asserting how a component behaves without opening it**, after F115's durable-cursors claim and F110's mischaracterized detector. Here the refutation was two lines into the file agent-a named as its evidence.
+
+The consequence is that **synthetic principals in tests remain harness-asserted.** Agent-c's sharper point stands: if isolation policies key on a client-settable GUC that the same role can change, a forced-RLS test that "observes a denial" is F111 in a new hat.
+
+### F124
+
+**The council 04 record shape embeds a Port Log projection into a store justified as containing none.** ADR 0044's defense of the `port-family` invariant is that the control stream is *not a projection of the log at all* but authoritative for a different fact domain. **The checkpoint fields "covered canonical range" and "batch digest and count" are derived from Port Log content**, so the record is part private delivery fact and part log projection.
+
+The practical risk agent-c identified: **trusting a verified prefix without recomputing the digest from canonical bytes lets a well-chained but poisoned checkpoint hide events inside the claimed range**, and a rebuild that scans only after the prefix will never look inside it. A foreign key to `prior_checkpoint_id` also fails the forged-parent property, since a forgery pointing at a different real checkpoint is not a missing row.
+
+**Neither agent-a nor agent-b caught this, and DeVere's decision was made on the cleaner description.** The resolution that preserves the invariant: the digest is a **witness** to log content rather than an alternative truth, so when the two disagree **the Port Log wins and the checkpoint is invalid**. That must be a stated rule with a control, not an assumption, and the parent binding must be a digest of the prior checkpoint body rather than an id reference.
