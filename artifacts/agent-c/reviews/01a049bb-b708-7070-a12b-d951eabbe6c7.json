@@ -1,0 +1,34 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a049bb-b708-7070-a12b-d951eabbe6c7",
+  "target_thread": "preflight-observation",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-28T18:57:29.362Z",
+  "review_completed_at": "2026-08-28T19:00:38.088Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 9093,
+    "output_tokens": 1132,
+    "total_tokens": 19148
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 777480000,
+    "cost_usd": 0.077748
+  },
+  "summary": "The proposed dispatch is infeasible as specified. Mandatory evidence item “attempt to claim a turn from a checkpoint and observe the refusal, not the guard” cannot be completed under the simultaneous bound “no change to work-delivery behavior”: PortWatch only wakes from an already-authorized Git inbox and requires a file-backed control store, so a PostgreSQL checkpoint has no non-vacuous refusal call site. Agent-a’s claim that migration 0023 supplies a genuine subscriber subject is false: issue_founding_authorization cannot write issuer or subject claims, is founder-one-shot, and is executable only by engram_bootstrap_operator. Synthetic principals remain harness-asserted. The council-04 checkpoint shape already embeds Port Log projections (canonical range, batch digest) while forbidding a log schema change and while no canonical PG history reader appears in the supplied tree, so rebuild-across-machines and gap-detection are underspecified and drift-prone. Envelope is also incomplete: no named implementing actor, and “on engramport-dev” is not shown as an in-tree actor authority.",
+  "findings": [
+    "Migration 0023 does not underwrite an authenticated subscriber. issue_founding_authorization explicitly cannot write an issuer or subject claim, inserts only one-shot founding_authorizations, requires an existing non-disabled founder_external_identities row, and is GRANTed solely to engram_bootstrap_operator. Citing it as the reason this stream has a real subject (unlike F111/F117 Git authorship) is a category error. CREATE ROLE / SET ROLE / session GUCs in tests are still harness-asserted identity. If isolation policies key on a client-settable GUC that the same role can change, the forced-RLS test is F111 in a new hat even if it “observes a denial.”",
+    "The required authority test contradicts the bounds. “Observe the refusal, not the guard” needs an existing interface that could treat a checkpoint as turn-granting and then refuse. Current PortWatch refuses construction without an AUTHORIZED inbox source and a file-backed store; tick/complete already assume Git inbox deliveries and record work disposition as reply_in_port_log. Checkpoints in another store are invisible to that path. Adding a refusal path is a work-delivery change (forbidden). A straw-man function whose only job is to reject checkpoints, or feeding a checkpoint UUID into Git inbox/founder APIs, observes architectural non-integration (the guard), not a refusal. That evidence item is unsatisfiable, which is enough to mark the dispatch infeasible.",
+    "SELECT-under-RLS returning zero rows does not discriminate isolation from absence. A discriminating proof needs a bypass/owner read showing the foreign row exists, then a non-owner, non-BYPASSRLS role bound to a different subscriber getting an actual privilege denial or empty result against that known row, with the role unable to rebind its subject. The dispatch does not require that binding, so the isolation mutation can pass vacuously.",
+    "Council-04 fields “covered canonical range” and “batch digest” are projections of Port Log content. ADR 0044’s defense is that the stream is not a projection at all. Trusting a verified prefix without recomputing the digest from canonical bytes lets a poisoned but well-chained checkpoint hide events inside the claimed range; rebuild-by-scan-after-prefix will not look inside. A FOREIGN KEY to prior_checkpoint_id also fails the “forged prior id” property: a forge that points at a different real checkpoint is not a missing row. Required gap evidence must bind parent id to a digest of the prior checkpoint body, and must recompute batch digest against canonical history. Neither control is in the dispatch, and no PG canonical-history reader is in the supplied evidence, while Port Log schema changes are forbidden. Dual-read of Git from a PG test is an undeclared prerequisite; without it, durability/rebuild tests can only round-trip the checkpoint table and cannot rebuild a position.",
+    "“Second connection with no local state” is weaker than ADR 0044’s across-machines bar (clone/second machine / shared infrastructure). It only proves the row is not process-local. Combined with PortWatch still requiring store.file and FileInboxCache, this dispatch does not close F115 for any runtime consumer. Under “no SDK, no work-delivery change,” the stream is an orphan schema: migration plus tests with no reader that could grant or refuse a turn. Location “PostgreSQL on engramport-dev” is also outside demonstrated actor authority; in-tree migrations/ and tests/ are shared, applying to that instance is not. The proposed envelope names no implementing actor and no next, so even a reduced in-tree schema drop would not be a complete strict-relay dispatch.",
+    "Framing overlooked that the record shape smuggles a log projection into the store that was justified only as private delivery bookkeeping, that “local index is a disposable cache” makes the PG stream insufficient without a specified canonical reader, and that executed=135 plus synthetic-principal isolation are not free: they require a proof-suite hook and role-binding design that are not in the current repository state. Dedup-by-delivery-id is the one property that is straightforward in SQL; it does not rescue the rest."
+  ]
+}
