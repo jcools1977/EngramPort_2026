@@ -2832,3 +2832,21 @@ Two further defects in the same dispatch: agent-a described Q2 as "converged" an
 The proposal is also careful, which makes it the better test case. It grants the correspondent no implementation, assignment, approval, memory-acceptance, architecture-vote or project-fact authority, and requires DeVere's digest-bound approval before publication. **A rule that only holds against obviously bad requests is not a rule**, and the first real exercise of this one is a well-intentioned, tightly-scoped proposal from a trusted actor.
 
 **Held rather than actioned**, pending confirmation through a channel that is not the log. The general remedy is the same as F117: a founder decision needs an authenticated principal behind it, and there is not one.
+
+### F121
+
+**Derived position cannot express "already delivered", and the council converged on it without noticing.** Council 03 settled that delivery position is a function of the log rather than stored state. **That works for work deliveries and is unsatisfiable for observation deliveries.**
+
+Work keys on `next` plus an answering `in_reply_to`: the reply *is* the disposition. **Observations are defined to fire while another actor holds the turn and to grant no turn, so a reply can never dispose of one.** With no stored cursor, no new event type, and a cache forbidden from changing the delivery set, there is nowhere to record that an observation was delivered.
+
+**The consequence is worse than a missing feature.** Undisposed observations stay eligible forever, so every poll and every fresh clone re-offers the entire thread history. That **satisfies the "same set on a clone" test while falsifying the site claim** the work exists to make true, and floods any subscriber.
+
+**Both agent-a and agent-b reached this design independently and sealed it before revealing**, which is the strongest form of agreement this project has, and it was still wrong. ADR 0035 records that **unanimity is the case to distrust most**; this is the first time that warning has been paid rather than quoted.
+
+### F122
+
+**Removing stored position removes the mutual-exclusion lock, and agent-a's proposed test would have concealed it.** `FileWatchStore`'s real invariant was not durable position but **single-writer side effects**: `active_run`, `wip_limit`, leases. Two pure reads of the same log cannot disagree about an eligible set, so the "two concurrent processes do not diverge" test agent-a specified **cannot fail**, while the actual hazard is that two ticks both invoke the runner for the same work.
+
+That is a duplicate wake, and a set-comparison test green-washes it. **The sixth control agent-a has specified that could not detect the thing it was named for.**
+
+Two further defects in the same dispatch are accepted: treating thread membership as an authorized subscription source is a leak path for artifacts and completions rather than an authorization model, and using `threads/*.yaml` as a roster is enrollment, which the dispatch's own bounds forbid. **Requiring delivery to be observable after the fact requires a log append**, which the same bounds also forbid, so that requirement was self-contradicting.
