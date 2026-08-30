@@ -2896,3 +2896,17 @@ The practical risk agent-c identified: **trusting a verified prefix without reco
 **This confirms F111 in practice and settles its severity.** Under one owner impersonation was theoretical. Under ADR 0039's definition it is the difference between a product and a shared folder with good bookkeeping. **EngramPort currently provides excellent coordination between cooperating builders and no protection between them.**
 
 **The scoping consequence, which is why this slice was worth more than a green demonstration:** accepted Git authorship and work-disposition operations need a verified builder subject. That is the same keystone as F108, F111, F113 and F117, now with a measured blast radius rather than an argument.
+
+### F128
+
+**Event signing does not fix impersonation, and agent-a rejected the cheaper correct path while overstating the gain.** The dispatch argued that signing events beats signing commits because commit signatures bind the pusher and die outside Git. **Agent-c's refutation: both bind whoever controls the in-tree identity object**, an actor record in one case and a git identity in the other, so **against the F127 adversary the two are equivalent.** The portability argument is valid for export and rebase only: it justifies signatures as a Port feature, not as an impersonation fix.
+
+**Agent-a's own `docs/security/attribution-hardening.md` already contains the right answer** and agent-a did not reread it: commit signatures prove the pusher rather than `from:` honesty, and closing the gap is **verifier comparison of the claimed author against the introducing commit's identity.** That path is cheaper, requires no new secret class, and carries the same F108 exposure.
+
+**The requirement agent-a called unskippable is unsatisfiable inside its own bounds.** An enrollment-authority key that ordinary builders cannot rewrite cannot exist in-tree while agents push directly to `main`, because one commit can replace the key, its authority signature, and the verifier together.
+
+**Agent-a cited migration 0023 as the enrollment mechanism for a second time**, after F123 recorded that the file's own comments say it cannot write an issuer or subject claim. It has no public-key column, is executable only by `engram_bootstrap_operator`, and a Postgres grant cannot be consumed by the Git verifier. **Same false citation, same file, four days apart.**
+
+**The measured reason F127 is not fixable here:** its second builder ran on one operator machine with a uniform git identity. **Without per-builder key custody outside this tree, builder two can sign as builder one exactly as it passed the actor string**, and in-memory test keys would manufacture a convincing but meaningless refusal.
+
+**Recorded conclusion: agent-a has now attempted three times to solve identity inside the repository, and it cannot be solved there.** F108, F117 and now F128 are the same wall approached from three directions. The product's central feature requires identity infrastructure outside the log, and that is DeVere's to provide rather than agent-b's to build.
