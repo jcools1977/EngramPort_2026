@@ -171,6 +171,52 @@ export class FileClaimStore {
   }
 }
 
+function normalizePostgresClaim(row) {
+  if (!row) return null;
+  const { acquired: ignored, ...claim } = row;
+  void ignored;
+  return {
+    ...claim,
+    claimed_at: claim.claimed_at instanceof Date ? claim.claimed_at.toISOString() : claim.claimed_at,
+    expires_at: claim.expires_at instanceof Date ? claim.expires_at.toISOString() : claim.expires_at,
+  };
+}
+
+export class PostgresClaimStore {
+  constructor(pool) {
+    if (!pool?.query) throw new TypeError("claim store requires a PostgreSQL pool or client");
+    this.pool = pool;
+  }
+  async read(agent, project) {
+    const result = await this.pool.query("SELECT * FROM read_port_watch_claim($1,$2)", [agent, project]);
+    return normalizePostgresClaim(result.rows[0]);
+  }
+  async acquire({ agent, project, event_id, lease_ms = 300_000 }) {
+    if (!(lease_ms > 0) || !Number.isSafeInteger(lease_ms)) throw new RangeError("lease_ms must be a positive integer");
+    const run_id = randomUUID();
+    const lease_token = randomUUID();
+    const result = await this.pool.query(
+      "SELECT * FROM acquire_port_watch_claim($1,$2,$3,$4,$5,$6)",
+      [agent, project, event_id, run_id, lease_token, lease_ms],
+    );
+    const row = result.rows[0];
+    if (!row) throw new Error("PORT_WATCH_CLAIM_RESULT_MISSING");
+    return { acquired: row.acquired, claim: normalizePostgresClaim(row) };
+  }
+  async release(agent, project, { run_id }) {
+    const result = await this.pool.query("SELECT * FROM release_port_watch_claim($1,$2,$3)", [agent, project, run_id]);
+    return normalizePostgresClaim(result.rows[0]);
+  }
+  async expire(agent, project, lease_token) {
+    const result = await this.pool.query("SELECT * FROM expire_port_watch_claim($1,$2,$3)", [agent, project, lease_token]);
+    return normalizePostgresClaim(result.rows[0]);
+  }
+  async revoke(agent, project) {
+    const result = await this.pool.query("SELECT * FROM revoke_port_watch_claim($1,$2)", [agent, project]);
+    return normalizePostgresClaim(result.rows[0]);
+  }
+}
+
 export function decideDelivery({ cursor, events }) {
   const delta = events.filter((event) => event.project_seq > cursor).sort((left, right) => left.project_seq - right.project_seq || left.event_id.localeCompare(right.event_id));
   return delta.length ? { action: "wake", events: delta } : { action: "skip", reason: "unchanged" };

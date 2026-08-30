@@ -2,12 +2,12 @@ import {
   appendEvent, listInbox, listInboxEntries, validateAppendInputs,
 } from "../../git-adapter/src/event-core.mjs";
 import {
-  FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, RecordingRunner,
+  FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, PostgresClaimStore, RecordingRunner,
   gitAuthorizedInboxSource,
 } from "../../port-watch/src/index.mjs";
 
 export {
-  FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, RecordingRunner,
+  FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, PostgresClaimStore, RecordingRunner,
   appendEvent, gitAuthorizedInboxSource, listInbox, listInboxEntries, validateAppendInputs,
 };
 
@@ -19,8 +19,8 @@ export const CLAIM_COVERAGE = Object.freeze([
   }),
   Object.freeze({
     id: "discover",
-    coverage: "partial",
-    qualifier: "Inbox discovery and Port Watch delivery are exposed. Port Watch position is log-derived and its control/claim stores are file-backed, so this SDK does not claim a portable durable cursor.",
+    coverage: "full-with-dependency",
+    qualifier: "Inbox position is log-derived. PostgreSQL claim exclusion is shared across independent connections to one reachable control database; this is not evidence from two physical machines.",
   }),
   Object.freeze({
     id: "respond",

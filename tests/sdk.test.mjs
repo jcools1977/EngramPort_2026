@@ -130,13 +130,14 @@ test("unregistered actor and out-of-prefix artifact are honestly refused without
   } finally { await cleanup(cwd); }
 });
 
-test("SDK publishes four claim qualifiers with honest full and partial coverage", async () => {
+test("SDK publishes four claim qualifiers with honest dependency coverage", async () => {
   assert.deepEqual(sdk.CLAIM_COVERAGE.map(({ id, coverage }) => [id, coverage]), [
-    ["publish", "full"], ["discover", "partial"], ["respond", "full"], ["handoff", "full"],
+    ["publish", "full"], ["discover", "full-with-dependency"], ["respond", "full"], ["handoff", "full"],
   ]);
   const readme = await readFile(path.join(root, "packages/sdk/README.md"), "utf8");
   assert.match(readme, /Never-overwrite is structural/);
-  assert.match(readme, /does not claim a portable, cross-host durable cursor/);
+  assert.match(readme, /not that cross-machine networking or availability works/);
+  assert.match(readme, /requires the PostgreSQL control stream to be reachable/);
   assert.match(readme, /neither authenticates a caller nor proves possession/);
   assert.match(readme, /registry check is log structure validation, not enrollment or authorization/);
 });

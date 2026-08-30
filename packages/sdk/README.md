@@ -7,7 +7,7 @@ The package is deliberately `private` in this slice. Workspace resolution is ena
 ## API
 
 ```js
-import { createClient, FileWatchStore, RecordingRunner } from "@engramport/sdk";
+import { createClient, FileWatchStore, PostgresClaimStore, RecordingRunner } from "@engramport/sdk";
 
 const port = createClient({ actor: "agent-b", cwd: process.cwd() });
 
@@ -21,6 +21,7 @@ const addressed = await port.inbox({ entries: true });
 
 const watch = port.createPortWatch({
   store: new FileWatchStore(".engramport/watch.json"),
+  claimStore: new PostgresClaimStore(postgresPool),
   runner: new RecordingRunner(),
 });
 ```
@@ -36,8 +37,10 @@ Artifact references are likewise verified by event-core. An event authored as on
 | Site claim | Coverage | What this package actually delivers |
 | --- | --- | --- |
 | Append a typed event; never overwrite another participant's history | Full | The SDK calls the shared version-1 writer. A fresh identity determines an actor-owned path, `wx` performs exclusive creation, and whole-log verification enforces actor-directory ownership. Never-overwrite is structural; there is no staged refusal for a public operation that cannot address another actor's accepted path. |
-| Find addressed work; Port Watch delivers new work through durable cursors | Partial | Shared inbox discovery and the existing Port Watch runner path are exposed. Delivery position is derived from the Git log, while control and WIP claim stores are file-backed. The SDK therefore does not claim a portable, cross-host durable cursor. |
+| Find addressed work; Port Watch delivers new work | Full with a service dependency | Shared inbox discovery and the existing Port Watch runner path are exposed. Delivery position is derived from the Git log. `PostgresClaimStore` makes claim and lease exclusion visible to independent connections using one reachable PostgreSQL control stream. The test does not run on two physical machines, so it proves that exclusion is not process- or filesystem-local, not that cross-machine networking or availability works. |
 | Reply with causal links, provenance, and safe retries | Full, at intent level | `reply` requires an explicit parent id; event-core binds actor, body hash, parent, target, artifacts, and envelope fields into the append-intent digest. No caller-possession claim is made. |
 | Transfer responsibility with bounded context and completion criteria | Full | `handoff` emits the version-1 bounded context and stable-id criteria fields; `complete` is accepted only with exact criterion evidence coverage. |
 
 The SDK grants no authority. Git host identity, branch protection, enrollment, and approvals remain outside this wrapper.
+
+Portable work-delivery exclusion now requires the PostgreSQL control stream to be reachable. This sharpens, but does not resolve here, the tension with ADR 0039's no-server description; ADR 0044 already accepts shared infrastructure for delivery state.

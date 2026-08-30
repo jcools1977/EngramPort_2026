@@ -54,6 +54,8 @@ run_port_watch_shared(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_EVENT_
 assert_port_watch_shared(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch_shared "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_observation_live(){ local module_root="$1"; OBSERVATION_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" OBSERVATION_DATABASE_URL="postgres://127.0.0.1:55432/$SDB" OBSERVATION_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-timeout=10000 "$root_dir/tests/port-watch-observation-live.test.mjs"; }
 assert_observation_live(){ local module_root="$1" out rc; out=$(mktemp); run_observation_live "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_port_watch_claim_live(){ local module_root="$1"; PORT_WATCH_CLAIM_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" PORT_WATCH_CLAIM_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" PORT_WATCH_CLAIM_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-timeout=10000 "$root_dir/tests/port-watch-claim-live.test.mjs"; }
+assert_port_watch_claim_live(){ local module_root="$1" out rc; out=$(mktemp); run_port_watch_claim_live "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_ONLY=1 SITE_EVENT_TYPES_MODULE="$(agent_c_url "$module")" SITE_EVENT_TYPE_OVERRIDE="$fabricated" node --test "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(mktemp); run_site_event_types "$module" "$fabricated" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
@@ -512,6 +514,7 @@ for line in "${MUTATIONS[@]}"; do
       PORT_WATCH_LOG_DERIVED_POSITION) mode=position; marker=PORT_WATCH_LOG_DERIVED_POSITION_REMOVED; test_pattern='completion stores no position and an unanswered work item remains eligible at least once'; suite=watch ;;
       PORT_WATCH_CACHE_LOG_STATE) mode=cache; marker=PORT_WATCH_CACHE_LOG_STATE_REMOVED; test_pattern='changed log state cannot reuse a stale cached work set'; suite=watch ;;
       PORT_WATCH_ATOMIC_CLAIM) mode=claim; marker=PORT_WATCH_ATOMIC_CLAIM_REMOVED; test_pattern='concurrent ticks reserve one invocation slot before either runner call'; suite=watch ;;
+      PORT_WATCH_POSTGRES_EXCLUSIVITY) mode=postgres-claim; marker=PORT_WATCH_POSTGRES_EXCLUSIVITY_REMOVED; test_pattern='PostgreSQL claim store excludes duplicate invocation across independent connections'; suite=claim_live ;;
       PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD) mode=legacy; marker=PORT_WATCH_LEGACY_ACTIVE_RUN_GUARD_REMOVED; test_pattern='legacy active run requires explicit expiry before log-derived migration'; suite=watch ;;
       PORT_WATCH_OBSERVATION_AUTHORITY) mode=observation-authority; marker=OBSERVATION_NO_TURN_AUTHORITY_REMOVED; test_pattern='observation delivery cannot obtain a turn through the real consumer call site'; suite=watch ;;
       PORT_WATCH_OBSERVATION_CANONICAL) mode=observation-canonical; marker=OBSERVATION_CANONICAL_RANGE_DIGEST_REMOVED; test_pattern='checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected'; suite=watch ;;
@@ -528,6 +531,18 @@ for line in "${MUTATIONS[@]}"; do
       log="$mutation_dir/port-watch-observation-rls.log"; run_observation_live "$source_root" >"$log" 2>&1; after=$?
       forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern|✖ $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
       build >/dev/null 2>&1; restored=$(assert_observation_live "$source_root")
+      printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+      executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+      continue
+    fi
+    if [ "$suite" = claim_live ]; then
+      build || { fail=1; continue; }
+      base=$(assert_port_watch_claim_live "$source_root")
+      psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'WHERE (claims.expires_at<=clock_timestamp() OR claims.lease_status<>''active'') /* PORT_WATCH_POSTGRES_EXCLUSIVITY */','WHERE true /* PORT_WATCH_POSTGRES_EXCLUSIVITY_REMOVED */') WHERE oid='acquire_port_watch_claim(text,text,text,uuid,uuid,integer)'::regprocedure;" >/dev/null 2>&1
+      applied=$(psql_as postgres "$SDB" -Atc "SELECT position('PORT_WATCH_POSTGRES_EXCLUSIVITY_REMOVED' in prosrc)>0 AND position('claims.expires_at<=clock_timestamp()' in prosrc)=0 FROM pg_proc WHERE oid='acquire_port_watch_claim(text,text,text,uuid,uuid,integer)'::regprocedure" | tr -d '[:space:]')
+      log="$mutation_dir/port-watch-postgres-claim.log"; run_port_watch_claim_live "$source_root" >"$log" 2>&1; after=$?
+      forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern|✖ $test_pattern" "$log" && grep -Fq '2 !== 1' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+      build >/dev/null 2>&1; restored=$(assert_port_watch_claim_live "$source_root")
       printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
       executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
       continue
@@ -1467,7 +1482,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 145 ] || fail=1
+  [ "$executed" = 146 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
