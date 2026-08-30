@@ -57,7 +57,7 @@ export class EngramPortClient {
 
   complete({ inReplyTo, ...input }, options = {}) {
     if (typeof inReplyTo !== "string" || !inReplyTo) throw new TypeError("complete requires inReplyTo");
-    return this.append({ ...input, type: "completion", reply: inReplyTo }, options);
+    return this.append({ ...input, type: "completion", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH */
   }
 
   inbox({ entries = false } = {}) {

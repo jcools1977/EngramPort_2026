@@ -106,6 +106,7 @@ checksum25="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout
 "${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0025_port_watch_claims.sql"
 "${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES ('0025_port_watch_claims', '$checksum25');"
 PORT_WATCH_CLAIM_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/engramport" PORT_WATCH_CLAIM_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/port-watch-claim-live.test.mjs"
+SECOND_BUILDER_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/engramport" SECOND_BUILDER_MAINTENANCE_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" SECOND_BUILDER_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/second-builder-live.test.mjs"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/founder-enrollment-issuer.sql"
 "${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/canonical-truncate.sql"
 W1_1_BINDING_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/engramport" W1_1_BINDING_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/engramport" node --test --test-timeout=10000 "$root_dir/tests/founder-binding-live.test.mjs"

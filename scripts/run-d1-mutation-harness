@@ -44,6 +44,8 @@ run_git_adapter_core(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$
 assert_git_adapter_core(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_sdk_core_consumers(){ local module_root="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$module_root/packages/git-adapter/src/cli.mjs")" ENGRAMPORT_SDK_MODULE="$(agent_c_url "$module_root/packages/sdk/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern='CLI append and inbox delegate to the exported core|SDK append delegates to event-core' "$root_dir/tests/git-v0.test.mjs" "$root_dir/tests/sdk.test.mjs"; }
 assert_sdk_core_consumers(){ local module_root="$1" out rc; out=$(mktemp); run_sdk_core_consumers "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_second_builder(){ local module_root="$1"; ENGRAMPORT_SDK_MODULE="$(agent_c_url "$module_root/packages/sdk/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern='synthetic second builder completes the public SDK path and exposes the authorization gaps' "$root_dir/tests/second-builder.test.mjs"; }
+assert_second_builder(){ local module_root="$1" out rc; out=$(mktemp); run_second_builder "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_git_adapter_core_guard(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$cli")" node --test --test-reporter=tap --test-name-pattern='normal CLI execution cannot activate the harness core override' "$root_dir/tests/git-v0.test.mjs"; }
 assert_git_adapter_core_guard(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core_guard "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_event_v1(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$module_root/verify-log.mjs")" GIT_ADAPTER_EVENT_CORE_MODULE="$(agent_c_url "$module_root/event-core.mjs")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs"; }
@@ -311,6 +313,20 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor='  try { await writeFile(file, source, { flag: "wx" }); }';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'  try { await Promise.resolve(); /* SDK_CORE_WRITE_REMOVED */ }');
+fs.writeFileSync(target,text);
+NODE
+}
+make_second_builder_variant(){
+  local target="$1"
+  mkdir -p "$target/packages"
+  cp -R "$root_dir/packages/git-adapter" "$target/packages/"
+  cp -R "$root_dir/packages/port-watch" "$target/packages/"
+  cp -R "$root_dir/packages/sdk" "$target/packages/"
+  node - "$target/packages/sdk/src/index.mjs" <<'NODE'
+const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
+const anchor='    return this.append({ ...input, type: "completion", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH */';
+if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
+text=text.replace(anchor,'    return this.append({ ...input, type: "reply", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH_REMOVED */');
 fs.writeFileSync(target,text);
 NODE
 }
@@ -642,6 +658,22 @@ for line in "${MUTATIONS[@]}"; do
     [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_sdk_core_consumers "$source_root")
     printf 'SDK_CORE_WRAPPER baseline=%s applied=%s after=%s cli_and_sdk_forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = SECOND_BUILDER_COMPLETE_PATH ]; then
+    source_root="$root_dir"
+    base=$(assert_second_builder "$source_root")
+    variant_root="$mutation_dir/second-builder-complete"; make_second_builder_variant "$variant_root" || { fail=1; continue; }
+    variant_sdk="$variant_root/packages/sdk/src/index.mjs"
+    if grep -Fq SECOND_BUILDER_COMPLETE_PATH_REMOVED "$variant_sdk"; then applied=t; else applied=f; fi
+    log="$mutation_dir/second-builder-complete.log"
+    run_second_builder "$variant_root" >"$log" 2>&1; after=$?
+    forbidden=f
+    if grep -Eq 'not ok [0-9]+ - synthetic second builder completes the public SDK path and exposes the authorization gaps' "$log" && grep -Fq 'false !== true' "$log"; then forbidden=t; fi
+    [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_second_builder "$source_root")
+    printf 'SECOND_BUILDER_COMPLETE_PATH baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
@@ -1482,7 +1514,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 146 ] || fail=1
+  [ "$executed" = 147 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
