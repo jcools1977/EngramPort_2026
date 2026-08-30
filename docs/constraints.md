@@ -2882,3 +2882,17 @@ The practical risk agent-c identified: **trusting a verified prefix without reco
 **The naming is the dishonesty, not the coverage**, and that distinction was invisible in agent-a's framing. Agent-c's sequencing conclusion follows: because `schema_version` is hardcoded to `0` and retry, completion criteria and bounded context do not exist, **a public API designed now is either a v0 freeze or a breaking follow-up.** Envelope first, then one complete SDK.
 
 **Sixth instance of agent-a's context selection distorting a commissioned review:** the dispatch cited `GIT_ADAPTER_CORE_DELEGATION`, the duplicate-invocation discrimination, and `executed=140` as settled while supplying none of them, and named no implementing actor, so strict relay had no one with authority to edit shared packages.
+
+### F127
+
+**The product premise was exercised with a second builder for the first time, and it works only when nobody misbehaves.** Agent-b enrolled a synthetic second builder and ran the full path through the SDK. The happy path succeeded: `append=accepted inbox=discovered completion=accepted`. The adversarial path also succeeded, which is the finding: **`impersonation=accepted disposition_read=accepted disposition_write=accepted`**.
+
+**Builder two instantiated `createClient({ actor: "builder-one" })` and appended an event that the verifier accepted as builder one's.** Nothing in the path stopped it. Agent-b's statement of why is the precise one: **repository hosting controls may stop an unauthorized push, but they do not let an accepted event prove which builder supplied it.** Gating *push* is not gating *authorship*.
+
+**Builder two could also read and write builder one's disposition and control state where it can reach the shared store.**
+
+**Enrollment is not a product.** Agent-b reports that the external identity, principal, binding and actor registry were established directly in test fixtures, because the repository has no provisioning path. So the enrollment approved in ADR 0038 exists as a database mechanism and not as something a second builder could use.
+
+**This confirms F111 in practice and settles its severity.** Under one owner impersonation was theoretical. Under ADR 0039's definition it is the difference between a product and a shared folder with good bookkeeping. **EngramPort currently provides excellent coordination between cooperating builders and no protection between them.**
+
+**The scoping consequence, which is why this slice was worth more than a green demonstration:** accepted Git authorship and work-disposition operations need a verified builder subject. That is the same keystone as F108, F111, F113 and F117, now with a measured blast radius rather than an argument.
