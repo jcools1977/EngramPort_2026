@@ -1,66 +1,44 @@
 # EngramPort
 
-EngramPort is the shared project-state and collaboration layer for humans and AI agents. Events are immutable truth; current state, retrieval indexes, summaries, and UI views are derived.
+**Shared project state for humans and AI agents.** Events are immutable truth; everything else is a projection that can be deleted and rebuilt from the log.
 
-This repository currently ships the **Git v0 interoperability proof** required by the engineering specification. It demonstrates a complete Claude Architect → Codex Builder → Claude Architect relay without a human copying message bodies.
+## What this repository is right now
 
-## What works now
+**A working protocol and a public record of how it was built, with its failures intact.** It is not yet installable.
 
-- Actor-owned, append-only Markdown event logs
-- Typed JSON Schema contract
-- UUIDv7 event identity and causal reply links
-- Strict-relay turn enforcement
-- Deterministic event-body and artifact hashing
-- Ownership, duplicate-ID, reply-cycle, target, filename, and artifact verification
-- CLI commands for verify, inbox discovery, and safe event append
-- A recorded three-event, two-agent architecture review
-- Failure tests proving malformed logs are rejected
+There is no npm package to install, no quickstart, and no provisioning path for a new participant. **If you are looking for a tool to adopt today, this is not that yet.** If you are interested in how a coordination protocol for AI agents actually gets built, and what breaks along the way, the log is the most useful thing here.
+
+## What is real and verifiable
+
+Clone it and run `npm run proof:verify`. It checks the whole log: content hashes, causal links, actor ownership, strict-relay turn enforcement, and that **every Markdown file under `events/` is either an enumerated, validated event or a verification failure**.
+
+- **432 accepted events across 79 threads and 3 actors**, every one content-addressed and causally linked
+- **145 mutation controls**, each one proven to fail when the behavior it guards is removed
+- **43 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
+- **34 architecture decision records** in `docs/adr/`
+
+## The interesting part is the log
+
+This project was built by three agents coordinating through the protocol itself: an architect, an implementer, and an independent critic that reviewed both. **The critic stopped seven dispatches before they were sent, refuted two accepted reviews, and found a security defect the architect had reviewed past.**
+
+That history is not summarized anywhere. **It is the log**, and it is readable in order. `docs/constraints.md` is the fastest way in: each finding records what was believed, what was observed, and which of those was wrong.
+
+## Read this before relying on it
+
+**[SECURITY.md](SECURITY.md) states what EngramPort guarantees and what it does not.** In short: it provides structural integrity and auditability, and it **does not authenticate authorship**. Any party who can commit can write an event claiming to be any actor. That is measured, recorded as F127, and four separate attempts to close it in-repository are documented along with why each failed.
+
+**EngramPort is sound for builders who trust each other. It does not protect you from your collaborators.**
 
 ## Run the proof
 
-```bash
+```
 npm install
-npm run proof
+npm run proof:verify
+npm test
 ```
 
-Expected result:
+`npm run db:test` additionally requires Docker.
 
-```text
-✓ verified 3 events across 1 thread(s) and 2 actors
-tests 10
-pass 10
-fail 0
-```
+## License
 
-Discover work for an actor:
-
-```bash
-npm run engram -- inbox --actor agent-b
-```
-
-Append a new event from a Markdown body:
-
-```bash
-npm run engram -- append \
-  --actor agent-b \
-  --thread architecture \
-  --type reply \
-  --body ./work/reply.md \
-  --reply EVENT_UUID \
-  --next agent-a
-```
-
-The CLI computes the UUIDv7, UTC filename, canonical body hash, and then verifies the whole log. It never modifies an accepted event.
-
-## Apex two-agent operating model
-
-Claude Code owns architecture, threat modeling, specification critique, and integration review. Codex owns implementation, migrations, failure tests, and reproducible verification. Either can act as coordinator, but each work item has one owner and one independent reviewer.
-
-Every handoff includes an objective, completion criteria, causal parent, exact next actor, evidence artifacts, and hashes. Event bodies are always treated as untrusted data; they cannot grant permissions or override repository instructions.
-
-See [PROTOCOL.md](./PROTOCOL.md) for the wire contract and [AGENTS.md](./AGENTS.md) for agent bootstrap instructions.
-
-## Roadmap
-
-The next gate is v0.1: PostgreSQL + pgvector, append/read API, tenant identity, RLS, idempotency, transactional projections, CLI, OpenAPI, and a local stack. The production source of truth will be PostgreSQL; Git remains the portability proof, not the production database.
-
+MIT. See [LICENSE](LICENSE).
