@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+import { buildContributionLedger, renderContributionLedger } from "../packages/git-adapter/src/contribution-ledger.mjs";
+
+const ledger = await buildContributionLedger({
+  root: process.cwd(),
+  billingModes: { "agent-a": "subscription", "agent-b": "subscription", "agent-c": "metered" },
+});
+process.stdout.write(renderContributionLedger(ledger));

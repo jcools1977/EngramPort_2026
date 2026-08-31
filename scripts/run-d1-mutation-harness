@@ -40,6 +40,14 @@ run_agent_c(){ local module="$1" pattern="$2"; AGENT_C_SUPERVISOR_MODULE="$(agen
 assert_agent_c(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_agent_c "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_report_correspondent(){ local module="$1" pattern="$2"; REPORT_CORRESPONDENT_MODULE="$(agent_c_url "$module")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/report-correspondent.test.mjs"; }
 assert_report_correspondent(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_report_correspondent "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_contribution_ledger(){ local module="$1"; CONTRIBUTION_LEDGER_MODULE="$(agent_c_url "$module")" node --test --test-reporter=tap --test-name-pattern='subscription contribution renders work without a fictional currency figure' "$root_dir/tests/contribution-ledger.test.mjs"; }
+assert_contribution_ledger(){ local module="$1" out rc; out=$(mktemp); run_contribution_ledger "$module" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+probe_contribution_currency(){ local module="$1"; node --input-type=module - "$module" <<'NODE'
+const {pathToFileURL}=await import("node:url");const {renderContributionLedger}=await import(pathToFileURL(process.argv[2]).href);
+const work={events_authored:1,handoffs_accepted:0,completions:0,criteria_satisfied:0,criteria_total:0};
+process.stdout.write(renderContributionLedger({event_count:1,actors:[{actor:"agent-a",billing_mode:"subscription",work,metered:{reviews:1,total_tokens:1,currency:"USD",cost_in_usd_ticks:10000000,cost_usd:"0.001"}}]}));
+NODE
+}
 run_git_adapter_core(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$cli")" node --test --test-reporter=tap --test-name-pattern='CLI append and inbox delegate to the exported core' "$root_dir/tests/git-v0.test.mjs"; }
 assert_git_adapter_core(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_sdk_core_consumers(){ local module_root="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$module_root/packages/git-adapter/src/cli.mjs")" ENGRAMPORT_SDK_MODULE="$(agent_c_url "$module_root/packages/sdk/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern='CLI append and inbox delegate to the exported core|SDK append delegates to event-core' "$root_dir/tests/git-v0.test.mjs" "$root_dir/tests/sdk.test.mjs"; }
@@ -296,6 +304,18 @@ text=text.replace(anchor,'  void profile; /* CLI_ARGUMENT_REFUSAL_REMOVED */');
 for(const name of ["verify-log.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs","event-core.mjs"]){
   text=text.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
 }
+fs.writeFileSync(target,text);
+NODE
+}
+make_contribution_ledger_variant(){
+  local target="$1"
+  mkdir -p "$target"
+  cp -R "$root_dir/packages/git-adapter/src/." "$target/"
+  node - "$target/contribution-ledger.mjs" <<'NODE'
+const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
+const anchor='    if (actor.billing_mode === "subscription" && actor.metered !== null) { /* CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL */';
+if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
+text=text.replace(anchor,'    if (false /* CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL_REMOVED */) {');
 fs.writeFileSync(target,text);
 NODE
 }
@@ -677,6 +697,22 @@ for line in "${MUTATIONS[@]}"; do
     restored=0
     printf 'CLI_ARGUMENT_REFUSAL baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = CONTRIBUTION_SUBSCRIPTION_CURRENCY ]; then
+    source_module="$root_dir/packages/git-adapter/src/contribution-ledger.mjs"
+    base=$(assert_contribution_ledger "$source_module")
+    variant_root="$mutation_dir/contribution-ledger"; make_contribution_ledger_variant "$variant_root" || { fail=1; continue; }
+    variant="$variant_root/contribution-ledger.mjs"
+    if grep -Fq CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL_REMOVED "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/contribution-subscription.log"; run_contribution_ledger "$variant" >"$log" 2>&1; after=$?
+    emitted_log="$mutation_dir/contribution-subscription-emitted.log"; probe_contribution_currency "$variant" >"$emitted_log" 2>&1; emitted=$?
+    forbidden=f
+    if grep -Eq 'not ok [0-9]+ - subscription contribution renders work without a fictional currency figure' "$log" && [ "$emitted" = 0 ] && grep -Fq '$0.001 USD' "$emitted_log"; then forbidden=t; fi
+    [ "$forbidden" = t ] || { cat "$log" >&2; cat "$emitted_log" >&2; }
+    restored=$(assert_contribution_ledger "$source_module")
+    printf 'CONTRIBUTION_SUBSCRIPTION_CURRENCY baseline=%s applied=%s after=%s emitted=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$emitted" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$emitted" = 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = GIT_ADAPTER_CORE_DELEGATION ]; then
@@ -1597,7 +1633,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 154 ] || fail=1
+  [ "$executed" = 155 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
