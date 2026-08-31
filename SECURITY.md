@@ -14,7 +14,7 @@
 
 **It does not authenticate authorship.** An actor's identity is a string in the event envelope. Any party who can commit to the repository can write an event claiming to be any actor, and the verifier will accept it.
 
-This is measured, not theoretical. A second builder ran `createClient({ actor: "builder-one" })` and appended an event accepted as builder one's: `impersonation=accepted`. It is recorded as **F127** in `docs/constraints.md`, along with four separate attempts to close it in-repository and why each failed (**F108**, **F117**, **F128**, **F131**).
+**The mechanism is recorded as F111**: `event-core.mjs` requires only that an `actor` string be present, writes it into `from:`, and derives the destination directory from it, checking nothing. **The consequence was then measured as F127**, and this is not theoretical. A second builder ran `createClient({ actor: "builder-one" })` and appended an event accepted as builder one's: `impersonation=accepted`. It is recorded as **F127** in `docs/constraints.md`, along with four separate attempts to close it in-repository and why each failed (**F108**, **F117**, **F128**, **F131**).
 
 **The reason is structural rather than an unfinished feature.** Prevention requires authenticating the caller *before* the event is written. The verifier runs at append time, when no commit exists yet, and after the commit exists refusal is unusable because accepted events may not be edited. **A component that runs after the fact cannot prevent something before it.**
 
