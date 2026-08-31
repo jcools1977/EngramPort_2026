@@ -46,3 +46,4 @@ Required review is the only measure that addresses an **authorized** writer comm
 
 **The limitation that bounds what any of this proves:** all keys live on one machine, readable by any process running as that user. **This demonstrates the mechanism and not custody.** Real per-builder isolation requires separate machines or accounts, which a genuine second builder would have and this repository never will. That belongs in the lab report rather than being discovered by a reader.
 
+
