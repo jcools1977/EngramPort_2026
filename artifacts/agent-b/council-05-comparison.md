@@ -1,0 +1,138 @@
+# Council 05 — post-reveal comparison and returned recommendation
+
+The ADR 0041 sequence held. Agent-a sealed
+`16466c5146c383991661375cbb31d92a01b0523c20cb86b4ee4bebc6cfc4ff2c`
+in `6092f19`; agent-b sealed
+`1cde08fd5775833c795704d33fa0be10945733d82a679c948cec739bcde99c18`
+in `e0fc9c6`. Both digests were committed before either plaintext was
+available. Agent-b revealed in `04eff4f`, agent-a revealed in `679290d`, and
+both plaintext files reproduce their committed digests exactly.
+
+## Convergence
+
+Both recommendations reject another in-tree attempt to make the Git log refuse
+impersonation. Both locate any real prevention boundary outside the mutable log,
+before publication, and distinguish that boundary from the log's integrity and
+audit role. Both also agree that F130 is evidence about a missing identity
+mapping at the hosting layer, not proof that all external controls are
+impossible. Finally, both require the public claim to name its deployment
+assumptions instead of implying that the repository alone supplies actor
+identity.
+
+That convergence settles the architectural direction: stop adding identity
+rules beside the events and design the admission boundary that ordinary
+repository writers cannot rewrite or bypass.
+
+## The remaining split: transport authentication is necessary but insufficient
+
+Agent-a recommends per-builder machines and hosting accounts, arguing that the
+transport prevents builder B from pushing as builder A. That is useful writer
+authentication, but it does not yet prevent the measured event-level attack.
+GitHub can prove which account pushed a commit while the commit legally contains
+an event whose `from:` names a different actor. The current relay deliberately
+permits one signer to introduce another actor's event, so pusher identity cannot
+be equated with event authorship without losing a supported flow.
+
+The returned recommendation therefore adds one required component: an external
+admission service must map the authenticated subject to the claimed actor or to
+a narrowly scoped, independently authorized delegation **before** it writes the
+event. Branch protection then permits only that service to advance the protected
+branch. Per-builder transport credentials are inputs to this decision, not the
+complete decision.
+
+F130 demonstrated that generic GitHub signature enforcement mapped signatures
+to GitHub users, reported `no_user` for the agent keys, and blocked the legitimate
+relay. It did not demonstrate event-level actor authorization, delegation, or
+impersonation refusal. A known GitHub pusher could still place another actor slug
+inside accepted content unless a separate admission policy checks that relation.
+
+## Q1 — Returned guarantee characterization
+
+Use **structural integrity and auditability, not authenticated authorship** as
+the current short description. “Detection, not prevention” is safe only when
+“detection” means malformed structure, broken causal rules, changed bytes, or
+artifact/hash inconsistency. It is not honest shorthand for impersonation:
+F127's false attribution was accepted and not flagged, so the current log does
+not even detect that identity failure.
+
+The log proves that the checked record says what it says, that content and
+referenced evidence hash correctly, and that the causal and strict-relay shape
+satisfies checked policy. It does not prove that the principal named in `from:`
+created or authorized the event.
+
+Prevention runs outside Git, in front of `appendEvent`, at a service holding the
+only accepted write/sign credential. It authenticates the caller, checks direct
+actor authority or explicit delegation, validates the candidate, and only then
+appends and signs. The log records that enforcement result; it is not the
+enforcement point.
+
+## Q2 — Returned site recommendation for DeVere
+
+Until that admission system exists, publish a narrower present-tense claim:
+
+> EngramPort preserves a project-owned, append-only collaboration record with
+> verifiable content and artifact hashes, explicit causal links, bounded
+> context, and policy-checked handoffs. Actor names are attribution claims in
+> the record; the open Git deployment does not authenticate the real agent
+> behind a name. Identity assurance requires a separately configured admission
+> service and isolated credentials.
+
+“Exact causal links” and “Verifiable content hashes” remain supportable.
+“CHAIN VERIFIED” must explicitly mean record and artifact integrity rather than
+actor identity. “Every claim can point back to its author” should say “claimed
+actor” or “recorded source.” The `Identity` block must be qualified as a
+deployment-dependent control plane or marked as forthcoming.
+
+Agent-a's proposed phrase “every coordination fact attributable and every
+inconsistency visible” remains too strong. Attribution is only recorded, not
+authenticated, and F127 proves false attribution is not currently visible as an
+inconsistency. ADR 0040 can keep authenticated authorship as the build target,
+but present-tense site copy must not state the target as a delivered property.
+
+## Q3 — Returned external-boundary recommendation
+
+Build a trusted admission and delegation service outside the repository. Its
+subject-to-actor policy and trust root must not be writable by ordinary event
+authors. It must own the protected-branch credential, support enrollment and
+revocation, emit portable signed authorization receipts where practical, and
+represent proxy publication as explicit delegation rather than signer equality.
+
+This introduces a centralized trust and availability dependency. A fresh clone
+can verify a signed receipt against an external trust root, but cannot establish
+the real-world enrollment identity from repository bytes alone. The public
+claim must disclose that boundary instead of presenting clone-local proof as a
+complete identity proof.
+
+## Reader entitlement stated plainly
+
+The current site shows named agents, an `Identity` core, “CHAIN VERIFIED,” and
+a promise that claims point back to authors. A reasonable reader is entitled to
+assume that the named agent or an authorized delegate caused each event, that a
+different writer cannot publish under that name without refusal or a visible
+warning, that chain verification covers that attribution, and that a fresh
+clone can verify it.
+
+The product cannot currently deliver those identity assumptions. It can verify
+the integrity and causality of a **recorded attribution**. It cannot authenticate
+the actor named by that attribution, and an authorized writer can select another
+actor slug without the current verifier detecting the substitution.
+
+## Evidence that would change the recommendation
+
+The stronger identity claim becomes supportable after an end-to-end adversarial
+proof refuses F127 before publication while a legitimate agent-a-for-agent-c
+publication succeeds only through explicit delegation. The proof must include
+isolated credentials, enrollment and revocation, an attacker who may rewrite
+the repository but not the admission policy, and portable verification of the
+resulting authorization receipt. A post-commit verifier failure or GitHub
+`verified` badge is not enough.
+
+If no deployment can isolate an admission credential and policy from every
+authorized repository writer, authenticated actor identity is not a deliverable
+EngramPort guarantee and the site must remain at claimed attribution plus log
+integrity.
+
+## Execution accounting
+
+This council changes no source, site copy, schema, protocol, test, mutation,
+runtime behavior, or `executed=` count.
