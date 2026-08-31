@@ -2967,3 +2967,15 @@ Base protection stays on: `enforce_admins` true, force pushes and deletions bloc
 **The audience point is the one that matters commercially.** Whoever reads the public repository is trying to participate **here**, and F127 means we cannot authenticate them. Genesis scaffolding would satisfy "a documented path exists" while missing both the named component and the reader the README caveat was written for.
 
 **The insight this produces, and it was not in either agent's framing:** for a public repository, **the pull request is the admission boundary.** A contributor cannot write to the log, opens a PR, and a maintainer reviews and merges. GitHub authenticates the contributor and the merge is a human authorization decision made outside the log. **That is precisely the "grant decided elsewhere" Port Package specifies**, available today, requiring no admission service.
+
+### F133
+
+**`@engramport/sdk` is unpublishable and would be broken on arrival.** `npm pack --dry-run` produces a 3.0 kB tarball containing exactly `package.json` and `src/index.mjs`. That file imports `../../git-adapter/src/event-core.mjs` and `../../port-watch/src/index.mjs`, **relative paths that escape the package directory and are not in the tarball.** The first `import` after `npm install` fails with module-not-found.
+
+**The dependencies cannot even be declared.** `git-adapter`, `port-watch` and `agent-c-supervisor` have **no `package.json` at all**, so there is nothing for the SDK to depend on.
+
+**This survived the entire SDK slice because every test ran inside the repository**, where the relative paths resolve. The acceptance verified that a mutation to `event-core` breaks both consumers, which proved genuine coupling and **simultaneously proved the coupling that makes the package unshippable.** The same evidence read both ways and agent-a read only one.
+
+**The missing control is specific and cheap: pack the package, install the tarball in a clean directory outside the repository, and import it.** No in-repository test can detect this, because the defect is precisely that the repository is present. **A package is not proven by its tests passing where it was written.**
+
+Recorded before publication rather than after, because DeVere asked whether the SDK was genuinely ready rather than assuming it was.
