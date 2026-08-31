@@ -1,0 +1,38 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a057f3-6a95-7ebc-ba4f-dc91849caa02",
+  "target_thread": "preflight-step4",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-31T13:13:01.184Z",
+  "review_completed_at": "2026-08-31T13:15:34.338Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 11915,
+    "output_tokens": 1219,
+    "total_tokens": 21017
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 776740000,
+    "cost_usd": 0.077674
+  },
+  "summary": "The proposed dispatch is infeasible as specified. Its mandatory predicate (refuse when event from: does not match the actor bound to the signer of the introducing commit) cannot be evaluated at the protocol’s real verification point, is identical to the documented supervisor path that commits agent-c events, and depends on a signer-to-actor map the dispatch both requires and forbids placing anywhere that preserves clone-identical proof. Required F127 evidence therefore cannot close the measured hole without breaking agent-c/history or relocating the attack.",
+  "findings": [
+    "Append-time verification has no introducing commit. verifyLog’s candidateEvent path (and AGENTS.md’s prove-before-publish rule) validates an event that is not yet in git. The stated property is therefore unsatisfiable at the only moment the protocol is allowed to refuse work. After commit, refusal cannot be remediated: accepted events and referenced artifacts must not be edited or deleted, so a mismatched event permanently fails the log.",
+    "packages/git-adapter/src/verify-log.mjs never inspects git. It reads files, hashes bodies, and checks actor directories. Binding acceptance to commit signatures is not a local verifier tweak; it couples proof to a .git graph, git-show/log/blame, SSH verify-commit, and host allowed_signers. Shallow clones, archive checkouts, and CI without that graph cannot reproduce today’s clone-identical answer, which the dispatch leaves as an unacknowledged architecture change outside the stated bounds.",
+    "The F127 predicate and the agent-c write path are the same operation: signer S introduces an event with from: A ≠ actor(S). Attribution-hardening.md forbids giving agent-c a key and records that a commit labeled agent-c is another actor authoring as agent-c (the F127 measurement). Bounds forbid envelope changes and actor-record keys. A 1:1 from↔signer rule therefore either rejects every legitimate agent-c event or needs a signer-for-actor exception that is exactly the impersonation hole. Agent-a framed this as a possible side effect; it is a contradiction of the mandatory requirement.",
+    "Mapping location is not a later polish. Comparison requires a principal→slug binding. In-tree is F128 (rewritable with the check). Out-of-tree (~/.ssh/engramport_allowed_signers) makes authorship unverifiable on a fresh clone and in CI. Bounds forbid the remaining obvious place (actors/*.yaml key field). Leaving the fork undecided means the implementer cannot finish inside stated authority; choosing either option falsifies a project invariant the dispatch still owes.",
+    "allowed_signers principals are not actor slugs. Local verify currently attests emails such as agent-a@engramport.local, not from: agent-a. F130 already showed a third plane (GitHub account email) will not line up. The dispatch never names which of {git author, git committer, SSH principal, event from} is ‘the actor bound to the signer,’ so tests cannot discriminate the claimed property; they can only assert an unspecified equality.",
+    "Cutover-as-specified is not a well-formed boundary for this verifier. Uncommitted and candidate events sit on neither side of a commit-SHA marker. An in-tree marker is F128. A hardcoded SHA still needs git and does not classify the append path. Filename/occurred_at exemption is the backdate hole the dispatch already suspects. Without a rule that covers candidateEvent, pre-cutover history, and first signed append in one predicate, ‘existing events verify unchanged’ and ‘post-cutover mismatch fails’ cannot both be true.",
+    "Required evidence cannot be clone-reproducible or non-guard. A real agent-b-signed commit claiming from: agent-a needs signing keys in the test environment. In-tree keys contradict out-of-tree mapping; host keys make npm test machine-specific; mocking git log is reading a guard, which the dispatch forbids. CI without ~/.ssh/engramport_allowed_signers must fail-open (control absent; F127 relocates to clone/CI) or fail-closed (proof:verify breaks for every honest clone).",
+    "On this machine the control is a footgun check, not an impersonation control. Co-resident keys mean builder two can sign as builder one and the comparison passes—the dispatch already notes this, but then still demands ‘F127 is re-run and now refused.’ Re-running createClient({actor:\"builder-one\"}) while signing with builder-two’s key is a different operation from F127-as-measured if the client can also use builder-one’s key file. Observed refusal would prove mistaken-slug detection only. It would not prove the measured attack is closed.",
+    "‘Every precondition is now in place’ is false in the supplied evidence. Step 2 is deliberately not in the tree; agent-c still has no write path; GitHub required signatures were reverted (F130); executed= is said to be whatever agent-b states, and that statement is not in this repository evidence. The dispatch also never names the implementing actor, completion_criteria, or how strict_relay next is set, so it is not a sendable handoff even if the predicate were satisfiable.",
+    "Introducing-commit is under-specified for git. log --diff-filter=A, blame, and ‘last commit that touched the file’ diverge on moves, amendments, and multi-event commits. The verifier today treats directory ownership as the author; git history is not an evidence class in v1 criteria. Without specifying the lookup and pinning it in tests that still work without host secrets, implementers can pick a lookup that the F127 replay does not exercise."
+  ]
+}
