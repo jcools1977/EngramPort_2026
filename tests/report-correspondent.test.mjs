@@ -37,13 +37,13 @@ test("a disclosed finding absent from SECURITY.md is refused by finding id", asy
 
 test("an unfixed finding is refused and fixed status requires a canonical agent-a disposition", async () => {
   const input = await fixture();
-  input.manifest.claims[0].finding_id = "F111";
-  await assert.rejects(generateReportDraft({ root, ...input }), /UNFIXED_FINDING_REFUSED.*F111/);
-  input.findingRegistry.findings.F111.status = "fixed";
-  const disposition = input.findingRegistry.findings.F111.updated_by_event_id;
-  input.findingRegistry.findings.F111.updated_by_event_id = null;
-  await assert.rejects(generateReportDraft({ root, ...input }), /FIXED_FINDING_DISPOSITION_INVALID.*F111/);
-  input.findingRegistry.findings.F111.updated_by_event_id = disposition;
+  input.manifest.claims[0].finding_id = "F106";
+  await assert.rejects(generateReportDraft({ root, ...input }), /UNFIXED_FINDING_REFUSED.*F106/);
+  input.findingRegistry.findings.F106.status = "fixed";
+  const disposition = input.findingRegistry.findings.F106.updated_by_event_id;
+  input.findingRegistry.findings.F106.updated_by_event_id = null;
+  await assert.rejects(generateReportDraft({ root, ...input }), /FIXED_FINDING_DISPOSITION_INVALID.*F106/);
+  input.findingRegistry.findings.F106.updated_by_event_id = disposition;
   await assert.doesNotReject(generateReportDraft({ root, ...input }));
 });
 
