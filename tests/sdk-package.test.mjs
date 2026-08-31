@@ -25,7 +25,12 @@ async function pack(destination) {
 
 test("publishable SDK manifest exposes only the bundled artifact", async () => {
   const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
-  assert.equal(manifest.private, true, "proof must not publish or remove the publication gate");
+  // Publication authorized by DeVere, ADR 0048. The gate moves from "never publish"
+  // to "publish correctly": scoped packages must declare public access explicitly,
+  // or a free org rejects the publish.
+  assert.equal(manifest.private, undefined, "publication is authorized; private must be absent");
+  assert.equal(manifest.publishConfig.access, "public", "a scoped package must declare public access");
+  assert.equal(manifest.name, "@engramport/sdk", "the unscoped engramport package is not replaced (ADR 0048)");
   assert.equal(manifest.exports["."], "./dist/index.mjs");
   assert.deepEqual(manifest.files, ["dist", "README.md"]);
   assert.equal(manifest.license, "MIT");

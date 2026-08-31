@@ -33,14 +33,14 @@ async function fixture() {
 
 async function cleanup(cwd) { await rm(cwd, { recursive: true, force: true }); }
 
-test("workspace resolves the advertised private SDK manifest without publishing", async () => {
+test("workspace resolves the advertised SDK manifest locally", async () => {
   const [rootManifest, sdkManifest] = await Promise.all([
     readFile(path.join(root, "package.json"), "utf8").then(JSON.parse),
     readFile(path.join(root, "packages/sdk/package.json"), "utf8").then(JSON.parse),
   ]);
   assert.ok(rootManifest.workspaces.includes("packages/sdk"));
   assert.equal(sdkManifest.name, "@engramport/sdk");
-  assert.equal(sdkManifest.private, true, "this slice must not publish the package");
+  assert.equal(sdkManifest.private, undefined, "publication authorized by DeVere, ADR 0048");
   assert.match(import.meta.resolve("@engramport/sdk"), /packages\/sdk\/dist\/index\.mjs$/);
 });
 
