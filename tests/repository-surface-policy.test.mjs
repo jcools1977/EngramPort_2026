@@ -21,13 +21,15 @@ const sharedDirectories = [
 ];
 const sharedRootFiles = [
   ".gitguard-allow", ".gitignore", "AGENTS.md", "CLAUDE.md", "ENGRAMPORT_ENGINEERING_SPEC.md",
-  "ONE PROJECT WHOLE FLEET.png", "PROTOCOL.md", "README.md", "agent-c.env.example",
+  "LICENSE",
+  "ONE PROJECT WHOLE FLEET.png", "PROTOCOL.md", "README.md",
+  "SECURITY.md", "agent-c.env.example",
   "drizzle.config.ts", "engramport.yaml", "eslint.config.mjs", "next-env.d.ts", "next.config.ts",
   "oidc.env.example", "package-lock.json", "package.json", "postcss.config.mjs", "tsconfig.json",
   "vite.config.ts",
 ];
 const sharedDirectoriesRule = "Shared editable directories are: `.github/`, `.openai/`, `app/`, `build/`, `db/`, `deploy/`, `docs/`, `drizzle/`, `examples/`, `migrations/`, `packages/`, `public/`, `schemas/`, `scripts/`, `tests/`, `threads/`, and `worker/`.";
-const sharedRootFilesRule = "Shared editable root files are: `.gitguard-allow`, `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `ENGRAMPORT_ENGINEERING_SPEC.md`, `ONE PROJECT WHOLE FLEET.png`, `PROTOCOL.md`, `README.md`, `agent-c.env.example`, `drizzle.config.ts`, `engramport.yaml`, `eslint.config.mjs`, `next-env.d.ts`, `next.config.ts`, `oidc.env.example`, `package-lock.json`, `package.json`, `postcss.config.mjs`, `tsconfig.json`, and `vite.config.ts`.";
+const sharedRootFilesRule = "Shared editable root files are: `.gitguard-allow`, `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `ENGRAMPORT_ENGINEERING_SPEC.md`, `LICENSE`, `ONE PROJECT WHOLE FLEET.png`, `PROTOCOL.md`, `README.md`, `SECURITY.md`, `agent-c.env.example`, `drizzle.config.ts`, `engramport.yaml`, `eslint.config.mjs`, `next-env.d.ts`, `next.config.ts`, `oidc.env.example`, `package-lock.json`, `package.json`, `postcss.config.mjs`, `tsconfig.json`, and `vite.config.ts`.";
 
 function inSurface(path, prefix) {
   return path === prefix || path.startsWith(`${prefix}/`);
