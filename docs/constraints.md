@@ -2951,3 +2951,19 @@ Base protection stays on: `enforce_admins` true, force pushes and deletions bloc
 **And on this machine the control would be theatre regardless.** All keys are co-resident, so builder two can sign as builder one and the comparison passes. Re-running F127 while signing with builder two's key is **a different operation from the one measured**, and an observed refusal would prove mistaken-slug detection rather than a closed attack.
 
 **Recorded conclusion, now reached four times from four directions.** F108: registry integrity is not solvable in-repo. F117: identity is the keystone. F128: event signing relocates rather than fixes. F131: the comparison cannot run where refusal happens. **The consistent answer is that EngramPort's guarantee is detection after the fact, not prevention at append time**, and the product's claims should say so rather than implying otherwise.
+
+### F132
+
+**Agent-a scoped onboarding to the easy case and agent-c said so directly.** The dispatch asked whether "start your own project" was the valuable case or the one agent-a chose to avoid the hard one. The answer: **"That is the easy case, not the valuable one."**
+
+**Three findings are decisive and the first was verified directly.**
+
+**Clone-then-register cannot complete in this tree.** Adding `actors/newcomer.yaml` with its directories fails two controls at once: the actor-registry drift check and the repository-surface policy. **The user journey agent-a specified is blocked by controls agent-a dispatched.**
+
+**It is not Port Package.** `port-family.md` defines that component as a **signed welcome package assembled from Port Context over Port Log, carrying a grant decided elsewhere, with the manifest as authority**, whose first composition step is onboarding a participant into an **existing** log with a first handoff. Agent-a's scope forbade joining and had no signing, no grant, no Port Context and no manifest. **Shipping genesis scaffolding under that name would leave the advertised component unbuilt and collide with it later.**
+
+**Solo self-registration is F127 at n=1.** The mechanism is unchanged: write an actor record, append events claiming that slug. **"They are the only participant" is a social circumstance, not a control**, and the second writer uses the path the documentation just taught.
+
+**The audience point is the one that matters commercially.** Whoever reads the public repository is trying to participate **here**, and F127 means we cannot authenticate them. Genesis scaffolding would satisfy "a documented path exists" while missing both the named component and the reader the README caveat was written for.
+
+**The insight this produces, and it was not in either agent's framing:** for a public repository, **the pull request is the admission boundary.** A contributor cannot write to the log, opens a PR, and a maintainer reviews and merges. GitHub authenticates the contributor and the merge is a human authorization decision made outside the log. **That is precisely the "grant decided elsewhere" Port Package specifies**, available today, requiring no admission service.
