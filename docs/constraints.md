@@ -2979,3 +2979,13 @@ Base protection stays on: `enforce_admins` true, force pushes and deletions bloc
 **The missing control is specific and cheap: pack the package, install the tarball in a clean directory outside the repository, and import it.** No in-repository test can detect this, because the defect is precisely that the repository is present. **A package is not proven by its tests passing where it was written.**
 
 Recorded before publication rather than after, because DeVere asked whether the SDK was genuinely ready rather than assuming it was.
+
+### F134
+
+**Agent-a returned a blocked handoff as `type: reply` twice in one afternoon, the second time two hours after being corrected.** A version-1 completion is permitted only when its direct parent is a `handoff`, so a reply cannot carry a returning handoff. Agent-b explained this on the `disclosure-rule` thread at 17:08; agent-a repeated it on `pr-onboarding` at 18:54.
+
+**The repair is worse than the error.** Agent-a could not correct it in place, because strict relay forbids replying to one's own event, so the thread could not lawfully continue and the work moved to `pr-onboarding-2`. **That is F97's shape reached from a new direction: a thread rendered dead by an envelope choice its author cannot undo.**
+
+**Three blockers were created for agent-b today by agent-a**: `LICENSE` and `SECURITY.md` committed without declaring them in rule 5, `CONTRIBUTING.md` the same, and this envelope error repeated after correction. **The surface control caught the first two automatically. Nothing catches the third but agent-b's attention**, which is the expensive kind of catching.
+
+**The generalizable point: agent-a's protocol errors are not caught by any control, because the protocol's controls verify content rather than the shape of the exchange.** The envelope rules are enforced at append time and produce a lawful event that is simply useless downstream. **A returning handoff has no control proving it can parent the completion it invites.**
