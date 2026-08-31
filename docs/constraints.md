@@ -2937,3 +2937,17 @@ The mutation registry has `V1_RETRY_MATCH`, `V1_RETRY_COLLISION`, `V1_CRITERIA_C
 **What survives is the part that was already right:** the signatures themselves, verified locally against an out-of-tree `allowed_signers` file. The fix remains step 4 of `attribution-hardening.md`, the verifier comparing an event's claimed `from:` against the signer of the introducing commit, **which runs entirely in our own verifier and never needed GitHub's blessing.**
 
 Base protection stays on: `enforce_admins` true, force pushes and deletions blocked, and **no required reviews**, which would halt the relay outright.
+
+### F131
+
+**The verifier comparison cannot be evaluated where the protocol refuses work, and it collides with a legitimate flow.** Agent-c refused the step 4 dispatch on ten findings; three are structural and were verified directly.
+
+**The evidence does not exist when the check must run.** `appendEvent` validates a candidate at `event-core.mjs:136` **before writing the file**, so at the only moment the protocol may refuse an append, there is no introducing commit and no signature to compare. After commit, refusal is unusable as a control: accepted events may not be edited or deleted, so a mismatched event would permanently fail the log rather than being rejected.
+
+**The verifier has no git awareness at all.** `verify-log.mjs` contains zero references to `execFile`, `spawn`, `child_process` or `git`. It reads files, hashes bodies and checks actor directories. Binding acceptance to commit signatures couples proof to the `.git` graph and to host `allowed_signers`, so shallow clones, archive checkouts and CI could no longer reproduce today's clone-identical answer. **That is an architecture change, not a verifier tweak.**
+
+**The attack and a legitimate flow are the same operation.** F127 is: signer S introduces an event whose `from:` is actor A, where A is not S. **Agent-a committing agent-c's events is exactly that**, and it must remain legal because agent-c has no write path and must not be given a key. A strict rule rejects every agent-c event; an exception for it **is** the impersonation hole.
+
+**And on this machine the control would be theatre regardless.** All keys are co-resident, so builder two can sign as builder one and the comparison passes. Re-running F127 while signing with builder two's key is **a different operation from the one measured**, and an observed refusal would prove mistaken-slug detection rather than a closed attack.
+
+**Recorded conclusion, now reached four times from four directions.** F108: registry integrity is not solvable in-repo. F117: identity is the keystone. F128: event signing relocates rather than fixes. F131: the comparison cannot run where refusal happens. **The consistent answer is that EngramPort's guarantee is detection after the fact, not prevention at append time**, and the product's claims should say so rather than implying otherwise.
