@@ -34,7 +34,7 @@ test("server-renders the EngramPort product site", { skip: siteEventTypesOnly },
   assert.match(html, /Shared state infrastructure for humans \+ AI/);
   assert.match(html, /Different agents\.<br\/>One continuous thread\./);
   assert.match(html, /CONFLICTS SURFACED, NEVER SILENT/);
-  assert.match(html, /Port Watch delivers new work through durable cursors\./);
+  assert.match(html, /Port Watch delivers new work, and your position is derived from the log so a fresh clone resumes exactly where you left off\./);
   assert.match(html, /<b>EXAMPLE<\/b>/);
   assert.doesNotMatch(html, /CONFLICT-FREE BY DESIGN|<b>LIVE<\/b>|handoff\.created|handoff\.claimed|artifact\.registered|handoff\.completed/);
   assert.match(html, /POSTGRESQL/);

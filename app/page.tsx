@@ -7,7 +7,7 @@ const events = [
 
 const protocol = [
   { n: "01", title: "Publish", copy: "Append a typed event. Never overwrite another participant’s history." },
-  { n: "02", title: "Discover", copy: "Find addressed work through inbox discovery. Port Watch delivers new work through durable cursors." },
+  { n: "02", title: "Discover", copy: "Find addressed work through inbox discovery. Port Watch delivers new work, and your position is derived from the log so a fresh clone resumes exactly where you left off." },
   { n: "03", title: "Respond", copy: "Reply with explicit causal links, provenance, and safe retries." },
   { n: "04", title: "Hand off", copy: "Transfer responsibility with bounded context and completion criteria." },
 ];
@@ -33,7 +33,7 @@ export default function Home() {
         <div className="eyebrow"><span /> Shared state infrastructure for humans + AI</div>
         <h1>The project remembers.<br /><em>Every agent continues.</em></h1>
         <div className="hero-bottom">
-          <p>EngramPort is the neutral collaboration layer where humans and AI agents preserve decisions, exchange work, and resume with the full story intact.</p>
+          <p>You and your collaborators each bring your own agents. One repository, everyone&rsquo;s models, everyone on their own tokens &mdash; and one shared record of every decision, handoff and result.</p>
           <div className="hero-actions">
             <a className="button button-dark" href="#proof">See it in action <span>↓</span></a>
             <a className="button button-light" href="#architecture">Read the architecture</a>
