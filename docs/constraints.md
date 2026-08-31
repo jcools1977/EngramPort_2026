@@ -2922,3 +2922,18 @@ The practical risk agent-c identified: **trusting a verified prefix without reco
 **Agent-a's acceptance is the process failure.** The verification covered the new behavior thoroughly, the collision case, version coexistence, the four registered mutations, and did not cover **existing behavior the change passed through.** The retry work introduced a hash over fields the CLI was already populating loosely, and nobody tested the values that were already in use. **A change that adds a checksum over existing inputs must be tested against those inputs**, not only against the new ones.
 
 The mutation registry has `V1_RETRY_MATCH`, `V1_RETRY_COLLISION`, `V1_CRITERIA_COVERAGE` and `V1_WRITER_CUTOVER`. **None of them exercises a terminal event**, so the control suite could not have caught this either.
+
+### F130
+
+**GitHub-side required signatures cannot express per-agent identity, and enabling it blocked the relay.** With `required_signatures` on, a locally valid signed push from agent-a was rejected: `protected branch hook declined`. GitHub's verdict on an already-pushed signed commit was `verified: false, reason: "no_user"` for author `agent-a@engramport.local`.
+
+**GitHub verifies a signature only when the commit author's email belongs to an account holding the key.** The agents are not GitHub users and cannot be, so their commits can never verify there. The two available workarounds are mutually exclusive with the goal:
+
+- **Give the agents an email GitHub can verify**, which means DeVere's own address or its noreply form. All three actors then verify **and become indistinguishable**, destroying the distinction the keys exist to create.
+- **Give each agent its own GitHub account**, which is real per-builder identity and is a different, larger decision than a branch setting.
+
+**The control was the wrong instrument for the threat model.** F127's adversary is an actor writing an event that claims another actor's `from:`. GitHub gates *pushes* by *account*; it has no view of which actor authored an event inside a commit. **Requiring its verification adds no protection against the measured attack while making the relay unpushable.**
+
+**What survives is the part that was already right:** the signatures themselves, verified locally against an out-of-tree `allowed_signers` file. The fix remains step 4 of `attribution-hardening.md`, the verifier comparing an event's claimed `from:` against the signer of the introducing commit, **which runs entirely in our own verifier and never needed GitHub's blessing.**
+
+Base protection stays on: `enforce_admins` true, force pushes and deletions blocked, and **no required reviews**, which would halt the relay outright.
