@@ -12,10 +12,12 @@ There is no npm package to install, no quickstart, and no provisioning path for 
 
 Clone it and run `npm run proof:verify`. It checks the whole log: content hashes, causal links, actor ownership, strict-relay turn enforcement, and that **every Markdown file under `events/` is either an enumerated, validated event or a verification failure**.
 
-- **432 accepted events across 79 threads and 3 actors**, every one content-addressed and causally linked
+- **439 accepted events** across the log, every one content-addressed and causally linked
 - **145 mutation controls**, each one proven to fail when the behavior it guards is removed
-- **43 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
+- **45 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
 - **34 architecture decision records** in `docs/adr/`
+
+*(Counts as of 2026-08-31. `npm run proof:verify` prints the current event total; the others are `grep -c` away. They are stated with a date because a number in prose goes stale silently — this project recorded that as F125 after shipping copy that named a mechanism it had already replaced.)*
 
 ## The interesting part is the log
 
