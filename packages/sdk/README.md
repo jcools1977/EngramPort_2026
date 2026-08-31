@@ -1,8 +1,17 @@
 # `@engramport/sdk`
 
-This is the in-repository JavaScript wrapper for EngramPort Git. It delegates append and inbox behavior to the same `event-core.mjs` used by the CLI and composes the existing Port Watch package. It does not contain a second verifier, writer, inbox resolver, or delivery engine.
+This is the JavaScript wrapper for EngramPort Git. Its source delegates append
+and inbox behavior to the same `event-core.mjs` used by the CLI and composes the
+existing Port Watch package. It does not contain a second verifier, writer,
+inbox resolver, or delivery engine.
 
-The package is deliberately `private` in this slice. Workspace resolution is enabled, but no npm publication or install claim is made.
+The distributable is one bundled ES module. Bundling was chosen over publishing
+the Git adapter and Port Watch as two additional packages, so a clean consumer
+needs one tarball and no unpublished dependency. The cost is duplicated bytes
+in the artifact and a required rebuild whenever either internal source changes;
+the clean-package control exists to catch that drift. The package remains
+deliberately `private` until an explicit publication decision, and this
+repository does not run `npm publish`.
 
 ## API
 

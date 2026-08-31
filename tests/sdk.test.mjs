@@ -41,7 +41,7 @@ test("workspace resolves the advertised private SDK manifest without publishing"
   assert.ok(rootManifest.workspaces.includes("packages/sdk"));
   assert.equal(sdkManifest.name, "@engramport/sdk");
   assert.equal(sdkManifest.private, true, "this slice must not publish the package");
-  assert.match(import.meta.resolve("@engramport/sdk"), /packages\/sdk\/src\/index\.mjs$/);
+  assert.match(import.meta.resolve("@engramport/sdk"), /packages\/sdk\/dist\/index\.mjs$/);
 });
 
 test("SDK append delegates to event-core", async () => {

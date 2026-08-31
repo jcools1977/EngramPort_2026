@@ -44,6 +44,10 @@ run_git_adapter_core(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$
 assert_git_adapter_core(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_sdk_core_consumers(){ local module_root="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$module_root/packages/git-adapter/src/cli.mjs")" ENGRAMPORT_SDK_MODULE="$(agent_c_url "$module_root/packages/sdk/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern='CLI append and inbox delegate to the exported core|SDK append delegates to event-core' "$root_dir/tests/git-v0.test.mjs" "$root_dir/tests/sdk.test.mjs"; }
 assert_sdk_core_consumers(){ local module_root="$1" out rc; out=$(mktemp); run_sdk_core_consumers "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_sdk_package(){ local package_root="$1"; SDK_PACKAGE_ROOT="$package_root" node --test --test-reporter=tap --test-name-pattern='packed SDK installs outside repository, imports, and appends' "$root_dir/tests/sdk-package.test.mjs"; }
+assert_sdk_package(){ local package_root="$1" out rc; out=$(mktemp); run_sdk_package "$package_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_sdk_package_in_repo(){ local module_root="$1"; ENGRAMPORT_SDK_MODULE="$(agent_c_url "$module_root/packages/sdk/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern='SDK append delegates to event-core' "$root_dir/tests/sdk.test.mjs"; }
+assert_sdk_package_in_repo(){ local module_root="$1" out rc; out=$(mktemp); run_sdk_package_in_repo "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_second_builder(){ local module_root="$1"; ENGRAMPORT_SDK_MODULE="$(agent_c_url "$module_root/packages/sdk/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern='synthetic second builder completes the public SDK path and exposes the authorization gaps' "$root_dir/tests/second-builder.test.mjs"; }
 assert_second_builder(){ local module_root="$1" out rc; out=$(mktemp); run_second_builder "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_git_adapter_core_guard(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$cli")" node --test --test-reporter=tap --test-name-pattern='normal CLI execution cannot activate the harness core override' "$root_dir/tests/git-v0.test.mjs"; }
@@ -319,6 +323,23 @@ const anchor='  try { await writeFile(file, source, { flag: "wx" }); }';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'  try { await Promise.resolve(); /* SDK_CORE_WRITE_REMOVED */ }');
 fs.writeFileSync(target,text);
+NODE
+}
+make_sdk_package_variant(){
+  local target="$1"
+  mkdir -p "$target/packages"
+  cp -R "$root_dir/packages/git-adapter" "$target/packages/"
+  cp -R "$root_dir/packages/port-watch" "$target/packages/"
+  cp -R "$root_dir/packages/sdk" "$target/packages/"
+  node - "$target/packages/sdk" <<'NODE'
+const fs=require("node:fs"),path=require("node:path");const [root]=process.argv.slice(2);
+fs.rmSync(path.join(root,"dist"),{recursive:true,force:true});
+const file=path.join(root,"package.json"),manifest=JSON.parse(fs.readFileSync(file,"utf8"));
+manifest.exports={".":"./src/index.mjs"};
+manifest.files=["src","README.md"];
+delete manifest.scripts.prepack;
+manifest.description += " SDK_PACKAGE_ISOLATION_REMOVED";
+fs.writeFileSync(file,`${JSON.stringify(manifest,null,2)}\n`);
 NODE
 }
 make_second_builder_variant(){
@@ -688,6 +709,21 @@ for line in "${MUTATIONS[@]}"; do
     restored=$(assert_sdk_core_consumers "$source_root")
     printf 'SDK_CORE_WRAPPER baseline=%s applied=%s after=%s cli_and_sdk_forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [ "$mutation" = SDK_PACKAGE_ISOLATION ]; then
+    source_package="$root_dir/packages/sdk"
+    base=$(assert_sdk_package "$source_package")
+    variant_root="$mutation_dir/sdk-package-isolation"; make_sdk_package_variant "$variant_root" || { fail=1; continue; }
+    if grep -Fq SDK_PACKAGE_ISOLATION_REMOVED "$variant_root/packages/sdk/package.json"; then applied=t; else applied=f; fi
+    in_repo=$(assert_sdk_package_in_repo "$variant_root")
+    log="$mutation_dir/sdk-package-isolation.log"; run_sdk_package "$variant_root/packages/sdk" >"$log" 2>&1; after=$?
+    forbidden=f
+    if grep -Eq 'not ok [0-9]+ - packed SDK installs outside repository, imports, and appends' "$log" && grep -Eq 'ERR_MODULE_NOT_FOUND|Cannot find module' "$log"; then forbidden=t; fi
+    [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_sdk_package "$source_package")
+    printf 'SDK_PACKAGE_ISOLATION baseline=%s in_repository=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$in_repo" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$in_repo" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = SECOND_BUILDER_COMPLETE_PATH ]; then
@@ -1561,7 +1597,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 153 ] || fail=1
+  [ "$executed" = 154 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

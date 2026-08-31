@@ -2,12 +2,26 @@
   "name": "@engramport/sdk",
   "version": "0.1.0",
   "private": true,
-  "description": "In-repository JavaScript SDK for the EngramPort Git collaboration substrate",
+  "description": "JavaScript SDK for the EngramPort Git collaboration substrate",
   "type": "module",
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./dist/index.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build --config vite.config.mjs",
+    "prepack": "npm run build"
   },
   "engines": {
     "node": ">=22.13.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jcools1977/EngramPort_2026.git",
+    "directory": "packages/sdk"
   }
 }
