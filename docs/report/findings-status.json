@@ -63,7 +63,7 @@
       "updated_by_event_id": "01a03ffe-2a44-7f4f-a575-903ab1e2d726"
     },
     "F108": {
-      "status": "unfixed",
+      "status": "disclosed",
       "updated_by_event_id": "01a044d5-1463-76b3-9e06-9a86e1979776"
     },
     "F109": {
@@ -95,7 +95,7 @@
       "updated_by_event_id": "01a0486a-fa6e-7342-878e-512c88844240"
     },
     "F117": {
-      "status": "unfixed",
+      "status": "disclosed",
       "updated_by_event_id": "01a04458-0f41-7244-a15f-f2fcd8c905bb"
     },
     "F118": {
