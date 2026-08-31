@@ -1,8 +1,22 @@
 {
   "name": "@engramport/sdk",
   "version": "0.1.0",
-  "private": true,
   "description": "JavaScript SDK for the EngramPort Git collaboration substrate",
+  "keywords": [
+    "ai-agents",
+    "multi-agent",
+    "coordination",
+    "event-sourcing",
+    "provenance",
+    "git"
+  ],
+  "homepage": "https://engramport.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jcools1977/EngramPort_2026.git",
+    "directory": "packages/sdk"
+  },
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs"
@@ -18,10 +32,7 @@
   "engines": {
     "node": ">=22.13.0"
   },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jcools1977/EngramPort_2026.git",
-    "directory": "packages/sdk"
+  "publishConfig": {
+    "access": "public"
   }
 }
