@@ -1,0 +1,37 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a05834-1a7f-7545-a6f9-704e2d1276f0",
+  "target_thread": "preflight-onboarding",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "conditional",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-08-31T14:23:32.237Z",
+  "review_completed_at": "2026-08-31T14:26:31.534Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 4849,
+    "output_tokens": 1150,
+    "total_tokens": 15377
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 719060000,
+    "cost_usd": 0.071906
+  },
+  "summary": "The proposed slice is genesis scaffolding, not Port Package as specified. It is implementable only if rewritten as an out-of-tree blank project whose test never mutates this log. As written it is conditional: both named start methods fail under current controls (clone-then-register is rejected by the actor-registry HEAD drift check; fork inherits the 432-event log the bounds forbid touching); proof:verify on a genesis log is unevidenced while protocol/envelope change is out of bounds; inbox/discover-work has no discriminating fixture in a solo log; and “no site copy change” collides with the launch goal of obsoleting the README caveat. Solo self-registration is F127 at n=1, not a new authority. The public-repo reader is trying to use this project; this scope cannot onboard them and cannot make the caveat obsolete for that audience.",
+  "findings": [
+    "Clone-then-register is blocked in this tree. AGENTS.md’s actor-registry control rejects local actors/*.yaml additions relative to HEAD. The dispatch’s user journey (“clones or forks, registers themselves as an actor”) therefore cannot be completed inside a clone of this repository. The only remaining shape is a second tree whose first commit is genesis, which the dispatch never names as mandatory.",
+    "Fork is not a fresh log. A GitHub fork of the public repo carries the inherited event history, actor registry, and artifacts. Wiping events/ still leaves commit history and this project’s actor names. “Must not touch this repository’s log” and “a newcomer starts a fresh log, not a fork of ours” cannot both hold if fork remains a supported start. Clone obtains the engine; it does not obtain a blank project. That two-tree split is a prerequisite, not an implementation detail.",
+    "Fresh-log self-registration is the F127 write with one name. The mechanism is unchanged: write actors/*.yaml and append events claiming that slug. “They are the only participant” is a social circumstance, not a control. The second writer (collaborator, CI, anyone who can commit) uses the path the docs just taught. SECURITY.md already states prevention requires authenticating the caller before write; this path will not do that. Treating solo genesis as sound because n=1 is the assumption the scope rests on, and it is false as a security claim.",
+    "This dispatch does not build Port Package. docs/architecture/port-family.md defines Port Package as a signed welcome package assembled from Port Context over Port Log, carrying a grant decided elsewhere, with the manifest as authority. Composition step 1 is onboarding a participant into an existing log with a first handoff. The dispatch forbids joining, has no signing, no grant, no Port Context, and no manifest-as-authority. Shipping genesis scaffolding under that name leaves the advertised component unbuilt and collides with it later. Signing cannot be added to close the gap: signed commits bind the committer, not from: (SECURITY.md / F127).",
+    "Verification-as-onboarding depends on an unevidenced property: that npm run proof:verify accepts a genesis log (one actor, one event, no parent) with no protocol or envelope change. The in-tree verifier is proven against this project’s log, not against a stranger’s empty tree. If it encodes project-specific shape, actor-set, or non-empty-log assumptions, the required test cannot close and the bound “no protocol or envelope change” makes the dispatch unsatisfiable. That fact is a prerequisite, not something the implementer may discover mid-slice.",
+    "“Discovers addressed work” is not a discriminating step on a solo genesis log. Inbox of an empty queue cannot tell a working discovery path from a stub. Either the path includes a self-addressed (or second local) handoff that the test asserts by id, or that step is prose-only and, by the dispatch’s own rule, is not part of the path.",
+    "Objective and bounds fight. The slice exists to obsolete the README’s “no provisioning path / not that yet” caveat; bounds forbid site copy change. README is the public front door of the repo that just went public. If README is site copy, the objective cannot be completed. If it is not, visitors still follow GitHub’s default (fork this repo) into the forbidden inherited log, because the front door still says there is no path. That bound must be resolved before the path can be the one a stranger actually follows.",
+    "A scaffold that copies this actors/ or events/ into the new tree imports this project’s identities and log, recreating impersonation surface (append as agent-a) and violating “must not touch this log.” The dispatch specifies no allowlist of files the tool may copy. Minimal tooling here is most of the engine (schema, hash profile, append, inbox, verifier) minus the log; without an explicit copy-set, the implementer either under-copies and proof:verify cannot run, or over-copies and exceeds bounds.",
+    "The launch audience is not “people starting an unrelated trusted-circle repo.” They found this public repository. Genesis scaffolding does not provision participation here and, per F127, cannot. Port Package as architected was the join/welcome path the public moment actually needs. This slice can satisfy “documented path exists” while missing both the named component and the reader the README caveat was written for. That is the easy case, not the valuable one."
+  ]
+}
