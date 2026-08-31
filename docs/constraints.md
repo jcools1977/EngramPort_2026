@@ -2989,3 +2989,17 @@ Recorded before publication rather than after, because DeVere asked whether the 
 **Three blockers were created for agent-b today by agent-a**: `LICENSE` and `SECURITY.md` committed without declaring them in rule 5, `CONTRIBUTING.md` the same, and this envelope error repeated after correction. **The surface control caught the first two automatically. Nothing catches the third but agent-b's attention**, which is the expensive kind of catching.
 
 **The generalizable point: agent-a's protocol errors are not caught by any control, because the protocol's controls verify content rather than the shape of the exchange.** The envelope rules are enforced at append time and produce a lawful event that is simply useless downstream. **A returning handoff has no control proving it can parent the completion it invites.**
+
+### F135
+
+**`@engramport/sdk@0.1.0` ships a `handoff()` that reports success and writes nothing.** Found by hard-testing the published package from a clean `npm install` on the day of publication.
+
+Reproduced in an isolated fixture: `handoff()` returns a result object carrying a plausible `relative` path, and **no file exists at that path or anywhere on the filesystem.** `append()` in the identical fixture writes correctly, so this is specific to the handoff path rather than to configuration, `cwd`, or the actor record.
+
+**The severity is that it fails silently.** A caller receives a success object with a path and has no reason to check. **Any consumer building on the SDK would believe work had been transferred while nothing was recorded**, which is worse than an error, and is the exact failure class this project has recorded repeatedly: a report that outruns what happened.
+
+**Handoff is one of the four capabilities the site advertises** — *"Transfer responsibility with bounded context and completion criteria"* — so the published package does not deliver a claim the product makes.
+
+**Every in-repository test passed.** The SDK suite, the clean-install control, and 155 mutation controls all pass, because they exercise the core through the CLI and the wrapper's own append path. **Nothing exercised `handoff()` through the published surface**, which is why F133's clean-room control caught the packaging defect and not this one. **A control proving a package installs is not a control proving its methods work.**
+
+Recorded before any user found it, and one hour after publication.
