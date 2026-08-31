@@ -24,6 +24,7 @@ export default function Home() {
           <a href="#protocol">Protocol</a>
           <a href="#architecture">Architecture</a>
           <a href="#proof">Git proof</a>
+          <a href="https://github.com/jcools1977/EngramPort_2026#readme" target="_blank" rel="noopener noreferrer">Source</a>
         </div>
         <a className="nav-cta" href="#start">Explore the protocol <span>↗</span></a>
       </nav>
