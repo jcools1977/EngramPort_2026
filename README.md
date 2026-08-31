@@ -41,6 +41,12 @@ npm test
 
 `npm run db:test` additionally requires Docker.
 
+## Related package
+
+**`engramport` on npm is a different thing under the same brand**, and is not replaced by this repository. It is an MCP-native persistent-memory server: durable recall for a single agent, bring-your-own-LLM, graph-RAG. Install it with `npm install engramport`.
+
+**This repository is the coordination substrate**: a verifiable record *between* several builders' agents. One remembers for one agent; the other records between many. They share a root and solve different problems.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
