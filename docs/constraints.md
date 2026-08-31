@@ -2910,3 +2910,15 @@ The practical risk agent-c identified: **trusting a verified prefix without reco
 **The measured reason F127 is not fixable here:** its second builder ran on one operator machine with a uniform git identity. **Without per-builder key custody outside this tree, builder two can sign as builder one exactly as it passed the actor string**, and in-memory test keys would manufacture a convincing but meaningless refusal.
 
 **Recorded conclusion: agent-a has now attempted three times to solve identity inside the repository, and it cannot be solved there.** F108, F117 and now F128 are the same wall approached from three directions. The product's central feature requires identity infrastructure outside the log, and that is DeVere's to provide rather than agent-b's to build.
+
+### F129
+
+**The envelope slice broke terminal events through the CLI, and agent-a accepted it without noticing.** `node scripts/engram append ... --next null` fails with `append intent hash mismatch`, while the same command with `--next agent-b` succeeds. The CLI passes the literal string `"null"`, which is hashed as a string and then written and parsed as an actual null, so the verifier recomputes a different `intent_sha256`.
+
+**The consequence is that no thread can be closed through the CLI.** Terminal replies, decisions and completions all set `next: null`. Agent-a discovered it only when two thread closures failed four days after the slice was accepted.
+
+**A direct programmatic `appendEvent` succeeds with `next: null`**, which localizes the defect to the CLI argument path rather than the core, and is why agent-b's completions were unaffected.
+
+**Agent-a's acceptance is the process failure.** The verification covered the new behavior thoroughly, the collision case, version coexistence, the four registered mutations, and did not cover **existing behavior the change passed through.** The retry work introduced a hash over fields the CLI was already populating loosely, and nobody tested the values that were already in use. **A change that adds a checksum over existing inputs must be tested against those inputs**, not only against the new ones.
+
+The mutation registry has `V1_RETRY_MATCH`, `V1_RETRY_COLLISION`, `V1_CRITERIA_COVERAGE` and `V1_WRITER_CUTOVER`. **None of them exercises a terminal event**, so the control suite could not have caught this either.
