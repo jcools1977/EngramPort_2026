@@ -7,6 +7,7 @@ const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 const SHA256 = /^[0-9a-f]{64}$/;
 const CLAIM_KINDS = new Set(["success", "failure", "correction", "reversal"]);
 const FAILURE_KINDS = new Set(["failure", "correction", "reversal"]);
+const FINDING_STATUSES = new Set(["fixed", "disclosed", "unfixed"]); /* REPORT_DISCLOSED_STATUS_SUPPORT */
 
 export class ReportCorrespondentError extends Error {
   constructor(code, message) {
@@ -31,7 +32,7 @@ function validateFindingRegistry(registry) {
   for (const [id, record] of Object.entries(registry.findings)) {
     if (!/^F[1-9][0-9]*$/.test(id)) refuse("FINDING_REGISTRY_INVALID", `invalid finding id ${id}`);
     exactKeys(record, new Set(["status", "updated_by_event_id"]), `findings.${id}`);
-    if (!new Set(["fixed", "unfixed"]).has(record.status)) refuse("FINDING_REGISTRY_INVALID", `${id} status must be fixed or unfixed`);
+    if (!FINDING_STATUSES.has(record.status)) refuse("FINDING_REGISTRY_INVALID", `${id} status must be fixed, disclosed, or unfixed`);
     if (record.updated_by_event_id !== null && !UUID_V7.test(record.updated_by_event_id ?? "")) refuse("FINDING_REGISTRY_INVALID", `${id} updated_by_event_id must be a UUIDv7 or null`);
   }
   return registry;
@@ -82,14 +83,18 @@ function assertClaimsTrace(events, claims) {
   }
 }
 
-function assertFindingsFixed(claims, registry, events) {
+function assertFindingsCitable(claims, registry, events, securityModel) {
   for (const claim of claims) {
     if (claim.finding_id === undefined) continue;
-    const status = registry.findings[claim.finding_id]?.status;
-    if (!status) refuse("FINDING_STATUS_MISSING", `${claim.finding_id} is not marked by agent-a`);
-    if (status !== "fixed") refuse("UNFIXED_FINDING_REFUSED", `${claim.id} cites ${claim.finding_id}, which agent-a marks unfixed`); /* REPORT_UNFIXED_FINDING_GUARD */
-    const disposition = events.get(registry.findings[claim.finding_id].updated_by_event_id);
-    if (!disposition || disposition.from !== "agent-a") refuse("FIXED_FINDING_DISPOSITION_INVALID", `${claim.finding_id} fixed status is not backed by a canonical agent-a event`);
+    const record = registry.findings[claim.finding_id];
+    if (!record) refuse("FINDING_STATUS_MISSING", `${claim.finding_id} is not marked by agent-a`);
+    if (record.status === "unfixed") refuse("UNFIXED_FINDING_REFUSED", `${claim.id} cites ${claim.finding_id}, which agent-a marks unfixed`); /* REPORT_UNFIXED_FINDING_GUARD */
+    if (record.status === "disclosed") {
+      if (!new RegExp(`\\b${claim.finding_id}\\b`).test(securityModel)) refuse("DISCLOSED_FINDING_NOT_PUBLIC", `${claim.finding_id} is marked disclosed but is not referenced in SECURITY.md`); /* REPORT_DISCLOSED_SECURITY_REFERENCE */
+      continue;
+    }
+    const disposition = events.get(record.updated_by_event_id);
+    if (!disposition || disposition.from !== "agent-a") refuse("FIXED_FINDING_DISPOSITION_INVALID", `${claim.finding_id} fixed status is not backed by a canonical agent-a event`); /* REPORT_FIXED_DISPOSITION_GUARD */
   }
 }
 
@@ -127,7 +132,8 @@ export async function generateReportDraft({ root = process.cwd(), manifest, find
   validateManifest(manifest);
   validateFindingRegistry(findingRegistry);
   const events = await canonicalEvents(root);
-  assertFindingsFixed(manifest.claims, findingRegistry, events);
+  const securityModel = await readFile(path.join(root, "SECURITY.md"), "utf8");
+  assertFindingsCitable(manifest.claims, findingRegistry, events, securityModel);
   assertClaimsTrace(events, manifest.claims);
   const markdown = renderDraft(manifest);
   return Object.freeze({

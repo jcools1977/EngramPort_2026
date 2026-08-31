@@ -21,11 +21,29 @@ test("the checked-in claim manifest generates an inert, balanced lab-report draf
   assert.match(draft.markdown, /4c7a08042d2e37bd7081b7516762a4c1706ef6a3bf3a65e2bc4232ffe73f1099/);
 });
 
-test("a claim citing an unfixed finding is refused and the fixed-status mutation discriminates", async () => {
+test("a disclosed finding referenced in SECURITY.md is citable", async () => {
+  const input = await fixture();
+  input.manifest.claims[0].finding_id = "F108";
+  input.findingRegistry.findings.F108.status = "disclosed";
+  await assert.doesNotReject(generateReportDraft({ root, ...input }));
+});
+
+test("a disclosed finding absent from SECURITY.md is refused by finding id", async () => {
+  const input = await fixture();
+  input.manifest.claims[0].finding_id = "F106";
+  input.findingRegistry.findings.F106.status = "disclosed";
+  await assert.rejects(generateReportDraft({ root, ...input }), /DISCLOSED_FINDING_NOT_PUBLIC.*F106.*SECURITY\.md/);
+});
+
+test("an unfixed finding is refused and fixed status requires a canonical agent-a disposition", async () => {
   const input = await fixture();
   input.manifest.claims[0].finding_id = "F111";
   await assert.rejects(generateReportDraft({ root, ...input }), /UNFIXED_FINDING_REFUSED.*F111/);
   input.findingRegistry.findings.F111.status = "fixed";
+  const disposition = input.findingRegistry.findings.F111.updated_by_event_id;
+  input.findingRegistry.findings.F111.updated_by_event_id = null;
+  await assert.rejects(generateReportDraft({ root, ...input }), /FIXED_FINDING_DISPOSITION_INVALID.*F111/);
+  input.findingRegistry.findings.F111.updated_by_event_id = disposition;
   await assert.doesNotReject(generateReportDraft({ root, ...input }));
 });
 
