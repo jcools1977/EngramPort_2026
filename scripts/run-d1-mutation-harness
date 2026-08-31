@@ -48,7 +48,7 @@ run_second_builder(){ local module_root="$1"; ENGRAMPORT_SDK_MODULE="$(agent_c_u
 assert_second_builder(){ local module_root="$1" out rc; out=$(mktemp); run_second_builder "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_git_adapter_core_guard(){ local cli="$1"; GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$cli")" node --test --test-reporter=tap --test-name-pattern='normal CLI execution cannot activate the harness core override' "$root_dir/tests/git-v0.test.mjs"; }
 assert_git_adapter_core_guard(){ local cli="$1" out rc; out=$(mktemp); run_git_adapter_core_guard "$cli" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_event_v1(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$module_root/verify-log.mjs")" GIT_ADAPTER_EVENT_CORE_MODULE="$(agent_c_url "$module_root/event-core.mjs")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs"; }
+run_event_v1(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$module_root/verify-log.mjs")" GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$module_root/cli.mjs")" GIT_ADAPTER_EVENT_CORE_MODULE="$(agent_c_url "$module_root/event-core.mjs")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs"; }
 assert_event_v1(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_event_v1 "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_port_watch(){ local module="$1" pattern="$2"; PORT_WATCH_MODULE="$(agent_c_url "$module")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/port-watch.test.mjs"; }
 assert_port_watch(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -348,12 +348,13 @@ make_event_v1_variant(){
   cp -R "$root_dir/packages/git-adapter/src/." "$target/"
   node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
-const coreFile=path.join(root,"event-core.mjs"),verifyFile=path.join(root,"verify-log.mjs");
+const cliFile=path.join(root,"cli.mjs"),coreFile=path.join(root,"event-core.mjs"),verifyFile=path.join(root,"verify-log.mjs");
 function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
 if(mode==="retry-match")mutate(coreFile,'    if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (false /* V1_RETRY_INTENT_MATCH_REMOVED */) return resultFor(existing.relative, id, true);');
 else if(mode==="retry-collision")mutate(coreFile,'    if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (existing.event.meta.schema_version === 1 /* V1_RETRY_COLLISION_REMOVED */) return resultFor(existing.relative, id, true);');
 else if(mode==="criteria-coverage")mutate(verifyFile,'    if (missing.length) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`); /* V1_CRITERIA_EXACT_COVERAGE */','    if (false /* V1_CRITERIA_EXACT_COVERAGE_REMOVED */) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`);');
 else if(mode==="writer-cutover")mutate(coreFile,'  if (schemaVersion !== 1) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only"); /* V1_WRITER_CUTOVER */','  if (false /* V1_WRITER_CUTOVER_REMOVED */) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only");');
+else if(mode==="terminal-next")mutate(cliFile,'    const next = options.next === "null" ? null : options.next; /* V1_CLI_TERMINAL_NEXT */','    const next = options.next; /* V1_CLI_TERMINAL_NEXT_REMOVED */');
 else throw new Error(`unknown event-v1 variant ${mode}`);
 NODE
 }
@@ -699,6 +700,7 @@ for line in "${MUTATIONS[@]}"; do
       EVENT_V1_RETRY_COLLISION) mode=retry-collision; marker=V1_RETRY_COLLISION_REMOVED; test_pattern='version-1 retry identity collision raises a distinct error without writing' ;;
       EVENT_V1_CRITERIA_COVERAGE) mode=criteria-coverage; marker=V1_CRITERIA_EXACT_COVERAGE_REMOVED; test_pattern='version-1 completion requires exact criterion evidence coverage' ;;
       EVENT_V1_WRITER_CUTOVER) mode=writer-cutover; marker=V1_WRITER_CUTOVER_REMOVED; test_pattern='live writer refuses version-0 append after cutover while historical v0 verifies' ;;
+      EVENT_V1_TERMINAL_NEXT) mode=terminal-next; marker=V1_CLI_TERMINAL_NEXT_REMOVED; test_pattern='CLI terminal append normalizes --next null before hashing and preserves next validation' ;;
     esac
     source_root="$root_dir/packages/git-adapter/src"
     base=$(assert_event_v1 "$source_root" "$test_pattern")
@@ -1514,7 +1516,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 147 ] || fail=1
+  [ "$executed" = 148 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

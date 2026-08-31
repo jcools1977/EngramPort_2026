@@ -208,6 +208,39 @@ test("append with an empty artifacts flag preserves artifact-free append behavio
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
+test("CLI terminal append normalizes --next null before hashing and preserves next validation", async () => {
+  const directory = await fixture();
+  const errors = [];
+  const originalError = console.error;
+  try {
+    const terminalBody = path.join(directory, "terminal-next-body.txt");
+    const delegatedBody = path.join(directory, "delegated-next-body.txt");
+    const malformedBody = path.join(directory, "malformed-next-body.txt");
+    await writeFile(terminalBody, "terminal CLI append\n");
+    await writeFile(delegatedBody, "delegated CLI append\n");
+    await writeFile(malformedBody, "malformed CLI append\n");
+    for (const thread of ["terminal-next", "delegated-next", "malformed-next"]) await declare(directory, thread, "free_form");
+
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "terminal-next", "--type", "message", "--body", terminalBody, "--next", "null"], directory), 0);
+    const terminalResult = await verifyLog(directory);
+    assert.equal(terminalResult.ok, true, terminalResult.errors.join("\n")); /* V1_CLI_TERMINAL_NEXT_ASSERTION */
+    const sources = await Promise.all((await readdir(path.join(directory, "events", "agent-b"))).map((name) => readFile(path.join(directory, "events", "agent-b", name), "utf8")));
+    assert.match(sources.find((source) => source.includes("thread: terminal-next")), /^next: null$/m);
+
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "delegated-next", "--type", "message", "--body", delegatedBody, "--next", "agent-b"], directory), 0);
+    assert.ok((await listInbox({ actor: "agent-b", cwd: directory })).some((relative) => relative.includes("events/agent-b/")));
+
+    const beforeMalformed = (await discoverEventFiles(path.join(directory, "events"))).length;
+    console.error = (...parts) => errors.push(parts.join(" "));
+    assert.equal(await run(["append", "--actor", "agent-b", "--thread", "malformed-next", "--type", "message", "--body", malformedBody, "--next", "not-an-actor"], directory), 1);
+    assert.equal((await discoverEventFiles(path.join(directory, "events"))).length, beforeMalformed);
+    assert.match(errors.join("\n"), /unknown next actor not-an-actor/);
+  } finally {
+    console.error = originalError;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("append refuses an unrecognized flag before writing and preserves known-good behavior", async () => {
   const directory = await fixture();
   try {

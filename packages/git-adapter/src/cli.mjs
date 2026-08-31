@@ -120,7 +120,8 @@ export async function run(argv, cwd = process.cwd()) {
     const completionCriteria = await readJsonArray("completion-criteria");
     const criteriaResults = await readJsonArray("criteria-results");
     const schemaVersion = options["schema-version"] === undefined ? undefined : Number(options["schema-version"]);
-    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next: options.next, artifacts, schemaVersion, boundedContext, completionCriteria, criteriaResults }, { cwd, id: options.id });
+    const next = options.next === "null" ? null : options.next; /* V1_CLI_TERMINAL_NEXT */
+    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next, artifacts, schemaVersion, boundedContext, completionCriteria, criteriaResults }, { cwd, id: options.id });
     if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(result.relative); return 0;
   }
