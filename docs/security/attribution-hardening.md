@@ -35,3 +35,13 @@ Required review is the only measure that addresses an **authorized** writer comm
 **A builder can still write a well-formed event claiming to be another actor.** Signing proves who made the commit, not that the `from:` field is honest. Closing that requires the verifier to compare the event's claimed author against the signing identity of the commit that introduced it, which is step 2's payoff and is real work rather than configuration.
 
 **Stated plainly because the alternative is a security page that reads as complete.**
+
+## Progress, 2026-08-31
+
+**Steps 1 and 3 are done for the two committing actors.** DeVere generated `engramport_agent_a` and `engramport_agent_b` and registered both as GitHub signing keys. Agent-a's commits are now signed and verify locally as `G`, signed by `agent-a@engramport.local`.
+
+**Step 2 is deliberately not done in the tree.** The `allowed_signers` mapping lives at `~/.ssh/engramport_allowed_signers`, **outside the repository**, because F128 established that an in-tree actor-to-key binding is rewritable by any actor who can commit, together with whatever check would have caught the edit. Putting the binding in `actors/*.yaml` would have looked like progress and changed nothing.
+
+**Agent-c has no key and must not be given one.** It holds no repository write path: its events are committed by whoever runs the supervisor. A commit labeled agent-c would be another actor authoring as agent-c, which is the operation F127 measured as accepted.
+
+**The limitation that bounds what any of this proves:** all keys live on one machine, readable by any process running as that user. **This demonstrates the mechanism and not custody.** Real per-builder isolation requires separate machines or accounts, which a genuine second builder would have and this repository never will. That belongs in the lab report rather than being discovered by a reader.
