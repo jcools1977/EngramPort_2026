@@ -71,6 +71,8 @@ run_repository_surface_policy(){
   fi
 }
 assert_repository_surface_policy(){ local rules="$1" actor_root="${2:-$root_dir/actors}" index="${3:-}" verifier="${4:-$root_dir/packages/git-adapter/src/verify-log.mjs}" out rc; out=$(mktemp); run_repository_surface_policy "$rules" "$actor_root" "$index" "$verifier" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
+run_pr_onboarding(){ local module="$1" pattern="$2"; PR_ONBOARDING_HELPER_MODULE="$(agent_c_url "$module")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/pr-onboarding.test.mjs"; }
+assert_pr_onboarding(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_pr_onboarding "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
 assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -425,6 +427,22 @@ function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw ne
 if(mode==="slug")replace('    if (name !== `${slug}.yaml`) throw new Error(`actors/${name}: filename must match declared slug ${slug}`); /* ACTOR_SLUG_FILENAME_BINDING */','    if (false /* ACTOR_SLUG_FILENAME_BINDING_REMOVED */) throw new Error(`actors/${name}: filename must match declared slug ${slug}`);');
 else if(mode==="normalization")replace('export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION */\n  return value.normalize("NFKC").toLocaleLowerCase("en-US");\n}','export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION_REMOVED */\n  return value;\n}');
 else throw new Error(`unknown actor registry verifier variant ${mode}`);
+fs.writeFileSync(target,text);
+NODE
+}
+make_pr_onboarding_variant(){
+  node - "$root_dir/tests/helpers/pr-onboarding-fixture.mjs" "$1" "$2" <<'NODE'
+const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
+function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);}
+if(mode==="unmerged")replace(
+  'export async function assertRegistrationMerged(root, slug) { /* PR_ONBOARDING_MERGE_REQUIRED */',
+  'export async function assertRegistrationMerged(root, slug) { /* PR_ONBOARDING_MERGE_REQUIRED_REMOVED */ return readFile(join(root, `actors/${slug}.yaml`), "utf8");'
+);
+else if(mode==="merged")replace(
+  '  const actor = actors.get(slug);',
+  '  throw new Error("PR_ONBOARDING_MERGED_ACCEPTANCE_REMOVED");\n  const actor = actors.get(slug);'
+);
+else throw new Error(`unknown PR onboarding variant ${mode}`);
 fs.writeFileSync(target,text);
 NODE
 }
@@ -836,6 +854,23 @@ for line in "${MUTATIONS[@]}"; do
     log="$mutation_dir/actor-prefix-normalization.log"; run_repository_surface_policy "$source_rules" "$root_dir/actors" "" "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_repository_surface_policy "$source_rules"); printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
+    executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    continue
+  fi
+  if [[ "$mutation" = PR_ONBOARDING_* ]]; then
+    source_module="$root_dir/tests/helpers/pr-onboarding-fixture.mjs"
+    if [ "$mutation" = PR_ONBOARDING_UNMERGED_REFUSAL ]; then
+      mode=unmerged; marker=PR_ONBOARDING_MERGE_REQUIRED_REMOVED; pattern='documented PR onboarding refuses an unmerged local registration'
+    else
+      mode=merged; marker=PR_ONBOARDING_MERGED_ACCEPTANCE_REMOVED; pattern='documented PR onboarding accepts the maintainer-merged registration'
+    fi
+    base=$(assert_pr_onboarding "$source_module" "$pattern")
+    variant="$mutation_dir/pr-onboarding-$mode.mjs"; make_pr_onboarding_variant "$variant" "$mode" || { fail=1; continue; }
+    if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
+    log="$mutation_dir/pr-onboarding-$mode.log"; run_pr_onboarding "$variant" "$pattern" >"$log" 2>&1; after=$?
+    forbidden=f; grep -Eq "not ok [0-9]+ - $pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
+    restored=$(assert_pr_onboarding "$source_module" "$pattern")
+    printf '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
     executed=$((executed+1)); [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
@@ -1526,7 +1561,7 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 151 ] || fail=1
+  [ "$executed" = 153 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
 [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"

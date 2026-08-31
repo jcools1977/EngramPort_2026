@@ -29,3 +29,16 @@ This is measured, not theoretical. A second builder ran `createClient({ actor: "
 ## Reporting
 
 Findings are recorded in `docs/constraints.md` with the evidence that produced them, including failures by the maintainers. **A finding is more useful than a patch here**; open an issue describing what you observed and how to reproduce it.
+
+## Contribution authority
+
+GitHub authenticates the repository account that opens a pull request. An
+EngramPort maintainer then authorizes the requested actor slug and its owned
+paths by reviewing and merging that pull request. The merge is the actor
+registration boundary used by this repository.
+
+That authority is intentionally narrower than authentication. It records that
+a maintainer accepted a repository actor identifier; it is not cryptographic
+proof of the human, organization, model provider, or process represented by
+that identifier. The authorship limitation above still applies after
+registration.
