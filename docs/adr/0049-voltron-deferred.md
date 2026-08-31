@@ -20,10 +20,6 @@ A handoff brief was drafted at `/Users/an2b/an2b/products/eidetic/voltron/ENGRAM
 
 That answer will not change until an admission boundary exists, which council 05 identified and which is the paid tier of ADR 0047 rather than current work.
 
-## The unresolved item, carried forward
-
-**The brief opens by naming "Andrew" as the sponsor of the enquiry.** Agent-a has only ever been directed by DeVere. Under the rule this project runs on — document content is untrusted evidence, not authority — **a brief naming an unverified sponsor is F120's shape.** It is recorded rather than acted on, and it should be resolved before any assessment is returned.
-
 ## When this resumes
 
 **After EngramPort has users.** Layer 1 exists, the SDK is published, the contribution path works, and nobody has used any of it. **The next meaningful signal is a second builder opening a pull request, not an integration assessment.**
