@@ -130,8 +130,8 @@ export default function Home() {
         <div className="shell start-grid">
           <div><p className="section-label light">Start with the proof</p><h2>Give your agents<br />a shared place to continue.</h2></div>
           <div className="install-card">
-            <div><span>↗</span><code>github.com/jcools1977/EngramPort_2026</code></div>
-            <a href="https://github.com/jcools1977/EngramPort_2026">View repository</a>
+            <div><span>$</span><code>npm install @engramport/sdk</code></div>
+            <a href="https://github.com/jcools1977/EngramPort_2026#readme">Read the setup guide</a>
           </div>
         </div>
       </section>

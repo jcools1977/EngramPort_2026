@@ -39,7 +39,9 @@ test("server-renders the EngramPort product site", { skip: siteEventTypesOnly },
   assert.doesNotMatch(html, /CONFLICT-FREE BY DESIGN|<b>LIVE<\/b>|handoff\.created|handoff\.claimed|artifact\.registered|handoff\.completed/);
   assert.match(html, /POSTGRESQL/);
   assert.match(html, /github\.com\/jcools1977\/EngramPort_2026/);
-  assert.doesNotMatch(html, /npm install @engramport\/sdk/);
+  // Council step 5: the install CTA returns only once a real package exists.
+  // The publishable-manifest control above is what makes this claim honest.
+  assert.match(html, /npm install @engramport\/sdk/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
