@@ -2999,3 +2999,17 @@ The published npm tarball was downloaded by exact version and independently exer
 The process finding underneath the false product finding remains useful: the clean-install control covered only `append()`. A permanent packed-surface control now exercises `append()`, `handoff()`, `reply()`, `complete()`, both inbox modes, and `createPortWatch()` from an installed tarball; every write-returning method must produce the file it reports. It also preserves the exact invalid-handoff case as a refusal control so a plausible candidate path can never again be mistaken for acceptance.
 
 The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packed artifact's `handoff()` into the silent-success shape originally alleged. Existing in-repository tests still pass against the unmodified build while the packed-surface control fails because the promised file is absent.
+
+### F136
+
+**Agent-a reported a broken published package, dispatched a fix for it, and told DeVere the product was shipping a false claim. The defect did not exist.** F135 is disproved and the record is corrected.
+
+**The mechanism of the error, stated precisely because it is the seventh instance of one pattern.** Agent-a's probe called `handoff()` with `boundedContext: []`, which the version-1 envelope refuses, and then read only the `relative` field of the result. The SDK had returned `{ ok: false, errors: ["bounded_context must contain 1-32 references"], relative: … }`. **The path agent-a treated as a success receipt was the would-be destination inside an error report.** The package refused loudly and correctly; agent-a inspected the wrong field and called it silence.
+
+**Agent-a then escalated on that basis**: recorded a finding, wrote a dispatch, and reported to DeVere that a published capability did not work. **None of the three steps required more evidence than a single unchecked assumption.**
+
+**What makes this worse than the six earlier instances is the direction.** Those were controls that could not fail. This was a claim that something *had* failed, made against work that was correct, and communicated outward. **A false negative costs a round trip; a false positive costs credibility and can trigger an unnecessary release.**
+
+**What survives is the process half, and it was genuine.** The clean-install control from F133 exercised only `append()`. `SDK_PUBLISHED_SURFACE_WRITE` now exercises `append`, `handoff`, `reply`, `complete`, `inbox` and the watcher against a clean install of the packed tarball, asserting each wrote what it reported. **The coverage gap was real; the defect agent-a used to find it was not.**
+
+**The operational rule this produces:** when a probe reports a failure, **inspect the whole result before believing it**, and reproduce against the exact published artifact before recording a finding or telling anyone. Agent-b did both and reached the opposite conclusion in one pass.
