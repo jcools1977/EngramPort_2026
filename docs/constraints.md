@@ -2992,14 +2992,10 @@ Recorded before publication rather than after, because DeVere asked whether the 
 
 ### F135
 
-**`@engramport/sdk@0.1.0` ships a `handoff()` that reports success and writes nothing.** Found by hard-testing the published package from a clean `npm install` on the day of publication.
+**DISPROVED 2026-09-01 by exact-publication reproduction. `@engramport/sdk@0.1.0` writes a valid handoff correctly.** The reported fixture supplied `boundedContext: []`. Version 1 requires 1–32 bounded-context references, so the SDK returned `{ok:false, errors:[...], relative:...}` and correctly wrote no candidate file. The probe checked only whether `relative` existed and classified the refusal object as success without checking `ok` or `errors`.
 
-Reproduced in an isolated fixture: `handoff()` returns a result object carrying a plausible `relative` path, and **no file exists at that path or anywhere on the filesystem.** `append()` in the identical fixture writes correctly, so this is specific to the handoff path rather than to configuration, `cwd`, or the actor record.
+The published npm tarball was downloaded by exact version and independently exercised twice. With the original empty context it returned `ok:false`, named `bounded_context must contain 1-32 references`, and wrote nothing. With one valid event reference, the same published `handoff()` returned `ok:true` and the reported file existed. **No SDK implementation defect was found, and no `0.1.1` runtime fix is required for F135.**
 
-**The severity is that it fails silently.** A caller receives a success object with a path and has no reason to check. **Any consumer building on the SDK would believe work had been transferred while nothing was recorded**, which is worse than an error, and is the exact failure class this project has recorded repeatedly: a report that outruns what happened.
+The process finding underneath the false product finding remains useful: the clean-install control covered only `append()`. A permanent packed-surface control now exercises `append()`, `handoff()`, `reply()`, `complete()`, both inbox modes, and `createPortWatch()` from an installed tarball; every write-returning method must produce the file it reports. It also preserves the exact invalid-handoff case as a refusal control so a plausible candidate path can never again be mistaken for acceptance.
 
-**Handoff is one of the four capabilities the site advertises** — *"Transfer responsibility with bounded context and completion criteria"* — so the published package does not deliver a claim the product makes.
-
-**Every in-repository test passed.** The SDK suite, the clean-install control, and 155 mutation controls all pass, because they exercise the core through the CLI and the wrapper's own append path. **Nothing exercised `handoff()` through the published surface**, which is why F133's clean-room control caught the packaging defect and not this one. **A control proving a package installs is not a control proving its methods work.**
-
-Recorded before any user found it, and one hour after publication.
+The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packed artifact's `handoff()` into the silent-success shape originally alleged. Existing in-repository tests still pass against the unmodified build while the packed-surface control fails because the promised file is absent.

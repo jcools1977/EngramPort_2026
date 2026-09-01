@@ -84,3 +84,25 @@ test("packed SDK installs outside repository, imports, and appends", async () =>
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("packed SDK exercises every client method and verifies promised writes", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "engramport-sdk-surface-install-"));
+  try {
+    const packed = await pack(directory);
+    const consumer = path.join(directory, "consumer");
+    await writeFile(path.join(directory, "package.json"), "{}");
+    execute("npm", [
+      "install", "--ignore-scripts", "--no-audit", "--no-fund", "--cache", path.join(directory, ".npm-cache"),
+      "--prefix", consumer, packed.tarball,
+    ], directory);
+    await writeFile(path.join(consumer, "package.json"), '{"type":"module"}\n');
+    await writeFile(
+      path.join(consumer, "exercise.mjs"),
+      await readFile(path.join(root, "tests/fixtures/sdk-package-surface-exercise.mjs"), "utf8"),
+    );
+    const output = execute("node", ["exercise.mjs"], consumer);
+    assert.match(output, /SDK_PUBLISHED_SURFACE append=written handoff=written reply=written complete=written inbox=observed watch=woke invalid_handoff=refused/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
