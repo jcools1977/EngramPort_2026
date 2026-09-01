@@ -3027,3 +3027,15 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The asset `ONE PROJECT WHOLE FLEET.png` is declared in this repository's rule 5 allowlist and referenced by no page here**, which was visible evidence of a second site sitting in the governance file the whole time.
 
 **The rule this produces: a claim control must inspect what is served, not what is built.** Verifying the rendered HTML of a page in the repository answers a question nobody asked.
+
+### F138
+
+**The production website has no recoverable source.** `engramport.com` and `www.engramport.com` are served by the Vercel project `engramport-web` (`prj_X8tgbeqLGgKZIhtr0aqOIFhz3s9X`), a Next.js app whose live production deployment was created **2026-08-20** and has not changed since.
+
+**That project's GitHub link is `null`.** It was deployed directly rather than from a repository, so there is no branch, no history, no review, and no control over what it serves. Searching every repository on the account and the whole of this machine for its distinctive copy — *"JOIN THE FIRST FLEET"*, *"Bring whoever"* — returns nothing. **The source is neither on cockpit nor in version control.**
+
+**This violates the estate's own standing rule**, recorded in `~/an2b/CLAUDE.md`: *"every directory under this one should be restorable with `git clone`."* The public face of the product is the one artifact that cannot be.
+
+**It also explains F137 completely.** `app/page.tsx` is not a stale copy of the live site; it is a different site that has never been deployed. Two days of claim corrections, each bound by a control, were applied to a page with no route to a visitor — and the controls were faithful the whole time, because they verify what the repository builds and were never asked what the domain serves.
+
+**The operational consequence is sharper than the copy problem.** The live site advertises a private alpha, links to no repository, and never mentions `@engramport/sdk`. **Yesterday's public launch and today's published package are invisible at the domain**, and nobody in this estate can currently change that without finding a directory that exists on some other machine or not at all.
