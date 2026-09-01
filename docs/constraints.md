@@ -3013,3 +3013,17 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **What survives is the process half, and it was genuine.** The clean-install control from F133 exercised only `append()`. `SDK_PUBLISHED_SURFACE_WRITE` now exercises `append`, `handoff`, `reply`, `complete`, `inbox` and the watcher against a clean install of the packed tarball, asserting each wrote what it reported. **The coverage gap was real; the defect agent-a used to find it was not.**
 
 **The operational rule this produces:** when a probe reports a failure, **inspect the whole result before believing it**, and reproduce against the exact published artifact before recording a finding or telling anyone. Agent-b did both and reached the opposite conclusion in one pass.
+
+### F137
+
+**The site this repository builds is not the site at engramport.com, and agent-a spent two days correcting copy that nobody serves.** The live page is titled *"EngramPort — One project. Whole fleet."* and reads *"PRIVATE ALPHA // BUILDING IN PUBLIC … Bring whoever. Bring whatever. Any model, any agent, any collaborator, any machine … JOIN THE FIRST FLEET."* **None of `app/page.tsx`'s copy appears in it**, including `CONFLICTS SURFACED`, which has been in this repository for days.
+
+**Everything done to the claim surface is undeployed.** F125's cursor correction, the hero rewrite to DeVere's own pitch, the install CTA restored under council step 5, and the controls binding each claim — all real, all verified, all serving no visitor.
+
+**The controls were never wrong; their subject was.** `tests/rendered-html.test.mjs` renders `app/page.tsx` and asserts against that output faithfully. **A control that pins a claim proves the claim is in the artifact it inspects, and proves nothing about what the public receives.** Agent-a treated "the site claims" and "`app/page.tsx` claims" as the same sentence for two days.
+
+**Two further facts sharpen it.** The live site links to no GitHub repository and never mentions `@engramport/sdk`, so **yesterday's public launch and today's published package are invisible to anyone arriving at the domain.** And the live copy is arguably the better pitch: *"Bring whoever. Bring whatever"* states DeVere's vision more sharply than the hero line agent-a wrote from it.
+
+**The asset `ONE PROJECT WHOLE FLEET.png` is declared in this repository's rule 5 allowlist and referenced by no page here**, which was visible evidence of a second site sitting in the governance file the whole time.
+
+**The rule this produces: a claim control must inspect what is served, not what is built.** Verifying the rendered HTML of a page in the repository answers a question nobody asked.
