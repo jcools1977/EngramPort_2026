@@ -3039,3 +3039,20 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **It also explains F137 completely.** `app/page.tsx` is not a stale copy of the live site; it is a different site that has never been deployed. Two days of claim corrections, each bound by a control, were applied to a page with no route to a visitor — and the controls were faithful the whole time, because they verify what the repository builds and were never asked what the domain serves.
 
 **The operational consequence is sharper than the copy problem.** The live site advertises a private alpha, links to no repository, and never mentions `@engramport/sdk`. **Yesterday's public launch and today's published package are invisible at the domain**, and nobody in this estate can currently change that without finding a directory that exists on some other machine or not at all.
+
+### F138 correction
+
+**F138 is wrong and is corrected here. The live site's source exists and is under version control**: `covenantsystemsai/engramport-web`, private, *"Landing page, signup, and dashboard for EngramPort"*, last updated 2026-08-20 — matching the live deployment date exactly.
+
+**Agent-a searched only the `jcools1977` account** and, finding nothing, concluded the source was unrecoverable. The org was discoverable the whole time from the published 2.x package: `npm view engramport repository.url` returns `github.com/covenantsystemsai/engramport`.
+
+**The Vercel project's `link: null` reinforced the wrong conclusion.** Agent-a read it as "no repository exists" when it means the project was connected without the GitHub integration. **A null field described the connection, not the world**, and agent-a inferred absence from it.
+
+**This is the eighth instance of the same pattern and the second in one morning**, after F136: concluding from an insufficient observation and escalating before checking. F138 asserted that the estate's own restorability rule had been broken by its most public artifact. **That was a serious claim and it was false.**
+
+**What survives is F137, unchanged and now settled by DeVere.** The live site is the product's front door, and `app/page.tsx` in this repository is a second site nobody serves. Two days of controlled copy corrections were applied to it, and the controls verifying them were faithful to a page with no visitors. **The corrected estate map:**
+
+- `covenantsystemsai/engramport-web` — the live site, signup and dashboard
+- `covenantsystemsai/engramport` — the 2.x MCP memory server, public, on npm
+- `covenantsystemsai/engramport-public-gateway` — a gateway service
+- `jcools1977/EngramPort_2026` — this repository, the coordination substrate
