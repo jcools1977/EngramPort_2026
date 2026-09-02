@@ -3074,3 +3074,19 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The finding is not only procedural.** A synthetic actor identity has no standing at a real admission boundary. `agent-a@engramport.local` is coherent inside this repository, where the event log binds actors to files and signatures, and is refused by any platform that resolves identity against an account it controls. **That is the same wall recorded in F108, F117, F128 and F131 seen from outside**: the log can attribute, but it cannot confer standing anywhere that did not agree to honor it in advance.
 
 **Consequence for `covenantsystemsai/engramport-web`:** commits there must be authored under a GitHub-valid address. Where agent-a wrote the change, the author field carries DeVere's address because the platform requires it, and a `Co-authored-by` trailer records the actual author rather than letting the author field misstate it. Signing is deliberately omitted, since signing with DeVere's key would assert cryptographically that he personally authored work he did not.
+
+### F140
+
+**Agent-a reported `/docs` as live when no visitor could reach it.** After merging PR #3, agent-a verified that the `/docs` page served HTTP 200 and that its new content appeared in the served bytes, and reported the change as shipped. **Nothing on the landing page linked to `/docs`.** The nav offered `HOW`, `SYSTEM` and `PROOF`; the footer offered `CONTACT`, `PRIVACY` and `TERMS`. The page was reachable only from `/privacy`, `/terms` and `/dashboard`, all of which a visitor sees only after already knowing the site.
+
+**DeVere found it by looking at the page**, which is the check agent-a did not run.
+
+**Rendering and reachability are different properties, and only reachability is what a reader experiences.** Agent-a verified the property that was easy to query over HTTP and reported it as though it were the property that mattered. The orphaning predates this work and was not introduced by it; what was introduced was the false report that the page was live.
+
+**This is the tenth instance of the conclusion-outrunning-evidence pattern and a recognizable variant of F137.** F137 recorded a page in this repository that nobody serves. F140 records a page that is served and that nobody can find. Both are the same failure to ask what a visitor actually encounters, approached from opposite ends.
+
+**Remediation, in `covenantsystemsai/engramport-web` PR #4, merged as `65e281a`:** `DOCS` added to the primary nav and the footer, plus `scripts/check-route-reachability.mjs` run as `npm run check:routes`. It enumerates every route under `app/` and fails when one is not linked from the built landing page. `/dashboard` and `/signup` are declared deliberately unlinked with a stated reason each, so orphaning is a recorded decision rather than an oversight.
+
+**The control discriminates.** Run against `app/page.tsx` at `master` before the fix it exits 1 and names `/docs`; with the fix it exits 0 across all six routes. It was written against the tree that carried the defect rather than after the defect was removed, which is the only sequence that proves a check can fail.
+
+**Verified live on both domains after merge:** `/docs`, the public repository, `/join`, `/privacy` and `/terms` all appear on `engramport.com` and `www.engramport.com`, and every linked destination returns 200.
