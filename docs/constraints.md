@@ -3130,3 +3130,23 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **Remediation.** `scripts/readme-counts` derives events, findings and ADRs from the repository; `npm run counts:check` fails on disagreement, and `tests/readme-counts.test.mjs` is wired into `npm test`. The control was demonstrated against the live README before the fix, where it reported all three drifts. Its mutation test perturbs each claim independently and requires exactly one failure per perturbation, so a single over-broad matcher cannot masquerade as three working checks, and a further case proves that rewording a claim out of the README fails loudly rather than silently disabling the check.
 
 **The mutation-control total is not derived live**, because the harness requires Docker. It is stated as the last value the log records and is cited to the event that recorded it, which is weaker than the other three and is marked as such in the README rather than presented as equivalent.
+
+### F144
+
+**ADR 0036's $10 daily spend cap existed only in prose, and the unattended runner had no kill switch.** The agent-c supervisor measures provider cost exactly, in integer USD ticks, and records it in every review artifact. **Nothing read that number.** A measurement that no decision consumes is a report, not a control, which is the pattern this register already carries several findings about.
+
+**The runner also had no stop.** `engramport-relay-notify` checks a `DISABLED` file on every pass; `run-agent-c-review-service-account` had no equivalent, so once launchd was keeping it alive the only way to stop it was `launchctl bootout`. **The component that could spend money was the one without a brake.**
+
+**A third fact, found while investigating:** the automatic path has been half-installed since 2026-08-27. The poller `com.an2b.engramport-agent-c-poll` is loaded and running, and its log shows it correctly detecting pending agent-c turns on six occasions. The executor it exists to feed has never run, because the 1Password service-account token was never written to the Keychain. **A scheduled job that cannot do its work is indistinguishable at a glance from one that has nothing to do**, and the poller's own log was honest about this the entire time while nobody read it.
+
+**Remediation: `packages/agent-c-supervisor/src/spend-gate.mjs`**, gating the runner before the credential is read.
+
+**Spend is derived from the review artifacts the log already carries**, not from a side ledger. A separate spend file would be a second truth that can disagree with the first, and this project's premise is that events are truth and every projection is rebuildable from them.
+
+**Every path fails closed.** An unreadable spend total, a malformed cost field, an absent completion timestamp, a missing or nonsensical cap, and a corrupt artifact all refuse the run. **"I cannot tell what I have spent today" must never resolve to "I have spent nothing"**, and that inversion is precisely how a cap becomes decorative. `ticksSpentOn` throws on a malformed record rather than skipping it, because skipping the one record that cannot be read is the same error wearing a different hat.
+
+**The controls discriminate and were proven on the real executable, not only in unit tests.** Ten unit cases each pair a refusal with its nearest allowed case, so the gate cannot pass by refusing everything: the cap refuses at the ceiling and allows one tick short, and the reserve refuses at $9.50 spent and allows at $9.00. On the installed runner, with the kill switch engaged the log reads `REFUSED KILL_SWITCH` and **`CREDENTIAL_UNAVAILABLE` never appears**, which is the observation proving the gate runs before the credential is read rather than after. With the switch removed the same runner logs `ALLOWED spent=0 remaining=10` and proceeds to the credential failure.
+
+**The reserve is deliberately conservative.** Observed agent-c reviews cost about $0.072; the reserve withheld before a run of unknown cost is $1.00, so an unusually expensive run cannot cross a ceiling it was cleared under.
+
+**What this does not do.** It caps agent-c and nothing else. Other metered calls in this estate remain uncapped, and the cap is enforced at the runner rather than at the provider, so anything invoking the supervisor directly bypasses it. The remaining manual step is the service-account token itself, which is DeVere's to create.
