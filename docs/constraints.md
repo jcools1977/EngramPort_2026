@@ -3174,3 +3174,27 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **Also unverified and asserted:** the dispatch named `events/agent-c/` and `artifacts/agent-c/` as agent-c's owned paths without supplying `actors/agent-c.yaml`, so the ownership constraint was stated rather than checked against the registry. Agent-c's third finding.
 
 **Cost of the review: $0.0656, 14,720 tokens.** The spend gate reported `ALLOWED spent=0 remaining=10` before the call and the run completed inside the cap.
+
+### F147
+
+**The cited-not-shown defect was announced as fixed in the same sentence that reproduced it.** In the first council review agent-c found that agent-a cited premises without showing them. Agent-a's remedy, published on 2026-08-26, read: *"Every premise is now shown with the command that produced it, in `artifacts/agent-a/council-01-evidence.md`, sha256 `e080b2e2...`"*. **That event carries no `artifacts:` field.** The reviewer receives artifacts only when they are named in the target event's `artifacts` field, so the evidence was never delivered.
+
+**The digest was correct.** The file exists, and its sha256 matches the value asserted seven days earlier, byte for byte. **Real evidence, correctly hashed, never handed over.** The failure was entirely in delivery, which is why it survived a week without anyone noticing: every check agent-a would think to run confirms the artifact and the hash, and none of them asks whether the reader received it.
+
+**Agent-c found it twice, seven days apart, and agent-a found it neither time.** The second occurrence is F145, where `bounded_context` was mistaken for a delivery channel in the keystone handoff. **Two different mechanisms, the same wrong belief: that naming evidence in an envelope transmits it.**
+
+**A second gap, from the same review.** Agent-c had no lawful outbound `next`. DeVere holds no `actors/` record, so a reply addressed to him cannot be formed, and `agent-a` was not named by the dispatch, so selecting it would be an invention by the receiving actor. **A strict-relay dispatch must name the outbound hop, not only the inbound one.** This repeats the unregistered-recipient failure the same re-dispatch claimed to have retired, one hop later.
+
+**Remediation.** `council-01-review` is closed terminal with the evidence artifact attached to the closing event, which is the delivery that should have happened on 2026-08-26.
+
+### F148
+
+**The log can reach a state that no lawful actor can leave.** Event `01a054bf-8947-7931-9b3e-8beff07f01cf` sets `next: agent-c` and `type: message`. Strict relay permits only agent-c to reply. Agent-c's supervisor accepts only `handoff` and `reply` as review targets and refuses `message` with `TARGET_REFUSED`. **The only actor permitted to close the turn is the only actor structurally unable to.**
+
+**Nothing is corrupt and every rule is behaving correctly.** The verifier passes, the poller correctly excludes the event as unactionable, and the relay correctly refuses everyone else. **The turn is simply immortal**, and it will sit in agent-c's inbox for the life of the repository.
+
+**This is a liveness defect, and the register has been recording safety defects almost exclusively.** Every control in this project asks whether something invalid can be accepted. None asks whether something valid can become permanently stuck. A protocol whose whole claim is that work is legible and resumable has a state in which work is legible and unresumable.
+
+**Two candidate remedies, neither taken here.** Widen the supervisor to review `message` targets, which changes an accepted control and needs its own dispatch; or add a protocol-level withdrawal that lets the *sender* retire an unanswered turn, which strict relay currently forbids because it would let an actor edit the effect of an accepted event. **The second is the more honest fix and the more dangerous one**, and it is a design question rather than a repair.
+
+**Not remediated. The stuck turn is left in place** as the standing example, because deleting it would destroy the only instance of the defect while proving nothing about the rule that produced it.
