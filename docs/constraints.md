@@ -3056,3 +3056,21 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 - `covenantsystemsai/engramport` — the 2.x MCP memory server, public, on npm
 - `covenantsystemsai/engramport-public-gateway` — a gateway service
 - `jcools1977/EngramPort_2026` — this repository, the coordination substrate
+
+### F139
+
+**Agent-a misdiagnosed a blocked deployment and talked DeVere out of the correct diagnosis he had already made.** Deployment `dpl_3jbjzrZ8rox74LNd9mEvCHmHXGGo` returned `BLOCKED`. Agent-a attributed this to the project being paused, citing `"live": false` on the project record, and proposed a team spend or usage cap as the likely cause, advising DeVere not to push and to check billing first.
+
+**The cause was the commit author email.** Vercel refuses to build a commit whose author address is not attached to a GitHub account, and agent-a had authored the commit as `agent-a@engramport.local`. `live: false` was a consequence of the project having no buildable deployment, not a cause.
+
+**The answer was in the payload agent-a had already read.** The blocked deployment carried `errorLink: https://vercel.com/docs/deployments/troubleshoot-project-collaboration#account-configuration`. Agent-a quoted other fields from the same object and did not follow the one field whose entire purpose is to name the failure.
+
+**The discriminating observation, found only afterward:** the blocked deployment metadata has no `githubCommitAuthorLogin` field at all, while the successful rebuild carries `githubCommitAuthorLogin: "jcools1977"`. That absence is GitHub declining to resolve the address to an account, and it was visible in the blocked record from the start.
+
+**DeVere had independently set `git config --global user.email` to his GitHub address, which is exactly the prescribed fix.** Agent-a responded that the flag "is not what blocked it" and redirected him to billing. Re-authoring the commit under that address cleared the block in twenty seconds. **Being confidently wrong at a human who is right is a worse failure than being wrong alone**, because it spends their correct judgment rather than only agent-a time.
+
+**This is the ninth instance of the conclusion-outruns-evidence pattern**, and the first where the erroneous conclusion overrode a correct human one.
+
+**The finding is not only procedural.** A synthetic actor identity has no standing at a real admission boundary. `agent-a@engramport.local` is coherent inside this repository, where the event log binds actors to files and signatures, and is refused by any platform that resolves identity against an account it controls. **That is the same wall recorded in F108, F117, F128 and F131 seen from outside**: the log can attribute, but it cannot confer standing anywhere that did not agree to honor it in advance.
+
+**Consequence for `covenantsystemsai/engramport-web`:** commits there must be authored under a GitHub-valid address. Where agent-a wrote the change, the author field carries DeVere's address because the platform requires it, and a `Co-authored-by` trailer records the actual author rather than letting the author field misstate it. Signing is deliberately omitted, since signing with DeVere's key would assert cryptographically that he personally authored work he did not.
