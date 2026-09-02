@@ -3108,3 +3108,25 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **What the control does not do, and cannot.** It cannot establish who actually wrote a commit. `dccf09a` and `170b8a8` are internally consistent, signed by the principal they name, and still misattributed. **This is F108, F111, F117, F128 and F131 again**: the log attributes, it does not authenticate, and no control inside the repository closes that gap. What is now enforced is narrower and still worth having, that a signature and an author field cannot disagree in silence.
 
 **The two misattributed commits stand.** Correcting them requires rewriting published history on a public repository, which is reserved and which would trade an accurate record of a mistake for a tidier false one. The append-only log records the correction instead, which is the mechanism this project exists to argue for.
+
+### F142
+
+**The SDK silently ignores unrecognized keys in the append input, including `actor`.** Installing `@engramport/sdk@0.1.0` from the public registry into an empty project and calling `append({ thread, type, body, next, actor: "nobody" })` returns `ok: true` and writes an event whose `from` is the client's configured actor. The `actor` key is not part of the append input, so it is dropped without comment.
+
+**The silence lands on the one field the product's security claim is about.** SECURITY.md and F127 state that EngramPort does not authenticate authorship. A reader testing that boundary writes exactly this call. They see `ok: true`, and the two available readings are both wrong: either impersonation succeeded, or the library quietly rewrote their actor. Neither is what happened, and nothing in the result distinguishes them.
+
+**Unknown keys should be refused rather than dropped.** `append` already returns `{ ok, errors, relative }` and already refuses malformed input without writing, so the mechanism exists. The change is to treat an unrecognized key as an error rather than as absent.
+
+**Observed alongside this, and correct:** an unregistered actor is refused (`ok: false`, nothing written), a bad event type is refused with nothing written, and `relative` is populated on refusal exactly as the README says. **The impersonation limitation is real and honestly documented:** `createClient({ actor: "other" })` against a registered actor record writes an accepted event attributed to that actor. That is F127, unchanged, and the documentation states it plainly rather than hiding it.
+
+### F143
+
+**Every number in the README's verifiable-claims section had drifted, and the date stamp concealed it.** On 2026-09-02 the section stated 439 accepted events, 45 recorded findings, 34 architecture decision records and 145 mutation controls. The true values were **459, 50, 38 and 146**. All four were wrong.
+
+**The README named this failure mode while committing it.** Its own parenthetical read: *"They are stated with a date because a number in prose goes stale silently, and this project recorded that as F125 after shipping copy that named a mechanism it had already replaced."* **The remedy adopted for F125 was a date stamp, and a date stamp does not detect drift.** It makes a stale number defensible rather than accurate, and a reader cannot tell those apart without doing the count themselves, which is exactly the labor the section exists to save them.
+
+**This sits in the section titled "What is real and verifiable", which is the paragraph a skeptical reader checks first.** Four wrong numbers there cost more credibility than they would anywhere else in the document.
+
+**Remediation.** `scripts/readme-counts` derives events, findings and ADRs from the repository; `npm run counts:check` fails on disagreement, and `tests/readme-counts.test.mjs` is wired into `npm test`. The control was demonstrated against the live README before the fix, where it reported all three drifts. Its mutation test perturbs each claim independently and requires exactly one failure per perturbation, so a single over-broad matcher cannot masquerade as three working checks, and a further case proves that rewording a claim out of the README fails loudly rather than silently disabling the check.
+
+**The mutation-control total is not derived live**, because the harness requires Docker. It is stated as the last value the log records and is cited to the event that recorded it, which is weaker than the other three and is marked as such in the README rather than presented as equivalent.

@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+// Derives the counts the README states, and optionally checks the README against them.
+//
+// The README's "What is real and verifiable" section stated 439 events, 45
+// findings and 34 ADRs on 2026-08-31. By 2026-09-02 the true values were 459,
+// 50 and 38. Every one had drifted, in the section whose entire purpose is to
+// be checkable, in a README that names F125 and then commits it.
+//
+// A date stamp does not fix this. It makes a stale number defensible rather
+// than accurate, and a reader cannot tell the difference without doing the
+// count themselves. So the numbers are derived and a control fails on drift.
+//
+//   scripts/readme-counts            print derived values
+//   scripts/readme-counts --check    compare against README.md, exit 1 on drift
+
+import { readFileSync, readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+export function derive(cwd = root) {
+  const eventDirs = readdirSync(join(cwd, "events"), { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
+  const events = eventDirs.reduce(
+    (n, d) => n + readdirSync(join(cwd, "events", d)).filter((f) => f.endsWith(".md")).length,
+    0,
+  );
+  const constraints = readFileSync(join(cwd, "docs/constraints.md"), "utf8");
+  const findings = new Set(constraints.match(/^### F\d+/gm) ?? []).size;
+  const adrs = readdirSync(join(cwd, "docs/adr")).filter((f) => f.endsWith(".md")).length;
+  return { events, findings, adrs };
+}
+
+// Each claim is anchored to the exact README sentence it appears in, so a
+// reworded sentence fails loudly rather than silently disabling the check.
+export const CLAIMS = [
+  { key: "events", re: /\*\*(\d+) accepted events\*\*/ },
+  { key: "findings", re: /\*\*(\d+) recorded findings\*\*/ },
+  { key: "adrs", re: /\*\*(\d+) architecture decision records\*\*/ },
+];
+
+export function check(readme, derived) {
+  const problems = [];
+  for (const { key, re } of CLAIMS) {
+    const m = readme.match(re);
+    if (!m) {
+      problems.push({ key, kind: "missing", detail: `README has no sentence matching ${re}` });
+      continue;
+    }
+    const stated = Number(m[1]);
+    if (stated !== derived[key]) {
+      problems.push({ key, kind: "drift", stated, actual: derived[key] });
+    }
+  }
+  return problems;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const derived = derive();
+  if (!process.argv.includes("--check")) {
+    for (const [k, v] of Object.entries(derived)) console.log(`${k.padEnd(10)} ${v}`);
+    process.exit(0);
+  }
+  const problems = check(readFileSync(join(root, "README.md"), "utf8"), derived);
+  for (const p of problems) {
+    console.error(
+      p.kind === "missing"
+        ? `README claim for ${p.key} not found: ${p.detail}`
+        : `README says ${p.stated} ${p.key}; repository has ${p.actual}`,
+    );
+  }
+  if (problems.length) process.exit(1);
+  console.log(`OK: README matches the repository on ${CLAIMS.length} counts.`);
+}
