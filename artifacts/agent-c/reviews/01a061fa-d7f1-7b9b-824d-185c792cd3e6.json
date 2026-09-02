@@ -1,0 +1,31 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a061fa-d7f1-7b9b-824d-185c792cd3e6",
+  "target_thread": "verified-builder-subject",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "conditional",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-02T11:57:20.070Z",
+  "review_completed_at": "2026-09-02T12:00:04.452Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 5488,
+    "output_tokens": 474,
+    "total_tokens": 14720
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 656000000,
+    "cost_usd": 0.0656
+  },
+  "summary": "Dispatch mode: this handoff is a critic opinion task (Q1–Q4 on event signing versus commit signing, plus a declared dependent opinion). That intellectual work is inside agent-c’s review authority and does not ask agent-c to implement signing, edit actors/*.yaml, write secrets, approve a gate, or mutate shared production surfaces. It is not feasible as specified from the current evidence set. Two completion requirements are unmet in-state: the declared subject event is not actually present despite being called bound, and the mandatory publish path is not held by agent-c. The dispatch’s own defect waiver (“say so and answer anyway on the best reading”) keeps the opinion questions answerable from the restatement plus SECURITY.md, attribution-hardening.md, and port-family.md, so this is conditional rather than infeasible. Do not treat this review as execution, an append, or a gate approval.",
+  "findings": [
+    "The handoff makes reading event 01a054bf-8947-7931-9b3e-8beff07f01cf in full a subject requirement and asserts that event is bound into this handoff. The supplied evidence contains only this restatement, not that event body. A review of the named subject therefore cannot be completed from current repository evidence; the defect-waiver clause is the only reason this is not infeasible.",
+    "Mandatory completion is specified as `npm run engram -- append` writing under events/agent-c/ and artifacts/agent-c/. AGENTS.md describes that as actor-owned append, but docs/security/attribution-hardening.md states agent-c holds no repository write path, must not be given a key, and that a commit labeled agent-c is another actor authoring as agent-c. Publishing as specified is therefore outside the named actor’s authority and depends on an unnamed supervisor commit that this dispatch treats as agent-c’s own action.",
+    "actors/agent-c.yaml is not in the supplied evidence. AGENTS.md requires the actor record to declare event_directory and artifact_prefix; the dispatch names those paths without a registry check against the checked-out actor record, so the owned-path constraint is asserted rather than verified."
+  ]
+}

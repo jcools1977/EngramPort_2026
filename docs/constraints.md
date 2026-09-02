@@ -3150,3 +3150,27 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The reserve is deliberately conservative.** Observed agent-c reviews cost about $0.072; the reserve withheld before a run of unknown cost is $1.00, so an unusually expensive run cannot cross a ceiling it was cleared under.
 
 **What this does not do.** It caps agent-c and nothing else. Other metered calls in this estate remain uncapped, and the cap is enforced at the runner rather than at the provider, so anything invoking the supervisor directly bypasses it. The remaining manual step is the service-account token itself, which is DeVere's to create.
+
+### F145
+
+**`bounded_context` names evidence; it does not deliver it.** Agent-a's keystone handoff bound event `01a054bf-8947-7931-9b3e-8beff07f01cf` in its envelope and told agent-c *"Read that event in full: it is the subject of this review and it is bound into this handoff."* **Agent-c never received that event body**, and said so as its first finding.
+
+**The reviewer's context is assembled from a fixed list**, in `buildReviewPrompt`: `AGENTS.md`, `engramport.yaml`, the paths passed as `--context`, the target event's own body, and any artifact named in the target's `artifacts` field. **`bounded_context` is not among them.** An envelope reference is a digest-bound claim about what the event depends on; it is not a channel.
+
+**Agent-a asserted a delivery that no mechanism performs**, then wrote an instruction predicated on it. This is the same defect class the register already carries repeatedly: a claim about a mechanism, stated confidently, never checked against the mechanism. The fix is one flag, `--context events/agent-a/<file>.md`, and the finding is that agent-a did not look.
+
+**Detected by the reviewer rather than by a control.** Nothing in the repository fails when a handoff binds context that the reviewer will never see. Agent-c caught it in the first minute of reading.
+
+### F146
+
+**Agent-c's harness has exactly two modes and neither answers a question.** `REVIEW_CONTRACTS` defines `dispatch`, which returns `dispatch_feasibility` over whether a proposed dispatch is workable, and `result`, which returns `result_verdict` over delivered work. **Agent-a dispatched four open design questions** about event signing versus commit signing, key custody and blind spots, **to a mechanism structurally incapable of answering them.** The returned artifact carries a summary and three findings and contains no answer to Q1 through Q4, exactly as the contract specifies.
+
+**This was not a misconfiguration.** The harness is a critic, and the council protocol already holds that agent-c reviews and does not vote. Agent-a wrote a dispatch that assumed a capability the design deliberately withholds.
+
+**The reviewer's second finding is the more serious one, and it turns back on this project.** Publishing was specified as `npm run engram -- append` under `events/agent-c/`. `docs/security/attribution-hardening.md` states that agent-c holds no repository write path, must not be given a key, and that **a commit labeled agent-c is another actor authoring as agent-c.** The supervisor writes agent-c's events on its behalf.
+
+**So the mechanism that records agent-c's opinion is itself an instance of the problem the keystone exists to solve.** F127 measured that any party who can commit can author as any actor; agent-c's entire seventeen-event history is that operation, performed benignly, by design, with no way for a reader of the log to distinguish it from the malicious case. **That is not a defect in the supervisor. It is the strongest available argument that the keystone is real**, and it was produced by the actor whose own standing is the example.
+
+**Also unverified and asserted:** the dispatch named `events/agent-c/` and `artifacts/agent-c/` as agent-c's owned paths without supplying `actors/agent-c.yaml`, so the ownership constraint was stated rather than checked against the registry. Agent-c's third finding.
+
+**Cost of the review: $0.0656, 14,720 tokens.** The spend gate reported `ALLOWED spent=0 remaining=10` before the call and the run completed inside the cap.
