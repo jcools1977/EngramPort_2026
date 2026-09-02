@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "title": "The Stops Were Part of the Build",
-  "dek": "A lab note from the EngramPort experiment: controls rejected their authors, independent review reversed verified acceptances, and the product advanced without becoming finished.",
+  "dek": "A lab note from the EngramPort experiment: controls rejected their authors, the architect escalated a defect that did not exist, impersonation succeeded, and a public package still has zero users.",
   "claims": [
     {
       "id": "first-verified-acceptance-refuted",
@@ -28,6 +28,33 @@
           "event_id": "01a03fa8-cf7b-72c0-b7c1-0467e45aab4e",
           "artifact_path": "artifacts/agent-c/reviews/01a03fa5-8240-72a3-9139-6aa28f7235e4.json",
           "artifact_sha256": "4d8e3b60a00272acf7ff200c5ec9db07b4a788c4d87d897263a779a9e8da5154"
+        }
+      ]
+    },
+    {
+      "id": "architect-false-defect",
+      "kind": "failure",
+      "headline": "The architect escalated a defect that did not exist",
+      "statement": "F136 records a failure by the architect rather than by the implementation. Agent-a called the published SDK's handoff method with an invalid empty bounded-context list, received ok:false and the exact validation error, read only the candidate relative path, and reported a silent success that wrote nothing. Exact reproduction against the public tarball showed the valid call writes correctly. The product defect was false; the narrower coverage finding was real, so the correction added a packed-surface control that would now kill the behavior agent-a had alleged.",
+      "evidence": [
+        {
+          "event_id": "01a05d26-ed11-7100-8f36-2a71616a4138",
+          "artifact_path": "artifacts/agent-b/sdk-published-surface-results.md",
+          "artifact_sha256": "717e4fc0ce18cabdc40669ec1d26044f352379b75279ea5deb59e3f463b9b198"
+        }
+      ]
+    },
+    {
+      "id": "impersonation-became-measured",
+      "kind": "failure",
+      "headline": "A second builder proved that attribution rested on honor",
+      "statement": "F111 was first a source reading: the caller selects an actor string and the verifier checks consistency, not entitlement. The synthetic second-builder exercise turned that mechanism into a measurement. Builder two created a client naming builder one, appended an event that verified as builder one's, and observed impersonation=accepted. The same exercise showed that the PostgreSQL disposition store could isolate private state while the Git event layer still accepted the false attribution. The chain proved what the record said; it did not prove who caused it.",
+      "finding_id": "F111",
+      "evidence": [
+        {
+          "event_id": "01a05432-f9fa-7705-a52d-91586cf80896",
+          "artifact_path": "artifacts/agent-b/second-builder-results.md",
+          "artifact_sha256": "7ed282d9b18760afa0bd5a6223f4955414fe5509b9c4428871d034003b15b30e"
         }
       ]
     },
@@ -91,10 +118,53 @@
       ]
     },
     {
+      "id": "repository-controls-narrowed-to-detection",
+      "kind": "correction",
+      "headline": "Four identity repairs reached the boundary of the repository",
+      "statement": "F108 forced the first correction: a registry digest stored beside the registry can be rewritten in the same commit as the registry, the rule, and its test. Later attempts reached the same wall from different directions. An event signature still needs an actor-to-key binding outside ordinary writers' control; a commit signature authenticates the pusher rather than the actor named inside an event; and a comparison with the introducing commit runs only after the append-time decision it was meant to influence. The repository can preserve and expose structural inconsistency, but authenticated authorship requires a pre-write boundary whose policy and credential are not mutable by event authors.",
+      "finding_id": "F108",
+      "evidence": [
+        {
+          "event_id": "01a03fdb-e566-7b58-b1bf-41cfcf5145a5",
+          "artifact_path": "artifacts/agent-b/rule-5-amendment-final-results.md",
+          "artifact_sha256": "61a153c492b7a44e2a780c780a356e4886ce23bd331cd548f3cddee515cff320"
+        },
+        {
+          "event_id": "01a057cb-51fa-7b83-96f2-0a594aba38d7",
+          "artifact_path": "artifacts/agent-b/agent-b-signing-results.md",
+          "artifact_sha256": "e99af4b7dda4871a9b37e8b374b50e26215c55986978440616e6054ec9952439"
+        },
+        {
+          "event_id": "01a0580c-ff7a-7305-b1c2-5ccbe8ca796c",
+          "artifact_path": "artifacts/agent-b/council-05-comparison.md",
+          "artifact_sha256": "55f55e44e123cf5b5afb3ff53018ad7b7a57eee42ade9d156e24685cf7d8686e"
+        }
+      ]
+    },
+    {
+      "id": "identity-keystone-moved-outside-log",
+      "kind": "correction",
+      "headline": "The missing principal became a deployment boundary",
+      "statement": "F117 joined enrollment, attribution, and possession-level retry at one missing fact: an authenticated principal. The resulting deployment distinction is explicit. Trusted collaborators can use the current Git substrate for durable structure, causality, and evidence. Mutually untrusting builders require an external admission and delegation service that authenticates a caller, authorizes the claimed actor before writing, and alone holds the protected-branch credential. That control plane adds centralized trust and availability; a clone can verify its receipt but cannot derive the real-world enrollment identity from repository bytes alone.",
+      "finding_id": "F117",
+      "evidence": [
+        {
+          "event_id": "01a04400-32e2-714d-badd-d7532d2b714f",
+          "artifact_path": "artifacts/agent-b/council-02-comparison.md",
+          "artifact_sha256": "ffb92658deaba36960695854be141833a75b721149d7fbf3840f8cd33fdc258a"
+        },
+        {
+          "event_id": "01a0580c-ff7a-7305-b1c2-5ccbe8ca796c",
+          "artifact_path": "artifacts/agent-b/council-05-comparison.md",
+          "artifact_sha256": "55f55e44e123cf5b5afb3ff53018ad7b7a57eee42ade9d156e24685cf7d8686e"
+        }
+      ]
+    },
+    {
       "id": "product-remains-partial",
       "kind": "correction",
       "headline": "The SDK exists, but the product claim remains partial",
-      "statement": "The package covers four public claims with qualifiers, and it calls the Port Watch claim partial in its own evidence. Moving work claims into PostgreSQL removes one process- and filesystem-local boundary, but it adds a reachable shared control-stream dependency. ADR 0045 records that consequence and leaves unresolved its tension with ADR 0039's statement that coordination needs no server. This is progress, not a finished product.",
+      "statement": "The repository is public, the package is installable, and a pull request can register a contributor through an executable merge-bound path. Those are release surfaces, not user evidence. EngramPort still has zero users. Its package covers four public claims with qualifiers, and its evidence calls the Port Watch claim partial. Moving work claims into PostgreSQL removes one process- and filesystem-local boundary while adding a reachable shared control-stream dependency. This is a testable product with a contribution path, not a finished or adopted one.",
       "evidence": [
         {
           "event_id": "01a05290-50e0-7784-ba7f-cebf44e3f591",
@@ -105,6 +175,11 @@
           "event_id": "01a0530f-1bb4-75fd-8d73-86049c9d412a",
           "artifact_path": "artifacts/agent-b/portable-claim-results.md",
           "artifact_sha256": "c52ab46ed0c5b72c4260c2fafa68e4ffaf02546b5ac1fa455c826fe960e6acc6"
+        },
+        {
+          "event_id": "01a05955-1fd2-752f-bd0f-ba19288c3cad",
+          "artifact_path": "artifacts/agent-b/pr-onboarding-results.md",
+          "artifact_sha256": "9de118b80702e2a32f48b8818deef55c67f64d7087f8466123348143a0531ec5"
         }
       ]
     },
@@ -118,6 +193,24 @@
           "event_id": "01a0498e-2405-7351-8078-b8b606244505",
           "artifact_path": "artifacts/agent-b/council-04-comparison.md",
           "artifact_sha256": "1e15cdf51b75ce5288ab1f028ce9f3f0ae96c48c3d4bcef533ef46ae8d8889e9"
+        }
+      ]
+    },
+    {
+      "id": "controls-earned-the-release-surfaces",
+      "kind": "success",
+      "headline": "Controls became release conditions instead of launch decoration",
+      "statement": "The site control refused an install claim while the package was unavailable, then the package was published and the same policy accepted a real install surface. The later whole-surface exercise found no handoff defect but added the missing method-level protection. The contribution path uses the same discipline: an unmerged actor proposal is refused, and the modeled maintainer merge is the authorization boundary. The controls did not merely describe the launch; they determined which claims could appear in it.",
+      "evidence": [
+        {
+          "event_id": "01a05d26-ed11-7100-8f36-2a71616a4138",
+          "artifact_path": "artifacts/agent-b/sdk-published-surface-results.md",
+          "artifact_sha256": "717e4fc0ce18cabdc40669ec1d26044f352379b75279ea5deb59e3f463b9b198"
+        },
+        {
+          "event_id": "01a05955-1fd2-752f-bd0f-ba19288c3cad",
+          "artifact_path": "artifacts/agent-b/pr-onboarding-results.md",
+          "artifact_sha256": "9de118b80702e2a32f48b8818deef55c67f64d7087f8466123348143a0531ec5"
         }
       ]
     },
