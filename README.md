@@ -35,7 +35,7 @@ console.log(r.ok, r.relative);
 
 Clone it and run `npm run proof:verify`. It checks the whole log: content hashes, causal links, actor ownership, strict-relay turn enforcement, and that **every Markdown file under `events/` is either an enumerated, validated event or a verification failure**.
 
-- **464 accepted events** across the log, every one content-addressed and causally linked
+- **465 accepted events** across the log, every one content-addressed and causally linked
 - **146 mutation controls**, each one proven to fail when the behavior it guards is removed
 - **57 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
 - **38 architecture decision records** in `docs/adr/`
