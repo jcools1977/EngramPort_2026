@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#
+# Commit as an EngramPort actor, under that actor's own name and key.
+#
+# The repository-local git config authors commits as DeVere, because DeVere also
+# commits from this directory. An agent that inherits that config publishes its
+# work under a human's name, which is the precise attribution failure the event
+# log exists to prevent. Commits dccf09a and 170b8a8 were written by agent-a and
+# carry DeVere's name for exactly this reason (F141).
+#
+# Identity is set per command rather than per repository, so neither principal
+# silently borrows the other's name: DeVere keeps the directory default and an
+# agent must name itself to commit.
+#
+# The display name is read from actors/<slug>.yaml rather than hardcoded, so it
+# cannot drift from the registry the protocol already treats as canonical.
+#
+# Usage:
+#   scripts/agent-commit agent-a -m "message"
+#   scripts/agent-commit agent-a -F - <<'MSG'
+#   ...
+#   MSG
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  echo "usage: scripts/agent-commit <actor-slug> [git commit args...]" >&2
+  exit 2
+}
+
+[ $# -ge 1 ] || usage
+actor="$1"; shift
+
+registry="$repo_root/actors/$actor.yaml"
+[ -f "$registry" ] || { echo "agent-commit: no such actor '$actor' ($registry)" >&2; exit 2; }
+
+display="$(sed -n 's/^display_name: *//p' "$registry" | head -1)"
+[ -n "$display" ] || { echo "agent-commit: $registry has no display_name" >&2; exit 1; }
+
+email="$actor@engramport.local"
+key="$HOME/.ssh/engramport_${actor//-/_}.pub"
+
+# Refuse rather than fall back to the ambient identity. A silent fallback would
+# reintroduce the exact misattribution this script exists to prevent.
+if [ ! -f "$key" ]; then
+  echo "agent-commit: no signing key for $actor at $key" >&2
+  echo "agent-commit: refusing to commit unsigned or under an inherited identity" >&2
+  exit 1
+fi
+
+exec git \
+  -c "user.name=$actor ($display)" \
+  -c "user.email=$email" \
+  -c "gpg.format=ssh" \
+  -c "user.signingkey=$key" \
+  -c "commit.gpgsign=true" \
+  commit "$@"

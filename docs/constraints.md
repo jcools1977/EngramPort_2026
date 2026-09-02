@@ -3090,3 +3090,21 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The control discriminates.** Run against `app/page.tsx` at `master` before the fix it exits 1 and names `/docs`; with the fix it exits 0 across all six routes. It was written against the tree that carried the defect rather than after the defect was removed, which is the only sequence that proves a check can fail.
 
 **Verified live on both domains after merge:** `/docs`, the public repository, `/join`, `/privacy` and `/terms` all appear on `engramport.com` and `www.engramport.com`, and every linked destination returns 200.
+
+### F141
+
+**Agent-a published its own work under DeVere's name.** Commits `dccf09a` (F139) and `170b8a8` (F140) were written by agent-a and are authored `J. DeVere Cooley <luke@covenantsystems.ai>`, signed with DeVere's key. The cause is the repository-local git config, which sets that identity for anything committed from this directory. Agent-a inherited it without checking, across two consecutive commits, both of which were findings about agent-a failing to check things.
+
+**This is the attribution failure the product exists to prevent, committed inside the product.** EngramPort's entire claim is that several builders' agents can work a shared repository with contribution remaining attributed. Two commits into a public repository under that claim, the agent's contributions were recorded as the human's.
+
+**Earlier commits show the correct shape**, so this was drift rather than an absent convention: `7b724bf` is authored `agent-a (Claude Architect) <agent-a@engramport.local>`, signed with `~/.ssh/engramport_agent_a`, and verifies. Fifty-one commits in history carry that form.
+
+**The direction of the error matters.** Attributing agent work to a human overstates what the human did and lets an agent's output inherit a person's standing without their review. The reverse, attributing human work to an agent, is also wrong but fails safe by comparison. **A repository-local identity cannot distinguish the two, because it answers "which directory" when the question is "which principal."**
+
+**Remediation is per-command identity rather than per-repository**, which is the discipline already used for signing elsewhere in this project. `scripts/agent-commit <actor-slug>` reads `display_name` from `actors/<slug>.yaml` so the name cannot drift from the registry, sets author and signing key for that one command, and **refuses to run when the actor's key is absent rather than falling back to the ambient identity.** A silent fallback would reproduce this finding exactly. Both refusals are exercised: an unknown actor exits 2, and a known actor with no key on disk exits 1.
+
+**A control now guards the impersonation direction.** `tests/commit-identity.test.mjs`, wired into `npm test`, fails when any commit carrying a good signature names an author it was not signed by. Its negative control plants a commit authored as agent-a and signed with DeVere's key, both principals being in `allowed_signers` so the signature itself verifies, and asserts the harness observes the disagreement. Across all history the repository has 68 signed commits and zero mismatches.
+
+**What the control does not do, and cannot.** It cannot establish who actually wrote a commit. `dccf09a` and `170b8a8` are internally consistent, signed by the principal they name, and still misattributed. **This is F108, F111, F117, F128 and F131 again**: the log attributes, it does not authenticate, and no control inside the repository closes that gap. What is now enforced is narrower and still worth having, that a signature and an author field cannot disagree in silence.
+
+**The two misattributed commits stand.** Correcting them requires rewriting published history on a public repository, which is reserved and which would trade an accurate record of a mistake for a tidier false one. The append-only log records the correction instead, which is the mechanism this project exists to argue for.
