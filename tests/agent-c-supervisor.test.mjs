@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -28,6 +29,18 @@ const fixedUsage = { input_tokens: 41, output_tokens: 17, total_tokens: 58, cost
 
 function check(name, operation) { test(name, { skip: selected !== "all" && selected !== name }, operation); }
 function stubModel(review = fixedReview) { return { review: async () => ({ review, model: "grok-synthetic", usage: fixedUsage }) }; }
+function sha256(value) { return createHash("sha256").update(value).digest("hex"); }
+const boundTargetRelative = "events/agent-a/20260902T115704Z_01a061fa-d7f1-7b9b-824d-185c792cd3e6.md";
+const boundEventRelative = "events/agent-a/20260830T221713Z_01a054bf-8947-7931-9b3e-8beff07f01cf.md";
+
+async function boundContextFixture() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "engramport-bound-context-"));
+  for (const surface of ["actors", "events", "artifacts", "engramport.yaml", "AGENTS.md"]) await cp(path.join(repository, surface), path.join(root, surface), { recursive: true });
+  await mkdir(path.join(root, "docs", "design"), { recursive: true });
+  await cp(path.join(repository, "docs/design/agent-c-review-prompt.md"), path.join(root, "docs/design/agent-c-review-prompt.md"));
+  const event = parseEvent(await readFile(path.join(root, boundTargetRelative), "utf8"), boundTargetRelative);
+  return { root, event };
+}
 
 async function fixture({ next = "agent-c", targetType = "handoff", isolated = false, actor = "agent-a" } = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "engramport-agent-c-"));
@@ -114,6 +127,74 @@ check("credential-context", async () => {
       assert.equal(error.message.includes(secret), false);
       return true;
     });
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("bounded-context-delivery", async () => {
+  const { root, event } = await boundContextFixture();
+  try {
+    const delivered = await supervisor.buildReviewPrompt(root, { event });
+    assert.match(delivered, /Pre-flight: the verified builder subject/);
+    const oldAssembly = await supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [] } } });
+    assert.doesNotMatch(oldAssembly, /Pre-flight: the verified builder subject/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("bounded-context-missing-event", async () => {
+  const { root, event } = await boundContextFixture();
+  try {
+    const missing = { ...event, meta: { ...event.meta, bounded_context: [{ type: "event", event_id: "01a00000-0000-7000-8000-000000000000" }] } };
+    await assert.rejects(supervisor.buildReviewPrompt(root, { event: missing }), (error) => error.code === "CONTEXT_EVENT_NOT_FOUND");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("bounded-context-event-digest", async () => {
+  const { root, event } = await boundContextFixture();
+  try {
+    await writeFile(path.join(root, boundEventRelative), `${await readFile(path.join(root, boundEventRelative), "utf8")}altered\n`);
+    await assert.rejects(supervisor.buildReviewPrompt(root, { event }), (error) => error.code === "CONTEXT_DIGEST_MISMATCH");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("bounded-context-artifact-digest", async () => {
+  const { root, event } = await boundContextFixture();
+  const relative = "artifacts/agent-a/bounded-context-synthetic.txt";
+  try {
+    const original = "bounded artifact evidence\n";
+    await writeFile(path.join(root, relative), original);
+    const ref = `${relative}#sha256:${sha256(original)}`;
+    assert.match(await supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [{ type: "artifact", ref }] } } }), /bounded artifact evidence/);
+    await writeFile(path.join(root, relative), "stale artifact evidence\n");
+    await assert.rejects(supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [{ type: "artifact", ref }] } } }), (error) => error.code === "CONTEXT_DIGEST_MISMATCH");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("legacy-artifact-digest", async () => {
+  const { root, event } = await boundContextFixture();
+  const relative = "artifacts/agent-a/legacy-context-synthetic.txt";
+  try {
+    await writeFile(path.join(root, relative), "changed legacy evidence\n");
+    const stale = `${relative}#sha256:${sha256("original legacy evidence\n")}`;
+    await assert.rejects(supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, artifacts: [stale] } } }), (error) => error.code === "CONTEXT_DIGEST_MISMATCH");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("bounded-context-size", async () => {
+  const { root, event } = await boundContextFixture();
+  const relative = "artifacts/agent-a/oversized-context.txt";
+  try {
+    const oversized = "x".repeat(1_000_001);
+    await writeFile(path.join(root, relative), oversized);
+    const ref = `${relative}#sha256:${sha256(oversized)}`;
+    await assert.rejects(supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [{ type: "artifact", ref }] } } }), (error) => error.code === "CONTEXT_TOO_LARGE");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+check("bounded-context-deduplication", async () => {
+  const { root, event } = await boundContextFixture();
+  try {
+    const prompt = await supervisor.buildReviewPrompt(root, { event }, [boundEventRelative]);
+    assert.equal(prompt.split(`<repository-file path=${JSON.stringify(boundEventRelative)}>`).length - 1, 1);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

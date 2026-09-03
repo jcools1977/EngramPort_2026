@@ -9,6 +9,7 @@ import { pathToFileURL } from "node:url";
 const root = path.resolve(import.meta.dirname, "..");
 const sourceFile = path.join(root, "packages/agent-c-supervisor/src/index.mjs");
 const boundaryFile = path.join(root, "packages/git-adapter/src/credential-boundary.mjs");
+const boundedContextFile = path.join(root, "packages/git-adapter/src/bounded-context.mjs");
 const temporary = mkdtempSync(path.join(tmpdir(), "agent-c-mutations-"));
 const mutations = [
   ["credential-reference", [['if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");', 'if (typeof credential !== "string" || !credential) refuse("CREDENTIAL_UNRESOLVED");']]],
@@ -30,13 +31,21 @@ const mutations = [
   ["credential-unavailable-reporting", [[
     '    await log("ERROR CREDENTIAL_UNAVAILABLE"); /* AGENT_C_CREDENTIAL_FAILURE_REPORT */\n    await notify("Agent C credential unavailable; review was not started.");',
     '    void log; /* AGENT_C_CREDENTIAL_FAILURE_REPORT_REMOVED */\n    void notify;'
-  ]]]
+  ]]],
+  ["bounded-context-delivery", [['  for (const record of await contextOperation(() => resolveBoundedContext(root, turn.event.meta.bounded_context ?? []))) addRecord(record);', '  void turn.event.meta.bounded_context; /* BOUNDED_CONTEXT_DELIVERY_REMOVED */']]],
+  ["bounded-context-missing-event", [], [], [['      if (!resolved) refuse("CONTEXT_EVENT_NOT_FOUND", reference.event_id);', '      if (!resolved) continue; /* CONTEXT_EVENT_NOT_FOUND_REMOVED */']]],
+  ["bounded-context-event-digest", [], [], [['      if (hashBody(resolved.event.body) !== resolved.event.meta.content_sha256) refuse("CONTEXT_DIGEST_MISMATCH", reference.event_id);', '      void resolved.event.meta.content_sha256; /* CONTEXT_EVENT_DIGEST_REMOVED */']]],
+  ["bounded-context-artifact-digest", [], [], [['  if (expectedSha256 && sha256(content) !== expectedSha256) refuse("CONTEXT_DIGEST_MISMATCH", relative);', '  void expectedSha256; /* CONTEXT_ARTIFACT_DIGEST_REMOVED */']]],
+  ["legacy-artifact-digest", [], [], [['  if (expectedSha256 && sha256(content) !== expectedSha256) refuse("CONTEXT_DIGEST_MISMATCH", relative);', '  void expectedSha256; /* LEGACY_ARTIFACT_DIGEST_REMOVED */']]],
+  ["bounded-context-size", [['    if (Buffer.byteLength(record.content) > MAX_CONTEXT_BYTES) refuse("CONTEXT_TOO_LARGE", { contextFile: record.relative });', '    void record.content; /* CONTEXT_RECORD_SIZE_REMOVED */'], ['  if (Buffer.byteLength(combined) > MAX_CONTEXT_BYTES) refuse("CONTEXT_TOO_LARGE");', '  void combined; /* CONTEXT_COMBINED_SIZE_REMOVED */']]],
+  ["bounded-context-deduplication", [['  const addRecord = (record) => { if (!seen.has(record.relative)) { seen.add(record.relative); records.push(record); } };', '  const addRecord = (record) => { records.push(record); }; /* CONTEXT_DEDUPLICATION_REMOVED */']]]
 ];
 
 try {
   const original = readFileSync(sourceFile, "utf8");
   const originalBoundary = readFileSync(boundaryFile, "utf8");
-  for (const [name, replacements, boundaryReplacements = []] of mutations) {
+  const originalBoundedContext = readFileSync(boundedContextFile, "utf8");
+  for (const [name, replacements, boundaryReplacements = [], boundedContextReplacements = []] of mutations) {
     let mutatedBoundary = originalBoundary;
     for (const [before, after] of boundaryReplacements) {
       assert.equal(mutatedBoundary.includes(before), true, `boundary mutation target changed: ${name}`);
@@ -44,8 +53,16 @@ try {
     }
     const boundaryModule = path.join(temporary, `${name}-credential-boundary.mjs`);
     writeFileSync(boundaryModule, mutatedBoundary);
+    let mutatedBoundedContext = originalBoundedContext.replace("./verify-log.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href);
+    for (const [before, after] of boundedContextReplacements) {
+      assert.equal(mutatedBoundedContext.includes(before), true, `bounded context mutation target changed: ${name}`);
+      mutatedBoundedContext = mutatedBoundedContext.replace(before, after);
+    }
+    const boundedContextModule = path.join(temporary, `${name}-bounded-context.mjs`);
+    writeFileSync(boundedContextModule, mutatedBoundedContext);
     let mutated = original
       .replace("../../git-adapter/src/credential-boundary.mjs", pathToFileURL(boundaryModule).href)
+      .replace("../../git-adapter/src/bounded-context.mjs", pathToFileURL(boundedContextModule).href)
       .replace("../../git-adapter/src/verify-log.mjs", pathToFileURL(path.join(root, "packages/git-adapter/src/verify-log.mjs")).href);
     for (const [before, after] of replacements) {
       assert.equal(mutated.includes(before), true, `mutation target changed: ${name}`);

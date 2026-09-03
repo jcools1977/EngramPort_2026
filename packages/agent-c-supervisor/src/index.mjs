@@ -4,6 +4,7 @@ import { mkdir, open, readFile, readdir, realpath, rm } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { detectCredential } from "../../git-adapter/src/credential-boundary.mjs";
+import { BoundedContextError, readRepositoryContext, resolveArtifactReferences, resolveBoundedContext } from "../../git-adapter/src/bounded-context.mjs";
 import { parseEvent, parseRecord, verifyLog } from "../../git-adapter/src/verify-log.mjs";
 
 const AGENT_C = "agent-c";
@@ -136,33 +137,31 @@ export async function assertOpenAgentCTurn(root, targetRelative) {
   return { event, relayCount };
 }
 
-async function readBoundedContextFile(root, relative) {
-  if (path.isAbsolute(relative) || relative.includes("\0")) refuse("CONTEXT_PATH_REFUSED");
-  if (slash(relative).split("/").some((segment) => segment.startsWith("."))) refuse("CONTEXT_PATH_REFUSED");
-  const absolute = path.resolve(root, relative);
-  const rootReal = await realpath(root);
-  const fileReal = await realpath(absolute).catch(() => refuse("CONTEXT_PATH_REFUSED"));
-  if (!fileReal.startsWith(`${rootReal}${path.sep}`) || fileReal.includes(`${path.sep}.git${path.sep}`)) refuse("CONTEXT_PATH_REFUSED");
-  const content = await readFile(fileReal, "utf8");
-  if (Buffer.byteLength(content) > MAX_CONTEXT_BYTES) refuse("CONTEXT_TOO_LARGE");
-  return { relative: slash(path.relative(rootReal, fileReal)), content };
+async function contextOperation(operation) {
+  try { return await operation(); }
+  catch (error) {
+    if (error instanceof BoundedContextError) refuse(error.code, { contextFile: error.reference });
+    throw error;
+  }
 }
 
 export async function buildReviewPrompt(root, turn, contextPaths = [], reviewMode = "dispatch") {
   if (!Object.hasOwn(REVIEW_CONTRACTS, reviewMode)) refuse("REVIEW_MODE_REFUSED");
-  const prompt = await readBoundedContextFile(root, "docs/design/agent-c-review-prompt.md");
+  const prompt = await contextOperation(() => readRepositoryContext(root, "docs/design/agent-c-review-prompt.md"));
   const fixed = ["AGENTS.md", "engramport.yaml", ...contextPaths];
   const seen = new Set();
   const records = [];
+  const addRecord = (record) => { if (!seen.has(record.relative)) { seen.add(record.relative); records.push(record); } };
   for (const relative of fixed) {
-    if (seen.has(relative)) continue;
-    seen.add(relative);
-    records.push(await readBoundedContextFile(root, relative));
+    addRecord(await contextOperation(() => readRepositoryContext(root, relative)));
   }
-  records.push({ relative: turn.event.relative ?? "target-event", content: turn.event.body });
-  const artifactPaths = (turn.event.meta.artifacts ?? []).map((reference) => reference.split("#", 1)[0]);
-  for (const relative of artifactPaths) if (!seen.has(relative)) records.push(await readBoundedContextFile(root, relative));
-  for (const record of records) assertNoCredential(record.content, null, "CREDENTIAL_CONTEXT_REFUSED", { contextFile: record.relative });
+  addRecord({ relative: turn.event.relative ?? "target-event", content: turn.event.body });
+  for (const record of await contextOperation(() => resolveBoundedContext(root, turn.event.meta.bounded_context ?? []))) addRecord(record);
+  for (const record of await contextOperation(() => resolveArtifactReferences(root, turn.event.meta.artifacts ?? []))) addRecord(record);
+  for (const record of records) {
+    if (Buffer.byteLength(record.content) > MAX_CONTEXT_BYTES) refuse("CONTEXT_TOO_LARGE", { contextFile: record.relative });
+    assertNoCredential(record.content, null, "CREDENTIAL_CONTEXT_REFUSED", { contextFile: record.relative });
+  }
   const context = records.map(({ relative, content }) => `\n<repository-file path=${JSON.stringify(relative)}>\n${content}\n</repository-file>`).join("");
   const modeInstruction = reviewMode === "dispatch"
     ? "Review mode: dispatch. Assess whether the proposed dispatch is feasible. Return dispatch_feasibility."
