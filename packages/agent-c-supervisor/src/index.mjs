@@ -39,10 +39,15 @@ function scrubReferences(value) {
     .replace(/op:\/\/[^\s"']+/g, "OP_REFERENCE");
 }
 
-function assertNoCredential(value, credential, code = "CREDENTIAL_OUTPUT_REFUSED", details = {}) {
+function assertNoCredential(value, credential, code = "CREDENTIAL_OUTPUT_REFUSED", details = {}, options = {}) {
   const serialized = typeof value === "string" ? value : JSON.stringify(value);
   if (credential && serialized.includes(credential)) refuse(code, { ...details, matchedPattern: "resolved-credential" });
-  const finding = detectCredential(scrubReferences(serialized));
+  const finding = detectCredential(scrubReferences(serialized), options);
+  // "I could not scan this" is not "I found a credential". Reporting the first
+  // as the second is why an oversize corpus read as a leak for an afternoon.
+  if (finding.hit && finding.code === "RECORD_TOO_LARGE") {
+    refuse("SCAN_INPUT_TOO_LARGE", { ...details, bytes: Buffer.byteLength(serialized) });
+  }
   if (finding.hit) refuse(code, { ...details, matchedPattern: finding.pattern ?? finding.code });
 }
 
@@ -229,7 +234,13 @@ export class XaiResponsesClient {
   constructor({ credential, model = "grok-4.6", fetchImpl = globalThis.fetch }) { this.credential = credential; this.model = model; this.fetchImpl = fetchImpl; }
 
   async review(prompt, reviewMode = "dispatch") {
-    assertNoCredential(prompt, this.credential, "CREDENTIAL_CONTEXT_REFUSED");
+    // The scanner's default ceiling is 64KB and it fails closed above it, while
+    // this supervisor's policy ceiling is MAX_CONTEXT_BYTES. Scanning the whole
+    // prompt with the default made the effective limit 6.4% of the stated one,
+    // and reported the truncation as CREDENTIAL_CONTEXT_REFUSED, sending a
+    // reader hunting a secret that was never there. The scan now covers exactly
+    // what policy admits.
+    assertNoCredential(prompt, this.credential, "CREDENTIAL_CONTEXT_REFUSED", {}, { maxBytes: MAX_CONTEXT_BYTES });
     const contract = REVIEW_CONTRACTS[reviewMode];
     if (!contract) refuse("REVIEW_MODE_REFUSED");
     let response;

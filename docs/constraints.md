@@ -3214,3 +3214,19 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The control discriminates, observed rather than asserted.** Against the original resolver it fails two of three cases, naming both the unresolved reference and the wrongly accepted legacy delimiter; with the fix restored all three pass. It was written against the broken code, not after the repair.
 
 **What it does not fix.** The two patterns are still two literals in two files, kept identical by a comment. A shared export would make the drift impossible rather than merely tested for, and that is the stronger fix, not taken here.
+
+### F150
+
+**The credential scanner made the reviewer's effective context limit 6.4% of its stated one, and blamed a credential for it.** `MAX_CONTEXT_BYTES` is 1,000,000 and the supervisor checks against it twice. It then passed the whole assembled prompt to `detectCredential`, whose default ceiling is **64KB** and which returns `{ hit: true, code: "RECORD_TOO_LARGE" }` above it. `assertNoCredential` treats any hit as a credential and refuses with `CREDENTIAL_CONTEXT_REFUSED`.
+
+**So a 70KB review corpus was reported as a leaked secret.** Every individual file scanned clean; the refusal came from the combined prompt at a second call site. An afternoon was spent looking for a credential that did not exist, in files that did not contain one.
+
+**"I could not scan this" is not "I found a credential."** Reporting the first as the second inverts the meaning of the only security signal the reviewer emits, and it fails in the direction that wastes the reader's attention on a phantom rather than hiding a real leak. The fail-closed behaviour was right; the label was a lie.
+
+**Found by use rather than by inspection.** It surfaced only when an agent-a dispatch finally supplied a complete review corpus, which had never happened before because agent-a had been hand-listing context and omitting things for six consecutive dispatches. **A defect that needs correct behaviour upstream to become visible will not be found by the party who keeps behaving incorrectly.**
+
+**Remediation.** The prompt scan now runs with `maxBytes: MAX_CONTEXT_BYTES`, so the scan covers exactly what policy admits. `RECORD_TOO_LARGE` is surfaced as its own refusal, `SCAN_INPUT_TOO_LARGE`, carrying the byte count, rather than as a credential refusal.
+
+**The control guards the tempting wrong fix, which is to raise a ceiling and quietly scan less.** `tests/scan-covers-policy-limit.test.mjs` asserts three things: the old default still refuses a 300KB clean prompt for size specifically; the same prompt scans clean at the policy limit; and **a credential planted past the old 64KB boundary inside a 600KB prompt is still detected**. The third is the load-bearing one. Beyond the policy limit it still fails closed.
+
+**Consequence, observed immediately:** the review that had been refused three times went through and returned `verified`. The build under review was accepted on its evidence rather than on its author's account of it.

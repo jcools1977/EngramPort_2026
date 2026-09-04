@@ -37,7 +37,7 @@ Clone it and run `npm run proof:verify`. It checks the whole log: content hashes
 
 - **466 accepted events** across the log, every one content-addressed and causally linked
 - **146 mutation controls**, each one proven to fail when the behavior it guards is removed
-- **58 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
+- **59 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
 - **38 architecture decision records** in `docs/adr/`
 
 *(Event, finding and ADR counts are derived by `scripts/readme-counts` and enforced by `npm run counts:check`, which fails when this section disagrees with the repository. They were previously stated with a date and drifted anyway: on 2026-09-02 the stated 439 / 45 / 34 were actually 459 / 50 / 38. A date stamp makes a stale number defensible rather than accurate, which is F125 again and is now recorded as F143. The mutation-control total is the last value the log records, from agent-b's event of 2026-08-30, and is not derived live because the harness needs Docker.)*
