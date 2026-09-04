@@ -162,7 +162,7 @@ check("bounded-context-artifact-digest", async () => {
   try {
     const original = "bounded artifact evidence\n";
     await writeFile(path.join(root, relative), original);
-    const ref = `${relative}#sha256:${sha256(original)}`;
+    const ref = `${relative}#sha256=${sha256(original)}`;
     assert.match(await supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [{ type: "artifact", ref }] } } }), /bounded artifact evidence/);
     await writeFile(path.join(root, relative), "stale artifact evidence\n");
     await assert.rejects(supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [{ type: "artifact", ref }] } } }), (error) => error.code === "CONTEXT_DIGEST_MISMATCH");
@@ -174,7 +174,7 @@ check("legacy-artifact-digest", async () => {
   const relative = "artifacts/agent-a/legacy-context-synthetic.txt";
   try {
     await writeFile(path.join(root, relative), "changed legacy evidence\n");
-    const stale = `${relative}#sha256:${sha256("original legacy evidence\n")}`;
+    const stale = `${relative}#sha256=${sha256("original legacy evidence\n")}`;
     await assert.rejects(supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, artifacts: [stale] } } }), (error) => error.code === "CONTEXT_DIGEST_MISMATCH");
   } finally { await rm(root, { recursive: true, force: true }); }
 });
@@ -185,7 +185,7 @@ check("bounded-context-size", async () => {
   try {
     const oversized = "x".repeat(1_000_001);
     await writeFile(path.join(root, relative), oversized);
-    const ref = `${relative}#sha256:${sha256(oversized)}`;
+    const ref = `${relative}#sha256=${sha256(oversized)}`;
     await assert.rejects(supervisor.buildReviewPrompt(root, { event: { ...event, meta: { ...event.meta, bounded_context: [{ type: "artifact", ref }] } } }), (error) => error.code === "CONTEXT_TOO_LARGE");
   } finally { await rm(root, { recursive: true, force: true }); }
 });

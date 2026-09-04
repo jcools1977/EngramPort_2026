@@ -3198,3 +3198,19 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **Two candidate remedies, neither taken here.** Widen the supervisor to review `message` targets, which changes an accepted control and needs its own dispatch; or add a protocol-level withdrawal that lets the *sender* retire an unanswered turn, which strict relay currently forbids because it would let an actor edit the effect of an accepted event. **The second is the more honest fix and the more dangerous one**, and it is a design question rather than a repair.
 
 **Not remediated. The stuck turn is left in place** as the standing example, because deleting it would destroy the only instance of the defect while proving nothing about the rule that produced it.
+
+### F149
+
+**The F145 fix delivered events and silently refused every artifact.** `verify-log` validates an artifact reference against `^([^#]+)#sha256=([0-9a-f]{64})$`. The resolver shipped in `bounded-context.mjs` split the same string on `"#sha256:"`. **The two halves were written apart, disagreed on one character, and nothing crossed between them.** Binding an artifact into `bounded_context` therefore returned `CONTEXT_REFERENCE_REFUSED` while events resolved normally, so the failure read as a caller mistake rather than a defect.
+
+**The fix for "bounded context names evidence and nothing delivers it" did not deliver artifacts**, which is the half of F145 that mattered most for the reader it was written for.
+
+**How it passed review, which is worse than the bug.** Three tests in `tests/agent-c-supervisor.test.mjs` constructed references with `"#sha256:"`, the resolver's delimiter, rather than the one a writer emits. **They tested the parser against itself.** Every one was green, and green over a feature that could not work end to end. **That is a test that cannot fail, discovered on the same day agent-a proposed building a tool to find tests that cannot fail, and the proposed tool would not have caught it** because no mutation of the resolver breaks a test that shares its assumption.
+
+**Found by using the substrate on a foreign problem.** The an2b-workshop experiment bound an evidence artifact into a handoff and was refused. Nothing in EngramPort's own use exercised that path, because agent-a had until then always cited artifacts in prose, which is the defect F147 recorded.
+
+**Remediation.** The resolver now matches with the same pattern the validator enforces, held in one named constant with a comment binding the two together. The three tests are corrected to the writer's format; all 22 supervisor controls still pass. `tests/bounded-context-roundtrip.test.mjs` is added to `npm test` and crosses from writer to reader, which is the only place the disagreement was ever visible.
+
+**The control discriminates, observed rather than asserted.** Against the original resolver it fails two of three cases, naming both the unresolved reference and the wrongly accepted legacy delimiter; with the fix restored all three pass. It was written against the broken code, not after the repair.
+
+**What it does not fix.** The two patterns are still two literals in two files, kept identical by a comment. A shared export would make the drift impossible rather than merely tested for, and that is the stronger fix, not taken here.
