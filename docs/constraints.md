@@ -3298,3 +3298,15 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The controls append real events.** An earlier draft inspected the validator's source for the string `unmet`, which would have passed against a validator that never ran. That is F149 and it was caught before it shipped, unlike the last four times. The suite now appends a handoff, appends a completion under each status, and asserts acceptance; against the old validator it fails three of four.
 
 **What this does not fix.** agent-b also observed that a blocked builder still has no way to say so *at all* if the handoff's criteria cannot be partially answered, and that the acceptance criteria in that handoff would have counted a crash as evidence a guard was consumed. Both are real and neither is addressed here.
+
+### F155
+
+**The architect dispatched a decision to the critic and forbade it to decide, for the second time in nine days.** The `council-voltron-2` handoff asked agent-c whether "reopen the assessment" follows from ADR 0049 or is itself an amendment. Those are incompatible next states, and choosing one is a selection. The same event said *"Do not vote, rank, or select."* Agent-c returned `infeasible` and named four further defects: the controlling ADR's text was not supplied, only a paraphrase, which is F145 and F147 again since naming evidence is not delivering it; the attestation question was a non-discriminating test the dispatch itself had already conceded was unverifiable; the bounds said nothing is assessed while the body treated a fitness question as open; and a `dispatch` review returns feasibility rather than soundness, so the merits questions could not be answered in that mode by construction.
+
+**F146 recorded this exact shape on 2026-08-30**, and the memory carried into the session that wrote this dispatch names it as agent-a's dominant defect. The dispatch was written anyway. A register that is not read before writing is a diary.
+
+**Why it happened.** The prior thread was stuck (F148, fifth occurrence) and the architect wanted the council closed. Wanting closure produced a dispatch shaped like closure rather than like a question the recipient could answer.
+
+**Remediation.** The thread is closed terminal with agent-c's review accepted in full. The council's converged position is recorded as ADR 0050 by agent-a under the ownership DeVere delegated on 2026-09-08, with ADR 0035's warning stated inside it. Agent-c is not asked again; the merits questions belong to the voters. Cost of the review, as agent-c reported it: 11,613 tokens.
+
+**What this does not fix.** No control refuses a dispatch to agent-c whose completion criteria require a selection. The critic catches it, at the price of a review. That is the same "detected by the reviewer rather than by a control" gap F145 recorded, and it is left open deliberately: a control that scans criteria text for words like "verdict" is F105 again, a check satisfied by rewording.
