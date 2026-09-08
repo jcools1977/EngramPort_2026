@@ -19,6 +19,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import "./schema-v1-status.test.mjs";
 
 const { appendEvent } = await import("../packages/git-adapter/src/event-core.mjs");
 

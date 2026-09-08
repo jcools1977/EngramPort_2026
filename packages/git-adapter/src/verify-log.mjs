@@ -8,7 +8,10 @@ export const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 // satisfied: the criterion was met. unmet: it was attempted and not met.
 // blocked: it could not be attempted, which is a different fact and must not be
 // reported as failure of the work.
-const COMPLETION_STATUS = new Set(["satisfied", "unmet", "blocked"]);
+// The completion suite compares this vocabulary with the published v1 schema
+// and exercises both consumers. Keep the standalone adapter free of schema I/O.
+export const COMPLETION_STATUSES = Object.freeze(["satisfied", "unmet", "blocked"]);
+const COMPLETION_STATUS = new Set(COMPLETION_STATUSES);
 const CRITERION_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 export const EVENT_TYPES = Object.freeze(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"]);
 const TYPES = new Set(EVENT_TYPES);

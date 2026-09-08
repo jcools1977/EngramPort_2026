@@ -1,0 +1,36 @@
+[
+  {
+    "criterion_id": "schema-accepts-all-statuses",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f157-schema-status-results.md#sha256=ae81d95f66568756a7b9999782f884523a8aef64e00858e58c9a96c563ad071c"
+      }
+    ]
+  },
+  {
+    "criterion_id": "no-second-copy",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f157-schema-status-results.md#sha256=ae81d95f66568756a7b9999782f884523a8aef64e00858e58c9a96c563ad071c"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f157-schema-status-results.md#sha256=ae81d95f66568756a7b9999782f884523a8aef64e00858e58c9a96c563ad071c"
+      },
+      {
+        "type": "event",
+        "event_id": "01a0829a-b23f-7274-b9d5-1861adeaea41"
+      }
+    ]
+  }
+]

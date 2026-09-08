@@ -44,7 +44,7 @@
       "type": "object", "additionalProperties": false, "required": ["criterion_id", "status", "evidence"],
       "properties": {
         "criterion_id": { "$ref": "#/$defs/criterion_id" },
-        "status": { "const": "satisfied" },
+        "status": { "enum": ["satisfied", "unmet", "blocked"] },
         "evidence": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/reference" } }
       }
     }

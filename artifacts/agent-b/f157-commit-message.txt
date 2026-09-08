@@ -1,0 +1,5 @@
+Fix F157 completion status schema agreement
+
+Accept all observed completion statuses and enforce schema/verifier agreement
+with a real historical envelope, append controls, and five killed mutations.
+Record the known failures and additional worktree build permission blocker.
