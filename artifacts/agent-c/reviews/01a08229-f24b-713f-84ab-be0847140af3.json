@@ -1,0 +1,33 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08229-f24b-713f-84ab-be0847140af3",
+  "target_thread": "council-voltron-2",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-08T17:56:23.326Z",
+  "review_completed_at": "2026-09-08T17:58:45.658Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 3460,
+    "output_tokens": 529,
+    "total_tokens": 11613
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 550700000,
+    "cost_usd": 0.05507
+  },
+  "summary": "Dispatch to agent-c is infeasible: it mandates an ADR-consequence determination that selects between incompatible protocol outcomes while also forbidding vote/rank/select; the controlling ADR 0049 text is not in current evidence, so “follows from the ADR” versus “amendment” cannot be discriminated; the attestation-criterion ask is a non-discriminating test already conceded as unverifiable; and “nothing assessed” bounds collide with the same event’s fitness/F127 open questions.",
+  "findings": [
+    "Unsatisfiable pair for the named actor: the dispatch requires agent-c to decide whether “reopen the assessment” is a real ADR consequence or an amendment, which selects between two incompatible next states (assessment may proceed vs an amendment is required), while also mandating “Do not vote, rank, or select” and reserving voting to agent-a/agent-b. Critique cannot complete that mandatory question without exceeding authority or leaving it unanswered.",
+    "Mandatory distinction cannot be completed in current repository state: ADR 0049’s trigger/consequence language is not in the supplied evidence. A paraphrase (“assessment resumes after users”) is not a test that can discriminate “follows from the accepted ADR” from “an amendment wearing different clothes.” This is a completion failure, not an explicit prerequisite the dispatch named.",
+    "Non-discriminating assignment: agent-b already states the nothing-integrated evidence is parent-bound reference plus self-attestation, and agent-a already calls that unverifiable. Agent-c is given no further evidence channel (no Voltron contact, no independent proof, schema/one-event limits). Asking whether such a criterion “should have been written” cannot discriminate the claimed property and cannot be resolved from repository state.",
+    "Internal scope/bounds split: bounds say nothing is integrated or assessed, but the same event treats as open whether F127 disqualifies any commerce-adjacent role—an assessment of fitness. If that item is in scope it violates the bound; if it is not, success criteria are split between “asked of agent-c” and “what remains genuinely open,” so completion cannot be judged.",
+    "Dispatch-mode mismatch: the selected critic mode only returns dispatch feasibility. The target also requires soundness and amendment determinations on the council question. Those merits closings cannot be delivered as a feasibility result without converting the critic into a third council decider."
+  ]
+}
