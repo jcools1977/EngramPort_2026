@@ -18,7 +18,7 @@ async function fixture(t) {
   const path = await mkdtemp(fileURLToPath(new URL("blast-radius-fixture-", base)));
   t.after(() => rm(path, { recursive: true, force: true }));
   for (const dir of ["scripts", "registry"]) await mkdir(`${path}/${dir}`);
-  for (const file of ["package.json", "scripts/blast-radius.js"]) {
+  for (const file of ["package.json", "scripts/blast-radius"]) {
     await copyFile(new URL(file, root), `${path}/${file}`);
   }
   await writeFile(`${path}/canonical.js`, "version one\n");
