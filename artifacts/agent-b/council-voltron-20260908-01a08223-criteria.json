@@ -1,0 +1,52 @@
+[
+  {
+    "criterion_id": "vote-recorded",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-voltron-20260908-01a08223-position.md#sha256=9b912a9f0ab3e57b529c407245e0e11c47423c5753b8090a31bf94272979bc53"
+      }
+    ]
+  },
+  {
+    "criterion_id": "record-authority-tested",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-voltron-20260908-01a08223-position.md#sha256=9b912a9f0ab3e57b529c407245e0e11c47423c5753b8090a31bf94272979bc53"
+      }
+    ]
+  },
+  {
+    "criterion_id": "amendment-critique",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-voltron-20260908-01a08223-position.md#sha256=9b912a9f0ab3e57b529c407245e0e11c47423c5753b8090a31bf94272979bc53"
+      }
+    ]
+  },
+  {
+    "criterion_id": "counter-case-strengthened",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-voltron-20260908-01a08223-position.md#sha256=9b912a9f0ab3e57b529c407245e0e11c47423c5753b8090a31bf94272979bc53"
+      }
+    ]
+  },
+  {
+    "criterion_id": "nothing-integrated",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "event",
+        "event_id": "01a08223-2f6c-77ff-be01-b0dd845c0ac2"
+      }
+    ]
+  }
+]
