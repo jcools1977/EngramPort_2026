@@ -1,0 +1,161 @@
+{
+  "phase": "before artifact creation; initial session outputs matched this snapshot",
+  "engram_head": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit_code": 0,
+    "stdout": "63d26fdadaa74674068dc33d01867d3176552640\n",
+    "stderr": ""
+  },
+  "engram_status": {
+    "command": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "eidetic_head": {
+    "command": [
+      "git",
+      "-C",
+      "/Users/an2b/an2b/products/eidetic",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit_code": 0,
+    "stdout": "4d03772b2d536faaf360ed1bf2eba0d3f4c27da5\n",
+    "stderr": ""
+  },
+  "eidetic_status": {
+    "command": [
+      "git",
+      "-C",
+      "/Users/an2b/an2b/products/eidetic",
+      "status",
+      "--porcelain"
+    ],
+    "exit_code": 0,
+    "stdout": " M .gitignore\n M CLAUDE.md\n?? AN2B_AUTONOMOUS_COMPANY_ORCHESTRATION_BLUEPRINT_2026-09-01.md\n?? DEMO.md\n?? ENGRAMPORT-VOLTRON-STATUS-2026-09-01.md\n?? GOVSCOUT-AUDIT-2026-09-01.md\n?? MCP-HANDOFF.md\n?? NORMAN-AUDIT-2026-09-01.md\n?? Norman-AN2B-Strategy-Deck.md\n?? YESCHEF-AUDIT-2026-09-01.md\n?? mission-control/\n",
+    "stderr": ""
+  },
+  "digests": {
+    "command": [
+      "shasum",
+      "-a",
+      "256",
+      "/Users/an2b/an2b/products/eidetic/voltron/ENGRAMPORT_AGENT_HANDOFF.md",
+      "/Users/an2b/an2b/products/eidetic/voltron/protocol/manifest.json",
+      "artifacts/agent-a/adr-0050-copy.md",
+      "artifacts/agent-a/seals/voltron-assessment-agent-a.sha256.json"
+    ],
+    "exit_code": 0,
+    "stdout": "46c06dc19af6c2e2451f3c1f703cce1edb68f2a996ac63196e2931f8e7499332  /Users/an2b/an2b/products/eidetic/voltron/ENGRAMPORT_AGENT_HANDOFF.md\nc0edd38fdc8ebc201634d477305a18aec69d3c696a0b4b683ceb5029f25f8dfd  /Users/an2b/an2b/products/eidetic/voltron/protocol/manifest.json\nc06a884796eb23fff86e65c5fe6f7573b8cabbec4901a3eff348191c9cac2604  artifacts/agent-a/adr-0050-copy.md\n1829217a10ec4969e72e4f47206be076e8a94938f709cf2e3d370c427869058e  artifacts/agent-a/seals/voltron-assessment-agent-a.sha256.json\n",
+    "stderr": ""
+  },
+  "reveal_path_exists": false,
+  "reveal_history": {
+    "command": [
+      "git",
+      "log",
+      "--format=%H",
+      "--",
+      "artifacts/agent-a/voltron-assessment-agent-a.md"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "after": {
+    "eidetic_head": {
+      "command": [
+        "git",
+        "-C",
+        "/Users/an2b/an2b/products/eidetic",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "stdout": "4d03772b2d536faaf360ed1bf2eba0d3f4c27da5\n",
+      "stderr": ""
+    },
+    "eidetic_status": {
+      "command": [
+        "git",
+        "-C",
+        "/Users/an2b/an2b/products/eidetic",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "stdout": " M .gitignore\n M CLAUDE.md\n?? AN2B_AUTONOMOUS_COMPANY_ORCHESTRATION_BLUEPRINT_2026-09-01.md\n?? DEMO.md\n?? ENGRAMPORT-VOLTRON-STATUS-2026-09-01.md\n?? GOVSCOUT-AUDIT-2026-09-01.md\n?? MCP-HANDOFF.md\n?? NORMAN-AUDIT-2026-09-01.md\n?? Norman-AN2B-Strategy-Deck.md\n?? YESCHEF-AUDIT-2026-09-01.md\n?? mission-control/\n",
+      "stderr": ""
+    },
+    "engram_status": {
+      "command": [
+        "git",
+        "status",
+        "--porcelain",
+        "--untracked-files=all"
+      ],
+      "exit_code": 0,
+      "stdout": "?? artifacts/agent-b/voltron-assessment-agent-b.md\n?? artifacts/agent-b/voltron-assessment-commit-message.txt\n?? artifacts/agent-b/voltron-assessment-observations.json\n?? artifacts/agent-b/voltron-assessment-probe-results.json\n?? artifacts/agent-b/voltron-assessment-probe.mjs\n",
+      "stderr": ""
+    },
+    "reveal_path_exists": false,
+    "reveal_history": {
+      "command": [
+        "git",
+        "log",
+        "--format=%H",
+        "--",
+        "artifacts/agent-a/voltron-assessment-agent-a.md"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "unchanged": {
+    "eidetic_head": true,
+    "eidetic_status": true
+  },
+  "probe_execution": {
+    "command": [
+      "node",
+      "artifacts/agent-b/voltron-assessment-probe.mjs"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"forged_actor_candidate\": {\n    \"ok\": true,\n    \"errors\": [],\n    \"accepted_file_written\": false\n  },\n  \"changed_body_without_rehash\": {\n    \"ok\": false,\n    \"errors\": [\n      \"events/agent-a/20260908T192818Z_01a0827e-1eba-7000-8000-000000000001.md: content hash mismatch\"\n    ]\n  },\n  \"inbox_projection\": {\n    \"without_candidate\": 0,\n    \"with_candidate\": [\n      {\n        \"from\": \"agent-a\",\n        \"event_id\": \"01a0827e-1eba-7000-8000-000000000001\"\n      }\n    ]\n  },\n  \"spend_projection\": {\n    \"at_cap\": {\n      \"allowed\": false,\n      \"code\": \"DAILY_CAP_REACHED\",\n      \"spentTicks\": 100000000000,\n      \"capTicks\": 100000000000\n    },\n    \"changed_cost_to_zero\": {\n      \"allowed\": true,\n      \"spentTicks\": 0,\n      \"capTicks\": 100000000000,\n      \"remainingTicks\": 100000000000\n    }\n  },\n  \"body_normalization\": {\n    \"distinct_input_bytes\": true,\n    \"equal_hashes\": true\n  },\n  \"schema_result_status\": {\n    \"const\": \"satisfied\"\n  },\n  \"limits\": \"No append, provider invocation, filesystem mutation, credential access, external authentication test, or end-to-end spend attack in this probe.\"\n}\n",
+    "stderr": ""
+  },
+  "preseal_proof": {
+    "command": [
+      "npm",
+      "run",
+      "proof:verify"
+    ],
+    "exit_code": 0,
+    "stdout": "\n> engramport@0.1.0 proof:verify\n> node scripts/verify-log\n\n\u2713 verified 475 events across 95 thread(s) and 3 actors\n",
+    "stderr": ""
+  },
+  "publication_preparation": {
+    "staging": {
+      "command": "git add -- artifacts/agent-b/voltron-assessment-agent-b.md artifacts/agent-b/voltron-assessment-observations.json artifacts/agent-b/voltron-assessment-probe.mjs artifacts/agent-b/voltron-assessment-probe-results.json artifacts/agent-b/voltron-assessment-commit-message.txt",
+      "observed_stderr": "fatal: Unable to create '/Users/an2b/an2b/products/EngramPORT/.git/worktrees/EngramPORT-assess/index.lock': Operation not permitted\n",
+      "note": "The compound command ended with git diff, so its overall exit 0 is not evidence that git add succeeded."
+    },
+    "commit": {
+      "command": "scripts/agent-commit agent-b -F artifacts/agent-b/voltron-assessment-commit-message.txt",
+      "exit_code": 128,
+      "stderr": "fatal: Unable to create '/Users/an2b/an2b/products/EngramPORT/.git/worktrees/EngramPORT-assess/index.lock': Operation not permitted\n"
+    },
+    "sealed_before_reveal": "blocked",
+    "staged": false
+  }
+}

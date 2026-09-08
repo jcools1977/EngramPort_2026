@@ -1,0 +1,4 @@
+agent-b: seal bounded Voltron assessment with current-byte evidence
+
+Assess the named Voltron handoff without changing either implementation.
+Record manifest mismatch, consumer authority risks, and read-only probes.

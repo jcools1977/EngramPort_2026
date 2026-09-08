@@ -1,0 +1,72 @@
+[
+  {
+    "criterion_id": "digests-computed",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/voltron-assessment-agent-b.md#sha256=c06c571fa624d63117da0d714ddfe541c767a0574ca3baa61e78f37e9e0442fe"
+      }
+    ]
+  },
+  {
+    "criterion_id": "twelve-answers-labeled",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/voltron-assessment-agent-b.md#sha256=c06c571fa624d63117da0d714ddfe541c767a0574ca3baa61e78f37e9e0442fe"
+      }
+    ]
+  },
+  {
+    "criterion_id": "seven-part-response",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/voltron-assessment-agent-b.md#sha256=c06c571fa624d63117da0d714ddfe541c767a0574ca3baa61e78f37e9e0442fe"
+      }
+    ]
+  },
+  {
+    "criterion_id": "invariant-answered",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/voltron-assessment-agent-b.md#sha256=c06c571fa624d63117da0d714ddfe541c767a0574ca3baa61e78f37e9e0442fe"
+      }
+    ]
+  },
+  {
+    "criterion_id": "candidate-findings",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/voltron-assessment-agent-b.md#sha256=c06c571fa624d63117da0d714ddfe541c767a0574ca3baa61e78f37e9e0442fe"
+      }
+    ]
+  },
+  {
+    "criterion_id": "bounds-observable",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/voltron-assessment-agent-b.md#sha256=c06c571fa624d63117da0d714ddfe541c767a0574ca3baa61e78f37e9e0442fe"
+      }
+    ]
+  },
+  {
+    "criterion_id": "sealed-before-reveal",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "event",
+        "event_id": "01a0827e-1eba-793a-9315-a5936106bf55"
+      }
+    ]
+  }
+]

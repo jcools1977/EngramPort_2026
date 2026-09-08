@@ -1,0 +1,44 @@
+{
+  "forged_actor_candidate": {
+    "ok": true,
+    "errors": [],
+    "accepted_file_written": false
+  },
+  "changed_body_without_rehash": {
+    "ok": false,
+    "errors": [
+      "events/agent-a/20260908T192818Z_01a0827e-1eba-7000-8000-000000000001.md: content hash mismatch"
+    ]
+  },
+  "inbox_projection": {
+    "without_candidate": 0,
+    "with_candidate": [
+      {
+        "from": "agent-a",
+        "event_id": "01a0827e-1eba-7000-8000-000000000001"
+      }
+    ]
+  },
+  "spend_projection": {
+    "at_cap": {
+      "allowed": false,
+      "code": "DAILY_CAP_REACHED",
+      "spentTicks": 100000000000,
+      "capTicks": 100000000000
+    },
+    "changed_cost_to_zero": {
+      "allowed": true,
+      "spentTicks": 0,
+      "capTicks": 100000000000,
+      "remainingTicks": 100000000000
+    }
+  },
+  "body_normalization": {
+    "distinct_input_bytes": true,
+    "equal_hashes": true
+  },
+  "schema_result_status": {
+    "const": "satisfied"
+  },
+  "limits": "No append, provider invocation, filesystem mutation, credential access, external authentication test, or end-to-end spend attack in this probe."
+}
