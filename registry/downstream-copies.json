@@ -9,6 +9,14 @@
       "location": "nep1019/lex-service:coordination/bin/vendor/turn-decision.mjs",
       "vendored_on": "2026-09-08",
       "provenance": "Vendored because the published SDK is 0.1.0 and does not carry the turn decision. That deployment's own copy lacked the thread-depth cap; see F152."
+    },
+    {
+      "id": "an2b-workshop-vendored-turn-decision",
+      "canonical_path": "packages/git-adapter/src/turn-decision.mjs",
+      "vendored_sha256": "94c31d74531dbda8883bc447b37c2fbfc3e7f55d5fff1381a6664bf9e5d8b460",
+      "location": "jcools1977/an2b-workshop:src/vendor/decision.js",
+      "vendored_on": "2026-09-08",
+      "provenance": "Vendored at 2026-09-08T16:10:34.067Z; src/vendor/decision.manifest.json; artifacts/agent-b/close-f152/evidence.md"
     }
   ]
 }

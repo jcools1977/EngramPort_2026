@@ -3266,3 +3266,17 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **What this still does not do.** It cannot verify the downstream file, only the canonical one it was copied from. If the collaborator edits their copy, their own vendor check catches it and this one cannot. The two checks are complementary and neither is sufficient, which is a property of vendoring rather than of these tools.
 
 **The honest scope of the fix:** the registry converts "we will remember" into "the suite fails." It does not convert vendoring into importing. That happens when the SDK ships the decision, and it is the reason to publish.
+
+### F152 closure
+
+**F152 is closed. Both remaining copies now consume one decision, and both are visible from the canonical repository.**
+
+**The gap that persisted longest was the most serious one.** After a model published a governance decision under the owner's name, the human-seat guard was added to each runner **separately, as a check outside the decision**. So for four days the guard that stopped an impersonation existed twice and was covered by conformance zero times, in a repository whose runners were executing unattended. `rate-ledger-unreadable` did not exist there at all.
+
+**The discriminating test is the one that settles it.** Removing the human-seat guard from the vendored decision makes the runner fall through to the next refusal, `working-tree-dirty`, rather than continuing to refuse. **If a local check had survived, removing the decision's guard would have changed nothing**, and the migration would have been cosmetic.
+
+**What remains in the runners is observation, not decision.** They read the actor record to learn whether a seat is human and pass that into the shared verdict. Observation must be local because a repository can only be observed where it is; the verdict must not be, which is the whole distinction F152 was about.
+
+**Both copies are now registered upstream**, and a change to the canonical file reports both as stale rather than silently stranding either. Verified: two registered, both current, both reported stale on an unregistered change, both current again on restore.
+
+**What is still true.** These are copies. The registry converts a memory into a failing suite; it does not convert vendoring into importing. **Publishing the decision in the SDK is what ends this**, and that remains a reserved action with a now-concrete justification rather than a preference.
