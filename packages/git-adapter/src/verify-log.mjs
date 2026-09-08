@@ -5,6 +5,10 @@ import path from "node:path";
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
+// satisfied: the criterion was met. unmet: it was attempted and not met.
+// blocked: it could not be attempted, which is a different fact and must not be
+// reported as failure of the work.
+const COMPLETION_STATUS = new Set(["satisfied", "unmet", "blocked"]);
 const CRITERION_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 export const EVENT_TYPES = Object.freeze(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"]);
 const TYPES = new Set(EVENT_TYPES);
@@ -281,7 +285,14 @@ function validateV1Envelope(event, relative, errors) {
         if (!result || typeof result !== "object" || Array.isArray(result)) { errors.push(`${label}: result must be an object`); return; }
         if (Object.keys(result).sort().join(",") !== "criterion_id,evidence,status") errors.push(`${label}: fields must be criterion_id, status, and evidence`);
         if (!CRITERION_ID.test(result.criterion_id ?? "")) errors.push(`${label}: invalid criterion_id`);
-        if (result.status !== "satisfied") errors.push(`${label}: completion status must be satisfied`);
+        // A completion could previously only report success. A builder that did
+        // the work published structured results; a builder that was blocked
+        // could only write prose, so the machine-readable record was
+        // structurally incapable of recording failure. Any report derived from
+        // the log then showed a blocked thread as indistinguishable from an
+        // unanswered one. Found when a builder refused to relabel unperformed
+        // work as satisfied and said the envelope left it no honest option.
+        if (!COMPLETION_STATUS.has(result.status)) errors.push(`${label}: status must be one of ${[...COMPLETION_STATUS].join(", ")}`);
         if (!Array.isArray(result.evidence) || result.evidence.length < 1 || result.evidence.length > MAX_CONTEXT_REFS) errors.push(`${label}: evidence must contain 1-${MAX_CONTEXT_REFS} references`);
         else result.evidence.forEach((reference, evidenceIndex) => validateReference(reference, `${label}.evidence[${evidenceIndex}]`, errors));
       });

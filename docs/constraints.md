@@ -3280,3 +3280,21 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **Both copies are now registered upstream**, and a change to the canonical file reports both as stale rather than silently stranding either. Verified: two registered, both current, both reported stale on an unregistered change, both current again on restore.
 
 **What is still true.** These are copies. The registry converts a memory into a failing suite; it does not convert vendoring into importing. **Publishing the decision in the SDK is what ends this**, and that remains a reserved action with a now-concrete justification rather than a preference.
+
+### F154
+
+**A completion could only report success.** The version-1 envelope accepted `criteria_results` on `completion` events and required every result to carry `status: "satisfied"`. It also forbids `criteria_results` on a `reply`.
+
+**So a builder that did the work published machine-readable results, and a builder that was blocked could only write prose.** The structured record was incapable of representing failure, in a project whose stated premise is that corrections and reversals keep the same prominence as successes.
+
+**The consequence was already visible and had been misread.** The criteria join reports a thread with no recorded results as *"cannot tell"*. A thread where a builder was genuinely blocked and said so in detail is indistinguishable, in every derived report, from a thread nobody answered. **The Re:PORTer has been under-reporting failure since it was written**, and the cause was upstream of it.
+
+**Found by a builder refusing to lie.** Asked to build an isolation harness and unable to establish isolation, agent-b probed two mechanisms, found both unavailable, and declined to substitute a weaker check. It then wrote: *"The installed SDK requires `status === 'satisfied'` for every criteria result, and prohibits `criteria_results` on replies. I am using the explicit instruction to publish an honest refusal when blocked; I am not relabeling unperformed work as satisfied."*
+
+**It was correct on every point**, including that the envelope left it no honest option. The refusal is worth more than the harness would have been.
+
+**Remediation.** The vocabulary is now `satisfied`, `unmet`, `blocked`, and the distinction between the last two is deliberate: **`unmet` is a fact about the work, `blocked` is a fact about the world.** A criterion that could not be attempted must not be recorded as work that failed, and collapsing them would lose exactly the information a reader needs.
+
+**The controls append real events.** An earlier draft inspected the validator's source for the string `unmet`, which would have passed against a validator that never ran. That is F149 and it was caught before it shipped, unlike the last four times. The suite now appends a handoff, appends a completion under each status, and asserts acceptance; against the old validator it fails three of four.
+
+**What this does not fix.** agent-b also observed that a blocked builder still has no way to say so *at all* if the handoff's criteria cannot be partially answered, and that the acceptance criteria in that handoff would have counted a crash as evidence a guard was consumed. Both are real and neither is addressed here.
