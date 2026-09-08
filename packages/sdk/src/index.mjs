@@ -7,6 +7,18 @@ import {
 } from "../../port-watch/src/index.mjs";
 
 export {
+
+// The turn decision, exported so every deployment imports one implementation
+// instead of restating it. It existed four times before it existed once, and
+// the copies disagreed within hours in both directions: one lacked the
+// thread-depth cap that stops two runners looping forever, another lacked the
+// human-seat refusal that stopped a model publishing under its owner's name.
+export {
+  REFUSALS as TURN_REFUSALS,
+  decideBefore as decideTurnBefore,
+  decideAfter as decideTurnAfter,
+  demonstrateBounds as demonstrateTurnBounds,
+} from "../../git-adapter/src/turn-decision.mjs";
   FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, PostgresClaimStore, RecordingRunner,
   appendEvent, gitAuthorizedInboxSource, listInbox, listInboxEntries, validateAppendInputs,
 };

@@ -3230,3 +3230,23 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **The control guards the tempting wrong fix, which is to raise a ceiling and quietly scan less.** `tests/scan-covers-policy-limit.test.mjs` asserts three things: the old default still refuses a 300KB clean prompt for size specifically; the same prompt scans clean at the policy limit; and **a credential planted past the old 64KB boundary inside a 600KB prompt is still detected**. The third is the load-bearing one. Beyond the policy limit it still fails closed.
 
 **Consequence, observed immediately:** the review that had been refused three times went through and returned `verified`. The build under review was accepted on its evidence rather than on its author's account of it.
+
+### F152
+
+**The turn decision existed four times before it existed once, and the fourth copy was written four days after the finding about the third.** F149 recorded a value duplicated across two files whose copies drifted by one character. The remedy for the runner guards was a shared `decideTurn`, verified by conformance. Agent-a then wrote a fresh implementation of the same decision into a second repository while porting a runner to Windows, and did not notice until measuring.
+
+**Within hours the copies disagreed in both directions, and both disagreements were dangerous.**
+
+**The LEX copy had no thread-depth cap.** That is the guard that stops two autonomous runners passing a turn back and forth forever, and the collaborator whose repository it was written into is in the process of acquiring the second runner. The guard was absent from precisely the deployment about to need it.
+
+**The workshop's shared decision had no human-seat refusal.** After a model published a governance decision under the owner's name, the fix was added *to each runner separately* rather than to the decision that conformance covers. **The guard that stopped an impersonation was the one guard not under test.**
+
+**A guard that is duplicated is a guard that is not enforced.** Conformance proved that every backend reached the same verdict from the same observation, which was true and beside the point: the decision it tested was not the decision every deployment ran.
+
+**Remediation.** One definition in `packages/git-adapter/src/turn-decision.mjs`, the union of all four copies at nine refusals, re-exported from the SDK so deployments import rather than restate. It observes nothing, so any deployment can watch every bound fire on its own platform in a second, which is what makes a bound confirmed rather than asserted.
+
+**The controls guard the failure shape, not today's list.** `tests/turn-decision.test.mjs` requires every declared refusal to have a demonstration, every demonstration to name a reachable refusal, every guard field to be exercised, the kill switch to survive every other condition being simultaneously true, and an unreadable ledger to refuse rather than count as zero.
+
+**Both drift modes are demonstrated failing.** Adding a refusal with no demonstration fails the suite. Demoting the kill switch below another guard fails the suite. Restored, all eight pass.
+
+**What this does not fix.** The four existing runners still carry their own copies until each is migrated, and migration is per-deployment work. The union is now the reference; the copies are now known to be behind it rather than assumed to agree.
