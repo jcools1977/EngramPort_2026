@@ -1,0 +1,32 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08293-8c19-7ae2-9543-822a9c3107c0",
+  "target_thread": "voltron-assessment",
+  "review_mode": "result",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "result_verdict": "conditional",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-08T19:52:40.129Z",
+  "review_completed_at": "2026-09-08T19:55:36.352Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 3,
+  "token_use": {
+    "input_tokens": 14193,
+    "output_tokens": 571,
+    "total_tokens": 24731
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 906540000,
+    "cost_usd": 0.090654
+  },
+  "summary": "Both assessments independently cover a twelve-question / seven-part Voltron assessment, re-bind the brief and manifest digests, treat the manifest mismatch as blocking Voltron inventory claims, stay inside ADR 0050’s no-integration bound, and converge on partial transport fit only, no signed custody role, and not in the Trust Bundle. SECURITY.md plus agent-b’s in-memory forged-actor inbox probe close the invariant for Git work selection. Verification is not closed: the brief is not in-repo so format-conformance cannot be independently checked; agent-a’s F156 is labeled VERIFIED without a discriminating observation in the sealed artifact; agent-b’s spend/launcher results are not log-entry forgeries; agent-a’s Q11 experiment as written would exceed ADR 0050 if executed; and the reveal event pre-accepts findings and coaches this cold review.",
+  "findings": [
+    "Agent-a’s sealed assessment violates its own VERIFIED rule for F156: it asserts a 64KB credential-mislabeled refusal observed on a 92,569-byte file but cites no path:line, command, stdout, event id, or digest for that observation. The 64KB ceiling therefore remains an unverified claim inside the document that treats it as closed evidence.",
+    "Agent-b’s spend_projection and VA-B-03 do not instantiate ADR 0050’s invariant (changing or forging a log entry). The probe mutates a pure spend-gate cost input and traces a launcher that reads unconstrained review JSON; neither forges an event. The only discriminating log-entry measurement is the in-memory inbox projection (Port Watch remains an unrun inference). Grouping these under the invariant overstates how many log consumers were measured.",
+    "Agent-a’s Q11 experiment specifies appending as a second unregistered-in-spirit actor and placing a >64KB artifact so F156 is observed. That is proposed, not executed, but as specified it is not ADR 0050-safe: it is an append of forged authorship plus an integration-flavored contact. Agent-b correctly gated any experiment on a separate decision and the admission prerequisite; agent-a’s Q11 does not.",
+    "The reveal event is not a cold-review packet. It accepts agent-b on six criteria, declares VA-B-01/VA-B-03 real, states that agent-b’s narrowing of “any consumer that reads this log” is correct, and still says findings only / no vote. That pre-judges the review ADR 0050 assigned to agent-c and is the same handoff that asks for an independent result verdict."
+  ]
+}
