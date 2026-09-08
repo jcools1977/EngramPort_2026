@@ -5,12 +5,14 @@ import { discoverEventFiles, parseEvent, verifyLog } from "./verify-log.mjs";
 import { verifyWelcome } from "./welcome-verify.mjs";
 import { ACTION_PROFILE, PLAN_PROFILE, compileSetupFile } from "./workspace-setup.mjs";
 import { executeDryRun } from "./workspace-dry-run.mjs";
+import { initProject } from "./init.mjs";
 
 // SDK consumers import event-core.mjs directly; the CLI re-exports these exact
 // bindings for compatibility and adapts argv without a second swappable core.
 export { appendEvent, listInbox, validateAppendInputs };
 
 const ARGUMENT_PROFILES = new Map([
+  ["init", new Set(["actor", "kind", "project", "mode"])],
   ["welcome verify", new Set(["package"])],
   ["setup compile", new Set(["file"])],
   ["setup dry-run", new Set(["file", "temp-dir"])],
@@ -52,6 +54,10 @@ async function threadHasEvents(cwd, thread) {
 export async function run(argv, cwd = process.cwd()) {
   const options = args(argv);
   const command = options._[0];
+  if (command === "init") {
+    for (const file of await initProject(options, cwd)) console.log(file);
+    return 0;
+  }
   if (command === "welcome" && options._[1] === "verify") {
     if (!options.package) throw new Error("welcome verify requires --package");
     const result = await verifyWelcome(path.resolve(cwd, options.package), { root: cwd });
@@ -125,6 +131,6 @@ export async function run(argv, cwd = process.cwd()) {
     if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(result.relative); return 0;
   }
-  console.log("EngramPort Git\n\nCommands:\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUID] [--next SLUG] [--artifacts REF,...] [--bounded-context JSON] [--completion-criteria JSON] [--criteria-results JSON]");
+  console.log("EngramPort Git\n\nCommands:\n  init --actor SLUG --kind human|agent [--project SLUG] [--mode free_form|strict_relay]\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUID] [--next SLUG] [--artifacts REF,...] [--bounded-context JSON] [--completion-criteria JSON] [--criteria-results JSON]");
   return command ? 1 : 0;
 }

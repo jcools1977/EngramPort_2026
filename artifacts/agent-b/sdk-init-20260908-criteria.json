@@ -1,0 +1,72 @@
+[
+  {
+    "criterion_id": "init-scaffolds-verifiable",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "init-refuses-existing-project",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "init-refuses-bad-input",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "init-never-overwrites",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "bin-from-clean-consumer",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "readme-install-rewritten",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/sdk-init-20260908-results.md#sha256=10e4014784f1e411566f42a4db90fa8690cf841baf769643eb0fbaa58f78c65f"
+      }
+    ]
+  }
+]

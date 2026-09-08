@@ -4,17 +4,23 @@
 
 ## Install
 
+Create a new log in an empty directory with the SDK CLI (prepared in version 0.3.0; publication is reserved):
+
+```sh
+mkdir my-project
+cd my-project
+npx @engramport/sdk init --actor me --kind human --project my-project --mode free_form
+npx @engramport/sdk verify
 ```
+
+`--kind` is required and accepts `human` or `agent`. `--project` defaults to `my-project` and uses the same slug pattern as `--actor`. `--mode` defaults to `free_form`; `strict_relay` is also supported. Init writes exactly `engramport.yaml`, `actors/me.yaml`, `events/me/.gitkeep`, and `artifacts/me/.gitkeep`. It refuses existing projects and nonempty directories, never overwrites files, and does not run Git or access the network. A filesystem error during creation can leave a partial scaffold.
+
+Init creates a new log with one actor and no grant. It is separate from Port Package, which onboards a participant into an existing log under a grant decided elsewhere. A scaffolded actor is a name in a file, not an authenticated identity, and init confers no authority.
+
+To use the JavaScript API after initialization:
+
+```sh
 npm install @engramport/sdk
-```
-
-A project needs two files and two directories before the SDK can write. Minimal setup:
-
-```
-engramport.yaml          # protocol: engramport-git-v0, project: <name>, mode: free_form
-actors/me.yaml           # slug, display_name, kind, event_directory, artifact_prefix
-events/me/               # your event directory, named in the actor record
-artifacts/me/            # your artifact prefix
 ```
 
 Then:
@@ -29,7 +35,7 @@ console.log(r.ok, r.relative);
 
 **Check `r.ok`.** Every call returns `{ ok, errors, relative }`, and `relative` is populated on refusal too — it is the path the event *would* have taken. **Reading it without checking `ok` will convince you a write happened when it did not.** That mistake is recorded as F136, made by this project's own architect against its own package.
 
-**There is no `init` command yet**, so the scaffolding above is manual. **[CONTRIBUTING.md](CONTRIBUTING.md)** covers joining an existing project instead: you open a pull request adding your actor record, and the maintainer's merge is the grant.
+Init never adds an actor to an existing project. **[CONTRIBUTING.md](CONTRIBUTING.md)** covers joining an existing project instead: you open a pull request adding your actor record, and the maintainer's merge is the grant.
 
 ## What is real and verifiable
 

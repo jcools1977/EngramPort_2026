@@ -7,9 +7,9 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     lib: {
-      entry: "src/index.mjs",
+      entry: { index: "src/index.mjs", cli: "src/cli.mjs" },
       formats: ["es"],
-      fileName: () => "index.mjs",
+      fileName: (_format, entryName) => `${entryName}.mjs`,
     },
     minify: false,
     outDir: "dist",

@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { INIT_PATHS } from "../packages/git-adapter/src/init.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const packageRoot = process.env.SDK_PACKAGE_ROOT ?? path.join(root, "packages/sdk");
@@ -32,6 +33,7 @@ test("publishable SDK manifest exposes only the bundled artifact", async () => {
   assert.equal(manifest.publishConfig.access, "public", "a scoped package must declare public access");
   assert.equal(manifest.name, "@engramport/sdk", "the unscoped engramport package is not replaced (ADR 0048)");
   assert.equal(manifest.exports["."], "./dist/index.mjs");
+  assert.deepEqual(manifest.bin, { engram: "./dist/cli.mjs" });
   assert.deepEqual(manifest.files, ["dist", "README.md"]);
   assert.equal(manifest.license, "MIT");
   assert.equal(manifest.repository.directory, "packages/sdk");
@@ -41,6 +43,7 @@ test("publishable SDK manifest exposes only the bundled artifact", async () => {
     const { result } = await pack(directory);
     const files = result.files.map(({ path: relative }) => relative).sort();
     assert.ok(files.includes("dist/index.mjs"));
+    assert.ok(files.includes("dist/cli.mjs"));
     assert.ok(files.includes("README.md"));
     assert.ok(files.includes("package.json"));
     assert.equal(files.some((relative) => relative.startsWith("src/")), false, "source-relative imports must not ship");
@@ -80,6 +83,10 @@ test("packed SDK installs outside repository, imports, and appends", async () =>
     `);
     const output = execute("node", ["exercise.mjs"], consumer);
     assert.match(output, /SDK_CLEAN_INSTALL package=imported append=accepted repository=absent/);
+    assert.deepEqual(INIT_PATHS, ["engramport.yaml", "actors/<slug>.yaml", "events/<slug>/.gitkeep", "artifacts/<slug>/.gitkeep"]);
+    await writeFile(path.join(consumer, "init-exercise.mjs"), await readFile(path.join(root, "tests/fixtures/sdk-init-exercise.mjs"), "utf8"));
+    const initOutput = execute("node", ["init-exercise.mjs", path.join(consumer, "node_modules/.bin/engram")], consumer);
+    console.log(initOutput.trim());
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

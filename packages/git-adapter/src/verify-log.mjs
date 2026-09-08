@@ -4,7 +4,7 @@ import path from "node:path";
 
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
-const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
+export const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 // satisfied: the criterion was met. unmet: it was attempted and not met.
 // blocked: it could not be attempted, which is a different fact and must not be
 // reported as failure of the work.

@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+
+const root = path.resolve(import.meta.dirname, "..");
+const temporary = await mkdtemp(path.join(os.tmpdir(), "sdk-init-mutations-"));
+function execute(command, args, cwd) {
+  const result = spawnSync(command, args, { cwd, encoding: "utf8" });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, `${command}: ${result.stdout}${result.stderr}`);
+  return result.stdout;
+}
+const cases = [
+  ["existing-project", "INIT_PROJECT_EXISTS"],
+  ["invalid-slug", "INIT_ACTOR_REFUSED"],
+  ["missing-kind", "INIT_KIND_REQUIRED"],
+  ["invalid-kind", "INIT_KIND_REFUSED"],
+  ["invalid-mode", "INIT_MODE_REFUSED"],
+  ["invalid-project", "INIT_PROJECT_REFUSED"],
+  ["existing-actor", "INIT_PATH_EXISTS"],
+  ["nonempty", "INIT_NOT_EMPTY"],
+  ["unknown-flag", "ARGUMENT_REFUSED"],
+  ["exclusive-write", "wx"],
+];
+let executed = 0;
+try {
+  const output = execute("npm", ["pack", "--json", "--silent", "--cache", path.join(temporary, "cache"), "--pack-destination", temporary], path.join(root, "packages/sdk"));
+  const [packed] = JSON.parse(output.slice(output.lastIndexOf("[\n  {")));
+  const consumer = path.join(temporary, "consumer");
+  execute("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", "--cache", path.join(temporary, "cache"), "--prefix", consumer, path.join(temporary, packed.filename)], temporary);
+  await writeFile(path.join(consumer, "package.json"), '{"type":"module"}\n');
+  const originalDist = path.join(consumer, "node_modules/@engramport/sdk/dist");
+  const original = await readFile(path.join(originalDist, "cli.mjs"), "utf8");
+  const fixture = path.join(consumer, "exercise.mjs");
+  await cp(path.join(root, "tests/fixtures/sdk-init-exercise.mjs"), fixture);
+  for (const [name, code] of cases) {
+    const dist = path.join(consumer, name);
+    await cp(originalDist, dist, { recursive: true });
+    const cli = path.join(dist, "cli.mjs");
+    let baseline = original;
+    if (name === "exclusive-write") {
+      const anchor = "for (const [index, file] of files.entries()) await writeFile";
+      assert.ok(baseline.includes(anchor));
+      baseline = baseline.replace(anchor, 'await writeFile(path.join(cwd, "engramport.yaml"), "competing writer\\n", { flag: "wx" });\n\t' + anchor);
+    }
+    await writeFile(cli, baseline);
+    // Preserve the executable mode from the installed bin's copied target.
+    execute(process.execPath, [fixture, cli, name], consumer);
+    let mutated;
+    if (name === "exclusive-write") {
+      const anchor = 'contents[index], { flag: "wx" }';
+      assert.ok(baseline.includes(anchor));
+      mutated = baseline.replace(anchor, 'contents[index], { flag: "w" }');
+    } else if (name === "missing-kind") {
+      const line = baseline.split("\n").find((line) => line.includes('refuse("INIT_KIND_REQUIRED"'));
+      assert.ok(line);
+      mutated = baseline.replace(line, '\tkind ??= "agent";');
+    } else if (name === "unknown-flag") {
+      const anchor = 'if (!profile.has(flag)) argumentRefused(flag);';
+      assert.ok(baseline.includes(anchor));
+      mutated = baseline.replace(anchor, "void flag;");
+    } else {
+      const line = baseline.split("\n").find((line) => line.includes(`refuse("${code}"`));
+      assert.ok(line, `${code}: mutation anchor`);
+      mutated = baseline.replace(line, "");
+    }
+    await writeFile(cli, mutated);
+    const result = spawnSync(process.execPath, [fixture, cli, name], { cwd: consumer, encoding: "utf8" });
+    assert.ifError(result.error);
+    executed++;
+    assert.equal(result.status, 1, `${name}: mutation survived`);
+    assert.match(result.stderr, /AssertionError/, `${name}: must fail an assertion, not loading or syntax`);
+    assert.ok(result.stderr.includes(`${name}:`), `${name}: must fail its own discriminating assertion`);
+    const observation = JSON.parse(result.stdout.trim());
+    console.log(JSON.stringify({ mutation: name, baseline: "passed", after: "killed", observation }));
+    await writeFile(cli, baseline);
+    execute(process.execPath, [fixture, cli, name], consumer);
+  }
+  console.log(`SDK_INIT_MUTATIONS executed=${executed} killed=${executed} restored=${executed}`);
+} finally { await rm(temporary, { recursive: true, force: true }); }

@@ -1,0 +1,5 @@
+Add packed SDK init for new project scaffolding
+
+Implement explicit actor kind, shared slug validation, exclusive writes, and
+clean-consumer controls with ten observed discriminating mutations. Record
+the sdk-init completion with five satisfied and two unmet criteria.
