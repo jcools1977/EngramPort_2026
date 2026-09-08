@@ -1,0 +1,16 @@
+[
+  {
+    "sha": "2f033ec52f2b1cc28228b347f2945f851b86d4c0",
+    "author": "agent-a@engramport.local",
+    "signer": "luke@covenantsystems.ai",
+    "date": "2026-09-08T15:15:52-04:00",
+    "finding": "F160"
+  },
+  {
+    "sha": "502ab6f008f99ec52b07bb812e4d9f6745e88909",
+    "author": "agent-b@engramport.local",
+    "signer": "luke@covenantsystems.ai",
+    "date": "2026-09-08T15:56:34-04:00",
+    "finding": "F160"
+  }
+]

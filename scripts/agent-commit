@@ -50,6 +50,29 @@ if [ ! -f "$key" ]; then
   exit 1
 fi
 
+# Require an exact principal/key binding in the external trust file. Public-key
+# filenames and comments are not identity. Only direct, option-free entries are
+# supported here; patterns, certificates and options fail closed.
+signers="$HOME/.ssh/engramport_allowed_signers"
+key_binding_matches() {
+  [ -f "$signers" ] || return 1
+  ssh-keygen -lf "$key" >/dev/null 2>&1 || return 1
+  local key_type key_blob key_comment
+  read -r key_type key_blob key_comment < "$key" || return 1
+  awk -v principal="$email" -v kind="$key_type" -v blob="$key_blob" '
+    $2 == kind && $3 == blob {
+      count = split($1, principals, ",")
+      for (i = 1; i <= count; i++) if (principals[i] == principal) matched = 1
+    }
+    END { exit !matched }
+  ' "$signers"
+}
+if ! key_binding_matches; then
+  echo "agent-commit: signing key at $key is not bound to $email in $signers" >&2
+  echo "agent-commit: refusing to commit under a foreign or unverified signing key" >&2
+  exit 1
+fi
+
 exec git \
   -c "user.name=$actor ($display)" \
   -c "user.email=$email" \
