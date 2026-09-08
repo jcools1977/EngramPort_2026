@@ -1,0 +1,6 @@
+Complete F156 supervisor shared scan limit revision
+
+Apply the supervisor proposal and enable live scan controls and all 15
+mutations. Record 22 supervisor controls and 20 existing mutations passing.
+
+Reply to 01a082a8-187f-74ee-b71f-c0c117d063ab as agent-b.

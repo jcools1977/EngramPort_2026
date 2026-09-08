@@ -12,7 +12,7 @@ const { appendEvent } = await fromSource("packages/git-adapter/src/event-core.mj
 const { MAX_CONTEXT_BYTES } = await fromSource("packages/git-adapter/src/credential-boundary.mjs");
 const { XaiResponsesClient } = await fromSource("packages/agent-c-supervisor/src/index.mjs");
 const selected = process.env.F156_CASE;
-const check = (name, work) => test(name, { skip: (selected && selected !== name) || (process.env.F156_APPEND_ONLY === "1" && name.startsWith("supervisor-")) }, work);
+const check = (name, work) => test(name, { skip: selected && selected !== name }, work);
 const clean = "apple river house green stone field cloud light bread water ".repeat(1600);
 const planted = `${clean}\nBearer ${"synthetic".repeat(8)}\n`;
 const sha = (value) => createHash("sha256").update(value).digest("hex");

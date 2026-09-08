@@ -1,0 +1,54 @@
+
+> engramport@0.1.0 agent-c:test
+> node --test tests/agent-c-supervisor.test.mjs && node scripts/run-agent-c-supervisor-mutations
+
+✔ credential-reference (0.637125ms)
+✔ credential-shape (0.1225ms)
+✔ credential-context (395.913ms)
+✔ bounded-context-delivery (433.912875ms)
+✔ bounded-context-missing-event (265.411916ms)
+✔ bounded-context-event-digest (465.6405ms)
+✔ bounded-context-artifact-digest (244.490667ms)
+✔ legacy-artifact-digest (262.758917ms)
+✔ bounded-context-size (420.838833ms)
+✔ bounded-context-deduplication (275.180167ms)
+✔ write-prefix (187.022583ms)
+✔ turn-enforcement (763.0295ms)
+✔ reply-target (215.159375ms)
+✔ result-review (374.499458ms)
+✔ inbox-poller (720.382042ms)
+✔ credential-egress (1150.442458ms)
+✔ stubbed-review-appends-through-cli (928.555084ms)
+✔ xai-client-metrics (0.4765ms)
+✔ provider-diagnosis (0.219ms)
+✔ provider-error-egress (0.141042ms)
+✔ scheduled-poller-silence (0.173916ms)
+✔ credential-unavailable-reporting (0.144042ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7153.584167
+AGENT_C_MUTATION credential-reference=killed
+AGENT_C_MUTATION credential-shape=killed
+AGENT_C_MUTATION credential-context=killed
+AGENT_C_MUTATION write-prefix=killed
+AGENT_C_MUTATION turn-enforcement=killed
+AGENT_C_MUTATION reply-target=killed
+AGENT_C_MUTATION result-review=killed
+AGENT_C_MUTATION inbox-poller=killed
+AGENT_C_MUTATION credential-egress=killed
+AGENT_C_MUTATION provider-diagnosis=killed
+AGENT_C_MUTATION provider-error-egress=killed
+AGENT_C_MUTATION scheduled-poller-silence=killed
+AGENT_C_MUTATION credential-unavailable-reporting=killed
+AGENT_C_MUTATION bounded-context-delivery=killed
+AGENT_C_MUTATION bounded-context-missing-event=killed
+AGENT_C_MUTATION bounded-context-event-digest=killed
+AGENT_C_MUTATION bounded-context-artifact-digest=killed
+AGENT_C_MUTATION legacy-artifact-digest=killed
+AGENT_C_MUTATION bounded-context-size=killed
+AGENT_C_MUTATION bounded-context-deduplication=killed

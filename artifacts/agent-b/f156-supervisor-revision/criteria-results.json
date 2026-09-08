@@ -1,0 +1,32 @@
+[
+  {
+    "criterion_id": "one-constant",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-supervisor-revision/results.md#sha256=2cb30a2f87b802eb733f2e98e1b85c38410a28e6862f8aa57e3439ce5e56e718"
+      }
+    ]
+  },
+  {
+    "criterion_id": "supervisor-controls-live",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-supervisor-revision/results.md#sha256=2cb30a2f87b802eb733f2e98e1b85c38410a28e6862f8aa57e3439ce5e56e718"
+      }
+    ]
+  },
+  {
+    "criterion_id": "agent-c-suite-still-green",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-supervisor-revision/results.md#sha256=2cb30a2f87b802eb733f2e98e1b85c38410a28e6862f8aa57e3439ce5e56e718"
+      }
+    ]
+  }
+]

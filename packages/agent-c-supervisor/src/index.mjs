@@ -3,7 +3,7 @@ import { constants as fsConstants } from "node:fs";
 import { mkdir, open, readFile, readdir, realpath, rm } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { detectCredential } from "../../git-adapter/src/credential-boundary.mjs";
+import { detectCredential, MAX_CONTEXT_BYTES } from "../../git-adapter/src/credential-boundary.mjs";
 import { BoundedContextError, readRepositoryContext, resolveArtifactReferences, resolveBoundedContext } from "../../git-adapter/src/bounded-context.mjs";
 import { parseEvent, parseRecord, verifyLog } from "../../git-adapter/src/verify-log.mjs";
 
@@ -12,17 +12,18 @@ const REVIEWER = "agent-a";
 const ARTIFACT_PREFIX = "artifacts/agent-c";
 const EVENT_PREFIX = "events/agent-c";
 const TICKS_PER_USD = 10_000_000_000;
-const MAX_CONTEXT_BYTES = 1_000_000;
 const MAX_OUTPUT_BYTES = 128_000;
 
 export class AgentCSupervisorError extends Error {
-  constructor(code, { providerStatus, providerError, contextFile, matchedPattern } = {}) {
-    const context = [contextFile && `file=${contextFile}`, matchedPattern && `pattern=${matchedPattern}`].filter(Boolean).join(" ");
+  constructor(code, { providerStatus, providerError, contextFile, matchedPattern, bytes, limit } = {}) {
+    const context = [bytes !== undefined && `bytes=${bytes}`, limit !== undefined && `limit=${limit}`, contextFile && `file=${contextFile}`, matchedPattern && `pattern=${matchedPattern}`].filter(Boolean).join(" ");
     const contextDiagnosis = context ? `: ${context}` : "";
     const diagnosis = providerError ? `: ${providerError}` : "";
     super(`${code}: refused${contextDiagnosis}${diagnosis}`);
     this.name = "AgentCSupervisorError";
     this.code = code;
+    if (bytes !== undefined) this.bytes = bytes;
+    if (limit !== undefined) this.limit = limit;
     if (providerStatus !== undefined) this.providerStatus = providerStatus;
     if (providerError !== undefined) this.providerError = providerError;
     if (contextFile !== undefined) this.contextFile = contextFile;
@@ -46,7 +47,7 @@ function assertNoCredential(value, credential, code = "CREDENTIAL_OUTPUT_REFUSED
   // "I could not scan this" is not "I found a credential". Reporting the first
   // as the second is why an oversize corpus read as a leak for an afternoon.
   if (finding.hit && finding.code === "RECORD_TOO_LARGE") {
-    refuse("SCAN_INPUT_TOO_LARGE", { ...details, bytes: Buffer.byteLength(serialized) });
+    refuse("SCAN_INPUT_TOO_LARGE", { ...details, bytes: finding.bytes, limit: finding.limit });
   }
   if (finding.hit) refuse(code, { ...details, matchedPattern: finding.pattern ?? finding.code });
 }
@@ -240,7 +241,7 @@ export class XaiResponsesClient {
     // and reported the truncation as CREDENTIAL_CONTEXT_REFUSED, sending a
     // reader hunting a secret that was never there. The scan now covers exactly
     // what policy admits.
-    assertNoCredential(prompt, this.credential, "CREDENTIAL_CONTEXT_REFUSED", {}, { maxBytes: MAX_CONTEXT_BYTES });
+    assertNoCredential(prompt, this.credential, "CREDENTIAL_CONTEXT_REFUSED", {}, { maxBytes: MAX_CONTEXT_BYTES, rawStringBytes: true });
     const contract = REVIEW_CONTRACTS[reviewMode];
     if (!contract) refuse("REVIEW_MODE_REFUSED");
     let response;

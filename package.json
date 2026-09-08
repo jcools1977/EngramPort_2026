@@ -62,7 +62,7 @@
     "blast:test": "node --test tests/blast-radius.test.mjs",
     "sdk:buildable": "node --test tests/sdk-buildable.test.mjs",
     "completion:test": "node --test tests/completion-status.test.mjs",
-    "scan:append:test": "F156_APPEND_ONLY=1 node --test tests/append-scan-policy.test.mjs && F156_APPEND_ONLY=1 node tests/run-append-scan-mutations.mjs"
+    "scan:append:test": "node --test tests/append-scan-policy.test.mjs && node tests/run-append-scan-mutations.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

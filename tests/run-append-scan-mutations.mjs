@@ -63,7 +63,7 @@ try {
   assert.match(historical.stdout, /not ok \d+ - clean-large-artifact/);
   assert.match(historical.stdout, /CREDENTIAL_INPUT_REFUSED: artifact refused/);
   console.log("OBSERVED pre-fix event-core clean artifact refused=CREDENTIAL_INPUT_REFUSED");
-  for (const [name, control, ...changes] of mutations.filter(([, control]) => process.env.F156_APPEND_ONLY !== "1" || !control.startsWith("supervisor-"))) {
+  for (const [name, control, ...changes] of mutations) {
     reset();
     for (const change of changes) replace(...change);
     const result = run(control);
