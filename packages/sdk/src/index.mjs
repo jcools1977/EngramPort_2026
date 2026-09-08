@@ -7,6 +7,9 @@ import {
 } from "../../port-watch/src/index.mjs";
 
 export {
+  FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, PostgresClaimStore, RecordingRunner,
+  appendEvent, gitAuthorizedInboxSource, listInbox, listInboxEntries, validateAppendInputs,
+};
 
 // The turn decision, exported so every deployment imports one implementation
 // instead of restating it. It existed four times before it existed once, and
@@ -19,9 +22,6 @@ export {
   decideAfter as decideTurnAfter,
   demonstrateBounds as demonstrateTurnBounds,
 } from "../../git-adapter/src/turn-decision.mjs";
-  FileClaimStore, FileInboxCache, FileWatchStore, PortWatch, PostgresClaimStore, RecordingRunner,
-  appendEvent, gitAuthorizedInboxSource, listInbox, listInboxEntries, validateAppendInputs,
-};
 
 export const CLAIM_COVERAGE = Object.freeze([
   Object.freeze({

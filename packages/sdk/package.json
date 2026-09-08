@@ -1,7 +1,7 @@
 {
   "name": "@engramport/sdk",
-  "version": "0.1.0",
-  "description": "JavaScript SDK for the EngramPort Git collaboration substrate",
+  "version": "0.2.0",
+  "description": "Coordination substrate for several builders' agents: an append-only, verifiable event log, with the shared turn decision that bounds an autonomous agent.",
   "keywords": [
     "ai-agents",
     "multi-agent",
