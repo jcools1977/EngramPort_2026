@@ -3250,3 +3250,19 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **Both drift modes are demonstrated failing.** Adding a refusal with no demonstration fails the suite. Demoting the kill switch below another guard fails the suite. Restored, all eight pass.
 
 **What this does not fix.** The four existing runners still carry their own copies until each is migrated, and migration is per-deployment work. The union is now the reference; the copies are now known to be behind it rather than assumed to agree.
+
+### F153
+
+**A shared definition had unknown blast radius.** F152 unified a decision that had existed in four copies. One copy then had to be vendored into a collaborator's repository, because the published SDK is `0.1.0` and does not carry the decision, and publishing is a reserved human action.
+
+**The vendored copy records its own digest, so a local edit is caught. Nothing catches the case that actually bit.** F152 was not tampering: it was upstream moving on while a copy sat still. The downstream check proves a copy is unedited and explicitly cannot prove it is current, because the canonical source is in a repository it cannot reach.
+
+**So the canonical repository did not know the copy existed.** A change to `turn-decision.mjs` would have silently stranded a deployment, and the only way to notice would have been to remember.
+
+**Remediation: an explicit registry and a check that reports which registered copies are behind.** `npm run blast-radius` names each copy whose recorded digest no longer matches its canonical file, with both digests, and exits nonzero. Verified by observation: current exits 0, a change to the canonical file with no re-registration exits 1 naming the stale entry, and restoring the file returns it to 0.
+
+**Discovery was deliberately not attempted.** A mechanism that finds copies and misses one is worse than a registry that is honestly incomplete, because the first implies coverage it does not have. The report therefore leads with its own limits, and the builder stated them more sharply than the handoff asked: *"registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations."* The second clause refuses to imply that anything at the far end was inspected.
+
+**What this still does not do.** It cannot verify the downstream file, only the canonical one it was copied from. If the collaborator edits their copy, their own vendor check catches it and this one cannot. The two checks are complementary and neither is sufficient, which is a property of vendoring rather than of these tools.
+
+**The honest scope of the fix:** the registry converts "we will remember" into "the suite fails." It does not convert vendoring into importing. That happens when the SDK ships the decision, and it is the reason to publish.

@@ -1,0 +1,58 @@
+import { createHash } from "node:crypto";
+import { readFile, realpath } from "node:fs/promises";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = await realpath(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
+const coverage = "Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.";
+const insideRoot = path => {
+  const rel = relative(root, path);
+  return rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
+};
+const validDate = value => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+
+// Read-only by construction: the recorded baseline is supplied explicitly at
+// registration, never computed or persisted by this check.
+console.log(coverage);
+try {
+  if (process.argv.length !== 2) throw new Error("Usage: npm run blast-radius (no arguments)");
+  const registry = JSON.parse(await readFile(resolve(root, "registry/downstream-copies.json"), "utf8"));
+  if (registry.schema_version !== 1 || registry.coverage !== "registered-copies-only" ||
+      !Array.isArray(registry.copies)) throw new Error("Invalid registry schema or coverage declaration");
+  const counts = { CURRENT: 0, STALE: 0, BROKEN: 0 };
+  const ids = new Set();
+  for (const [index, copy] of registry.copies.entries()) {
+    const label = `entry ${index + 1} ${JSON.stringify(copy?.id)} canonical=${JSON.stringify(copy?.canonical_path)} location=${JSON.stringify(copy?.location)}`;
+    try {
+      if (!copy || typeof copy !== "object" ||
+          typeof copy.id !== "string" || !copy.id.trim() || ids.has(copy.id)) {
+        throw new Error("missing or duplicate registration id");
+      }
+      ids.add(copy.id);
+      if (typeof copy.canonical_path !== "string" || !copy.canonical_path.trim() ||
+          isAbsolute(copy.canonical_path) || !insideRoot(resolve(root, copy.canonical_path))) {
+        throw new Error("canonical_path must be relative and inside this repository");
+      }
+      if (typeof copy.location !== "string" || !copy.location.trim() ||
+          typeof copy.vendored_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(copy.vendored_sha256) ||
+          !validDate(copy.vendored_on)) throw new Error("invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)");
+      const canonical = await realpath(resolve(root, copy.canonical_path));
+      if (!insideRoot(canonical)) throw new Error("canonical_path resolves outside this repository");
+      const current = createHash("sha256").update(await readFile(canonical)).digest("hex");
+      const status = current === copy.vendored_sha256 ? "CURRENT" : "STALE";
+      counts[status]++;
+      console.log(`${status} ${label} vendored_on=${copy.vendored_on} recorded=${copy.vendored_sha256} canonical_sha256=${current}`);
+    } catch (error) {
+      counts.BROKEN++;
+      const reason = error.code === "ENOENT" ? "canonical file absent" : error.message;
+      console.log(`BROKEN registration ${label}: ${reason}`);
+    }
+  }
+  console.log(`Registered copies: ${registry.copies.length}; current=${counts.CURRENT}; stale=${counts.STALE}; broken=${counts.BROKEN}`);
+  if (registry.copies.length === 0) console.log("No copies registered; this is not evidence of downstream currency.");
+  process.exitCode = counts.STALE || counts.BROKEN ? 1 : 0;
+} catch (error) {
+  console.error(`Registry check failed: ${error.message}`);
+  process.exitCode = 1;
+}
