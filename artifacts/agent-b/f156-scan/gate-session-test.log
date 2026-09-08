@@ -1,0 +1,91 @@
+
+> engramport@0.1.0 session:test
+> node --test tests/workspace-session.test.mjs tests/workspace-oidc-verifier.test.mjs tests/workspace-oidc-client.test.mjs tests/workspace-oidc-durable.test.mjs tests/workspace-oidc-provider.test.mjs
+
+W1_1_OIDC_CLIENT auth_start configured=true unique=true pkce=S256
+W1_1_OIDC_CLIENT transaction positive=accepted expired=OIDC_TRANSACTION_EXPIRED retained=0
+W1_1_OIDC_CLIENT callback positive=accepted mismatch=OIDC_STATE_REFUSED redirect=OIDC_REDIRECT_URI_REFUSED replay=OIDC_STATE_REFUSED retained=0/0/0/0
+W1_1_OIDC_CLIENT composition status=active postgres_creates=1 asserted_ignored=true identity_absent=true
+W1_1_OIDC_CLIENT binder surface=principal_id identity_absent=true
+✔ auth-start (2.876458ms)
+✔ transaction-state (0.700542ms)
+✔ callback (0.675083ms)
+✔ composition-store (0.941458ms)
+✔ binder (0.087458ms)
+
+  #  /opt/homebrew/Cellar/node/26.5.0/bin/node[30644]: void node::InternalCallbackScope::Close() at ../src/api/callback.cc:185
+  #  Assertion failed: (env_->execution_async_id()) == (0)
+
+----- Native stack trace -----
+
+ 1: 0x105e9a010 node::Assert(node::AssertionInfo const&) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 2: 0x105e61ce4 node::InternalCallbackScope::Close() (.cold.1) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 3: 0x104cc8120 node::InternalCallbackScope::Close() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 4: 0x104cc7e18 node::InternalCallbackScope::~InternalCallbackScope() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 5: 0x104dc2ac0 node::PerIsolatePlatformData::RunForegroundTask(std::__1::unique_ptr<v8::Task, std::__1::default_delete<v8::Task>>) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 6: 0x104dc1cd4 node::PerIsolatePlatformData::FlushForegroundTasksInternal() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 7: 0x1002ee3cc uv__async_io [/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib]
+ 8: 0x1002fd1b0 uv__io_poll [/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib]
+ 9: 0x1002eeb64 uv_run [/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib]
+10: 0x104cc8fd0 node::SpinEventLoopInternal(node::Environment*) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+11: 0x104d9fdd0 node::NodeMainInstance::Run(node::ExitCode*, node::Environment*) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+12: 0x104d9fb04 node::NodeMainInstance::Run() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+13: 0x104d40fac node::Start(int, char**) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+14: 0x18963be00 start [/usr/lib/dyld]
+✖ tests/workspace-oidc-durable.test.mjs (124.089875ms)
+W1_1_OIDC_PROVIDER discovery issuer=true hosts=accounts.google.com,oauth2.googleapis.com,www.googleapis.com auth_path=/o/oauth2/v2/auth mismatch=OIDC_DISCOVERY_ISSUER_REFUSED unresolved=OIDC_CLIENT_SECRET_UNRESOLVED before_fetch=true
+W1_1_OIDC_PROVIDER jwks first=a overlap=b unknown=c disappeared=OIDC_KEY_NOT_FOUND expired_refresh=d kids=c,d
+W1_1_OIDC_PROVIDER exchange id_only=id_token verifier=true client=true negative=OIDC_CLIENT_REFUSED retained=0/0
+W1_1_OIDC_PROVIDER azp positive=accepted foreign=OIDC_AUTHORIZED_PARTY_REFUSED
+W1_1_OIDC_PROVIDER subject surface=iss,sub issuer=true value=recorded-synthetic-sub
+✔ discovery (8.415333ms)
+✔ jwks-lifecycle (174.108375ms)
+✔ exchange (0.300792ms)
+✔ azp (24.577291ms)
+✔ subject (0.109958ms)
+W1_1_OIDC signature positive=accepted negative=OIDC_SIGNATURE_REFUSED
+W1_1_OIDC rotation positive=accepted negative=OIDC_KEY_RETIRED
+W1_1_OIDC alg-none positive=accepted negative=OIDC_ALGORITHM_NONE_REFUSED
+W1_1_OIDC alg-hs256 positive=accepted negative=OIDC_ALGORITHM_CONFUSION_REFUSED
+W1_1_OIDC issuer positive=accepted negative=OIDC_ISSUER_REFUSED
+W1_1_OIDC audience positive=accepted negative=OIDC_AUDIENCE_REFUSED
+W1_1_OIDC expiry positive=accepted negative=OIDC_EXPIRED
+W1_1_OIDC nonce positive=accepted negative=OIDC_NONCE_REFUSED
+W1_1_OIDC claims-surface positive=aud,exp,iss,nonce,sub negative=absent
+W1_1_OIDC retention positive=cleared negative=cleared
+✔ signature (2.940792ms)
+✔ rotation (1.07725ms)
+✔ alg-none (0.808292ms)
+✔ alg-hs256 (0.633125ms)
+✔ issuer (0.824042ms)
+✔ audience (0.815375ms)
+✔ expiry (0.799875ms)
+✔ nonce (0.771584ms)
+✔ claims-surface (0.738125ms)
+✔ retention (0.882917ms)
+✔ session binds authenticated founder with narrowed scopes and absolute expiry (0.835709ms)
+✔ approved step executes only within its live session (1.588709ms)
+✔ completion structurally removes identity, delegation, approval, and credential (0.455417ms)
+✔ expired session refuses approved execution and leaves no identity (0.21675ms)
+✔ untouched expired delegation is swept while an untouched live session remains counted (0.118084ms)
+✔ torn-down session cannot authorize and replayed approval is refused (0.250541ms)
+✔ approval from session A cannot execute under session B (0.220125ms)
+✔ scope and expiry ceilings reuse W0 predicates (0.101333ms)
+✔ non-setup scope and unbounded session are refused (0.164709ms)
+✔ abandonment leaves no partial authority (0.271083ms)
+✔ state machine is deterministic under injected clock and ids (0.335167ms)
+✔ authenticator returns identity only and fixture credential is never stored (0.059ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 32
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 247.055916
+
+✖ failing tests:
+
+test at tests/workspace-oidc-durable.test.mjs:1:1
+✖ tests/workspace-oidc-durable.test.mjs (124.089875ms)
+  'test failed'

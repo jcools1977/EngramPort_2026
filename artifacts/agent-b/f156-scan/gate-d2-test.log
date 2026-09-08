@@ -1,0 +1,17 @@
+
+> engramport@0.1.0 d2:test
+> node --test tests/d2-session-binding.test.mjs tests/d2-transaction-binding.test.mjs
+
+✔ D2 refuses unbound sessions before acquiring a connection (0.463ms)
+✔ D2 binds verified principal and session while ignoring caller identity fields (0.35125ms)
+D2_TRANSACTION_UNBOUND positive=accepted negative=SESSION_UNBOUND no_checkout=true
+D2_TRANSACTION_ROLE positive=accepted negative=SESSION_ROLE_INVALID released=true
+✔ D2 transaction guards: all (0.898791ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36.335792

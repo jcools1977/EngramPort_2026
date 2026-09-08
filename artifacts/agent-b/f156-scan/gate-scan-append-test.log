@@ -1,0 +1,46 @@
+
+> engramport@0.1.0 scan:append:test
+> F156_APPEND_ONLY=1 node --test tests/append-scan-policy.test.mjs && F156_APPEND_ONLY=1 node tests/run-append-scan-mutations.mjs
+
+OBSERVED append clean artifact bytes=96000 accepted=true
+✔ clean-large-artifact (12.046417ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+✔ artifact-size (17.493083ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ artifact-credential (7.095542ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+✔ body-size (11.454917ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ body-credential (5.930292ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000051 limit=1000000
+✔ envelope-size (6.381291ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ envelope-credential (4.780625ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000002 limit=1000000
+✔ utf8-and-escaping (19.267667ms)
+﹣ supervisor-shared-limit (0.072958ms) # SKIP
+﹣ supervisor-credential (0.042375ms) # SKIP
+ℹ tests 10
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 130.634542
+CONTROL production=passed
+CONTROL shared-limit-lowered-to-100000=passed
+OBSERVED pre-fix event-core clean artifact refused=CREDENTIAL_INPUT_REFUSED
+F156_MUTATION old-default=killed control=clean-large-artifact executed=1
+F156_MUTATION size-as-credential=killed control=artifact-size executed=2
+F156_MUTATION missing-byte-count=killed control=artifact-size executed=3
+F156_MUTATION missing-limit=killed control=artifact-size executed=4
+F156_MUTATION artifact-scan-removed=killed control=artifact-credential executed=5
+F156_MUTATION body-scan-removed=killed control=body-credential executed=6
+F156_MUTATION envelope-scan-removed=killed control=envelope-credential executed=7
+F156_MUTATION scan-truncated=killed control=artifact-credential executed=8
+F156_MUTATION serialized-instead-of-utf8=killed control=utf8-and-escaping executed=9
+F156_MUTATION body-size-bypassed=killed control=body-size executed=10
+F156_MUTATION envelope-size-bypassed=killed control=envelope-size executed=11
+F156_MUTATION append-restates-limit=killed control=artifact-size executed=12
+F156_MUTATIONS executed=12 killed=12 survived=0

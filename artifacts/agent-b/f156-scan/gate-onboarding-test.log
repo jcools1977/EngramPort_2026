@@ -1,0 +1,17 @@
+
+> engramport@0.1.0 onboarding:test
+> node --test tests/pr-onboarding.test.mjs
+
+PR_ONBOARDING_UNMERGED_REFUSAL proposal=present head=absent refused=true
+✔ documented PR onboarding refuses an unmerged local registration (243.621084ms)
+PR_ONBOARDING_MERGED_ACCEPTANCE proposal=merged head=present accepted=true
+✔ documented PR onboarding accepts the maintainer-merged registration (437.837833ms)
+✔ the documented path has no prose-only or machine-only operation (0.12275ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 719.809708

@@ -1,0 +1,20 @@
+
+> engramport@0.1.0 report:correspondent:test
+> node --test tests/report-correspondent.test.mjs
+
+✔ the checked-in claim manifest generates an inert, balanced lab-report draft (111.436791ms)
+✔ a disclosed finding referenced in SECURITY.md is citable (97.479792ms)
+✔ a disclosed finding absent from SECURITY.md is refused by finding id (96.387625ms)
+✔ an unfixed finding is refused and fixed status requires a canonical agent-a disposition (280.2025ms)
+✔ an untraceable event or artifact is refused (185.396166ms)
+✔ a triumph-only report is a reporting defect (0.450042ms)
+✔ reviewer circulation is outside the manifest boundary (0.28175ms)
+✔ publication preparation observes refusal without explicit digest-bound approval (92.771583ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 903.512

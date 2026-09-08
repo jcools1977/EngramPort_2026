@@ -1,0 +1,135 @@
+
+> engramport@0.1.0 test
+> npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run w1-7:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs
+
+
+> engramport@0.1.0 proof
+> npm run proof:verify && npm run proof:test
+
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 483 events across 97 thread(s) and 3 actors
+
+> engramport@0.1.0 proof:test
+> node --test tests/git-v0.test.mjs
+
+✔ valid registered-actor relay verifies (81.038042ms)
+✔ actor record filename is bound to its declared slug (164.380166ms)
+✔ verification refuses unregistered Markdown event files while ignoring empty directories (456.556709ms)
+✔ verification aligns recursive Markdown discovery with validation and ignores non-events (395.663333ms)
+✔ uppercase Markdown forgery is accounted for and fails by path (248.108375ms)
+✔ event extension policy is shared by inbox while normal append stays lowercase (525.834708ms)
+events/agent-b/20260908T200133Z_01a0829c-90fb-7a9e-8fab-0132247c160f.md
+✔ append with an empty artifacts flag preserves artifact-free append behavior (524.453792ms)
+events/agent-b/20260908T200134Z_01a0829c-930a-7ab3-9d34-3a96a781aca0.md
+events/agent-b/20260908T200134Z_01a0829c-945a-7b7c-b3a7-ab23db3f4bb8.md
+✔ CLI terminal append normalizes --next null before hashing and preserves next validation (1004.461458ms)
+events/agent-b/20260908T200135Z_01a0829c-96e4-7ff3-b7a0-4d4e929cf7c2.md
+✔ append refuses an unrecognized flag before writing and preserves known-good behavior (410.778ms)
+events/agent-b/20260908T200135Z_01a0829c-9880-747e-958d-911745a97b69.md
+✔ append refuses a second thread root without writing an event (585.10625ms)
+✔ exported append and inbox core preserve the event wire surface (483.487916ms)
+✔ CLI re-exports the same event-core binding the SDK must consume (0.151375ms)
+✔ version-1 retry returns the existing event and preserves event count (503.346708ms)
+✔ version-1 retry identity collision raises a distinct error without writing (510.861875ms)
+✔ version-1 completion requires exact criterion evidence coverage (833.624416ms)
+✔ live writer refuses version-0 append after cutover while historical v0 verifies (232.616375ms)
+✔ listInbox and Port Watch consume the same answered-work resolver (620.747333ms)
+✔ fresh copies reproduce the identical derived work-delivery set (487.690458ms)
+✔ pure work resolver excludes an answered event without project sequence fields (0.17225ms)
+✔ normal CLI execution cannot activate the harness core override (272.727625ms)
+✔ CLI append and inbox delegate to the exported core (496.579417ms)
+✔ modified content is rejected (227.216ms)
+✔ unknown schema fields are rejected (225.521916ms)
+✔ actor directory ownership is enforced (226.651083ms)
+✔ unknown reply targets are rejected (225.702958ms)
+✔ strict relay actor transitions are enforced (231.191291ms)
+✔ reply cycles are rejected (230.643333ms)
+✔ missing artifacts are rejected (240.096167ms)
+✔ artifact modification is rejected (284.160125ms)
+✔ artifact references must remain in author prefix (265.9365ms)
+✔ filename identity is enforced (246.3285ms)
+✔ free_form permits one actor to publish sequential events (251.240958ms)
+✔ free_form permits sibling replies (238.281167ms)
+✔ coordinator_led permits coordinator followed by two worker replies (221.1575ms)
+✔ strict_relay refuses an actor replying to itself and names the mode (221.47925ms)
+✔ strict_relay refuses a second reply and names the mode (239.101709ms)
+✔ free_form refuses an unknown parent and names the mode (233.804ms)
+✔ free_form refuses a cycle (251.053166ms)
+✔ free_form refuses a second root with a precise mode error (249.263ms)
+✔ coordinator_led refuses a worker root (257.479167ms)
+✔ coordinator_led refuses a worker replying to a worker (232.438666ms)
+✔ unknown thread modes fail closed (229.410542ms)
+✔ malformed thread mode declarations fail closed (225.257584ms)
+✔ a mode may be declared while a thread is empty (236.0675ms)
+✔ changing a declared mode after the first event violates its binding (219.239416ms)
+✔ a per-thread mode declaration cannot be added after the first event (242.242791ms)
+✔ changing mode cannot retroactively legitimize an invalid strict_relay branch (233.77375ms)
+✔ coordinator_led requires a coordinator (233.884292ms)
+✔ coordinator_led refuses an unknown coordinator (248.520167ms)
+✔ free_form supports invitation issuance, accepted, and terminal closure without an invitee actor (237.676ms)
+✔ free_form supports invitation issuance, rejected, and terminal closure without an invitee actor (219.109666ms)
+✔ free_form supports invitation issuance, expired, and terminal closure without an invitee actor (217.731292ms)
+✔ free_form supports invitation issuance, revoked, and terminal closure without an invitee actor (223.068541ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16463.1535
+
+> engramport@0.1.0 identity:test
+> node --test tests/commit-identity.test.mjs
+
+✖ no signed commit in this repository names an author it was not signed by (1225.094334ms)
+✔ the check rejects a commit signed by a key belonging to a different principal (140.349416ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1404.829
+
+✖ failing tests:
+
+test at tests/commit-identity.test.mjs:43:1
+✖ no signed commit in this repository names an author it was not signed by (1225.094334ms)
+  AssertionError [ERR_ASSERTION]: signature/author disagreement:
+    502ab6f author=agent-b@engramport.local signer=luke@covenantsystems.ai
+    2f033ec author=agent-a@engramport.local signer=luke@covenantsystems.ai
+  + actual - expected
+  
+  + [
+  +   {
+  +     author: 'agent-b@engramport.local',
+  +     sha: '502ab6f',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   },
+  +   {
+  +     author: 'agent-a@engramport.local',
+  +     sha: '2f033ec',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/tests/commit-identity.test.mjs:45:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { sha: '502ab6f', status: 'G', author: 'agent-b@engramport.local', signer: 'luke@covenantsystems.ai' }, { sha: '2f033ec', status: 'G', author: 'agent-a@engramport.local', signer: 'luke@covenantsystems.ai' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

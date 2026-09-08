@@ -1,0 +1,52 @@
+
+> engramport@0.1.0 identity:test
+> node --test tests/commit-identity.test.mjs
+
+✖ no signed commit in this repository names an author it was not signed by (825.591ms)
+✔ the check rejects a commit signed by a key belonging to a different principal (101.8785ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 960.542791
+
+✖ failing tests:
+
+test at tests/commit-identity.test.mjs:43:1
+✖ no signed commit in this repository names an author it was not signed by (825.591ms)
+  AssertionError [ERR_ASSERTION]: signature/author disagreement:
+    502ab6f author=agent-b@engramport.local signer=luke@covenantsystems.ai
+    2f033ec author=agent-a@engramport.local signer=luke@covenantsystems.ai
+  + actual - expected
+  
+  + [
+  +   {
+  +     author: 'agent-b@engramport.local',
+  +     sha: '502ab6f',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   },
+  +   {
+  +     author: 'agent-a@engramport.local',
+  +     sha: '2f033ec',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/tests/commit-identity.test.mjs:45:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { sha: '502ab6f', status: 'G', author: 'agent-b@engramport.local', signer: 'luke@covenantsystems.ai' }, { sha: '2f033ec', status: 'G', author: 'agent-a@engramport.local', signer: 'luke@covenantsystems.ai' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

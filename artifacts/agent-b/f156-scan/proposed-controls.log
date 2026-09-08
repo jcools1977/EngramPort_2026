@@ -1,0 +1,26 @@
+OBSERVED append clean artifact bytes=96000 accepted=true
+✔ clean-large-artifact (9.634208ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+✔ artifact-size (11.754125ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ artifact-credential (6.36175ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+✔ body-size (10.411416ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ body-credential (5.590375ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000051 limit=1000000
+✔ envelope-size (5.970334ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ envelope-credential (4.936166ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000002 limit=1000000
+✔ utf8-and-escaping (17.81875ms)
+✔ supervisor-shared-limit (4.119166ms)
+✔ supervisor-credential (0.760167ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.757125

@@ -1,0 +1,27 @@
+
+> engramport@0.1.0 w1-7:test
+> node --test tests/wizard-w1-7.test.mjs
+
+✖ section 10 canary observes ten vulnerable sinks and protects ten signing paths (113.928875ms)
+✔ Vault boundary validates response, path, absence, token confinement (1.043125ms)
+✔ retention clock starts (0.087625ms)
+✔ Vault token detector coverage and clean near matches (1.352208ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 159.415917
+
+✖ failing tests:
+
+test at tests/wizard-w1-7.test.mjs:97:22
+✖ section 10 canary observes ten vulnerable sinks and protects ten signing paths (113.928875ms)
+  Error: docker exited 1: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+  
+      at ChildProcess.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/tests/helpers/w1-7-canary-fixture.mjs:43:373)
+      at ChildProcess.emit (node:events:509:20)
+      at maybeClose (node:internal/child_process:1125:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:305:5)

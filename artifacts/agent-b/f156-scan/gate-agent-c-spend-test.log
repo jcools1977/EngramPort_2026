@@ -1,0 +1,22 @@
+
+> engramport@0.1.0 agent-c:spend-test
+> node --test tests/agent-c-spend-gate.test.mjs
+
+✔ a run under the ceiling is allowed (0.360333ms)
+✔ the kill switch refuses, and its absence does not (0.050625ms)
+✔ reaching the ceiling refuses; one tick short still runs (0.070834ms)
+✔ a run that would cross the ceiling is refused before it spends (0.059ms)
+✔ an unreadable spend total refuses rather than counting as zero (0.081584ms)
+✔ a missing or nonsensical cap refuses rather than defaulting to unlimited (0.044792ms)
+✔ spend is summed only for the day in question (0.664208ms)
+✔ a review with an unreadable cost throws instead of being skipped (0.28025ms)
+✔ the shipped defaults are the ones ADR 0036 states (0.0835ms)
+✔ day bucketing is UTC and does not drift with local time (0.080666ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38.758334

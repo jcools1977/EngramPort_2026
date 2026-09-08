@@ -1,0 +1,15 @@
+
+> engramport@0.1.0 counts:test
+> node --test tests/readme-counts.test.mjs
+
+✔ README counts match the repository (2.338959ms)
+✔ the check observes drift in each claim independently (1.1565ms)
+✔ the check fails loudly when a claim sentence is reworded away (0.732625ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.164625

@@ -1,0 +1,31 @@
+
+> engramport@0.1.0 welcome:test
+> node --test tests/welcome-package.test.mjs
+
+✔ valid package reports unchanged structural grant (231.256166ms)
+✔ tampered part bytes (281.732833ms)
+✔ missing part (281.162292ms)
+✔ extra unlisted part (277.25275ms)
+✔ unknown manifest field (294.213208ms)
+✔ altered identity grant (284.050792ms)
+✔ valid signature over tampered part list (288.70625ms)
+✔ unknown signing key (279.520042ms)
+✔ revoked signing key (276.5025ms)
+✔ expired package (277.17375ms)
+✔ revoked invitation (278.729584ms)
+✔ open invitation (294.888917ms)
+✔ invitation unknown field (313.940375ms)
+✔ absent checkpoint (271.866833ms)
+✔ inconsistent checkpoint chain (276.346917ms)
+✔ context role escalation (211.384333ms)
+✔ operator impersonation (212.885375ms)
+✔ identity contradiction (209.299959ms)
+✔ welcome verify CLI reports grant and exits nonzero on violation (345.406416ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5232.778292

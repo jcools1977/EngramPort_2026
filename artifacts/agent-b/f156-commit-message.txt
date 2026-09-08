@@ -1,0 +1,10 @@
+fix: scan append evidence at the policy limit and report size accurately
+
+Accept clean UTF-8 evidence through one million bytes and report byte count
+and limit on oversized input. Preserve credential coverage beyond 64 KB.
+Exercise real appends, the exact pre-fix module, and 12 discriminating mutations.
+
+Return the F156 handoff with three satisfied criteria, the supervisor shared
+constant blocked on scope clarification, and the suite criterion unmet.
+Record existing identity, OIDC, lint, and Docker failures without silencing them.
+Keep the tested supervisor proposal in agent-b artifacts for review.

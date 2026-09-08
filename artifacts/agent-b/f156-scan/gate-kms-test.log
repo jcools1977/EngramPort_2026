@@ -1,0 +1,7 @@
+
+> engramport@0.1.0 kms:test
+> bash scripts/run-kms-tests
+
+permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+KMS_UNAVAILABLE
+permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock

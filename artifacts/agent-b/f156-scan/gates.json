@@ -1,0 +1,224 @@
+[
+  {
+    "command": "npm run proof",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run identity:test",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run bctx:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run turn:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run completion:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run sdk:buildable",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run blast:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run scan:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run scan:append:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run counts:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run onboarding:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run ledger:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run sdk:package:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run sdk:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run second-builder:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run agent-c:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run agent-c:spend-test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run d2:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run w1-6:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run w1-7:test",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run report:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run report:r2:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run report:correspondent:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run welcome:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run setup:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run watch:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run session:test",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run approval:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run dry-run:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run db:lock-test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run db:static-test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run dispatch:test",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run build",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "node --test tests/rendered-html.test.mjs",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run db:test",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run kms:test",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  },
+  {
+    "command": "npm run lint",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  }
+]

@@ -1,0 +1,54 @@
+
+> engramport@0.1.0 agent-c:test
+> node --test tests/agent-c-supervisor.test.mjs && node scripts/run-agent-c-supervisor-mutations
+
+✔ credential-reference (0.559ms)
+✔ credential-shape (0.108458ms)
+✔ credential-context (276.308583ms)
+✔ bounded-context-delivery (179.968208ms)
+✔ bounded-context-missing-event (177.159916ms)
+✔ bounded-context-event-digest (173.365625ms)
+✔ bounded-context-artifact-digest (142.749375ms)
+✔ legacy-artifact-digest (185.860792ms)
+✔ bounded-context-size (164.679084ms)
+✔ bounded-context-deduplication (194.471417ms)
+✔ write-prefix (153.758125ms)
+✔ turn-enforcement (482.361041ms)
+✔ reply-target (154.408292ms)
+✔ result-review (171.021875ms)
+✔ inbox-poller (483.512584ms)
+✔ credential-egress (626.661125ms)
+✔ stubbed-review-appends-through-cli (701.174834ms)
+✔ xai-client-metrics (0.427083ms)
+✔ provider-diagnosis (0.195334ms)
+✔ provider-error-egress (0.1285ms)
+✔ scheduled-poller-silence (0.162834ms)
+✔ credential-unavailable-reporting (0.128333ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4312.521625
+AGENT_C_MUTATION credential-reference=killed
+AGENT_C_MUTATION credential-shape=killed
+AGENT_C_MUTATION credential-context=killed
+AGENT_C_MUTATION write-prefix=killed
+AGENT_C_MUTATION turn-enforcement=killed
+AGENT_C_MUTATION reply-target=killed
+AGENT_C_MUTATION result-review=killed
+AGENT_C_MUTATION inbox-poller=killed
+AGENT_C_MUTATION credential-egress=killed
+AGENT_C_MUTATION provider-diagnosis=killed
+AGENT_C_MUTATION provider-error-egress=killed
+AGENT_C_MUTATION scheduled-poller-silence=killed
+AGENT_C_MUTATION credential-unavailable-reporting=killed
+AGENT_C_MUTATION bounded-context-delivery=killed
+AGENT_C_MUTATION bounded-context-missing-event=killed
+AGENT_C_MUTATION bounded-context-event-digest=killed
+AGENT_C_MUTATION bounded-context-artifact-digest=killed
+AGENT_C_MUTATION legacy-artifact-digest=killed
+AGENT_C_MUTATION bounded-context-size=killed
+AGENT_C_MUTATION bounded-context-deduplication=killed

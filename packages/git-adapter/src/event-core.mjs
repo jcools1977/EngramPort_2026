@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { detectCredential } from "./credential-boundary.mjs";
+import { detectCredential, MAX_CONTEXT_BYTES } from "./credential-boundary.mjs";
 import { discoverEventFiles, hashAppendIntent, hashBody, hashThreadConfig, parseEvent, parseRecord, verifyLog } from "./verify-log.mjs";
 
 function uuidv7(now = Date.now()) {
@@ -48,23 +48,25 @@ async function readThreadDeclaration(cwd, thread) {
   }
 }
 
-export async function validateAppendInputs({ body, artifacts = [], envelope = null, cwd = process.cwd() }) {
-  const bodyFinding = detectCredential(body);
-  if (bodyFinding.hit) {
-    const error = new Error("CREDENTIAL_INPUT_REFUSED: event body refused");
-    error.code = "CREDENTIAL_INPUT_REFUSED";
+function scanAppendInput(value, surface) {
+  const finding = detectCredential(value, { maxBytes: MAX_CONTEXT_BYTES, rawStringBytes: true });
+  if (finding.code === "RECORD_TOO_LARGE") {
+    const error = appendError("SCAN_INPUT_TOO_LARGE", `${surface} bytes=${finding.bytes} limit=${finding.limit}`);
+    error.bytes = finding.bytes;
+    error.limit = finding.limit;
     throw error;
   }
+  if (finding.hit) throw appendError("CREDENTIAL_INPUT_REFUSED", `${surface} refused`);
+}
+
+export async function validateAppendInputs({ body, artifacts = [], envelope = null, cwd = process.cwd() }) {
+  scanAppendInput(body, "event body");
   for (const reference of artifacts.filter(Boolean)) {
     const artifactPath = reference.split("#", 1)[0];
     const artifact = await readFile(path.resolve(cwd, artifactPath), "utf8");
-    if (detectCredential(artifact).hit) {
-      const error = new Error("CREDENTIAL_INPUT_REFUSED: artifact refused");
-      error.code = "CREDENTIAL_INPUT_REFUSED";
-      throw error;
-    }
+    scanAppendInput(artifact, "artifact");
   }
-  if (envelope && detectCredential(JSON.stringify(envelope)).hit) throw appendError("CREDENTIAL_INPUT_REFUSED", "event envelope refused");
+  if (envelope) scanAppendInput(envelope, "event envelope");
 }
 
 async function findEventById(cwd, id) {

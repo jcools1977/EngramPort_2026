@@ -1,0 +1,52 @@
+[
+  {
+    "criterion_id": "clean-large-artifact-accepted",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-scan-results.md#sha256=0cd438a78419d6898b149cf48ba41650fa892fa390fd50bc53cc21af2f0ebd6c"
+      }
+    ]
+  },
+  {
+    "criterion_id": "size-is-size",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-scan-results.md#sha256=0cd438a78419d6898b149cf48ba41650fa892fa390fd50bc53cc21af2f0ebd6c"
+      }
+    ]
+  },
+  {
+    "criterion_id": "credential-past-old-boundary",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-scan-results.md#sha256=0cd438a78419d6898b149cf48ba41650fa892fa390fd50bc53cc21af2f0ebd6c"
+      }
+    ]
+  },
+  {
+    "criterion_id": "one-constant",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-scan-results.md#sha256=0cd438a78419d6898b149cf48ba41650fa892fa390fd50bc53cc21af2f0ebd6c"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f156-scan-results.md#sha256=0cd438a78419d6898b149cf48ba41650fa892fa390fd50bc53cc21af2f0ebd6c"
+      }
+    ]
+  }
+]

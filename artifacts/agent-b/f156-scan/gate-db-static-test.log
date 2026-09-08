@@ -1,0 +1,22 @@
+
+> engramport@0.1.0 db:static-test
+> node --test tests/app-role-grants-static.test.mjs
+
+✔ app role has no blanket all-table grant (0.451375ms)
+✔ app writes are limited to canonical append tables (0.420541ms)
+✔ app retains explicit reads needed by RLS and delegation trigger (0.162167ms)
+✔ maintenance remains separate authorization writer (0.112209ms)
+✔ future database controls assert exact permission errors and positive paths (0.052584ms)
+✔ database runner executes grant controls after postgres seed (0.112209ms)
+✔ founding issuer is a dormant dedicated-role capability (0.241375ms)
+✔ founding issuer refusal has a live app-role proof (0.113709ms)
+✔ observation disposition is private, forced-RLS, append-only, and function mediated (0.1095ms)
+✔ portable work claims are private, function mediated, and database-exclusive (0.177333ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.980375

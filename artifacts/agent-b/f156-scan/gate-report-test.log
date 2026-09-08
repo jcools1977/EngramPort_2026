@@ -1,0 +1,66 @@
+
+> engramport@0.1.0 report:test
+> node --test tests/report-boundary.test.mjs
+
+✔ normative report schemas are installed byte-for-byte (2.682416ms)
+✔ well-formed live_feed envelope validates (0.427083ms)
+✔ well-formed terminal_ticker envelope validates (0.091875ms)
+✔ well-formed daily_briefing envelope validates (0.05125ms)
+✔ well-formed executive_view envelope validates (0.058708ms)
+✔ well-formed technical_view envelope validates (0.054375ms)
+✔ well-formed public_view envelope validates (0.060042ms)
+✔ well-formed collaborator_briefing envelope validates (0.043666ms)
+✔ well-formed progress.published payload validates (0.07125ms)
+✔ well-formed risk.raised payload validates (0.056667ms)
+✔ well-formed risk.retired payload validates (0.031417ms)
+✔ well-formed blocker.raised payload validates (0.024833ms)
+✔ well-formed blocker.cleared payload validates (0.280667ms)
+✔ well-formed test.recorded payload validates (0.032916ms)
+✔ well-formed incident.opened payload validates (0.022375ms)
+✔ well-formed incident.resolved payload validates (0.016542ms)
+✔ well-formed report.generated payload validates (0.036041ms)
+✔ fact ids present in source_event_ids validate (0.127292ms)
+✔ generated evidence exclusion has an explicit opt-in positive control (0.201333ms)
+✔ public input requires allowlisted evidence and human approval but performs no publication (1.295833ms)
+✔ malformed envelope refused: unknown envelope field (0.129083ms)
+✔ malformed envelope refused: missing generated label (0.071458ms)
+✔ malformed envelope refused: false generated label (0.052834ms)
+✔ malformed envelope refused: empty fact event ids (0.045125ms)
+✔ malformed envelope refused: absent fact event ids (0.054542ms)
+✔ malformed envelope refused: fact id absent from sources (0.064792ms)
+✔ malformed envelope refused: inference missing basis (0.049ms)
+✔ malformed envelope refused: inference missing confidence (0.057167ms)
+✔ malformed envelope refused: empty source event ids (0.056541ms)
+✔ public_view without publication is refused (0.059292ms)
+✔ public_view above public sensitivity is refused (0.048458ms)
+✔ progress.published refuses free-form notes (0.04ms)
+✔ progress.published refuses free-form reasoning (0.024834ms)
+✔ progress.published refuses free-form thoughts (0.024792ms)
+✔ progress.published refuses free-form scratchpad (0.027541ms)
+✔ test.recorded requires negative_controls_ran (0.04075ms)
+✔ authorization is validated before the authorized source is called (0.174167ms)
+✔ raw candidate sources are structurally refused (0.051958ms)
+✔ unauthorized context input is refused (0.082375ms)
+✔ above sensitivity ceiling input is refused (0.054ms)
+✔ unauthorized visibility input is refused (0.059042ms)
+✔ cross-project input is refused (0.053625ms)
+✔ post-as_of_seq input is refused (0.062375ms)
+✔ generated-as-evidence input is refused (0.072917ms)
+✔ digest mismatch input is refused (0.058291ms)
+✔ evidence outside authorized history is refused (0.162792ms)
+✔ public_view refuses evidence not on the explicit publishable allowlist (0.11475ms)
+✔ public_view refuses self-approval before retrieval (0.056084ms)
+✔ public_view refuses missing human approval before retrieval (0.040875ms)
+✔ public approval digest is invalidated by an evidence-set change (0.116417ms)
+✔ authorized output is byte-identical whether restricted records exist or not (0.214792ms)
+✔ auditable input identity binds ids, digests, sequence, authorization, model, and reporter revision (0.280583ms)
+✔ envelope must match the authorized input exactly (0.115208ms)
+✔ audit record binds inputs and labels output without reproducibility claim (0.108875ms)
+ℹ tests 54
+ℹ suites 0
+ℹ pass 54
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.294167

@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
 
+// One million UTF-8 bytes matches the supervisor's admitted context budget.
+// Custody artifacts, event bodies, and serialized envelopes use the same ceiling
+// so clean evidence above the old 64 KB detector default remains appendable.
+export const MAX_CONTEXT_BYTES = 1_000_000;
+
 export class BoundaryError extends Error { constructor(code, message = "refused") { super(`${code}: ${message}`); this.code = code; } }
 
 const KNOWN_CREDENTIAL = /(?:^|\b)(?:gh[pousr]_[A-Za-z0-9_-]{20,}|hvs\.[A-Za-z0-9_-]{20,}|hvb\.[A-Za-z0-9_-]{20,}|s\.[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|Bearer\s+[A-Za-z0-9._~-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/i;
@@ -9,9 +14,11 @@ const REF = /^epr:(installation|credential|shape):[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const CRED_QUERY = /(?:token|secret|password|api[_-]?key|access[_-]?token)=/i;
 
-export function detectCredential(record, { maxBytes = 64 * 1024, maxDepth = 16 } = {}) {
-  let bytes; try { bytes = Buffer.byteLength(JSON.stringify(record)); } catch { return { hit: true, code: "DETECTOR_ERROR" }; }
-  if (bytes > maxBytes) return { hit: true, code: "RECORD_TOO_LARGE" };
+export function detectCredential(record, { maxBytes = 64 * 1024, maxDepth = 16, rawStringBytes = false } = {}) {
+  // Text custody limits count UTF-8 input bytes, without JSON quoting overhead.
+  // Keep the existing serialized-record profile for callers that do not opt in.
+  let bytes; try { bytes = Buffer.byteLength(rawStringBytes && typeof record === "string" ? record : JSON.stringify(record)); } catch { return { hit: true, code: "DETECTOR_ERROR" }; }
+  if (bytes > maxBytes) return { hit: true, code: "RECORD_TOO_LARGE", bytes, limit: maxBytes };
   const walk = (v, depth) => {
     if (depth > maxDepth) return "NESTING_TOO_DEEP";
     if (typeof v === "string") {

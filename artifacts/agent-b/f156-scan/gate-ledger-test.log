@@ -1,0 +1,18 @@
+
+> engramport@0.1.0 ledger:test
+> node --test tests/contribution-ledger.test.mjs
+
+CONTRIBUTION_LEDGER actors=3 events=483 source=verified-engramport-log
+✔ contribution ledger reports every registered actor from the verified log (102.262083ms)
+CONTRIBUTION_METERED actor=agent-c reviews=21 tokens=371385 usd_ticks=15245020000
+✔ agent-c metered totals reconcile with every referenced review artifact (83.247042ms)
+CONTRIBUTION_SUBSCRIPTION actor=agent-a work=observed currency=refused
+✔ subscription contribution renders work without a fictional currency figure (86.103042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 316.323875

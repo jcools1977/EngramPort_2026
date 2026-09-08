@@ -1,0 +1,31 @@
+
+> engramport@0.1.0 w1-6:test
+> node --test tests/wizard-w1-6.test.mjs
+
+✔ N1 nested secret and N2 future field are rejected without disclosure (1.9905ms)
+✔ F9 inline plan credential refused while reference form is accepted (0.103083ms)
+✔ N3 unknown shape and N4 provider registration fail closed; clean positive (0.076ms)
+✔ N5 provider shape shadowing is refused and trusted shape wins (0.073209ms)
+✔ N6 detector and N7 registry errors refuse (0.08375ms)
+✔ N8 size and N9 depth limits refuse, clean positive remains (0.106833ms)
+✔ N10 unsafe URLs refuse while HTTPS without authority is accepted (0.113083ms)
+✔ N11 foreign and N12 revoked references refuse (0.0765ms)
+✔ N13 refusal contains no record values (0.063417ms)
+✔ N14 registry revision is pinned and mutation cannot alter accepted result (0.098375ms)
+✔ G1 forged, G2 expired, G3 revoked grants refuse; GP succeeds (0.369709ms)
+✔ G4/G5 tenant and project mismatch refuse (0.055458ms)
+✔ G6/G7 provider and capability mismatch refuse (0.031833ms)
+✔ G8/G9 principal and actor mismatch refuse (0.036208ms)
+✔ G10 scope superset refuses rather than narrows (0.022916ms)
+✔ G11 caller-supplied grantor cannot substitute resolver authority (0.038667ms)
+✔ G12 revocation re-read and G13 session revocation refuse (0.04225ms)
+✔ G14 custody revocation refuses while GP live custody succeeds (0.052208ms)
+✔ genuine guard-removal mutations accept fixtures and restore shipped modules (12.777459ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.280125

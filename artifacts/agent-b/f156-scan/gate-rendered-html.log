@@ -1,0 +1,13 @@
+✔ server-renders the EngramPort product site (58.23775ms)
+✔ ships product metadata and removes the starter preview (1.793833ms)
+✔ site install claims require a publishable package manifest (1.076875ms)
+SITE_EVENT_TYPES handoff,reply,artifact,completion=accepted
+✔ site console event types remain linked to the verifier vocabulary (0.595709ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 99.650125

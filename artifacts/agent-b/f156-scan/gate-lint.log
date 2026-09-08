@@ -1,0 +1,10 @@
+
+> engramport@0.1.0 lint
+> eslint . --ignore-pattern dist --ignore-pattern '**/dist/**' --ignore-pattern .next
+
+
+/Users/an2b/an2b/products/EngramPORT/tests/completion-status.test.mjs
+  19:57  error  'readdirSync' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (1 error, 0 warnings)
+

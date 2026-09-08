@@ -1,0 +1,37 @@
+
+> engramport@0.1.0 sdk:test
+> npm run sdk:build && node --test tests/sdk.test.mjs
+
+
+> engramport@0.1.0 sdk:build
+> npm run build --workspace @engramport/sdk
+
+
+> @engramport/sdk@0.3.0 build
+> vite build --config vite.config.mjs
+
+vite v8.0.13 building client environment for production...
+[2Ktransforming...✓ 57 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.mjs               24.38 kB │ gzip:  6.69 kB
+dist/cli.mjs                 29.76 kB │ gzip:  8.67 kB
+dist/event-core-BY77crf9.js  41.22 kB │ gzip: 10.59 kB
+
+✓ built in 43ms
+✔ workspace resolves the advertised SDK manifest locally (1.878208ms)
+✔ SDK append delegates to event-core (8.069291ms)
+✔ SDK exposes typed append, inbox, causal reply, bounded handoff, and intent retry (15.25425ms)
+✔ SDK exposes the existing Port Watch delivery path without implementing another resolver (9.556959ms)
+✔ unregistered actor and out-of-prefix artifact are honestly refused without authorization claims (4.565041ms)
+✔ SDK publishes four claim qualifiers with honest dependency coverage (0.503917ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.1615
+(node:30314) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

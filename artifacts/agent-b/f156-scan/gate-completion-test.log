@@ -1,0 +1,16 @@
+
+> engramport@0.1.0 completion:test
+> node --test tests/completion-status.test.mjs
+
+✔ a completion reporting unmet is accepted and written (11.927916ms)
+✔ a completion reporting blocked is accepted and written (6.412292ms)
+✔ satisfied still works, so widening did not break the success path (5.546709ms)
+✔ an invented status is still refused, so the vocabulary is closed (4.518417ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63.753833

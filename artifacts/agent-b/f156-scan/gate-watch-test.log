@@ -1,0 +1,35 @@
+
+> engramport@0.1.0 watch:test
+> node --test tests/port-watch.test.mjs
+
+✔ observation delivery cannot obtain a turn through the real consumer call site (1.082833ms)
+✔ checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected (0.335334ms)
+✔ checkpoint chain binds the prior checkpoint body digest (0.138625ms)
+✔ stable delivery id deduplicates the same canonical batch (0.09375ms)
+✔ unchanged authorized work set invokes runner exactly zero times across many ticks (89.2995ms)
+✔ authorized addressed work wakes without project sequence or implementation-authority fields (2.46725ms)
+✔ waking grants exactly actor scopes and never supervisor scopes (1.801042ms)
+✔ completion stores no position and an unanswered work item remains eligible at least once (3.364084ms)
+✔ reply-derived removal changes the set without a cursor mutation (3.452292ms)
+✔ disposable cache is keyed to log state and deletion changes load count, never the set (1.6915ms)
+✔ changed log state cannot reuse a stale cached work set (0.9485ms)
+✔ concurrent ticks reserve one invocation slot before either runner call (1.983708ms)
+✔ separate PortWatch and store instances sharing a claim root still invoke once (1.894916ms)
+✔ lease expiry permits explicit at-least-once redelivery (4.028625ms)
+✔ legacy active run requires explicit expiry before log-derived migration (2.046584ms)
+✔ inactive legacy cursor is ignored and removed rather than imported (1.657333ms)
+✔ rewind is unavailable because position is derived from the log (0.210625ms)
+✔ off by default, pause, and stop each block new wakes (3.367458ms)
+✔ stop revokes an active local claim (2.0025ms)
+✔ decision function is deterministic and has no cursor input (0.066792ms)
+✔ cadence defaults to 240 and bounded jitter never skips tick (0.060375ms)
+✔ unbranded broad inbox source is structurally refused (0.244041ms)
+✔ claim file contains only local WIP state, never a delivery position (1.432792ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 161.404875

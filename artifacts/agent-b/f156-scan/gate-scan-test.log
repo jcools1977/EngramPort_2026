@@ -1,0 +1,15 @@
+
+> engramport@0.1.0 scan:test
+> node --test tests/scan-covers-policy-limit.test.mjs
+
+✔ a clean prompt larger than the scanner default is scanned, not refused (2.333792ms)
+✔ a credential planted deep inside a large prompt is still caught (2.749625ms)
+✔ beyond the policy limit it still fails closed (0.639042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43.876292

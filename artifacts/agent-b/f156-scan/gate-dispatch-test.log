@@ -1,0 +1,18 @@
+
+> engramport@0.1.0 dispatch:test
+> node --test tests/workspace-dispatch-gate.test.mjs
+
+✔ exact current threat-model revision and digest permit only a complete Tier A registry (2.133792ms)
+✔ dispatch gate refuses missing evidence (0.489375ms)
+✔ dispatch gate refuses stale evidence (0.311208ms)
+✔ dispatch gate refuses wrong digest evidence (0.341958ms)
+✔ dispatch gate refuses waiver evidence (0.265125ms)
+✔ document binding is the canonical file digest (0.301166ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.17975

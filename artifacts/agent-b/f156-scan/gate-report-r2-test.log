@@ -1,0 +1,20 @@
+
+> engramport@0.1.0 report:r2:test
+> node --test tests/report-r2.test.mjs
+
+✔ identical authorized state is byte-identical with stable ordering and as_of_seq (1.986834ms)
+✔ identical authorized state is byte-identical across processes (32.807416ms)
+✔ a newly authorized event changes evidence and as_of_seq and wakes once (0.419709ms)
+✔ unchanged authorized state invokes the generator exactly zero times across 100 repetitions (3.065125ms)
+✔ unauthorized-only higher sequence changes neither evidence nor as_of_seq and invokes zero times (0.153541ms)
+✔ a source leak aborts with the R1 authorization error (0.2615ms)
+✔ report.generated cannot enter the R2 evidence set (0.17375ms)
+✔ discriminating controls fail against naive all-visible max-sequence assembly (0.099625ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.207

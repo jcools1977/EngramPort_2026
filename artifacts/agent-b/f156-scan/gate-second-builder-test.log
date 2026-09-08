@@ -1,0 +1,14 @@
+
+> engramport@0.1.0 second-builder:test
+> node --test tests/second-builder.test.mjs
+
+SECOND_BUILDER_SDK append=accepted inbox=discovered completion=accepted impersonation=accepted disposition_read=accepted disposition_write=accepted
+✔ synthetic second builder completes the public SDK path and exposes the authorization gaps (24.553791ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60.802709

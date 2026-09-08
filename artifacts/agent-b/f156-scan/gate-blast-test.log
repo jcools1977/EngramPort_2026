@@ -1,0 +1,118 @@
+
+> engramport@0.1.0 blast:test
+> node --test tests/blast-radius.test.mjs
+
+✔ exactly separates planted current, stale, and broken registrations without skipping later entries (115.284542ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+CURRENT entry 1 "fresh" canonical="canonical.js" location="downstream-fresh:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+STALE entry 2 "behind-a" canonical="canonical.js" location="downstream-behind-a:lib/shared.js" vendored_on=2026-09-08 recorded=131e1a10fd517c113c1458379cb41e666de12d485a197a74cdd88e11baf23971 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+BROKEN registration entry 3 "absent" canonical="missing.js" location="downstream-absent:lib/shared.js": canonical file absent
+STALE entry 4 "behind-b" canonical="canonical.js" location="downstream-behind-b:lib/shared.js" vendored_on=2026-09-08 recorded=aefae4c7adb7518f18dc6c5a22a2c361388a8f2414fc5b338945f7340bfe2719 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+CURRENT entry 5 "fresh-last" canonical="canonical.js" location="downstream-fresh-last:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 5; current=2; stale=2; broken=1
+✔ all current passes; canonical mutation makes every dependent copy stale without registry changes (336.097ms)
+ℹ npm run blast-radius; exit=0
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+CURRENT entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+CURRENT entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+CURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 3; current=3; stale=0; broken=0
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+STALE entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+STALE entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+CURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 3; current=1; stale=2; broken=0
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+STALE entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+STALE entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+CURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 3; current=1; stale=2; broken=0
+✔ an isolated absent canonical file is a broken registration and exits nonzero (112.40675ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+BROKEN registration entry 1 "missing" canonical="absent.js" location="downstream-missing:lib/shared.js": canonical file absent
+Registered copies: 1; current=0; stale=0; broken=1
+✔ an unregistered file is ignored and empty coverage is explicit (210.03475ms)
+ℹ npm run blast-radius; exit=0
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+CURRENT entry 1 "registered" canonical="canonical.js" location="downstream-registered:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 1; current=1; stale=0; broken=0
+ℹ npm run blast-radius; exit=0
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registered copies: 0; current=0; stale=0; broken=0
+No copies registered; this is not evidence of downstream currency.
+✔ malformed entries fail without concealing valid entries (102.100959ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+BROKEN registration entry 1 undefined canonical=undefined location=undefined: missing or duplicate registration id
+BROKEN registration entry 2 "bad-digest" canonical="canonical.js" location="downstream-bad-digest:lib/shared.js": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)
+BROKEN registration entry 3 "bad-date" canonical="canonical.js" location="downstream-bad-date:lib/shared.js": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)
+BROKEN registration entry 4 "no-location" canonical="canonical.js" location=" ": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)
+CURRENT entry 5 "duplicate" canonical="canonical.js" location="downstream-duplicate:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+BROKEN registration entry 6 "duplicate" canonical="canonical.js" location="downstream-duplicate:lib/shared.js": missing or duplicate registration id
+CURRENT entry 7 "last" canonical="canonical.js" location="downstream-last:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 7; current=2; stale=0; broken=5
+✔ canonical paths cannot escape the repository directly or through a symlink (103.358625ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+BROKEN registration entry 1 "traversal" canonical="../outside.js" location="downstream-traversal:lib/shared.js": canonical_path must be relative and inside this repository
+BROKEN registration entry 2 "absolute" canonical="/outside.js" location="downstream-absolute:lib/shared.js": canonical_path must be relative and inside this repository
+BROKEN registration entry 3 "symlink" canonical="escape.js" location="downstream-symlink:lib/shared.js": canonical_path resolves outside this repository
+Registered copies: 3; current=0; stale=0; broken=3
+✔ missing and malformed registry fail closed while retaining the coverage statement (331.422875ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registry check failed: ENOENT: no such file or directory, open '/Users/an2b/an2b/products/EngramPORT/artifacts/agent-b/blast-radius-fixture-j38JiO/registry/downstream-copies.json'
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registry check failed: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registry check failed: Invalid registry schema or coverage declaration
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1350.248917

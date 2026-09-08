@@ -1,0 +1,19 @@
+CONTROL production=passed
+CONTROL shared-limit-lowered-to-100000=passed
+OBSERVED pre-fix event-core clean artifact refused=CREDENTIAL_INPUT_REFUSED
+F156_MUTATION old-default=killed control=clean-large-artifact executed=1
+F156_MUTATION size-as-credential=killed control=artifact-size executed=2
+F156_MUTATION missing-byte-count=killed control=artifact-size executed=3
+F156_MUTATION missing-limit=killed control=artifact-size executed=4
+F156_MUTATION artifact-scan-removed=killed control=artifact-credential executed=5
+F156_MUTATION body-scan-removed=killed control=body-credential executed=6
+F156_MUTATION envelope-scan-removed=killed control=envelope-credential executed=7
+F156_MUTATION scan-truncated=killed control=artifact-credential executed=8
+F156_MUTATION serialized-instead-of-utf8=killed control=utf8-and-escaping executed=9
+F156_MUTATION body-size-bypassed=killed control=body-size executed=10
+F156_MUTATION envelope-size-bypassed=killed control=envelope-size executed=11
+F156_MUTATION append-restates-limit=killed control=artifact-size executed=12
+F156_MUTATION supervisor-restates-limit=killed control=supervisor-shared-limit executed=13
+F156_MUTATION supervisor-truncated=killed control=supervisor-credential executed=14
+F156_MUTATION supervisor-size-details-lost=killed control=supervisor-shared-limit executed=15
+F156_MUTATIONS executed=15 killed=15 survived=0

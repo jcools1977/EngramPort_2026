@@ -1,0 +1,34 @@
+
+> engramport@0.1.0 setup:test
+> node --test tests/workspace-setup*.test.mjs
+
+✔ finite founder refuses non-expiring participant; both non-expiring is positive (2.31425ms)
+✔ finite owner refuses non-expiring agent; bounded agent is positive (0.239959ms)
+✔ authorized founder assigns verified_human to human (0.162792ms)
+✔ participant cannot claim trust founder cannot assign (0.162542ms)
+✔ agent cannot receive verified_human even when founder can assign it (0.149584ms)
+✔ unsupported trust elevation is refused (0.177916ms)
+✔ guest trust remains untrusted_agent (0.209083ms)
+✔ schema rejects unknown fields with positive control (2.382458ms)
+✔ cyclic dependencies refused (0.33325ms)
+✔ unsatisfiable dependency refused (0.233541ms)
+✔ scope exceeding founder refused (0.221292ms)
+✔ grant outliving founder refused (0.23875ms)
+✔ guest defaults enforced (0.230458ms)
+✔ agent scope exceeding owner refused (0.230708ms)
+✔ agent expiry exceeding owner refused (0.418ms)
+✔ unapproved GitHub permission refused (0.2585ms)
+✔ merge permission refused (0.211041ms)
+✔ self-asserted elevated trust refused (0.171084ms)
+✔ dependency order is stable and step digests are complete (0.738375ms)
+✔ serialized plan reloads with stable portable identity (0.452ms)
+✔ comments and key order do not affect digests; material parameters do (0.733875ms)
+✔ CLI compiles JSON-compatible workspace.setup.yaml (35.855916ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.702042

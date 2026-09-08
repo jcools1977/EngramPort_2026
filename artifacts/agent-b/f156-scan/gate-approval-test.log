@@ -1,0 +1,37 @@
+
+> engramport@0.1.0 approval:test
+> node --test tests/workspace-approval.test.mjs
+
+✔ digests and portable plan identity survive serialization and another process (31.947209ms)
+✔ compiled serialized reloaded plan executes under its genuine grouped approval (0.960458ms)
+✔ grouped approval authorizes all five steps in approved order (0.317083ms)
+✔ diffing a plan against itself is empty (0.363083ms)
+✔ source dependency order is normalized only during compilation (0.271ms)
+✔ reordered steps are refused with paired genuine-plan control (0.796458ms)
+✔ inserted step is refused with paired genuine-plan control (0.411708ms)
+✔ removed step is refused with paired genuine-plan control (0.283333ms)
+✔ substituted step is refused with paired genuine-plan control (0.336416ms)
+✔ modified parameters are refused with paired genuine-plan control (0.369ms)
+✔ forged but self-consistent plan is not authorized by a genuine approval (0.510167ms)
+✔ one consequential flag change is self-consistent but refused by genuine approval (0.323666ms)
+✔ all consequential flags changed is the refused F8 control (0.267125ms)
+✔ added dependency is self-consistent but refused by genuine approval (0.243417ms)
+✔ removed dependency is self-consistent but refused by genuine approval (0.22775ms)
+✔ wire dependency order is verified verbatim and never normalized (0.391625ms)
+✔ cross-plan approval is refused with paired approved-plan control (0.235375ms)
+✔ action v3 digest preserves step id and kind coverage (0.034417ms)
+✔ action v3 coverage is deny-by-default with only its self digest excluded (0.044583ms)
+✔ a future wire field is preserved, covered, diffed, and refused without an exclusion (0.257125ms)
+✔ v2 wire is refused with a specific profile error and differs from v3 plan identity (0.20725ms)
+✔ tampered serialized plan is refused on load with paired round trip (0.148791ms)
+✔ verified plan parameters are deeply immutable (0.12275ms)
+✔ hand-built step list is refused at approval and execution (0.147333ms)
+✔ structured diff reports all classes, covered fields, and parameter paths (0.860792ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.922

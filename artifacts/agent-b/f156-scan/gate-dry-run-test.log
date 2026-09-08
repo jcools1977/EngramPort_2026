@@ -1,0 +1,18 @@
+
+> engramport@0.1.0 dry-run:test
+> node --test tests/workspace-dry-run.test.mjs
+
+✔ valid plan transcript exactly covers compiled sequence and digests (3.543917ms)
+✔ dry-run output is deterministic (0.886833ms)
+✔ headline: provisioning, pull-request, and import effects cause zero side effects (0.591708ms)
+✔ compiler-refused plan produces no transcript (0.568875ms)
+✔ hand-built or cloned step list cannot bypass compiler (0.873792ms)
+✔ temporary directory is required (0.21725ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.044791

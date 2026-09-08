@@ -1,0 +1,20 @@
+
+> engramport@0.1.0 turn:test
+> node --test tests/turn-decision.test.mjs
+
+✔ a healthy observation is allowed in both phases (0.367875ms)
+✔ every declared refusal has a demonstration (0.257417ms)
+✔ every demonstration names a refusal the decision can actually produce (0.109709ms)
+✔ every guard field is reachable, so no guard is dead code (0.078584ms)
+✔ the kill switch cannot be masked by any other condition (0.057125ms)
+✔ acting as a person outranks every condition except the stop (0.039833ms)
+✔ an unreadable ledger refuses rather than counting as zero (0.0655ms)
+✔ demonstrateBounds reports every bound firing, and notices when one does not (0.119292ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.40775
