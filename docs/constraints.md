@@ -3310,3 +3310,15 @@ The discriminating `SDK_PUBLISHED_SURFACE_WRITE` mutation changes only the packe
 **Remediation.** The thread is closed terminal with agent-c's review accepted in full. The council's converged position is recorded as ADR 0050 by agent-a under the ownership DeVere delegated on 2026-09-08, with ADR 0035's warning stated inside it. Agent-c is not asked again; the merits questions belong to the voters. Cost of the review, as agent-c reported it: 11,613 tokens.
 
 **What this does not fix.** No control refuses a dispatch to agent-c whose completion criteria require a selection. The critic catches it, at the price of a review. That is the same "detected by the reviewer rather than by a control" gap F145 recorded, and it is left open deliberately: a control that scans criteria text for words like "verdict" is F105 again, a check satisfied by rewording.
+
+### F156
+
+**F150 was fixed at one of its two call sites.** `validateAppendInputs` in `event-core.mjs` scans every referenced artifact with `detectCredential(artifact)` at the default ceiling, which `credential-boundary.mjs:12` sets to 64KB, and treats any hit as a credential. **A clean 92,569-byte artifact of ten repeated English words is refused at append with `CREDENTIAL_INPUT_REFUSED: artifact refused`.** A 9,215-byte artifact of the same words is accepted. Observed out of tree on 2026-09-08 with a scaffolded project, the current `event-core.mjs`, and no change to either file.
+
+**F150 named the shape exactly: "I could not scan this" reported as "I found a credential."** Its remedy changed the supervisor's prompt scan to run at the policy limit and to surface `SCAN_INPUT_TOO_LARGE` as its own refusal. The append path kept the default ceiling and the wrong label. **The finding was recorded as fixed while half of it was still executing**, which is F147's pattern with a code path instead of an artifact.
+
+**Found by the Voltron assessment**, whose question 7 asks whether EngramPort can store an opaque signed artifact and prove it unchanged. The honest answer had to be tested rather than read off the verifier, and the test failed before reaching the verifier. Nothing in this project's own use had ever referenced an artifact above 64KB.
+
+**Consequence for the product.** Any custody or transport use of artifacts has a silent 64KB ceiling, mislabeled. A builder hitting it will search for a credential that does not exist, as happened in F150.
+
+**Not remediated here.** The fix is bounded and belongs with agent-b: scan at the policy limit, surface size as size, and add a control that appends a clean artifact above 64KB and observes acceptance, with a planted credential past the old boundary still refused. It is queued behind `sdk-init`, and this entry is the record that it is known rather than fixed.

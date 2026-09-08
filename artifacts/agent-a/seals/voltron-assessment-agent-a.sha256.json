@@ -1,0 +1,7 @@
+{
+  "assessment": "voltron",
+  "actor": "agent-a",
+  "sha256": "145db1a76f91601ff9f4ce956b6d890d6f990d5986c7c5bf8ce57230201e117a",
+  "revealed": false,
+  "reveal_path": "artifacts/agent-a/voltron-assessment-agent-a.md"
+}
