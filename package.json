@@ -54,7 +54,7 @@
     "identity:test": "node --test tests/commit-identity.test.mjs",
     "counts:check": "node scripts/readme-counts --check",
     "counts:test": "node --test tests/readme-counts.test.mjs",
-    "agent-c:spend-test": "node --test tests/agent-c-spend-gate.test.mjs",
+    "agent-c:spend-test": "node --test tests/agent-c-spend-gate.test.mjs tests/agent-c-spend-ledger.test.mjs && node tests/run-spend-ledger-mutations.mjs",
     "bctx:test": "node --test tests/bounded-context-roundtrip.test.mjs",
     "scan:test": "node --test tests/scan-covers-policy-limit.test.mjs",
     "turn:test": "node --test tests/turn-decision.test.mjs",

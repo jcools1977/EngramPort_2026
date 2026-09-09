@@ -1,0 +1,39 @@
+[
+  {
+    "command": [
+      "node_modules/.bin/eslint",
+      "packages/agent-c-supervisor/src/spend-ledger.mjs",
+      "tests/agent-c-spend-ledger.test.mjs",
+      "tests/run-spend-ledger-mutations.mjs"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "scripts/run-agent-c-review-service-account"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "proof:verify"
+    ],
+    "exit_code": 0,
+    "output": "\n> engramport@0.1.0 proof:verify\n> node scripts/verify-log\n\n\u2713 verified 495 events across 101 thread(s) and 3 actors\n"
+  }
+]

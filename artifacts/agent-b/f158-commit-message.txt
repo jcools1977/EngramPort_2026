@@ -1,0 +1,7 @@
+Fix F158 spend ledger integrity checks
+
+Refuse unreadable review roots and costs without accepted agent-c byte bindings.
+Preserve missing-root behavior and the pure spend decision semantics.
+
+Validation: spend 19 passed with 8 mutations killed; supervisor 22 passed
+with 20 mutations killed; repository surface policy 4 passed.

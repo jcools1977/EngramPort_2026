@@ -1,0 +1,561 @@
+
+> engramport@0.1.0 agent-c:spend-test
+> node --test tests/agent-c-spend-gate.test.mjs tests/agent-c-spend-ledger.test.mjs && node tests/run-spend-ledger-mutations.mjs
+
+✔ a run under the ceiling is allowed (0.363958ms)
+✔ the kill switch refuses, and its absence does not (0.050709ms)
+✔ reaching the ceiling refuses; one tick short still runs (0.084042ms)
+✔ a run that would cross the ceiling is refused before it spends (0.062375ms)
+✔ an unreadable spend total refuses rather than counting as zero (0.074334ms)
+✔ a missing or nonsensical cap refuses rather than defaulting to unlimited (0.050584ms)
+✔ spend is summed only for the day in question (0.490375ms)
+✔ a review with an unreadable cost throws instead of being skipped (0.294458ms)
+✔ the shipped defaults are the ones ADR 0036 states (0.078ms)
+✔ day bucketing is UTC and does not drift with local time (0.077959ms)
+OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ unreadable-root (27.65225ms)
+OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+✔ missing-root (7.680167ms)
+OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ altered-bytes (10.411166ms)
+OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ unreferenced-file (10.2985ms)
+OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ invalid-event (7.487125ms)
+OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+✔ valid-sum (15.095125ms)
+OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ file-read-failure (8.099958ms)
+OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ post-verification-edit (7.520291ms)
+OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+✔ same-buffer-cost (7.627709ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 141.472958
+CONTROL production=passed
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 25.627666
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 8.820833
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 9.504625
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 10.16325
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 9.266375
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 13.926333
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 8.046
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 7.974583
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 7.495125
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 141.86675
+
+CONTROL pre-fix-955a9b60f148430c3582ccbaa9123661d38cd302=passed
+TAP version 13
+# OBSERVED pre-fix permission=EACCES readableTicks=10000000000 {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 21.532125
+  type: 'test'
+  ...
+# OBSERVED pre-fix missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED pre-fix missing-root-alone {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 6.586583
+  type: 'test'
+  ...
+# OBSERVED pre-fix altered-cost-to-zero {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 6.465958
+  type: 'test'
+  ...
+# OBSERVED pre-fix unreferenced-zero-cost {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 5.755833
+  type: 'test'
+  ...
+# OBSERVED pre-fix invalid-event {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 6.857583
+  type: 'test'
+  ...
+# OBSERVED pre-fix unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 11.933
+  type: 'test'
+  ...
+# OBSERVED pre-fix file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 5.627083
+  type: 'test'
+  ...
+# OBSERVED pre-fix edit-after-verification {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 5.940375
+  type: 'test'
+  ...
+# OBSERVED pre-fix cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 7.058416
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 120.397791
+
+PRE_FIX new-unreadable-control=failed-as-expected
+KILLED hide-directory-failure case=unreadable-root exit=1
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreadable-root
+not ok 1 - unreadable-root
+  ---
+  duration_ms: 27.521334
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:52:17)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 68.159542
+
+KILLED refuse-missing-root case=missing-root exit=1
+TAP version 13
+# OBSERVED production missing-root-mixed {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: missing-root
+not ok 1 - missing-root
+  ---
+  duration_ms: 14.736833
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:63:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 56.500166
+
+KILLED trust-unreferenced-file case=unreferenced-file exit=1
+TAP version 13
+# OBSERVED production unreferenced-zero-cost {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreferenced-file
+not ok 1 - unreferenced-file
+  ---
+  duration_ms: 16.832292
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:91:15)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.983458
+
+KILLED trust-altered-cost case=altered-bytes exit=1
+TAP version 13
+# OBSERVED production altered-cost-to-zero {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: altered-bytes
+not ok 1 - altered-bytes
+  ---
+  duration_ms: 14.777959
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:78:15)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.515459
+
+KILLED trust-unaccepted-event case=invalid-event exit=1
+TAP version 13
+# OBSERVED production invalid-event {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: invalid-event
+not ok 1 - invalid-event
+  ---
+  duration_ms: 14.315333
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:105:15)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53.160625
+
+KILLED skip-buffer-digest case=post-verification-edit exit=1
+TAP version 13
+# OBSERVED production edit-after-verification {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: post-verification-edit
+not ok 1 - post-verification-edit
+  ---
+  duration_ms: 15.685708
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:150:42)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53.500125
+
+KILLED reread-cost-after-hashing case=same-buffer-cost exit=1
+TAP version 13
+# OBSERVED production cost-buffer-interleaving {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: same-buffer-cost
+not ok 1 - same-buffer-cost
+  ---
+  duration_ms: 16.072834
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'DAILY_CAP_REACHED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'DAILY_CAP_REACHED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:169:12)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.350542
+
+KILLED drop-root-cost case=valid-sum exit=1
+TAP version 13
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: valid-sum
+not ok 1 - valid-sum
+  ---
+  duration_ms: 25.258375
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 10000000000
+    - 30000000000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 30000000000
+  actual: 10000000000
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f158/tests/agent-c-spend-ledger.test.mjs:116:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.41075
+
+CONTROL restoration=passed
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 29.82625
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 8.350708
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 10.019
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 12.019875
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 8.792375
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 14.888167
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 8.837334
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 7.525542
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 7.868958
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 148.651041
+
+SPEND_LEDGER_MUTATIONS executed=8 killed=8
+
+COMMAND_EXIT=0

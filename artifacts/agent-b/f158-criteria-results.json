@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "unreadable-root-refuses",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f158-spend-ledger-results.md#sha256=af709eb755ca40297415dabc254f3b779ae4a5272f9b34cea122565212151282"
+      }
+    ]
+  },
+  {
+    "criterion_id": "missing-root-still-empty",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f158-spend-ledger-results.md#sha256=af709eb755ca40297415dabc254f3b779ae4a5272f9b34cea122565212151282"
+      }
+    ]
+  },
+  {
+    "criterion_id": "cost-from-vouched-bytes",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f158-spend-ledger-results.md#sha256=af709eb755ca40297415dabc254f3b779ae4a5272f9b34cea122565212151282"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f158-spend-ledger-results.md#sha256=af709eb755ca40297415dabc254f3b779ae4a5272f9b34cea122565212151282"
+      }
+    ]
+  }
+]
