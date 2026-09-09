@@ -1,0 +1,34 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08615-677c-77bf-b523-f58ee0acff65",
+  "target_thread": "preflight-council-06",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-09T12:13:32.897Z",
+  "review_completed_at": "2026-09-09T12:16:27.641Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 6243,
+    "output_tokens": 708,
+    "total_tokens": 16469
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 730740000,
+    "cost_usd": 0.073074
+  },
+  "summary": "The draft is not completable by agent-b in the current repository. Mandatory seal-then-reveal as two agent-b events is illegal under active strict_relay (no self-reply; at most one direct reply), while bounds and nothing-implemented forbid every escape (thread-mode change, bounce via another actor, protocol/supervisor edit). That is an F148-class liveness bind aimed at the voter, not a missing prerequisite. ADR 0041’s two-commit ancestry also cannot be produced if the sandbox cannot take the git index lock; the draft silently substitutes “checkable from the log,” which still requires the illegal second event. Several named criteria do not discriminate the stated recommendation contract, and the claim that agent-b has not seen agent-a’s arguments is false given the bound F148 excerpt.",
+  "findings": [
+    "Seal-before-reveal requires two successive events from agent-b. Under PROTOCOL.md strict_relay, next names the only lawful replier, an actor cannot reply to itself, and a parent has at most one direct reply. After agent-b’s seal reply, the reveal is either a self-reply, a second child of the dispatch, or a reply after next: null. All three are forbidden. This is mandatory work the named actor cannot perform in current state, so the dispatch is infeasible rather than conditional.",
+    "Bounds and nothing-implemented close the workarounds. Changing threads/*.yaml or the relay rules would be a protocol change and would dirty paths outside events/agent-b and artifacts/agent-b. Inserting a bounce event from agent-a or agent-c would also violate “only your seal event, your reveal event.” Objective (two agent-b events) and bounds (no protocol change, only those paths) conflict.",
+    "The draft cites ADR 0041 (commit digest, then commit plaintext; independence from commit ancestry) but the envelope only checks event-log order. An actor who cannot take the git index lock cannot produce that ancestry. The written criterion never looks for two commits, so it cannot discriminate the ADR 0041 property it invokes; the substituted two-event check is the one strict_relay already makes unsatisfiable.",
+    "Completion criteria do not cover the recommendation contract they claim to enforce. Required contents 4 and 5 (reversibility; failure class) have no criterion. counter-case’s “not a restatement of agent-a’s arguments” cannot be checked from repository state while agent-a’s plaintext is absent, so it is non-discriminating at completion. vote-first and failing-observation are presence checks only.",
+    "The envelope’s claim that agent-b has not seen agent-a’s arguments is false in the bound bundle. F148, supplied as context, already ranks withdrawal as “the more honest fix and the more dangerous one.” Blindness is therefore not a property of what is available, contrary to ADR 0041, and counter-case cannot mean independence from agent-a’s framing.",
+    "ADR 0035 requires the question event to name the evidence bundle by path and digest. The draft names paths (and agent-a’s seal digest) but does not digest-bind the context files the voter must use. That is a missing envelope prerequisite for a lawful council question, separate from whether a vote text can be written."
+  ]
+}
