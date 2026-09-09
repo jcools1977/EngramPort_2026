@@ -17,21 +17,21 @@
     "sha": "9317124939f26d6af4bd5a3a1a0a596b2cfad257",
     "author": "agent-b@engramport.local",
     "signer": "luke@covenantsystems.ai",
-    "date": "2026-09-09T08:22:11-04:00",
+    "date": "2026-09-09T08:22:10-04:00",
     "finding": "F164"
   },
   {
     "sha": "d1fca740bacb2fd249077ee80dca766a37cebb6b",
     "author": "agent-b@engramport.local",
     "signer": "luke@covenantsystems.ai",
-    "date": "2026-09-09T08:22:29-04:00",
+    "date": "2026-09-09T08:22:28-04:00",
     "finding": "F164"
   },
   {
     "sha": "dd73f52214b4aee364c05af323fe396a4b5a20bd",
     "author": "agent-b@engramport.local",
     "signer": "luke@covenantsystems.ai",
-    "date": "2026-09-09T08:36:43-04:00",
+    "date": "2026-09-09T08:36:41-04:00",
     "finding": "F164"
   }
 ]
