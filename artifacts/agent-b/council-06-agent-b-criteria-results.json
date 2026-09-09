@@ -1,0 +1,80 @@
+[
+  {
+    "criterion_id": "seal-before-reveal",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-recommendation-sealed.md#sha256=fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95"
+      },
+      {
+        "type": "event",
+        "event_id": "01a0861d-17d3-7461-8193-d60d52775fe1"
+      },
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-agent-b-reveal-body.md#sha256=0fa29448447697201e78419d927b49f89e39719194ee78b2ed6fd12914b79cec"
+      }
+    ]
+  },
+  {
+    "criterion_id": "vote-first",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-recommendation-sealed.md#sha256=fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95"
+      }
+    ]
+  },
+  {
+    "criterion_id": "counter-case",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-recommendation-sealed.md#sha256=fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95"
+      }
+    ]
+  },
+  {
+    "criterion_id": "failing-observation",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-recommendation-sealed.md#sha256=fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95"
+      }
+    ]
+  },
+  {
+    "criterion_id": "reversibility",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-recommendation-sealed.md#sha256=fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95"
+      }
+    ]
+  },
+  {
+    "criterion_id": "failure-class",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-recommendation-sealed.md#sha256=fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95"
+      }
+    ]
+  },
+  {
+    "criterion_id": "nothing-implemented",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-06-agent-b-reveal-body.md#sha256=0fa29448447697201e78419d927b49f89e39719194ee78b2ed6fd12914b79cec"
+      }
+    ]
+  }
+]
