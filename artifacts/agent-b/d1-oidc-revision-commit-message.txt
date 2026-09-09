@@ -1,0 +1,5 @@
+fix: cross real OIDC runtime output into D1 classification
+
+Recognize the suite-wide runtime skip and reject reader marker drift through
+actual durable-test output. Explain expected PostgreSQL partial-mutant failures
+and report dispatcher live validation as blocked by the no-Docker boundary.

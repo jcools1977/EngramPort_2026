@@ -1,0 +1,11 @@
+
+> engramport@0.1.0 lint
+> eslint . --ignore-pattern dist --ignore-pattern '**/dist/**' --ignore-pattern .next
+
+
+/Users/an2b/an2b/products/EngramPORT-d1b/tests/d1-oidc-classification.test.mjs
+  117:39  error  Spaces are hard to count. Use {2}  no-regex-spaces
+
+✖ 1 problem (1 error, 0 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

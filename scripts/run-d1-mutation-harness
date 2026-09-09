@@ -5,6 +5,13 @@ set -uo pipefail
 d1_oidc_skip_reason(){
   local baseline="$1" baseline_log="$2" pattern="$3"
   [ "$baseline" = 0 ] || return 1
+  # The runtime gate registers no tests and emits a suite-wide TAP comment.
+  local runtime_reason
+  runtime_reason=$(sed -nE 's/^# OIDC_RUNTIME_SKIP runtime=.+ reason=(.+)$/\1/p' "$baseline_log" | head -1)
+  if [ -n "$runtime_reason" ]; then
+    printf '%s\n' "$runtime_reason"
+    return 0
+  fi
   sed -nE "s/^ok [0-9]+ - ${pattern} # SKIP (.+)$/\\1/p" "$baseline_log" | head -1
 }
 d1_oidc_classify(){

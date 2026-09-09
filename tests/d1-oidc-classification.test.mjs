@@ -14,15 +14,15 @@ function fixture(operation) {
   try { return operation(directory); } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 
-function classify(directory, { source = harness, skipped = true, base = "0", applied = "t", after = "1", forbidden = "t", restored = "0", priorFail = "0", otherExecuted = "149" } = {}) {
-  const log = path.join(directory, "baseline.tap");
-  writeFileSync(log, "TAP version 13\n" + patterns.map((pattern, index) =>
-    `ok ${index + 1} - ${pattern}${skipped ? ` # SKIP ${reason}` : ""}\n`).join(""));
+function classify(directory, { source = harness, baselineOutputs, skipped = true, base = "0", applied = "t", after = "1", forbidden = "t", restored = "0", priorFail = "0", otherExecuted = "149" } = {}) {
+  const synthetic = "TAP version 13\n" + patterns.map((pattern, index) =>
+    `ok ${index + 1} - ${pattern}${skipped ? ` # SKIP ${reason}` : ""}\n`).join("");
+  for (const pattern of patterns) writeFileSync(path.join(directory, `${pattern}.tap`), baselineOutputs?.[pattern] ?? synthetic);
   return spawnSync("bash", ["-c", `
 source "$1"
 executed="$9";not_exercised=0;fail="\${10}"
 for pattern in route same-name restart atomic expiry cleanup redaction; do
-  reason=$(d1_oidc_skip_reason "$3" "$2" "$pattern")
+  reason=$(d1_oidc_skip_reason "$3" "$2/$pattern.tap" "$pattern")
   d1_oidc_classify "$pattern" v26.5.0 "$reason" "$3" "$4" "$5" "$6" "$7"
   printf 'OUTCOME %s %s\\n' "$pattern" "$oidc_outcome"
 done
@@ -30,13 +30,13 @@ d1_summary
 rc=$?
 printf 'STATE executed=%s not_exercised=%s fail=%s\\n' "$executed" "$not_exercised" "$fail"
 exit "$rc"
-`, "classification", source, log, base, applied, after, forbidden, restored, "unused", otherExecuted, priorFail], { encoding: "utf8" });
+`, "classification", source, directory, base, applied, after, forbidden, restored, "unused", otherExecuted, priorFail], { encoding: "utf8" });
 }
 
-function assertSkipped(result) {
+function assertSkipped(result, expectedReason = reason) {
   assert.equal(result.status, 0, result.stderr + result.stdout);
   for (const pattern of patterns) {
-    assert.ok(result.stdout.includes(`W1_1_OIDC_DURABLE_${pattern.toUpperCase()} not-exercised runtime=v26.5.0 reason=${reason}\n`));
+    assert.ok(result.stdout.includes(`W1_1_OIDC_DURABLE_${pattern.toUpperCase()} not-exercised runtime=v26.5.0 reason=${expectedReason}\n`));
     assert.ok(result.stdout.includes(`OUTCOME ${pattern} not-exercised\n`));
   }
   assert.ok(result.stdout.includes("STATE executed=149 not_exercised=7 fail=0\n"));
@@ -87,6 +87,56 @@ test("skip parsing uses the selected test's actual TAP reason, not unrelated ski
   const result = spawnSync("bash", ["-c", 'source "$1"; d1_oidc_skip_reason 0 "$2" route; d1_oidc_skip_reason 0 "$2" redaction', "parser", harness, log], { encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, `${reason}\n`);
+}));
+
+test("real durable output crosses into the classifier and kills pre-fix and marker-drift readers", {
+  skip: process.versions.node !== "26.5.0" ? "crossed runtime control requires actual Node 26.5.0" : false,
+}, () => fixture(directory => {
+  const root = path.resolve(import.meta.dirname, "..");
+  const baselineOutputs = {};
+  let expectedReason;
+  for (const pattern of patterns) {
+    const env = { ...process.env, W1_1_OIDC_DURABLE_MODULE_ROOT: root, W1_1_OIDC_DURABLE_CASE: pattern };
+    delete env.NODE_TEST_CONTEXT;
+    const args = ["--test", "--test-reporter=tap", "--test-timeout=10000", "tests/workspace-oidc-durable.test.mjs"];
+    const actual = spawnSync(process.execPath, args, { cwd: root, env, encoding: "utf8", timeout: 20000 });
+    assert.equal(actual.status, 0, actual.stdout + actual.stderr);
+    baselineOutputs[pattern] = actual.stdout + actual.stderr;
+    const markers = [...actual.stdout.matchAll(/^# OIDC_RUNTIME_SKIP runtime=Node 26\.5\.0 reason=(.+)$/gm)];
+    assert.equal(markers.length, 1, baselineOutputs[pattern]);
+    expectedReason = markers[0][1];
+    console.log(`D1_OIDC_REAL_OUTPUT case=${pattern} command=node ${args.join(" ")} exit=${actual.status}\n${baselineOutputs[pattern].trim()}`);
+  }
+  // A skipped mutant also exits zero. No successful mutant execution is invented.
+  const options = { baselineOutputs, after: "0", forbidden: "f" };
+  const fixed = classify(directory, options);
+  assertSkipped(fixed, expectedReason);
+  console.log(`D1_OIDC_CROSSED_FIXED\n${fixed.stdout.trim()}`);
+
+  const original = readFileSync(harness, "utf8");
+  const runtimeBlock = original.match(/ {2}# The runtime gate[^]*? {2}fi\n/)?.[0];
+  assert.ok(runtimeBlock, "pre-fix comparison must remove the runtime comment parser");
+  const mutations = [
+    ["pre-fix-classifier", original.replace(runtimeBlock, "")],
+    ["reader-marker-drift", original.replace("# OIDC_RUNTIME_SKIP runtime=", "# OIDC_RUNTIME_DRIFT runtime=")],
+  ];
+  for (const [name, source] of mutations) {
+    assert.notEqual(source, original, `${name} must alter the reader`);
+    const mutant = path.join(directory, `${name}.bash`);
+    writeFileSync(mutant, source);
+    const result = classify(directory, { ...options, source: mutant });
+    assert.throws(() => assertSkipped(result, expectedReason), { code: "ERR_ASSERTION" });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /STATE executed=156 not_exercised=0 fail=1/);
+    assert.equal((result.stdout.match(/OUTCOME .* failed/g) ?? []).length, 7);
+    console.log(`D1_OIDC_CROSSED_MUTANT ${name}\n${result.stdout.trim()}`);
+    assertSkipped(classify(directory, options), expectedReason);
+    console.log(`D1_OIDC_CROSSED_MUTATION ${name} baseline=0 applied=t control=1 restored=0 killed=t`);
+  }
+  const failedProcess = classify(directory, { ...options, base: "1" });
+  assert.equal(failedProcess.status, 1);
+  assert.match(failedProcess.stdout, /STATE executed=156 not_exercised=0 fail=1/);
+  console.log("D1_OIDC_CROSSED_MUTATIONS executed=2 killed=2; other_executed=149 is seeded, not a live D1 count");
 }));
 
 test("the control kills false execution, false kill, silent skip, and obsolete total mutations", () => fixture(directory => {

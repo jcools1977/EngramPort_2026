@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "crossed-control",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-oidc-revision-results.md#sha256=de35af4d43df7018edb0483bbd140a1b33f0e36499374ddbbf77d4b4fb60e061"
+      }
+    ]
+  },
+  {
+    "criterion_id": "one-marker",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-oidc-revision-results.md#sha256=de35af4d43df7018edb0483bbd140a1b33f0e36499374ddbbf77d4b4fb60e061"
+      }
+    ]
+  },
+  {
+    "criterion_id": "sibling-tests-explained",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-oidc-revision-results.md#sha256=de35af4d43df7018edb0483bbd140a1b33f0e36499374ddbbf77d4b4fb60e061"
+      }
+    ]
+  },
+  {
+    "criterion_id": "live-run",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-oidc-revision-results.md#sha256=de35af4d43df7018edb0483bbd140a1b33f0e36499374ddbbf77d4b4fb60e061"
+      }
+    ]
+  }
+]

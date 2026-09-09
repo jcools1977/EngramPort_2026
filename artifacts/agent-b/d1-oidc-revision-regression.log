@@ -1,0 +1,28 @@
+✔ both database entrypoints refuse a concurrent caller and leave the holder unaffected (159.572042ms)
+✔ a SIGKILL-stale lock is recovered by the other entrypoint (95.246041ms)
+DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ every absent Docker gate emits exactly one named reason (1.079666ms)
+✔ CI and required Docker refuse missing endpoints without successful skips (0.19075ms)
+✔ reachable Docker continues without skip output even in required mode (0.061917ms)
+✔ silent-skip mutation is killed by the same output control (1.682125ms)
+✔ real entry points skip loudly locally, refuse in CI, and continue when Docker responds (7613.843875ms)
+OIDC_RUNTIME_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ known-bad OIDC runtime emits exactly one runtime and reason line (0.569041ms)
+✔ other runtimes continue without a skip (0.702583ms)
+✔ silent OIDC skip mutation is killed by the output control (1.434666ms)
+✔ durable entry point exits zero with one loud skip on Node 26.5.0 (190.8475ms)
+✔ Node 22 CI explicitly invokes session tests including the durable entry point (0.489167ms)
+ACTOR_REGISTRY_DRIFT_CHECK actors=3 scope=dirty-tree normalized=true disjoint=true
+✔ actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint (27.319792ms)
+✔ registry drift check passes when a clean checkout committed materially wrong registry bytes (142.782833ms)
+✔ actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities (3.149334ms)
+REPOSITORY_SURFACE_POLICY tracked=1245 actor_rule=true drift_rule=true shared_rule=true unaccounted=0
+✔ tracked repository paths are covered only by explicit written surfaces (27.912209ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7657.850542
