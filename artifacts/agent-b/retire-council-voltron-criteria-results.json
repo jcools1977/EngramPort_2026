@@ -1,0 +1,12 @@
+[
+  {
+    "criterion_id": "withdrawal-appended",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "event",
+        "event_id": "01a08652-c79d-707c-ad04-3e20ed25ac25"
+      }
+    ]
+  }
+]
