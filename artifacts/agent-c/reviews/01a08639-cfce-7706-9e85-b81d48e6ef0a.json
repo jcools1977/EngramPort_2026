@@ -1,0 +1,30 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08639-cfce-7706-9e85-b81d48e6ef0a",
+  "target_thread": "preflight-adr-0052",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "feasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-09T12:52:26.201Z",
+  "review_completed_at": "2026-09-09T12:56:23.379Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 3,
+  "token_use": {
+    "input_tokens": 9080,
+    "output_tokens": 329,
+    "total_tokens": 24287
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 1086340000,
+    "cost_usd": 0.108634
+  },
+  "summary": "The second-draft dispatch to agent-b is feasible under current authority and repo state. Shared write surfaces cover the named bounds (git-adapter, schemas, tests, PROTOCOL.md, AGENTS.md, docs/, package.json, packages/sdk/dist and packages/sdk/package.json). Agent-b's implementation/testing capabilities match the work. The first-draft blockers look corrected: witnesses are per property (appendEvent/inbox/verifyLog), pre-fix comparison is only sender-withdraws as unknown event type (which current HEAD can produce), SDK dist is in bounds, and each new refusal rule names a discriminating mutation. Temporary-scaffold appends plus no live-log withdrawal keep the two stuck turns and actor-owned history intact. Residual gaps do not make a mandatory requirement unsatisfiable if agent-b follows the bound ADR together with existing strict-relay next/self-reply rules.",
+  "findings": [
+    "Objective still requires a non-empty withdrawal reason in the body, but none of the eight envelope criteria observe refusal of an empty reason. That claimed property is not discriminated by the completion envelope.",
+    "The dispatch never binds `next` on a withdrawal. Late-completion-once is only lawful under current strict_relay if withdrawal.next is the original addressee and the completion replies to the withdrawal, not to E. The bound ADR implies this, so it is implementable, but the draft leaves next:null as a reading that would make the criterion unsatisfiable without violating PROTOCOL.md."
+  ]
+}
