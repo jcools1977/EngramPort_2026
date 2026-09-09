@@ -1,0 +1,43 @@
+D1_AGENT_C_REWRITES fourth-import=rewritten pre-fix-bounded-context=unrewritten baseline=0 applied=t control=1 restored=0 killed=t
+AGENT_C_CREDENTIAL_REFERENCE mutant-load-failed baseline=0 applied=t after=1 error={"code":"ERR_MODULE_NOT_FOUND","message":"Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-agent-c-SP5Ksl/intentionally-missing-module.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-agent-c-SP5Ksl/agent-c-credential-reference.mjs"}
+D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+D1_AGENT_C_LOAD_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+AGENT_C_CREDENTIAL_REFERENCE not ok 1 - credential-reference
+AGENT_C_CREDENTIAL_SHAPE not ok 2 - credential-shape
+AGENT_C_CREDENTIAL_CONTEXT not ok 3 - credential-context
+AGENT_C_WRITE_PREFIX not ok 11 - write-prefix
+AGENT_C_TURN_ENFORCEMENT not ok 12 - turn-enforcement
+AGENT_C_REPLY_TARGET not ok 13 - reply-target
+AGENT_C_RESULT_REVIEW not ok 14 - result-review
+AGENT_C_POLLER_SILENCE not ok 15 - inbox-poller
+AGENT_C_CREDENTIAL_EGRESS not ok 16 - credential-egress
+AGENT_C_PROVIDER_DIAGNOSIS not ok 19 - provider-diagnosis
+AGENT_C_PROVIDER_ERROR_EGRESS not ok 20 - provider-error-egress
+AGENT_C_SCHEDULED_SILENCE not ok 21 - scheduled-poller-silence
+AGENT_C_CREDENTIAL_FAILURE_REPORT not ok 22 - credential-unavailable-reporting
+AGENT_C_CREDENTIAL_REFERENCE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_SHAPE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_CONTEXT baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_WRITE_PREFIX baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_TURN_ENFORCEMENT baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_REPLY_TARGET baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_RESULT_REVIEW baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_POLLER_SILENCE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_EGRESS baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_PROVIDER_DIAGNOSIS baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_PROVIDER_ERROR_EGRESS baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_SCHEDULED_SILENCE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_FAILURE_REPORT baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: executed=13 not_exercised=0 negative_control=0 expected_total=13
+D1 mutation harness: all exercised controls discriminate
+✔ agent-c builder derives adapter rewrites including a synthetic fourth import (104.376083ms)
+✔ agent-c missing module is named, counted, and fails the actual harness branch (859.851083ms)
+✔ all declared agent-c mutants apply and produce per-case failures through the harness (13058.45425ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14057.296542

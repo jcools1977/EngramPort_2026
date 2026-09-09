@@ -1,5 +1,6 @@
 import "./d1-mutation-paths.test.mjs";
 import "./d1-accounting.test.mjs";
+import "./d1-agent-c-mutations.test.mjs";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";

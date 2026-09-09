@@ -1,0 +1,54 @@
+
+> engramport@0.1.0 agent-c:test
+> node --test tests/agent-c-supervisor.test.mjs && node scripts/run-agent-c-supervisor-mutations
+
+✔ credential-reference (0.610917ms)
+✔ credential-shape (0.115625ms)
+✔ credential-context (368.561042ms)
+✔ bounded-context-delivery (238.515459ms)
+✔ bounded-context-missing-event (244.2985ms)
+✔ bounded-context-event-digest (253.270084ms)
+✔ bounded-context-artifact-digest (217.168958ms)
+✔ legacy-artifact-digest (244.181ms)
+✔ bounded-context-size (213.18225ms)
+✔ bounded-context-deduplication (240.316875ms)
+✔ write-prefix (218.21ms)
+✔ turn-enforcement (664.526291ms)
+✔ reply-target (215.729292ms)
+✔ result-review (232.125792ms)
+✔ inbox-poller (627.434209ms)
+✔ credential-egress (789.979167ms)
+✔ stubbed-review-appends-through-cli (875.743541ms)
+✔ xai-client-metrics (0.371041ms)
+✔ provider-diagnosis (0.171958ms)
+✔ provider-error-egress (0.117209ms)
+✔ scheduled-poller-silence (0.14275ms)
+✔ credential-unavailable-reporting (0.111625ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5690.098041
+AGENT_C_MUTATION credential-reference=killed
+AGENT_C_MUTATION credential-shape=killed
+AGENT_C_MUTATION credential-context=killed
+AGENT_C_MUTATION write-prefix=killed
+AGENT_C_MUTATION turn-enforcement=killed
+AGENT_C_MUTATION reply-target=killed
+AGENT_C_MUTATION result-review=killed
+AGENT_C_MUTATION inbox-poller=killed
+AGENT_C_MUTATION credential-egress=killed
+AGENT_C_MUTATION provider-diagnosis=killed
+AGENT_C_MUTATION provider-error-egress=killed
+AGENT_C_MUTATION scheduled-poller-silence=killed
+AGENT_C_MUTATION credential-unavailable-reporting=killed
+AGENT_C_MUTATION bounded-context-delivery=killed
+AGENT_C_MUTATION bounded-context-missing-event=killed
+AGENT_C_MUTATION bounded-context-event-digest=killed
+AGENT_C_MUTATION bounded-context-artifact-digest=killed
+AGENT_C_MUTATION legacy-artifact-digest=killed
+AGENT_C_MUTATION bounded-context-size=killed
+AGENT_C_MUTATION bounded-context-deduplication=killed

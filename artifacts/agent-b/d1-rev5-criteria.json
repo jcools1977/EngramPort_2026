@@ -1,0 +1,46 @@
+[
+  {
+    "criterion_id": "rewrites-derived",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev5-results.md#sha256=1ddb0527279bdc014260dab2f66244dbe9c6c168f545b36fba3ed1df7a063bac"
+      }
+    ]
+  },
+  {
+    "criterion_id": "load-failure-loud",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev5-results.md#sha256=1ddb0527279bdc014260dab2f66244dbe9c6c168f545b36fba3ed1df7a063bac"
+      }
+    ]
+  },
+  {
+    "criterion_id": "twelve-killed",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev5-results.md#sha256=1ddb0527279bdc014260dab2f66244dbe9c6c168f545b36fba3ed1df7a063bac"
+      }
+    ]
+  },
+  {
+    "criterion_id": "live-run",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev5-results.md#sha256=1ddb0527279bdc014260dab2f66244dbe9c6c168f545b36fba3ed1df7a063bac"
+      },
+      {
+        "type": "event",
+        "event_id": "01a0868b-6885-7efe-89a0-90e5f9c6dbfc"
+      }
+    ]
+  }
+]

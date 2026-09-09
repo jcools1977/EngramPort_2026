@@ -10,7 +10,10 @@ import { hashBody, hashThreadConfig, parseEvent, verifyLog } from "../packages/g
 
 const repository = path.resolve(import.meta.dirname, "..");
 const moduleSpecifier = process.env.AGENT_C_SUPERVISOR_MODULE ?? pathToFileURL(path.join(repository, "packages/agent-c-supervisor/src/index.mjs")).href;
-const supervisor = await import(moduleSpecifier);
+const supervisor = await import(moduleSpecifier).catch(error => {
+  console.error(`AGENT_C_MUTANT_LOAD_FAILED ${JSON.stringify({ code: error.code ?? error.name, message: error.message })}`);
+  throw error;
+});
 const selected = process.env.AGENT_C_TEST_CASE ?? "all";
 const credential = "xai-synthetic-unit-credential-1234567890";
 const fixedReview = {

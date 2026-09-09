@@ -378,9 +378,13 @@ if(mode==="credential-context"){
   boundary=path.join(path.dirname(target),"agent-c-credential-context-boundary.mjs");
   fs.writeFileSync(boundary,boundaryText);
 }
-let text=fs.readFileSync(source,"utf8")
-  .replace("../../git-adapter/src/credential-boundary.mjs",pathToFileURL(boundary).href)
-  .replace("../../git-adapter/src/verify-log.mjs",pathToFileURL(path.join(root,"packages/git-adapter/src/verify-log.mjs")).href);
+// Discover quoted adapter specifiers in the source, including future imports.
+// Only the credential-context mutation substitutes a different dependency.
+let text=fs.readFileSync(source,"utf8").replace(/(["'])(\.\.\/\.\.\/git-adapter\/src\/[^"'\r\n]+\.mjs)\1/g,(_match,quote,specifier)=>{
+  const dependency=specifier==="../../git-adapter/src/credential-boundary.mjs"
+    ? boundary : path.resolve(path.dirname(source),specifier);
+  return quote+pathToFileURL(dependency).href+quote;
+});
 function replace(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="credential-reference")replace('if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");','if (typeof credential !== "string" || !credential /* AGENT_C_CREDENTIAL_REFERENCE_REMOVED */) refuse("CREDENTIAL_UNRESOLVED");');
 else if(mode==="credential-shape")replace('  if (/\\s/.test(credential) || /^[A-Za-z_][A-Za-z0-9_]*=/.test(credential)) refuse("CREDENTIAL_MALFORMED");','  void credential; /* AGENT_C_CREDENTIAL_SHAPE_REMOVED */');
@@ -818,6 +822,13 @@ for line in "${MUTATIONS[@]}"; do
     [ "$pattern" = credential-context ] && marker_target="$mutation_dir/agent-c-credential-context-boundary.mjs"
     if grep -Fq "$marker" "$marker_target"; then applied=t; else applied=f; fi
     log="$mutation_dir/agent-c-$pattern.log"; run_agent_c "$variant" "$pattern" >"$log" 2>&1; after=$?
+    load_error=$(sed -n 's/^# AGENT_C_MUTANT_LOAD_FAILED //p' "$log")
+    if [ -n "$load_error" ]; then
+      fail=1
+      d1_outcome '%s mutant-load-failed baseline=%s applied=%s after=%s error=%s\n' "$name" "$base" "$applied" "$after" "$load_error"
+      cat "$log" >&2
+      continue
+    fi
     forbidden=f; grep -Eq "not ok [0-9]+ - $pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
     restored=$(assert_agent_c "$source_module" "$pattern")
     d1_outcome '%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$forbidden" "$restored"
