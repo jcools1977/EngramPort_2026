@@ -1,0 +1,46 @@
+[
+  {
+    "criterion_id": "host-gateway",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-host-preconditions-results.md#sha256=29ca8b5fdc709bc2bb0bf6b91ebb7f755171cb3359ed10ef4368dfb7dad995af"
+      }
+    ]
+  },
+  {
+    "criterion_id": "preconditions-listed",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-host-preconditions-results.md#sha256=29ca8b5fdc709bc2bb0bf6b91ebb7f755171cb3359ed10ef4368dfb7dad995af"
+      }
+    ]
+  },
+  {
+    "criterion_id": "canary-unchanged",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-host-preconditions-results.md#sha256=29ca8b5fdc709bc2bb0bf6b91ebb7f755171cb3359ed10ef4368dfb7dad995af"
+      }
+    ]
+  },
+  {
+    "criterion_id": "ci-green",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-host-preconditions-results.md#sha256=29ca8b5fdc709bc2bb0bf6b91ebb7f755171cb3359ed10ef4368dfb7dad995af"
+      },
+      {
+        "type": "event",
+        "event_id": "01a086c1-44a6-70fd-936d-23c4c408215f"
+      }
+    ]
+  }
+]

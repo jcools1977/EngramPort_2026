@@ -1,3 +1,17 @@
+// Host preconditions, checked before any canary sink runs:
+// - Docker can run coreImage and inspect containers/volumes; its kernel uses core_pattern=core.
+// - The host can create/remove a temporary directory and chmod its dump mount; the container
+//   can write that same mount and the host can read its files, including a chmod a+r real core.
+// - The image provides bash, perl, env -u, cat, chmod, getent and timeout; core_uses_pid=0,
+//   unlimited core/file limits and the host crash policy permit a nonempty /dump/core
+//   and Bash's expected English segmentation-fault/core-dumped diagnostic.
+// - Docker supports host-gateway; host.docker.internal resolves inside the mapped container.
+// - With no KMS_TOKEN, the stub can bind 0.0.0.0:18201. Otherwise Vault is on port 8201.
+//   The chosen signer accepts synth-a/sha2-256 with the token from host loopback AND from
+//   the container gateway (including Bash /dev/tcp and HTTP response-file readability).
+// - Cleanup inventory is readable before execution. Concurrent unrelated Docker/temp creation
+//   is not fenced here; the unchanged final delta assertions still detect it after execution.
+// Each preflight failure has a one-line diagnostic; probes use only synthetic signing input.
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {createHash} from "node:crypto";
@@ -53,16 +67,60 @@ async function startSigningContext(){
 async function runProtectedOperation(mode,landing,{canary,digest:knownDigest,moduleRoot,token,signer,port,store=null}){const env={...process.env};delete env.KMS_TOKEN;delete env.ENGRAM_CANARY_MATERIAL;const args=[worker,`protected_${mode}`,landing,...(store?[store]:[])];const input=JSON.stringify({canary,digest:knownDigest,moduleRoot,token,signer,port});const result=await runCommand(process.execPath,args,{env,input});const parsed=JSON.parse(result.stdout);assert.match(parsed.signature,/^vault:v\d+:/);assert.equal(parsed.signer,signer);return parsed;}
 export async function checkCanaryCorePattern(run=runCommand){
   // F170: containers inherit the host pattern; both observers read /dump/core.
-  const {stdout}=await run("docker",["run","--rm","--entrypoint","cat",coreImage,"/proc/sys/kernel/core_pattern"]);
+  const {stdout}=await precondition("DOCKER_IMAGE","Docker must run the canary image and read kernel.core_pattern",()=>run("docker",["run","--rm","--entrypoint","cat",coreImage,"/proc/sys/kernel/core_pattern"]));
   const pattern=stdout.replace(/\n$/,"");
   if(pattern!=="core")throw new Error(`W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=${JSON.stringify(pattern)}; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)`);
   return pattern;
+}
+async function precondition(code,requirement,operation){
+  try{return await operation();}catch{throw new Error(`W1_7_CANARY_${code}: ${requirement}`);}
+}
+export async function checkCanaryHostPreconditions({directory,signing,containers,run=runCommand,fetchSigning=fetch}){
+  const dump=path.join(directory,"host-preflight");
+  await precondition("DUMP_DIRECTORY","host must create, chmod and remove files in its temporary dump directory",async()=>{
+    await mkdir(dump);await chmod(dump,0o777);
+    const probe=path.join(dump,"host-probe");await writeFile(probe,"host-probe");await rm(probe);
+  });
+  const body=JSON.stringify({input:Buffer.from(digest("synthetic-host-preflight")).toString("base64")});
+  await precondition("HOST_SIGNER","signer must accept synth-a/sha2-256 on host loopback with the configured token",async()=>{
+    const response=await fetchSigning(`http://127.0.0.1:${signing.port}/v1/transit/sign/synth-a/sha2-256`,{method:"POST",headers:{"x-vault-token":signing.token,"content-type":"application/json"},body,signal:AbortSignal.timeout(3000)});
+    if(!response.ok||!/^vault:v\d+:/.test((await response.json())?.data?.signature??""))throw new Error("signer refused");
+  });
+  // Run a safe crash and signing probe on the same mount, image, limits and gateway as coreOperation.
+  const command=String.raw`fail(){ printf 'W1_7_PREFLIGHT:%s\n' "$1"; exit 1; }
+for tool in perl env cat chmod getent timeout; do command -v "$tool" >/dev/null || fail TOOLS; done
+env -u KMS_TOKEN -u KMS_PORT -u SIGN_BODY perl -e 'exit 0' || fail TOOLS
+test "$(cat /proc/sys/kernel/core_uses_pid)" = 0 || fail CORE_USES_PID
+test "$(ulimit -c)" = unlimited && test "$(ulimit -f)" = unlimited || fail CORE_LIMITS
+getent hosts host.docker.internal >/dev/null || fail HOST_RESOLUTION
+printf mount-probe > /dump/mount-probe || fail DUMP_MOUNT
+chmod a+r /dump/mount-probe || fail DUMP_READABILITY
+env -u KMS_TOKEN -u KMS_PORT -u SIGN_BODY perl -e '$held="synthetic-host-preflight"; kill 11,$$; sleep 1'
+crash_rc=$?
+test "$crash_rc" -ne 0 && test -s /dump/core || fail CORE_DUMP
+chmod a+r /dump/core || fail DUMP_READABILITY
+timeout 3 bash -c 'exec 3<>/dev/tcp/host.docker.internal/$KMS_PORT || exit 1; printf "POST /v1/transit/sign/synth-a/sha2-256 HTTP/1.1\r\nHost: host.docker.internal:%s\r\nX-Vault-Token: %s\r\ncontent-type: application/json\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s" "$KMS_PORT" "$KMS_TOKEN" "${"${#SIGN_BODY}"}" "$SIGN_BODY" >&3; cat <&3 > /dump/sign-response' || fail CONTAINER_SIGNER`;
+  const requirements={TOOLS:"image must provide bash, perl, env -u, cat, chmod, getent and timeout",CORE_USES_PID:"host kernel.core_uses_pid must be 0 for /dump/core",CORE_LIMITS:"container core and file size limits must be unlimited",HOST_RESOLUTION:"host.docker.internal must resolve through the Docker host-gateway mapping",DUMP_MOUNT:"container must write the host temporary directory mounted at /dump",DUMP_READABILITY:"container must make dump files readable by the host user",CORE_DUMP:"host crash policy and dump storage must allow a nonempty /dump/core",CONTAINER_SIGNER:"container Bash /dev/tcp must reach the host signer and read its HTTP response within 3 seconds"};
+  const name=`engram-canary-preflight-${process.pid}-${Math.random().toString(16).slice(2)}`;
+  containers.add(name);
+  const result=await precondition("CONTAINER_RUNTIME","Docker must start bash with the dump mount, core limit and host-gateway mapping",()=>run("docker",["run","--rm","--name",name,"--add-host=host.docker.internal:host-gateway","--ulimit","core=-1","-v",`${dump}:/dump`,"-w","/dump","-e",`KMS_TOKEN=${signing.token}`,"-e",`KMS_PORT=${signing.port}`,"-e",`SIGN_BODY=${body}`,"--entrypoint","bash",coreImage,"-c",command],{allowFailure:true}));
+  if(result.code!==0){const code=result.stdout.match(/^W1_7_PREFLIGHT:([A-Z_]+)$/m)?.[1];throw new Error(`W1_7_CANARY_${code&&requirements[code]?code:"CONTAINER_RUNTIME"}: ${requirements[code]??"Docker must run the preflight image with bash, mount, limits and host-gateway"}`);}
+  containers.delete(name);
+  if(!/Segmentation fault\s+\(core dumped\)/.test(result.stderr))throw new Error("W1_7_CANARY_CORE_DIAGNOSTIC: Bash must report Segmentation fault (core dumped) for the forced crash");
+  await precondition("HOST_DUMP_READ","host must read the mounted marker, nonempty real core and successful container signing response",async()=>{
+    if(await readFile(path.join(dump,"mount-probe"),"utf8")!=="mount-probe")throw new Error("mount mismatch");
+    if(!(await readFile(path.join(dump,"core"))).length)throw new Error("empty core");
+    const response=await readFile(path.join(dump,"sign-response"),"utf8");
+    if(!/^HTTP\/1\.[01] 200\b/.test(response)||!/vault:v\d+:[^"\\]+/.test(response))throw new Error("signer refused");
+  });
+  await precondition("DUMP_CLEANUP","host must remove container-created dump files",()=>rm(dump,{recursive:true}));
 }
 async function coreOperation(root,material,containers,{digest:knownDigest=null,token=null,signer=null,port=null}={}){const dump=path.join(root,"core");await mkdir(dump,{recursive:true});await chmod(dump,0o777);const name=`engram-canary-core-${process.pid}-${Math.random().toString(16).slice(2)}`;containers.add(name);const vulnerable=Boolean(material);let command;const envArgs=[];
   // Actions run 34368556755: root-owned cores denied host reads (EACCES); expose the dump bytes before exit.
   if(vulnerable){command=`perl -e '$held=$ENV{ENGRAM_CANARY}; kill 11,$$; sleep 1'; crash_rc=$?; chmod a+r /dump/core || exit $?; exit "$crash_rc"`;envArgs.push("-e",`ENGRAM_CANARY=${material}`);}
   else{const body=JSON.stringify({input:Buffer.from(knownDigest).toString("base64")});command=`( exec 3<>/dev/tcp/host.docker.internal/$KMS_PORT; printf "POST /v1/transit/sign/synth-a/sha2-256 HTTP/1.1\\r\\nHost: host.docker.internal:%s\\r\\nX-Vault-Token: %s\\r\\ncontent-type: application/json\\r\\nContent-Length: %s\\r\\nConnection: close\\r\\n\\r\\n%s" "$KMS_PORT" "$KMS_TOKEN" "\${#SIGN_BODY}" "$SIGN_BODY" >&3; cat <&3 > /dump/sign-response ) & sign_pid=$!; env -u KMS_TOKEN -u KMS_PORT -u SIGN_BODY perl -e '$held="synthetic-safe-protected-core"; kill 11,$$; sleep 1'; crash_rc=$?; chmod a+r /dump/core || exit $?; wait "$sign_pid"; sign_rc=$?; test "$sign_rc" -eq 0 || exit "$sign_rc"; exit "$crash_rc"`;envArgs.push("-e",`KMS_TOKEN=${token}`,"-e",`KMS_PORT=${port}`,"-e",`SIGN_BODY=${body}`);}
-  const args=["run","--rm","--name",name,"--ulimit","core=-1","-v",`${dump}:/dump`,"-w","/dump",...envArgs,"--entrypoint","bash",coreImage,"-c",command];const result=await runCommand("docker",args,{allowFailure:true});containers.delete(name);assert.notEqual(result.code,0,"forced crash must exit nonzero");assert.match(result.stderr,/Segmentation fault\s+\(core dumped\)/);await readFile(path.join(dump,"core"));if(vulnerable)return {};
+  // Actions run 34369284714: Linux Docker needs this mapping for the protected KMS request.
+  const args=["run","--rm","--name",name,"--add-host=host.docker.internal:host-gateway","--ulimit","core=-1","-v",`${dump}:/dump`,"-w","/dump",...envArgs,"--entrypoint","bash",coreImage,"-c",command];const result=await runCommand("docker",args,{allowFailure:true});containers.delete(name);assert.notEqual(result.code,0,"forced crash must exit nonzero");assert.match(result.stderr,/Segmentation fault\s+\(core dumped\)/);await readFile(path.join(dump,"core"));if(vulnerable)return {};
   const response=await readFile(path.join(dump,"sign-response"),"utf8");const signature=response.match(/vault:v\d+:[^"\\]+/)?.[0];assert.match(signature??"",/^vault:v\d+:/,"protected core signing response missing");return {signature,signer};}
 async function landingContains(file,canary){try{return (await readFile(file)).includes(Buffer.from(canary));}catch(error){if(error.code==="ENOENT")return false;throw error;}}
 async function cleanupSnapshot(){const [containers,volumes,temp]=await Promise.all([runCommand("docker",["ps","-aq"]),runCommand("docker",["volume","ls","-q"]),readdir(os.tmpdir())]);return {containers:new Set(containers.stdout.trim().split("\n").filter(Boolean)),volumes:new Set(volumes.stdout.trim().split("\n").filter(Boolean)),temp:new Set(temp.filter(name=>name.startsWith("engram-canary-")))};}
@@ -70,8 +128,8 @@ const added=(before,after)=>[...after].filter(value=>!before.has(value));
 
 export async function runCanaryFixture({moduleRoot,boundary,corePatternCommand=runCommand}){
   await checkCanaryCorePattern(corePatternCommand);
-  const cleanupBefore=await cleanupSnapshot();
-  const directory=await mkdtemp(path.join(os.tmpdir(),"engram-canary-"));
+  const cleanupBefore=await precondition("CLEANUP_INVENTORY","Docker container/volume lists and host temporary directory must be readable",cleanupSnapshot);
+  const directory=await precondition("TEMP_DIRECTORY","host temporary directory must be writable",()=>mkdtemp(path.join(os.tmpdir(),"engram-canary-")));
   const containers=new Set();let signing;
   try{
     const vulnerableModuleRoot=path.join(directory,"vulnerable-modules");
@@ -83,7 +141,8 @@ export async function runCanaryFixture({moduleRoot,boundary,corePatternCommand=r
       import(moduleUrl(vulnerableModuleRoot,"workspace-setup.mjs")),import(moduleUrl(vulnerableModuleRoot,"report-boundary.mjs")),
       import(moduleUrl(moduleRoot,"cli.mjs")),import(moduleUrl(moduleRoot,"workspace-setup.mjs")),import(moduleUrl(moduleRoot,"report-boundary.mjs"))
     ]);
-    signing=await startSigningContext();
+    signing=await precondition("SIGNER_LISTENER","local stub must bind 0.0.0.0:18201 when KMS_TOKEN is absent",startSigningContext);
+    await checkCanaryHostPreconditions({directory,signing,containers});
     const vulnerableLanding={plan:null,report_output:null};
     const protectedLanding={plan:null,report_output:null};
     const vulnerableOps=path.join(directory,"vulnerable-operations");const protectedOps=path.join(directory,"protected-operations");

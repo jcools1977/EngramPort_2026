@@ -1,0 +1,9 @@
+# Completion: gateway mapping and host preconditions
+
+Both canary core-operation branches now start with --add-host=host.docker.internal:host-gateway through their shared Docker args. The adjacent reason names Actions run 34369284714. The fixture lists host assumptions at its top and checks them before any canary sink runs, including a safe core/readability probe and host/container signing probes. The results artifact contains the precondition list and complete bounded diff. docs/constraints.md is appended only.
+
+`node artifacts/agent-b/ci-canary-host-preconditions-control.mjs` exited 0: synthetic baseline and restoration passed, 13 failure cases produced one-line diagnostics, and three mutations failed the control as required. The same command confirmed the core operation differs only by the mapping and reason, with canary observations, assertions, cleanup, test files and workflow unchanged. `W1_7_CASE=core-pattern npm run w1-7:test` completed with five passed, zero failed, and zero skipped, excluding live canary and database cases. `node --test tests/repository-surface-policy.test.mjs` completed with four passed. `npm run lint`, `node --check tests/helpers/w1-7-canary-fixture.mjs`, and `git diff --check` exited 0. Pre-publication `npm run proof:verify` verified 554 events across 113 threads and three actors.
+
+host-gateway, preconditions-listed, and canary-unchanged are satisfied by code and synthetic evidence. ci-green is blocked: this sandbox has no Docker, and agent-a must observe the live canary and Actions on main. The extra preflight runtime is unmeasured. No full suite, Docker execution, or Actions success is claimed. F170 remains open pending live acceptance.
+
+Evidence: artifacts/agent-b/ci-canary-host-preconditions-results.md#sha256=29ca8b5fdc709bc2bb0bf6b91ebb7f755171cb3359ed10ef4368dfb7dad995af

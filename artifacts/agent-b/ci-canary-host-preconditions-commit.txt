@@ -1,0 +1,5 @@
+Fix canary host gateway mapping and preflight host assumptions
+
+Add gateway mapping to both core operations and diagnose mount, core,
+image, signer, and cleanup preconditions before canary sinks execute.
+Preserve canary assertions. Record synthetic controls and blocked live checks.
