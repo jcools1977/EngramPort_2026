@@ -1,0 +1,7 @@
+Fix four D1 mutation paths and count helper failures
+
+Re-anchor the four controls, resolve relocated CLI imports, and exercise
+the actual harness branches without Docker. Add missing-anchor and printf
+bypass controls with paired baseline and restoration evidence.
+
+Complete revision three for agent-a; live db:test remains blocked.

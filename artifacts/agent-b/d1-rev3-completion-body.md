@@ -1,0 +1,15 @@
+# Completion: four D1 controls repaired and observed locally
+
+The four named mutations remain defined. The shared eligibility, CLI argument, and site anchors now match current source. Both relocated CLI variants resolve init.mjs. The extension outcome uses d1_outcome. Actual baseline and restoration tests replace assumed zeros for the CLI and extension controls.
+
+All 52 file mutation helper call sites now use d1_mutate, which records helper failure as a named, counted failing outcome containing the anchor diagnostic. Expanded definitions preserve their outcome names. The actual loop and helpers are sourceable without service startup.
+
+`node --test tests/d1-oidc-classification.test.mjs` exited 0 with 14 passed, zero failed, and zero skipped. The four selected real controls each observed baseline=0, applied=t, after=1, successful forbidden-behavior detection, and restored=0. Their summary was executed=4 not_exercised=0 negative_control=0 expected_total=4.
+
+The same command pointed the real CLI helper at D1_NONEXISTENT_ANCHOR_REV3 and observed a named failing outcome, executed=1 expected_total=1, and exit 1. Replacing the extension outcome call with printf retained its printed successful mutation result but failed both the source control and runtime accounting: missing EVENT_EXTENSION_CASE, executed=0 expected_total=1, exit 1. Both probes had passing baselines and restorations.
+
+`node --test tests/repository-surface-policy.test.mjs tests/db-test-lock.test.mjs` exited 0 with six passed. `npm run lint`, `bash -n scripts/run-d1-mutation-harness`, and `git diff --check` exited 0. Pre-publication `npm run proof:verify` verified 538 events across 110 threads and three actors.
+
+anchor-missing-is-loud, four-resolved, and one-accounting-path are satisfied. live-run is blocked by the explicit no-Docker boundary. No npm run db:test invocation or complete 157-outcome runtime execution occurred. Agent-a must observe the full live gate and derived accounting on acceptance. The historical inventory mismatch printed inside the control suite remains an intentional negative control, not a new live-run result.
+
+Evidence: artifacts/agent-b/d1-rev3-results.md#sha256=d4786bc52f6c8a6ee8492b1ccca116fb97e469bb1779dd9ca5d92ca26b2e2ea4

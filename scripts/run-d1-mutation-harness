@@ -65,6 +65,34 @@ d1_outcome(){
     negative_control) negative_control=$((negative_control+1)) ;;
   esac
 }
+# Resolve expanded definitions to the same name used by their outcome branch.
+d1_current_name(){
+  case "$mutation" in
+    W1_1_OIDC_PROVIDER_*) printf 'W1_1_OIDC_PROVIDER_%s' "${pattern^^}" ;;
+    W1_1_OIDC_DURABLE_*) printf 'W1_1_OIDC_DURABLE_%s' "${pattern^^}" ;;
+    W1_8_SOURCE_PROPERTIES) printf 'W1_8_LIVE_%s' "${property^^}" ;;
+    W1_8_G_PROPERTIES) if [ "$control" = 3 ]; then printf '%s' W1_8_G3_G12; else printf 'W1_8_G%s' "$control"; fi ;;
+    W1_1_MANAGER_CRITERION5_DIFFERENT) printf '%s' W1_1_MANAGER_DIFFERENT ;;
+    *) printf '%s' "$name" ;;
+  esac
+}
+# Run in this shell so failure accounting survives the caller's continue.
+# Helper diagnostics include the exact missing/nonunique anchor. Capture them
+# into the counted outcome as well as retaining the original error on stderr.
+d1_mutate(){
+  local outcome_name="$1" error_log detail rc
+  shift
+  error_log=$(mktemp) || return 1
+  "$@" 2>"$error_log"; rc=$?
+  if [ "$rc" != 0 ]; then
+    detail=$(cat "$error_log")
+    cat "$error_log" >&2
+    fail=1
+    d1_outcome '%s applied=f mutation_error=%q helper=%s exit=%s\n' "$outcome_name" "$detail" "$1" "$rc"
+  fi
+  rm -f "$error_log"
+  return "$rc"
+}
 # These functions are sourced by the Docker-free classification control below.
 # A successful process exit alone does not prove that the selected test ran.
 d1_oidc_skip_reason(){
@@ -104,26 +132,6 @@ d1_summary(){
   [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; return 1; }
   echo 'D1 mutation harness: all exercised controls discriminate'
 }
-# Sourcing exposes definitions and accounting without starting runtime services.
-if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return 0; fi
-# A lock probe exercises serialization only and does not require Docker.
-if [[ "${1:-}" != "--lock-probe" ]]; then
-  docker_gate_rc=0
-  node "$(dirname "$0")/docker-gate.mjs" d1:mutation || docker_gate_rc=$?
-  if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi
-  if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi
-fi
-root_dir="$(cd "$(dirname "$0")/.." && pwd)"
-source "$root_dir/scripts/db-test-lock"
-ENGRAMPORT_DB_TEST_LOCK_LABEL=run-d1-mutation-harness
-db_test_lock_acquire || exit $?
-if [[ "${1:-}" == "--lock-probe" ]];then trap db_test_lock_release EXIT;db_test_lock_probe "${2:-}" "${3:-}";exit;fi
-compose=(docker compose -f "$root_dir/deploy/docker-compose.yml"); SDB=engramport_mut; fail=0; mutation_dir="$(mktemp -d "$root_dir/.d2-mutations.XXXXXX")"
-psql_as(){ "${compose[@]}" exec -T postgres psql -q -v ON_ERROR_STOP=1 -U "$1" -d "$2" "${@:3}"; }
-drop(){ "${compose[@]}" exec -T postgres psql -q -U postgres -d postgres -c "DROP DATABASE IF EXISTS $SDB WITH (FORCE);" >/dev/null 2>&1 || true; }
-cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; rm -rf "$mutation_dir";db_test_lock_release;exit $rc; }
-trap cleanup EXIT INT TERM
-"${compose[@]}" up -d --wait >/dev/null
 build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql "$root_dir"/migrations/002[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours'),('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;" >/dev/null; }
 assert_file(){ local fixture="$1" out rc; out=$(mktemp); psql_as engram_maintenance "$SDB" -f - < "$fixture" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" D2_BINDING_MODULE="$module" D2_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"; }
@@ -399,7 +407,7 @@ make_report_correspondent_variant(){
   node - "$root_dir/packages/git-adapter/src/report-correspondent.mjs" "$1" "$root_dir" "$2" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
 const [source,target,root,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
-function mutate(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`report correspondent anchor not exact: ${mode}`);text=text.replace(anchor,replacement);}
+function mutate(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`report correspondent anchor not exact: ${anchor} mode=${mode}`);text=text.replace(anchor,replacement);}
 if(mode==="status-support")mutate('const FINDING_STATUSES = new Set(["fixed", "disclosed", "unfixed"]); /* REPORT_DISCLOSED_STATUS_SUPPORT */','const FINDING_STATUSES = new Set(["fixed", "unfixed"]); /* REPORT_DISCLOSED_STATUS_SUPPORT_REMOVED */');
 else if(mode==="security-reference")mutate('      if (!new RegExp(`\\\\b${claim.finding_id}\\\\b`).test(securityModel)) refuse("DISCLOSED_FINDING_NOT_PUBLIC", `${claim.finding_id} is marked disclosed but is not referenced in SECURITY.md`); /* REPORT_DISCLOSED_SECURITY_REFERENCE */','      void securityModel; /* REPORT_DISCLOSED_SECURITY_REFERENCE_REMOVED */');
 else if(mode==="unfixed")mutate('    if (record.status === "unfixed") refuse("UNFIXED_FINDING_REFUSED", `${claim.id} cites ${claim.finding_id}, which agent-a marks unfixed`); /* REPORT_UNFIXED_FINDING_GUARD */','    void record.status; /* REPORT_UNFIXED_FINDING_GUARD_REMOVED */');
@@ -409,14 +417,18 @@ text=text.replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(path.join(ro
 fs.writeFileSync(target,text);
 NODE
 }
+run_cli_argument_refusal(){ GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$1")" node --test --test-reporter=tap --test-name-pattern='append refuses an unrecognized flag' "$root_dir/tests/git-v0.test.mjs"; }
+assert_cli_argument_refusal(){ local out rc; out=$(mktemp); run_cli_argument_refusal "$1" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; }
+run_event_extension_case(){ GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$1")" GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$2")" node --test --test-reporter=tap --test-name-pattern='uppercase Markdown forgery|event extension policy is shared by inbox' "$root_dir/tests/git-v0.test.mjs"; }
+assert_event_extension_case(){ local out rc; out=$(mktemp); run_event_extension_case "$root_dir/packages/git-adapter/src/verify-log.mjs" "$root_dir/packages/git-adapter/src/cli.mjs" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; }
 make_cli_variant(){
   node - "$root_dir/packages/git-adapter/src/cli.mjs" "$1" "$root_dir" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
 const [source,target,root]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
-const anchor='  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_")) if (!profile.has(flag)) argumentRefused(flag);';
+const anchor='  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_" && key !== "help")) if (!profile.has(flag)) argumentRefused(flag);';
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,'  void profile; /* CLI_ARGUMENT_REFUSAL_REMOVED */');
-for(const name of ["verify-log.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs","event-core.mjs"]){
+for(const name of ["init.mjs","verify-log.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs","event-core.mjs"]){
   text=text.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
 }
 fs.writeFileSync(target,text);
@@ -545,7 +557,7 @@ make_port_watch_variant(){
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const core=path.join(root,"packages/git-adapter/src/event-core.mjs"),watch=path.join(root,"packages/port-watch/src/index.mjs"),observation=path.join(root,"packages/port-watch/src/observation.mjs");
 function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
-if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
+if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
 else if(mode==="position")mutate(watch,'    await this.claim_store.release(agent, project, { run_id });\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });','    await this.claim_store.release(agent, project, { run_id });\n    await this.store.transaction((state) => { state.agents[key(agent, project)].cursor = claim.event_id; return state; }); /* PORT_WATCH_LOG_DERIVED_POSITION_REMOVED */\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });');
 else if(mode==="cache")mutate(watch,'    if (cached?.log_state === log_state && Array.isArray(cached.deliveries)) {','    if (cached && Array.isArray(cached.deliveries) /* PORT_WATCH_CACHE_LOG_STATE_REMOVED */) {');
 else if(mode==="claim")mutate(watch,'    if (!reservation.acquired) {','    if (false && !reservation.acquired /* PORT_WATCH_ATOMIC_CLAIM_REMOVED */) {');
@@ -570,8 +582,8 @@ make_site_install_claim_variant(){
   node - "$root_dir/app/page.tsx" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 const anchor=`          <div className="install-card">
-            <div><span>↗</span><code>github.com/jcools1977/EngramPort_2026</code></div>
-            <a href="https://github.com/jcools1977/EngramPort_2026">View repository</a>
+            <div><span>$</span><code>npm install @engramport/sdk</code></div>
+            <a href="https://github.com/jcools1977/EngramPort_2026#readme">Read the setup guide</a>
           </div>`;
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,`          <div className="install-card" data-mutation="SITE_UNPUBLISHED_INSTALL_CLAIM">
@@ -651,7 +663,7 @@ let core=fs.readFileSync(coreSource,"utf8")
   .replace('"./credential-boundary.mjs"',JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src/credential-boundary.mjs")).href));
 fs.writeFileSync(coreTarget,core);
 let cli=fs.readFileSync(cliSource,"utf8").replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(verifyTarget).href));
-for(const name of ["welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs"]){
+for(const name of ["init.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs"]){
   cli=cli.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
 }
 cli=cli.replaceAll('"./event-core.mjs"',JSON.stringify(pathToFileURL(coreTarget).href));
@@ -714,8 +726,7 @@ NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }
 capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pattern" >"$log" 2>&1; return $?; }
-d1_load_definitions "$root_dir" "${1:-}" || exit 1
-d1_accounting_init
+d1_run_mutations(){
 node_runtime="$(node --version)"
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
@@ -773,7 +784,7 @@ for line in "${MUTATIONS[@]}"; do
       continue
     fi
     if [ "$suite" = observation_live ]; then build || { fail=1; continue; }; base=$(assert_observation_live "$source_root"); elif [ "$suite" = shared ]; then base=$(assert_port_watch_shared "$source_root" "$test_pattern"); else base=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
-    variant_root="$mutation_dir/port-watch-$mode"; make_port_watch_variant "$variant_root" "$mode" || { fail=1; continue; }
+    variant_root="$mutation_dir/port-watch-$mode"; d1_mutate "$(d1_current_name)" make_port_watch_variant "$variant_root" "$mode" || { fail=1; continue; }
     variant_module="$variant_root/packages/port-watch/src/index.mjs"
     if grep -R -Fq "$marker" "$variant_root/packages"; then applied=t; else applied=f; fi
     log="$mutation_dir/port-watch-$mode.log"
@@ -802,7 +813,7 @@ for line in "${MUTATIONS[@]}"; do
     esac
     source_module="$root_dir/packages/agent-c-supervisor/src/index.mjs"
     base=$(assert_agent_c "$source_module" "$pattern")
-    variant="$mutation_dir/agent-c-$pattern.mjs"; make_agent_c_variant "$variant" "$pattern" || { fail=1; continue; }
+    variant="$mutation_dir/agent-c-$pattern.mjs"; d1_mutate "$(d1_current_name)" make_agent_c_variant "$variant" "$pattern" || { fail=1; continue; }
     marker_target="$variant"
     [ "$pattern" = credential-context ] && marker_target="$mutation_dir/agent-c-credential-context-boundary.mjs"
     if grep -Fq "$marker" "$marker_target"; then applied=t; else applied=f; fi
@@ -823,7 +834,7 @@ for line in "${MUTATIONS[@]}"; do
     esac
     source_module="$root_dir/packages/git-adapter/src/report-correspondent.mjs"
     base=$(assert_report_correspondent "$source_module" "$pattern")
-    variant="$mutation_dir/report-correspondent-$mode.mjs"; make_report_correspondent_variant "$variant" "$mode" || { fail=1; continue; }
+    variant="$mutation_dir/report-correspondent-$mode.mjs"; d1_mutate "$(d1_current_name)" make_report_correspondent_variant "$variant" "$mode" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/report-correspondent-$mode.log"; run_report_correspondent "$variant" "$pattern" >"$log" 2>&1; after=$?
     forbidden=f; grep -E 'not ok [0-9]+ - ' "$log" | grep -Fq -- "$pattern" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -834,13 +845,13 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = CLI_ARGUMENT_REFUSAL ]; then
     source_module="$root_dir/packages/git-adapter/src/cli.mjs"
-    base=0
-    variant="$mutation_dir/cli-argument-refusal.mjs"; make_cli_variant "$variant" || { fail=1; continue; }
+    base=$(assert_cli_argument_refusal "$source_module")
+    variant="$mutation_dir/cli-argument-refusal.mjs"; d1_mutate "$(d1_current_name)" make_cli_variant "$variant" || { fail=1; continue; }
     if grep -Fq CLI_ARGUMENT_REFUSAL_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/cli-argument-refusal.log"
-    GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$variant")" node --test --test-reporter=tap --test-name-pattern='append refuses an unrecognized flag' "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
+    run_cli_argument_refusal "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - append refuses an unrecognized flag' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
-    restored=0
+    restored=$(assert_cli_argument_refusal "$source_module")
     d1_outcome 'CLI_ARGUMENT_REFUSAL baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$forbidden" "$restored"
     [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
@@ -848,7 +859,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = CONTRIBUTION_SUBSCRIPTION_CURRENCY ]; then
     source_module="$root_dir/packages/git-adapter/src/contribution-ledger.mjs"
     base=$(assert_contribution_ledger "$source_module")
-    variant_root="$mutation_dir/contribution-ledger"; make_contribution_ledger_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/contribution-ledger"; d1_mutate "$(d1_current_name)" make_contribution_ledger_variant "$variant_root" || { fail=1; continue; }
     variant="$variant_root/contribution-ledger.mjs"
     if grep -Fq CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/contribution-subscription.log"; run_contribution_ledger "$variant" >"$log" 2>&1; after=$?
@@ -864,7 +875,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = GIT_ADAPTER_CORE_DELEGATION ]; then
     source_cli="$root_dir/packages/git-adapter/src/cli.mjs"
     base=$(assert_git_adapter_core "$source_cli")
-    variant_root="$mutation_dir/git-adapter-core"; make_git_adapter_core_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/git-adapter-core"; d1_mutate "$(d1_current_name)" make_git_adapter_core_variant "$variant_root" || { fail=1; continue; }
     variant_core="$variant_root/event-core.mjs"; variant_cli="$variant_root/cli.mjs"
     if grep -Fq GIT_ADAPTER_CORE_WRITE_REMOVED "$variant_core"; then applied=t; else applied=f; fi
     log="$mutation_dir/git-adapter-core.log"
@@ -880,7 +891,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = SDK_CORE_WRAPPER ]; then
     source_root="$root_dir"
     base=$(assert_sdk_core_consumers "$source_root")
-    variant_root="$mutation_dir/sdk-core-wrapper"; make_sdk_core_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/sdk-core-wrapper"; d1_mutate "$(d1_current_name)" make_sdk_core_variant "$variant_root" || { fail=1; continue; }
     variant_core="$variant_root/packages/git-adapter/src/event-core.mjs"
     if grep -Fq SDK_CORE_WRITE_REMOVED "$variant_core"; then applied=t; else applied=f; fi
     log="$mutation_dir/sdk-core-wrapper.log"
@@ -896,7 +907,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = SDK_PACKAGE_ISOLATION ]; then
     source_package="$root_dir/packages/sdk"
     base=$(assert_sdk_package "$source_package")
-    variant_root="$mutation_dir/sdk-package-isolation"; make_sdk_package_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/sdk-package-isolation"; d1_mutate "$(d1_current_name)" make_sdk_package_variant "$variant_root" || { fail=1; continue; }
     if grep -Fq SDK_PACKAGE_ISOLATION_REMOVED "$variant_root/packages/sdk/package.json"; then applied=t; else applied=f; fi
     in_repo=$(assert_sdk_package_in_repo "$variant_root")
     log="$mutation_dir/sdk-package-isolation.log"; run_sdk_package "$variant_root/packages/sdk" >"$log" 2>&1; after=$?
@@ -911,7 +922,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = SDK_PUBLISHED_SURFACE_WRITE ]; then
     source_package="$root_dir/packages/sdk"
     base=$(assert_sdk_published_surface "$source_package")
-    variant_root="$mutation_dir/sdk-published-surface"; make_sdk_published_surface_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/sdk-published-surface"; d1_mutate "$(d1_current_name)" make_sdk_published_surface_variant "$variant_root" || { fail=1; continue; }
     if grep -Fq SDK_PUBLISHED_SURFACE_WRITE_REMOVED "$variant_root/packages/sdk/dist/index.mjs"; then applied=t; else applied=f; fi
     in_repo=$(assert_sdk_package_in_repo "$root_dir")
     log="$mutation_dir/sdk-published-surface.log"; run_sdk_published_surface "$variant_root/packages/sdk" >"$log" 2>&1; after=$?
@@ -926,7 +937,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = SECOND_BUILDER_COMPLETE_PATH ]; then
     source_root="$root_dir"
     base=$(assert_second_builder "$source_root")
-    variant_root="$mutation_dir/second-builder-complete"; make_second_builder_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/second-builder-complete"; d1_mutate "$(d1_current_name)" make_second_builder_variant "$variant_root" || { fail=1; continue; }
     variant_sdk="$variant_root/packages/sdk/src/index.mjs"
     if grep -Fq SECOND_BUILDER_COMPLETE_PATH_REMOVED "$variant_sdk"; then applied=t; else applied=f; fi
     log="$mutation_dir/second-builder-complete.log"
@@ -942,7 +953,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = GIT_ADAPTER_CORE_OVERRIDE_GUARD ]; then
     source_cli="$root_dir/packages/git-adapter/src/cli.mjs"
     base=$(assert_git_adapter_core_guard "$source_cli")
-    variant_root="$mutation_dir/git-adapter-core-override"; make_git_adapter_core_override_variant "$variant_root" || { fail=1; continue; }
+    variant_root="$mutation_dir/git-adapter-core-override"; d1_mutate "$(d1_current_name)" make_git_adapter_core_override_variant "$variant_root" || { fail=1; continue; }
     variant_cli="$variant_root/cli.mjs"
     if grep -Fq GIT_ADAPTER_CORE_OVERRIDE_GUARD_REMOVED "$variant_cli"; then applied=t; else applied=f; fi
     log="$mutation_dir/git-adapter-core-override.log"
@@ -965,7 +976,7 @@ for line in "${MUTATIONS[@]}"; do
     esac
     source_root="$root_dir/packages/git-adapter/src"
     base=$(assert_event_v1 "$source_root" "$test_pattern")
-    variant_root="$mutation_dir/event-v1-$mode"; make_event_v1_variant "$variant_root" "$mode" || { fail=1; continue; }
+    variant_root="$mutation_dir/event-v1-$mode"; d1_mutate "$(d1_current_name)" make_event_v1_variant "$variant_root" "$mode" || { fail=1; continue; }
     if grep -R -Fq "$marker" "$variant_root"; then applied=t; else applied=f; fi
     log="$mutation_dir/event-v1-$mode.log"; run_event_v1 "$variant_root" "$test_pattern" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq "not ok [0-9]+ - $test_pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -978,7 +989,7 @@ for line in "${MUTATIONS[@]}"; do
     source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
     test_pattern='verification refuses unregistered Markdown event files while ignoring empty directories'
     base=0
-    variant="$mutation_dir/event-directory-completeness.mjs"; make_event_directory_completeness_variant "$variant" || { fail=1; continue; }
+    variant="$mutation_dir/event-directory-completeness.mjs"; d1_mutate "$(d1_current_name)" make_event_directory_completeness_variant "$variant" || { fail=1; continue; }
     if grep -Fq EVENT_DIRECTORY_COMPLETENESS_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/event-directory-completeness.log"
     GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$variant")" node --test --test-reporter=tap --test-name-pattern="$test_pattern" "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
@@ -992,7 +1003,7 @@ for line in "${MUTATIONS[@]}"; do
     source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
     test_pattern='verification aligns recursive Markdown discovery with validation and ignores non-events'
     base=0
-    variant="$mutation_dir/event-enumeration-alignment.mjs"; make_event_enumeration_alignment_variant "$variant" || { fail=1; continue; }
+    variant="$mutation_dir/event-enumeration-alignment.mjs"; d1_mutate "$(d1_current_name)" make_event_enumeration_alignment_variant "$variant" || { fail=1; continue; }
     if grep -Fq EVENT_ENUMERATION_ALIGNMENT_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/event-enumeration-alignment.log"
     GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$variant")" node --test --test-reporter=tap --test-name-pattern="$test_pattern" "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
@@ -1003,27 +1014,28 @@ for line in "${MUTATIONS[@]}"; do
     continue
   fi
   if [ "$mutation" = EVENT_EXTENSION_CASE ]; then
+    base=$(assert_event_extension_case)
     verifier_variant="$mutation_dir/event-extension-case-verify.mjs"
     cli_variant="$mutation_dir/event-extension-case-cli.mjs"
     core_variant="$mutation_dir/event-extension-case-core.mjs"
-    make_event_extension_case_variant "$verifier_variant" "$cli_variant" "$core_variant" || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_event_extension_case_variant "$verifier_variant" "$cli_variant" "$core_variant" || { fail=1; continue; }
     if grep -Fq EVENT_EXTENSION_CASE_REMOVED "$verifier_variant"; then applied=t; else applied=f; fi
     test_pattern='uppercase Markdown forgery|event extension policy is shared by inbox'
     log="$mutation_dir/event-extension-case.log"
-    GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$verifier_variant")" GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$cli_variant")" node --test --test-reporter=tap --test-name-pattern="$test_pattern" "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
+    run_event_extension_case "$verifier_variant" "$cli_variant" >"$log" 2>&1; after=$?
     verifier_forbidden=f; grep -Eq 'not ok [0-9]+ - uppercase Markdown forgery is accounted for and fails by path' "$log" && verifier_forbidden=t
     cli_forbidden=f; grep -Eq 'not ok [0-9]+ - event extension policy is shared by inbox while normal append stays lowercase' "$log" && cli_forbidden=t
     [ "$verifier_forbidden" = t ] && [ "$cli_forbidden" = t ] || cat "$log" >&2
-    restored=0
-    printf 'EVENT_EXTENSION_CASE baseline=0 applied=%s after=%s verifier_forbidden=%s cli_forbidden=%s restored=%s\n' "$applied" "$after" "$verifier_forbidden" "$cli_forbidden" "$restored"
-     [ "$applied" = t ] && [ "$after" != 0 ] && [ "$verifier_forbidden" = t ] && [ "$cli_forbidden" = t ] && [ "$restored" = 0 ] || fail=1
+    restored=$(assert_event_extension_case)
+    d1_outcome 'EVENT_EXTENSION_CASE baseline=%s applied=%s after=%s verifier_forbidden=%s cli_forbidden=%s restored=%s\n' "$base" "$applied" "$after" "$verifier_forbidden" "$cli_forbidden" "$restored"
+    [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$verifier_forbidden" = t ] && [ "$cli_forbidden" = t ] && [ "$restored" = 0 ] || fail=1
     continue
   fi
   if [ "$mutation" = SITE_EVENT_TYPE_LINK ]; then
     source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
     base=$(assert_site_event_types "$source_module")
     paired=$(assert_site_event_types "$source_module" fabricated.event)
-    variant="$mutation_dir/site-event-types.mjs"; make_site_event_types_variant "$variant" || { fail=1; continue; }
+    variant="$mutation_dir/site-event-types.mjs"; d1_mutate "$(d1_current_name)" make_site_event_types_variant "$variant" || { fail=1; continue; }
     if grep -Fq SITE_EVENT_TYPE_LINK_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/site-event-types.log"; run_site_event_types "$variant" fabricated.event >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq 'SITE_EVENT_TYPES fabricated.event=accepted' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1035,7 +1047,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = SITE_UNPUBLISHED_INSTALL_CLAIM ]; then
     source_page="$root_dir/app/page.tsx"
     base=$(assert_site_install_policy "$source_page")
-    variant="$mutation_dir/site-unpublished-install-claim.tsx"; make_site_install_claim_variant "$variant" || { fail=1; continue; }
+    variant="$mutation_dir/site-unpublished-install-claim.tsx"; d1_mutate "$(d1_current_name)" make_site_install_claim_variant "$variant" || { fail=1; continue; }
     if grep -Fq SITE_UNPUBLISHED_INSTALL_CLAIM "$variant" && [ "$(grep -Fo 'npm install @engramport/missing-sdk' "$variant" | wc -l | tr -d '[:space:]')" = 2 ]; then applied=t; else applied=f; fi
     log="$mutation_dir/site-unpublished-install-claim.log"; run_site_install_policy "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - site install claims require a publishable package manifest' "$log" && grep -Fq 'site advertises unpublished package @engramport/missing-sdk' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1061,7 +1073,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = ACTOR_REGISTRY_DRIFT_CHECK ]; then
     source_rules="$root_dir/AGENTS.md"
     base=$(assert_repository_surface_policy "$source_rules")
-    variant="$mutation_dir/actors"; make_actor_registry_variant "$variant" || { fail=1; continue; }
+    variant="$mutation_dir/actors"; d1_mutate "$(d1_current_name)" make_actor_registry_variant "$variant" || { fail=1; continue; }
     if grep -Fq ACTOR_REGISTRY_PREFIX_TAKEOVER "$variant/agent-b.yaml"; then applied=t; else applied=f; fi
     log="$mutation_dir/actor-registry-drift.log"; run_repository_surface_policy "$source_rules" "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint' "$log" && grep -Fq 'actor registry dirty-tree drift detected: actors/agent-b.yaml differs from HEAD' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1072,7 +1084,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = ACTOR_SLUG_FILENAME_BINDING ]; then
     source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"; pattern='actor record filename is bound to its declared slug'
-    base=0; variant="$mutation_dir/actor-slug-filename.mjs"; make_actor_registry_verifier_variant "$variant" slug || { fail=1; continue; }
+    base=0; variant="$mutation_dir/actor-slug-filename.mjs"; d1_mutate "$(d1_current_name)" make_actor_registry_verifier_variant "$variant" slug || { fail=1; continue; }
     if grep -Fq ACTOR_SLUG_FILENAME_BINDING_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/actor-slug-filename.log"; GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$variant")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq "not ok [0-9]+ - $pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1082,7 +1094,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = ACTOR_PREFIX_NORMALIZATION ]; then
     source_rules="$root_dir/AGENTS.md"; source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
-    base=$(assert_repository_surface_policy "$source_rules"); variant="$mutation_dir/actor-prefix-normalization.mjs"; make_actor_registry_verifier_variant "$variant" normalization || { fail=1; continue; }
+    base=$(assert_repository_surface_policy "$source_rules"); variant="$mutation_dir/actor-prefix-normalization.mjs"; d1_mutate "$(d1_current_name)" make_actor_registry_verifier_variant "$variant" normalization || { fail=1; continue; }
     if grep -Fq ACTOR_PREFIX_NORMALIZATION_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/actor-prefix-normalization.log"; run_repository_surface_policy "$source_rules" "$root_dir/actors" "" "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1098,7 +1110,7 @@ for line in "${MUTATIONS[@]}"; do
       mode=merged; marker=PR_ONBOARDING_MERGED_ACCEPTANCE_REMOVED; pattern='documented PR onboarding accepts the maintainer-merged registration'
     fi
     base=$(assert_pr_onboarding "$source_module" "$pattern")
-    variant="$mutation_dir/pr-onboarding-$mode.mjs"; make_pr_onboarding_variant "$variant" "$mode" || { fail=1; continue; }
+    variant="$mutation_dir/pr-onboarding-$mode.mjs"; d1_mutate "$(d1_current_name)" make_pr_onboarding_variant "$variant" "$mode" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/pr-onboarding-$mode.log"; run_pr_onboarding "$variant" "$pattern" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq "not ok [0-9]+ - $pattern" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1117,7 +1129,7 @@ for line in "${MUTATIONS[@]}"; do
         subject) marker=W1_1_PROVIDER_SUBJECT_REMOVED; expected='W1_1_OIDC_PROVIDER subject surface=aud,azp,email,exp,iss,nonce,sub issuer=true value=recorded-synthetic-sub' ;;
       esac
       base=$(assert_w1_1_oidc_provider "$root_dir" "$pattern")
-      variant="$mutation_dir/w1-1-oidc-provider-$pattern";make_w1_1_oidc_provider_variant "$variant" "$pattern" || { fail=1;continue; }
+      variant="$mutation_dir/w1-1-oidc-provider-$pattern";d1_mutate "$(d1_current_name)" make_w1_1_oidc_provider_variant "$variant" "$pattern" || { fail=1;continue; }
       if grep -Rq "$marker" "$variant/packages/git-adapter/src";then applied=t;else applied=f;fi
       log="$mutation_dir/w1-1-oidc-provider-$pattern.log";run_w1_1_oidc_provider "$variant" "$pattern" >"$log" 2>&1;after=$?
       forbidden=f;grep -Fq "$expected" "$log"&&forbidden=t;[ "$forbidden" = t ]||cat "$log" >&2
@@ -1146,7 +1158,7 @@ for line in "${MUTATIONS[@]}"; do
         continue
       fi
      [ "$base" = 0 ] || cat "$baseline_log" >&2
-      variant="$mutation_dir/w1-1-oidc-durable-$pattern";make_w1_1_oidc_durable_variant "$variant" "$pattern" || { fail=1;continue; }
+      variant="$mutation_dir/w1-1-oidc-durable-$pattern";d1_mutate "$(d1_current_name)" make_w1_1_oidc_durable_variant "$variant" "$pattern" || { fail=1;continue; }
       if grep -Rq "$marker" "$variant";then applied=t;else applied=f;fi
       log="$mutation_dir/w1-1-oidc-durable-$pattern.log";run_w1_1_oidc_durable "$variant" "$pattern" >"$log" 2>&1;after=$?
       forbidden=f;grep -Fq "$expected" "$log"&&forbidden=t;[ "$forbidden" = t ]||cat "$log" >&2
@@ -1164,7 +1176,7 @@ for line in "${MUTATIONS[@]}"; do
       W1_1_OIDC_CLIENT_BINDER) pattern=binder; marker=W1_1_OIDC_CLIENT_BINDER_REMOVED; expected='W1_1_OIDC_CLIENT binder surface=identity_id,principal_id identity_absent=false' ;;
     esac
     base=$(assert_w1_1_oidc_client "$root_dir" "$pattern")
-    variant="$mutation_dir/w1-1-oidc-client-$pattern";make_w1_1_oidc_client_variant "$variant" "$pattern" || { fail=1;continue; }
+    variant="$mutation_dir/w1-1-oidc-client-$pattern";d1_mutate "$(d1_current_name)" make_w1_1_oidc_client_variant "$variant" "$pattern" || { fail=1;continue; }
     if grep -Rq "$marker" "$variant/packages/git-adapter/src";then applied=t;else applied=f;fi
     log="$mutation_dir/w1-1-oidc-client-$pattern.log";run_w1_1_oidc_client "$variant" "$pattern" >"$log" 2>&1;after=$?
     forbidden=f;grep -Fq "$expected" "$log"&&forbidden=t;[ "$forbidden" = t ]||cat "$log" >&2
@@ -1218,7 +1230,7 @@ for line in "${MUTATIONS[@]}"; do
     esac
     source_module="$root_dir/packages/git-adapter/src/oidc-verifier.mjs"
     base=$(assert_w1_1_oidc "$source_module" "$pattern")
-    variant="$mutation_dir/w1-1-oidc-$pattern.mjs"; make_w1_1_oidc_variant "$variant" "$pattern" || { fail=1; continue; }
+    variant="$mutation_dir/w1-1-oidc-$pattern.mjs"; d1_mutate "$(d1_current_name)" make_w1_1_oidc_variant "$variant" "$pattern" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/w1-1-oidc-$pattern.log"; run_w1_1_oidc "$variant" "$pattern" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1239,19 +1251,19 @@ for line in "${MUTATIONS[@]}"; do
     base=$(assert_w1_1_manager "$root_dir" "$pattern")
     if [ "$pattern" = expired ]; then
       guard_variant="$mutation_dir/w1-1-manager-expired-guard"; live_variant="$mutation_dir/w1-1-manager-expired-live"
-      make_w1_1_manager_variant "$guard_variant" expired_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
-      make_w1_1_manager_variant "$live_variant" liveness_only || { fail=1; continue; }; live_only=$(assert_w1_1_manager "$live_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$guard_variant" expired_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$live_variant" liveness_only || { fail=1; continue; }; live_only=$(assert_w1_1_manager "$live_variant" "$pattern")
     elif [ "$pattern" = different ]; then
       guard_variant="$mutation_dir/w1-1-manager-different-guard"; store_variant="$mutation_dir/w1-1-manager-different-store"
-      make_w1_1_manager_variant "$guard_variant" different_manager_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
-      make_w1_1_manager_variant "$store_variant" different_store_only || { fail=1; continue; }; store_only=$(assert_w1_1_manager "$store_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$guard_variant" different_manager_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$store_variant" different_store_only || { fail=1; continue; }; store_only=$(assert_w1_1_manager "$store_variant" "$pattern")
     elif [ "$pattern" = replay ]; then
       guard_variant="$mutation_dir/w1-1-manager-replay-guard"; live_variant="$mutation_dir/w1-1-manager-replay-live"; retention_variant="$mutation_dir/w1-1-manager-replay-retention"
-      make_w1_1_manager_variant "$guard_variant" replay_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
-      make_w1_1_manager_variant "$live_variant" liveness_only || { fail=1; continue; }; live_only=$(assert_w1_1_manager "$live_variant" "$pattern")
-      make_w1_1_manager_variant "$retention_variant" replay_retention_only || { fail=1; continue; }; retention_only=$(assert_w1_1_manager "$retention_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$guard_variant" replay_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$live_variant" liveness_only || { fail=1; continue; }; live_only=$(assert_w1_1_manager "$live_variant" "$pattern")
+      d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$retention_variant" replay_retention_only || { fail=1; continue; }; retention_only=$(assert_w1_1_manager "$retention_variant" "$pattern")
     fi
-    variant="$mutation_dir/w1-1-manager-$pattern-combined"; make_w1_1_manager_variant "$variant" "$pattern" || { fail=1; continue; }
+    variant="$mutation_dir/w1-1-manager-$pattern-combined"; d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$variant" "$pattern" || { fail=1; continue; }
     case "$pattern" in
       expired) grep -Rq 'W1_1_MANAGER_EXPIRED_REMOVED' "$variant" && grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
       revoked) grep -Rq 'W1_1_MANAGER_LIVENESS_REMOVED' "$variant" && applied=t || applied=f ;;
@@ -1391,7 +1403,7 @@ for line in "${MUTATIONS[@]}"; do
     source_module="$root_dir/packages/git-adapter/src/credential-boundary.mjs"
     for property in "${d1_live_properties[@]}"; do
       base=$(assert_w1_8 "$source_module" "$property")
-      variant="$mutation_dir/w1-8-$property.mjs"; make_w1_8_variant "$variant" "$property" || { fail=1; continue; }
+      variant="$mutation_dir/w1-8-$property.mjs"; d1_mutate "$(d1_current_name)" make_w1_8_variant "$variant" "$property" || { fail=1; continue; }
       if grep -Fq "W1_8_$(printf '%s' "$property" | tr '[:lower:]' '[:upper:]')" "$variant"; then applied=t; else applied=f; fi
       log="$mutation_dir/w1-8-$property.log"; run_w1_8 "$variant" "$property" >"$log" 2>&1; after=$?
       forbidden=f
@@ -1428,7 +1440,7 @@ for line in "${MUTATIONS[@]}"; do
       pattern="g$control"; base=$(assert_w1_8 "$source_module" "$pattern")
       if [ "$control" = 3 ]; then
         g12_base=$(assert_w1_8 "$source_module" g12)
-        variant="$mutation_dir/w1-8-g3-g12.mjs"; make_w1_8_variant "$variant" g3_g12 || { fail=1; continue; }
+        variant="$mutation_dir/w1-8-g3-g12.mjs"; d1_mutate "$(d1_current_name)" make_w1_8_variant "$variant" g3_g12 || { fail=1; continue; }
         if grep -Fq "W1_8_G3_G12_REMOVED" "$variant"; then applied=t; else applied=f; fi
         g3_log="$mutation_dir/w1-8-g3.log"; run_w1_8 "$variant" g3 >"$g3_log" 2>&1; starts_revoked=$?
         g12_log="$mutation_dir/w1-8-g12.log"; run_w1_8 "$variant" g12 >"$g12_log" 2>&1; revoked_between_reads=$?
@@ -1445,7 +1457,7 @@ for line in "${MUTATIONS[@]}"; do
         applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure" | tr -d '[:space:]')
         variant="$source_module"
       else
-        variant="$mutation_dir/w1-8-g$control.mjs"; make_w1_8_variant "$variant" "$pattern" || { fail=1; continue; }
+        variant="$mutation_dir/w1-8-g$control.mjs"; d1_mutate "$(d1_current_name)" make_w1_8_variant "$variant" "$pattern" || { fail=1; continue; }
         if grep -Fq "W1_8_G${control}_REMOVED" "$variant"; then applied=t; else applied=f; fi
       fi
       log="$mutation_dir/w1-8-g$control.log"; run_w1_8 "$variant" "$pattern" >"$log" 2>&1; after=$?
@@ -1461,7 +1473,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/substitution.mjs"; pattern="substitution"
     base=$(assert_d2 "$source_module" "$pattern")
-    make_d2_variant "$variant" substitution || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$variant" substitution || { fail=1; continue; }
     if grep -Fq '[request.principalId ?? session.principalId]' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/substitution.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'D2_SUBSTITUTION minted_by=22000000-0000-0000-0000-000000000002 tenant=20000000-0000-0000-0000-000000000002' "$log" && forbidden=t
@@ -1475,9 +1487,9 @@ for line in "${MUTATIONS[@]}"; do
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="joint"
     local_variant="$mutation_dir/local-false.mjs"; scrub_variant="$mutation_dir/no-scrub.mjs"; joint_variant="$mutation_dir/joint.mjs"
     base=$(assert_d2 "$source_module" "$pattern")
-    make_d2_variant "$local_variant" local_false || { fail=1; continue; }; local_only=$(assert_d2 "$local_variant" "$pattern")
-    make_d2_variant "$scrub_variant" no_scrub || { fail=1; continue; }; scrub_only=$(assert_d2 "$scrub_variant" "$pattern")
-    make_d2_variant "$joint_variant" joint || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$local_variant" local_false || { fail=1; continue; }; local_only=$(assert_d2 "$local_variant" "$pattern")
+    d1_mutate "$(d1_current_name)" make_d2_variant "$scrub_variant" no_scrub || { fail=1; continue; }; scrub_only=$(assert_d2 "$scrub_variant" "$pattern")
+    d1_mutate "$(d1_current_name)" make_d2_variant "$joint_variant" joint || { fail=1; continue; }
     if grep -Fq "set_config('app.principal_id', \$1, false)" "$joint_variant" && ! grep -Fq 'client.query("DISCARD ALL")' "$joint_variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/joint.log"; capture_d2 "$joint_variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'D2_JOINT_LEAK module_checkout="11000000-0000-0000-0000-000000000001"' "$log" && forbidden=t
@@ -1490,7 +1502,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/role.mjs"; pattern="role"
     base=$(assert_d2 "$source_module" "$pattern")
-    make_d2_variant "$variant" role || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$variant" role || { fail=1; continue; }
     if ! grep -Fq 'SESSION_ROLE_INVALID' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/role.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'D2_ROLE_GUARD maintenance=accepted app=' "$log" && grep -Fq 'postgres=accepted' "$log" && forbidden=t
@@ -1507,7 +1519,7 @@ for line in "${MUTATIONS[@]}"; do
       pattern=role; mode=transaction_role; marker=D2_TRANSACTION_ROLE_REMOVED; expected='D2_TRANSACTION_ROLE positive=accepted negative=accepted released=true'
     fi
     base=$(assert_d2_transaction "$source_module" "$pattern")
-    variant="$mutation_dir/d2-transaction-$pattern.mjs"; make_d2_variant "$variant" "$mode" || { fail=1; continue; }
+    variant="$mutation_dir/d2-transaction-$pattern.mjs"; d1_mutate "$(d1_current_name)" make_d2_variant "$variant" "$mode" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d2-transaction-$pattern.log"; run_d2_transaction "$variant" "$pattern" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq "$expected" "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1520,10 +1532,10 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; fault_variant="$mutation_dir/dirty-fault.mjs"; weak_variant="$mutation_dir/dirty-weakened.mjs"; pattern="dirty-success"
     base=$(assert_d2 "$source_module" "$pattern")
-    make_d2_variant "$fault_variant" dirty_fault || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$fault_variant" dirty_fault || { fail=1; continue; }
     fault_log="$mutation_dir/dirty-fault.log"; capture_d2 "$fault_variant" "$pattern" "$fault_log"; fault_only=$?
     fault_clean=f; grep -Fq 'principal=""' "$fault_log" && fault_clean=t
-    make_d2_variant "$weak_variant" dirty_weakened || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$weak_variant" dirty_weakened || { fail=1; continue; }
     if grep -Fq 'client.query("DISCARD ALLXX")' "$weak_variant" && grep -Fq 'client.release()' "$weak_variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/dirty-weakened.log"; capture_d2 "$weak_variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'principal="11000000-0000-0000-0000-000000000001"' "$log" && forbidden=t
@@ -1536,7 +1548,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-rollback-mint.mjs"; pattern="atomic"
     base=$(assert_w1_7 "$source_module" "$pattern")
-    make_d2_variant "$variant" rollback_mint || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$variant" rollback_mint || { fail=1; continue; }
     if grep -Fq '      await client.query("ROLLBACK");' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d3-rollback-mint.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'W1_7_DURABLE_ATOMIC custody=0 references=0 audit=0 canonical=true' "$log" && forbidden=t
@@ -1550,7 +1562,7 @@ for line in "${MUTATIONS[@]}"; do
     psql_as postgres "$SDB" -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002';" >/dev/null || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-swallow-refusal.mjs"; pattern="authorization"
     base=$(assert_w1_7 "$source_module" "$pattern")
-    make_d2_variant "$variant" swallow_refusal || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$variant" swallow_refusal || { fail=1; continue; }
     if grep -Fq '01a02095-c806-7000-8000-000000000001' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d3-swallow-refusal.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'MINT_AUTHORITY_REFUSED=accepted' "$log" && forbidden=t
@@ -1563,7 +1575,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-caller-reference.mjs"; pattern="control-mapping"
     base=$(assert_w1_7 "$source_module" "$pattern")
-    make_d2_variant "$variant" caller_reference || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_d2_variant "$variant" caller_reference || { fail=1; continue; }
     if grep -Fq "app.d1f_forced_reference" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d3-caller-reference.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
     forbidden=f; grep -Fq 'W1_7_A8_M1 chosen=accepted' "$log" && forbidden=t
@@ -1700,7 +1712,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_SOURCE_DISABLE_CANARY_DETECTOR ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-detector-disabled"
     base=$(assert_canary "$source_root")
-    make_canary_variant "$variant_root" detector_disabled || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" detector_disabled || { fail=1; continue; }
     if grep -Fq 'D3_CANARY_DETECTOR_DISABLED' "$variant_root/packages/git-adapter/src/credential-boundary.mjs" && ! grep -Fq 'if (SECRET.test(v)) return "CREDENTIAL_DETECTED";' "$variant_root/packages/git-adapter/src/credential-boundary.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-detector-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=10/10 protected_clean=6/10 signed=10/10' "$log" && grep -Fq 'observers=event-file,artifact-registration,compiled-plan,report-output,operation-log,live-argv,live-environment,core-dump,live-backup,error-message-and-stack' "$log" && forbidden=t
@@ -1713,7 +1725,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_SOURCE_NEUTER_CANARY_OBSERVER ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-observer-neutered"
     base=$(assert_canary "$source_root")
-    make_canary_variant "$variant_root" observer_neutered || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" observer_neutered || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 2 ] && ! grep -Fq 'const dirty=Boolean(await observers[sink]' "$variant_root/packages/git-adapter/src/custody-service.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=0/10 protected_clean=10/10 signed=10/10' "$log" && grep -Fq 'observers=event-file,artifact-registration,compiled-plan,report-output,operation-log,live-argv,live-environment,core-dump,live-backup,error-message-and-stack' "$log" && forbidden=t
@@ -1726,7 +1738,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_SOURCE_NEUTER_OPERATIONAL_OBSERVER ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-operational-observer-neutered"
     base=$(assert_canary "$source_root")
-    make_canary_variant "$variant_root" operational_observer_neutered || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" operational_observer_neutered || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 1 ]; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-operational-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=4/10 protected_clean=10/10 signed=10/10' "$log" && grep -Fq 'observers=event-file,artifact-registration,compiled-plan,report-output,operation-log,live-argv,live-environment,core-dump,live-backup,error-message-and-stack' "$log" && forbidden=t
@@ -1739,7 +1751,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_SOURCE_BYPASS_PROTECTED_OPERATION ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-protected-operation-bypassed"
     base=$(assert_canary "$source_root")
-    make_canary_variant "$variant_root" protected_operation_bypassed || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" protected_operation_bypassed || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_PROTECTED_OPERATION_BYPASSED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 1 ] && ! grep -Fq 'const operationSigned=typeof result?.signature==="string";' "$variant_root/packages/git-adapter/src/custody-service.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-protected-operation-bypassed.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq 'W1_7_CANARY vulnerable_dirty=10/10 protected_clean=4/10 signed=10/10 operation_signed=0/6' "$log" && forbidden=t
@@ -1752,7 +1764,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_SOURCE_REMOVE_REPORT_INCIDENT ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-report-incident-disabled"
     base=$(assert_canary "$source_root")
-    make_canary_variant "$variant_root" report_incident_disabled || { fail=1; continue; }
+    d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" report_incident_disabled || { fail=1; continue; }
     if grep -Fq 'D3_CANARY_REPORT_INCIDENT_DISABLED' "$variant_root/packages/git-adapter/src/report-boundary.mjs" && ! grep -Fq 'await incidentSink(incident);' "$variant_root/packages/git-adapter/src/report-boundary.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-report-incident-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
     forbidden=f; grep -Fq 'W1_7_REPORT_INCIDENT excluded=true recorded=false landing=event-file count=0' "$log" && forbidden=t
@@ -1786,5 +1798,33 @@ for line in "${MUTATIONS[@]}"; do
   d1_outcome '%s baseline=%s applied=%s after=%s restored=%s\n' "$name" "$base" "$applied" "$after" "$restored"
   if [ "$name" = NOOP ]; then [ "$base" = 0 ] && [ "$after" = 0 ] || fail=1; else [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$restored" = 0 ] || fail=1; fi
 done
-if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
+}
+
+d1_main(){
+# A lock probe exercises serialization only and does not require Docker.
+if [[ "${1:-}" != "--lock-probe" ]]; then
+  docker_gate_rc=0
+  node "$(dirname "$0")/docker-gate.mjs" d1:mutation || docker_gate_rc=$?
+  if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi
+  if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi
+fi
+root_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$root_dir/scripts/db-test-lock"
+ENGRAMPORT_DB_TEST_LOCK_LABEL=run-d1-mutation-harness
+db_test_lock_acquire || exit $?
+if [[ "${1:-}" == "--lock-probe" ]];then trap db_test_lock_release EXIT;db_test_lock_probe "${2:-}" "${3:-}";exit;fi
+compose=(docker compose -f "$root_dir/deploy/docker-compose.yml"); SDB=engramport_mut; fail=0; mutation_dir="$(mktemp -d "$root_dir/.d2-mutations.XXXXXX")"
+psql_as(){ "${compose[@]}" exec -T postgres psql -q -v ON_ERROR_STOP=1 -U "$1" -d "$2" "${@:3}"; }
+drop(){ "${compose[@]}" exec -T postgres psql -q -U postgres -d postgres -c "DROP DATABASE IF EXISTS $SDB WITH (FORCE);" >/dev/null 2>&1 || true; }
+cleanup(){ rc=$?; drop; "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true; rm -rf "$mutation_dir";db_test_lock_release;exit $rc; }
+trap cleanup EXIT INT TERM
+"${compose[@]}" up -d --wait >/dev/null
+d1_load_definitions "$root_dir" "${1:-}" || return 1
+d1_accounting_init
+d1_run_mutations
+if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; return 1; fi
 d1_summary
+}
+# Sourcing exposes the real helpers and loop without starting runtime services.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return 0; fi
+d1_main "$@"

@@ -1,0 +1,6 @@
+CLI_ARGUMENT_REFUSAL baseline=0 applied=t after=1 forbidden=t restored=0
+EVENT_EXTENSION_CASE baseline=0 applied=t after=1 verifier_forbidden=t cli_forbidden=t restored=0
+SITE_UNPUBLISHED_INSTALL_CLAIM baseline=0 applied=t after=1 forbidden=t restored=0
+PORT_WATCH_SHARED_ELIGIBILITY baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: executed=4 not_exercised=0 negative_control=0 expected_total=4
+D1 mutation harness: all exercised controls discriminate

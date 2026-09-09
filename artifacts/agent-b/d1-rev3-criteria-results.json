@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "anchor-missing-is-loud",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev3-results.md#sha256=d4786bc52f6c8a6ee8492b1ccca116fb97e469bb1779dd9ca5d92ca26b2e2ea4"
+      }
+    ]
+  },
+  {
+    "criterion_id": "four-resolved",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev3-results.md#sha256=d4786bc52f6c8a6ee8492b1ccca116fb97e469bb1779dd9ca5d92ca26b2e2ea4"
+      }
+    ]
+  },
+  {
+    "criterion_id": "one-accounting-path",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev3-results.md#sha256=d4786bc52f6c8a6ee8492b1ccca116fb97e469bb1779dd9ca5d92ca26b2e2ea4"
+      }
+    ]
+  },
+  {
+    "criterion_id": "live-run",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev3-results.md#sha256=d4786bc52f6c8a6ee8492b1ccca116fb97e469bb1779dd9ca5d92ca26b2e2ea4"
+      }
+    ]
+  }
+]
