@@ -4,12 +4,36 @@ import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { dockerGate } from "../scripts/docker-gate.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const missing = { available: false, reason: "Docker endpoint unavailable: synthetic missing socket" };
 const gates = ["w1-7:canary", "db:test", "d1:mutation", "kms:test"];
+// Keep the shim in step with the fixture's listed preconditions. This gate control
+// answers core_pattern, then stops at cleanup inventory, before host/container
+// preflight or any sink. Review new probes and the stopping point before updating
+// this digest. Pin the entire setup prefix so later preflight additions also fail.
+function assertCanaryPreconditionsReviewed(source) {
+  const end = source.indexOf("    const vulnerableLanding=");
+  assert.ok(end > 0, "canary precondition boundary moved; review the Docker shim");
+  assert.equal(createHash("sha256").update(source.slice(0, end)).digest("hex"),
+    "a4189421cbb3aa7c4cb4d44a56f17df9947c022eb7fb78e601d54ebaf35f8c32",
+    "canary preconditions changed; keep the Docker shim in step with the fixture list");
+}
+
+test("canary shim requires review when the fixture adds an unanswered precondition", () => {
+  const source = readFileSync(path.join(root, "tests/helpers/w1-7-canary-fixture.mjs"), "utf8");
+  assertCanaryPreconditionsReviewed(source);
+  const anchor = '  const dump=path.join(directory,"host-preflight");';
+  assert.ok(source.includes(anchor));
+  const mutant = source.replace(anchor, `${anchor}\n  await run("docker", ["run", "--rm", "--entrypoint", "cat", coreImage, "/proc/sys/kernel/new_probe"]);`);
+  assert.throws(() => assertCanaryPreconditionsReviewed(mutant), /canary preconditions changed/);
+  assert.throws(() => assertCanaryPreconditionsReviewed(source.replace("// Host preconditions,", "// New Docker probe required.\n// Host preconditions,")), /canary preconditions changed/);
+  assertCanaryPreconditionsReviewed(source);
+  console.log("DOCKER_SHIM_CONTRACT baseline=passed added-probe=killed changed-list=killed restored=passed");
+});
 function assertSkipLines(gateFunction) {
   const lines = [];
   assert.equal(gateFunction(gates, { availability: missing, env: {}, emit: line => lines.push(line) }), false);
@@ -74,11 +98,50 @@ test("real entry points skip loudly locally, refuse in CI, and continue when Doc
     }
     // Exercise the unchanged execution path without pretending this runs containers.
     writeFileSync(path.join(directory, "docker"), '#!/bin/sh\nif [ "$1" = info ]; then echo synthetic-version; exit 0; fi\necho DOCKER_EXECUTION_REACHED >&2\nexit 42\n');
-    for (const [command, args] of commands.filter(([, args]) => !args.includes("scripts/run-d1-mutation-harness"))) {
+    for (const [command, args] of commands.filter(([, args]) => args.includes("scripts/run-db-tests") || args.includes("scripts/run-kms-tests"))) {
       const result = spawnSync(command, args, { cwd: root, env, encoding: "utf8", timeout: 20000 });
       assert.notEqual(result.status, 0);
       assert.match(result.stdout + result.stderr, /DOCKER_EXECUTION_REACHED/);
       assert.doesNotMatch(result.stdout + result.stderr, /DOCKER_GATE_SKIP/);
     }
+    // Precondition errors intentionally sanitize Docker stderr. Observe the shim
+    // directly so its execution marker survives without changing fixture errors.
+    const trace = path.join(directory, "canary-docker.trace");
+    const shim = `#!/bin/sh
+if [ "$1" = info ]; then echo synthetic-version; exit 0; fi
+if [ "$#" -eq 6 ] && [ "$1" = run ] && [ "$2" = --rm ] && [ "$3" = --entrypoint ] && [ "$4" = cat ] && [ "$5" = pgvector/pgvector:pg16 ] && [ "$6" = /proc/sys/kernel/core_pattern ]; then
+  echo CORE_PATTERN_ANSWERED >> "$DOCKER_GATE_TRACE"
+  echo core
+  exit 0
+fi
+if [ "$*" = 'ps -aq' ] || [ "$*" = 'volume ls -q' ]; then
+  echo "DOCKER_EXECUTION_REACHED $*" >> "$DOCKER_GATE_TRACE"
+  echo DOCKER_EXECUTION_REACHED >&2
+  exit 42
+fi
+echo UNANSWERED_DOCKER_PROBE >> "$DOCKER_GATE_TRACE"
+exit 43
+`;
+    function canaryContinuation(source) {
+      writeFileSync(path.join(directory, "docker"), source);
+      writeFileSync(trace, "");
+      const result = spawnSync(process.execPath, ["--test", "tests/wizard-w1-7.test.mjs"], {
+        cwd: root, env: { ...env, W1_7_CASE: "canary", DOCKER_GATE_TRACE: trace }, encoding: "utf8", timeout: 20000,
+      });
+      assert.equal(result.error, undefined);
+      assert.notEqual(result.status, 0);
+      const output = result.stdout + result.stderr;
+      assert.doesNotMatch(output, /DOCKER_GATE_SKIP/);
+      assert.match(output, /W1_7_CANARY_CLEANUP_INVENTORY/);
+      assert.deepEqual(readFileSync(trace, "utf8").trim().split("\n").sort(), [
+        "CORE_PATTERN_ANSWERED", "DOCKER_EXECUTION_REACHED ps -aq", "DOCKER_EXECUTION_REACHED volume ls -q",
+      ]);
+    }
+    canaryContinuation(shim);
+    // Removing the new answer reproduces the old precondition failure and must
+    // fail the same continuation assertions. Restore and exercise them again.
+    assert.throws(() => canaryContinuation(shim.replace("  echo core\n  exit 0", "  exit 42")), /W1_7_CANARY_CLEANUP_INVENTORY/);
+    canaryContinuation(shim);
+    console.log("DOCKER_SHIM_CONTINUATION core_pattern=answered inventory=execution-reached missing-answer=killed restored=passed scope=synthetic");
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
