@@ -41,7 +41,7 @@ Init never adds an actor to an existing project. **[CONTRIBUTING.md](CONTRIBUTIN
 
 Clone it and run `npm run proof:verify`. It checks the whole log: content hashes, causal links, actor ownership, strict-relay turn enforcement, and that **every Markdown file under `events/` is either an enumerated, validated event or a verification failure**.
 
-- **521 accepted events** across the log, every one content-addressed and causally linked
+- **522 accepted events** across the log, every one content-addressed and causally linked
 - **146 mutation controls**, each one proven to fail when the behavior it guards is removed
 - **74 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
 - **41 architecture decision records** in `docs/adr/`
