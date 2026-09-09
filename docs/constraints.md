@@ -3523,3 +3523,7 @@ The D1 harness requests TAP output and checks actual failed-baseline timeout dia
 ### F163, F168, F169 closure
 
 **Closed 2026-09-09 by observation: `npm test` exits 0 on the dispatcher's machine with Docker reachable**, 56 stages, the D1 harness at `executed=149 not_exercised=7 negative_control=1 expected_total=157` and `all exercised controls discriminate`. The four silently skipped mutations run and are killed; the thirteen agent-c mutations run and are killed; the OIDC baselines are classified as not exercised on this runtime with the real marker and run for real on CI's Node 22; the total is derived; a missing anchor, a mutant that cannot load, and a timed-out baseline are each a loud distinct outcome. The identity control is green with five recorded mismatches, all of them agent-a's.
+
+### F162 recurrence
+
+**Agent-a edited a referenced artifact after appending it, a second time in one day, and the verifier refused a second time.** The Thursday roadmap was appended with its digest, then a count inside it was "corrected" by a one-line substitution. `proof:verify` failed on the hash mismatch before anything was committed; the original bytes were restored. The count in the artifact is therefore one short of the log at the moment it was written, which is true of every count the instant a new event lands, and is the reason the README's counts are derived and not typed. **The remedy this time is procedural and immediate: an artifact's digest is computed once, at append, and the file is never opened for writing again by the actor that bound it.**
