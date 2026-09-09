@@ -1,0 +1,59 @@
+[
+ {
+  "id": "sender-withdraws",
+  "statement": "The sender's withdrawal of an unanswered event is accepted and the addressee's inbox no longer lists the event, observed through inbox; on pre-fix HEAD the same append is refused as an unknown event type, observed; a mutation removing the sender-only rule is observed accepting a non-sender's withdrawal",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "non-sender-refused",
+  "statement": "A withdrawal by any actor other than the sender is refused and the inbox is unchanged, observed; the mutation that removes the sender check is observed accepting it",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "single-successor",
+  "statement": "Reply then withdrawal: the withdrawal is refused; withdrawal then reply: the reply is refused; both observed through append, and the mutation removing the successor rule is observed accepting the second. Separately, a history holding both successors constructed on disk is refused by verifyLog, observed, and the mutation removing that verifier rule is observed accepting it",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "late-completion-once",
+  "statement": "One completion by the addressee in reply to the withdrawal is accepted and a second is refused, observed; the mutation removing the once rule is observed accepting the second",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "other-self-replies-still-refused",
+  "statement": "A self-reply of any type other than withdrawal is still refused under strict relay, observed, and remains refused after the change (no mutation required; this guards regression)",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "non-strict-refused",
+  "statement": "A withdrawal in a free_form thread and in a coordinator_led thread is refused, observed; the mutation removing the mode check is observed accepting it",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "schema-and-verifier-agree",
+  "statement": "A real withdrawal event validates against the published v1 schema and is accepted by the verifier, observed; the one-definition control for EVENT_TYPES fails when the schema enum and verifier list differ, observed by mutation",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "suite-green-with-mutations",
+  "statement": "executed= reported from the mutation run covering every mutation named above; proof, completion, schema, bctx, sdk:buildable and sdk:package suites pass; the historical log verifies unchanged",
+  "evidence_classes": [
+   "artifact",
+   "event"
+  ]
+ }
+]

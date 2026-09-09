@@ -1,0 +1,33 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a0862c-8e8f-725a-a349-40469effae06",
+  "target_thread": "preflight-adr-0052",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-09T12:44:49.639Z",
+  "review_completed_at": "2026-09-09T12:48:50.697Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 8596,
+    "output_tokens": 602,
+    "total_tokens": 24191
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 978980000,
+    "cost_usd": 0.097898
+  },
+  "summary": "The draft is not a feasible agent-b dispatch as written. Mandatory completion prose requires every control to observe pre-fix behavior through appendEvent and inbox in one envelope; several criteria are unreachable or non-discriminating on current HEAD, and one states a pre-fix refusal class the published schema cannot exhibit. Bounds also conflict with the required sdk:package suite if that script emits files outside packages/git-adapter/src.",
+  "findings": [
+    "Criterion sender-withdraws requires observing that, pre-fix, the same sender withdrawal is refused as a self-reply. Current event-v1.schema.json type enum has no withdrawal, and the draft itself treats EVENT_TYPES as still lacking it, so the same appendEvent payload is refused as an unknown type (schema/verifier), not as a self-reply. Observing a self-reply class requires changing the type vocabulary first; that state is no longer pre-fix. The stated pre-fix observation is unsatisfiable in current repository state.",
+    "The completion-criteria prose binds every control, including late-completion-once and the withdrawal-then-reply order of single-successor, to pre-fix observation through appendEvent. Both scenarios need an accepted withdrawal parent. Current HEAD cannot accept that type, so those pre-fix observations are unreachable. A global pre-fix clause that cannot hold for each criterion makes the envelope unsatisfiable.",
+    "The same prose requires every control to observe through inbox and never by reading source. schema-and-verifier-agree, the on-disk forked-history half of single-successor, and suite-green-with-mutations are not inbox properties: an inbox listing can stay correct while the schema enum, verifier fork rule, or npm suite is wrong. Those controls cannot discriminate the claimed properties under the stated observation method.",
+    "non-sender-refused, non-strict-refused, and reply-then-withdrawal already fail closed because withdrawal is an unknown type. A temp-scaffold append+inbox test therefore passes before any sender-only, mode, or single-successor rule exists, so it does not discriminate those rules. Discrimination would need surgical mutations (type allowed, specific guard removed), which are a different code state than pre-fix HEAD. The envelope demands both 'the same append, pre-fix' and suite-green mutations without pinning one observable per new rule.",
+    "Bounds allow only packages/git-adapter/src/ under packages/, while suite-green-with-mutations mandates that sdk:package pass. The draft says the SDK rebuilds from the adapter and must not be published, but it names no permitted generated path. If sdk:package writes under packages/ outside git-adapter/src, agent-b cannot both keep that suite green in-tree and remain inside the dispatch write bound."
+  ]
+}
