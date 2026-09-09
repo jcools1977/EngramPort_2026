@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "derived-total",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev2-results.md#sha256=1e2a4c38c06f06f59863874463049b3980195ea5142516c6d2dafc73d30c77c1"
+      }
+    ]
+  },
+  {
+    "criterion_id": "two-named",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev2-results.md#sha256=1e2a4c38c06f06f59863874463049b3980195ea5142516c6d2dafc73d30c77c1"
+      }
+    ]
+  },
+  {
+    "criterion_id": "drop-killed",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev2-results.md#sha256=1e2a4c38c06f06f59863874463049b3980195ea5142516c6d2dafc73d30c77c1"
+      }
+    ]
+  },
+  {
+    "criterion_id": "live-run",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev2-results.md#sha256=1e2a4c38c06f06f59863874463049b3980195ea5142516c6d2dafc73d30c77c1"
+      }
+    ]
+  }
+]

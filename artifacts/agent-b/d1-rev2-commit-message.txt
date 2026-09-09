@@ -1,0 +1,6 @@
+fix(d1): derive and validate named mutation accounting
+
+Count outer outcome prints once, include NOOP as a negative control, and
+share property lists with expected inventory expansion. Preserve the bound
+live inventory mismatch as unmet evidence and the no-Docker live gate as
+blocked. Publish the agent-b revision-two completion with measured controls.

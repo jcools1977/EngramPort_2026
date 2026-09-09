@@ -1,0 +1,16 @@
+✔ both database entrypoints refuse a concurrent caller and leave the holder unaffected (145.337417ms)
+✔ a SIGKILL-stale lock is recovered by the other entrypoint (99.284ms)
+ACTOR_REGISTRY_DRIFT_CHECK actors=3 scope=dirty-tree normalized=true disjoint=true
+✔ actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint (22.449667ms)
+✔ registry drift check passes when a clean checkout committed materially wrong registry bytes (115.830458ms)
+✔ actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities (2.447417ms)
+REPOSITORY_SURFACE_POLICY tracked=1288 actor_rule=true drift_rule=true shared_rule=true unaccounted=0
+✔ tracked repository paths are covered only by explicit written surfaces (22.923209ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 280.451584

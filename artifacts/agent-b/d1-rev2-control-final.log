@@ -1,0 +1,270 @@
+D1_BOUND_INVENTORY source=artifacts/agent-a/d1-live-run-2-2026-09-09.md sha256=eb5ada7fa3ccd595064bf557aaefd367b15248414aebb7d97f45ec0e808b7337 names=156 exit=1
+D1 mutation harness: executed=147 not_exercised=7 negative_control=1 expected_total=157
+D1 unknown outcome: W1_1_MANAGER_RETENTION
+D1 missing outcome: PORT_WATCH_SHARED_ELIGIBILITY
+D1 missing outcome: SITE_UNPUBLISHED_INSTALL_CLAIM
+D1 mutation harness failed
+D1_BOUND_LIMIT inventory-only entries do not prove mutation success; no live db:test execution occurred
+D1_DERIVED_ACCOUNTING baseline_total=157 extended_total=159 baseline=0 extended=0; inventory replay only
+D1_ACCOUNTING_MUTATION drop-one-counter baseline=0 applied=t control=1 restored=0 killed=t
+D1 mutation harness: executed=155 not_exercised=0 negative_control=1 expected_total=157
+D1_ACCOUNTING_MUTATION drop-one-outcome baseline=0 applied=t control=1 restored=0 killed=t
+D1 mutation harness: executed=155 not_exercised=0 negative_control=1 expected_total=157
+D1_ACCOUNTING_MUTATION drop-noop-counter baseline=0 applied=t control=1 restored=0 killed=t
+D1 mutation harness: executed=156 not_exercised=0 negative_control=0 expected_total=157
+D1_ACCOUNTING_MUTATIONS executed=3 killed=3 survived=0
+D1_ACTUAL_BRANCHES_FIXED
+NOOP baseline=0 applied=f after=0 restored=0
+NOOP_STATE executed=0 negative_control=1
+D4_M8_ACTOR_CLASS baseline=1 applied=t after=0 forbidden=t restored=0
+D4_STATE executed=1 negative_control=1 fail=0
+D1_ACTUAL_BRANCHES_PRIOR
+NOOP_STATE executed=0
+D4_M8_ACTOR_CLASS baseline=1 applied=t after=0 forbidden=t restored=0
+D4_STATE executed=1 fail=0
+W1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME route not-exercised
+W1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME same-name not-exercised
+W1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME restart not-exercised
+W1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME atomic not-exercised
+W1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME expiry not-exercised
+W1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME cleanup not-exercised
+W1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME redaction not-exercised
+D1 mutation harness: executed=0 not_exercised=7 negative_control=0 expected_total=7
+D1 mutation harness: all exercised controls discriminate
+STATE executed=0 not_exercised=7 fail=0
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME route killed
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME same-name killed
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME restart killed
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME atomic killed
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME expiry killed
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME cleanup killed
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME redaction killed
+D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+D1 mutation harness: all exercised controls discriminate
+STATE executed=7 not_exercised=0 fail=0
+D1_OIDC_REAL_OUTPUT case=route command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 109.574584
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 112.5085
+D1_OIDC_REAL_OUTPUT case=same-name command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 108.868917
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 111.781791
+D1_OIDC_REAL_OUTPUT case=restart command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 109.505792
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 112.394542
+D1_OIDC_REAL_OUTPUT case=atomic command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 109.726666
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 112.6445
+D1_OIDC_REAL_OUTPUT case=expiry command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 109.318083
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 112.191167
+D1_OIDC_REAL_OUTPUT case=cleanup command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 110.529916
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113.410958
+D1_OIDC_REAL_OUTPUT case=redaction command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 110.866917
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113.771166
+D1_OIDC_CROSSED_FIXED
+W1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME route not-exercised
+W1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME same-name not-exercised
+W1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME restart not-exercised
+W1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME atomic not-exercised
+W1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME expiry not-exercised
+W1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME cleanup not-exercised
+W1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME redaction not-exercised
+D1 mutation harness: executed=0 not_exercised=7 negative_control=0 expected_total=7
+D1 mutation harness: all exercised controls discriminate
+STATE executed=0 not_exercised=7 fail=0
+D1_OIDC_CROSSED_MUTANT pre-fix-classifier
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME route failed
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME same-name failed
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME restart failed
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME atomic failed
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME expiry failed
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME cleanup failed
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME redaction failed
+D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+STATE executed=7 not_exercised=0 fail=1
+D1_OIDC_CROSSED_MUTATION pre-fix-classifier baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CROSSED_MUTANT reader-marker-drift
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME route failed
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME same-name failed
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME restart failed
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME atomic failed
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME expiry failed
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME cleanup failed
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME redaction failed
+D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+STATE executed=7 not_exercised=0 fail=1
+D1_OIDC_CROSSED_MUTATION reader-marker-drift baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CROSSED_MUTATIONS executed=2 killed=2; only the seven selected definitions are accounted; no other executions are seeded
+D1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-killed baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-executed baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION silent-skip baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION skip-sets-failure baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION executed-only-total baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATIONS executed=5 killed=5
+✔ D1 accounting derives its inventory and refuses the bound live inventory mismatch (21.424334ms)
+✔ D1 accounting follows added definitions and property iterations without a literal total (41.057209ms)
+✔ D1 accounting kills skipped counters, omitted output accounting, NOOP omission, and duplicate masking (185.427083ms)
+✔ D1 prior NOOP and D4 branches demonstrate one omitted count, not two (20.512625ms)
+✔ selected skipped baselines are loud, separately counted, and do not fail the harness (35.143917ms)
+✔ a running baseline retains all original kill requirements (164.211542ms)
+✔ skip classification preserves prior failures and refuses missing accounting (67.413791ms)
+✔ skip parsing uses the selected test's actual TAP reason, not unrelated skips (70.342458ms)
+✔ real durable output crosses into the classifier and kills pre-fix and marker-drift readers (1095.945417ms)
+✔ the control kills false execution, false kill, silent skip, and executed-only total mutations (474.933125ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2212.923
