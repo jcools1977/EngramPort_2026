@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# A lock probe exercises serialization only and does not require Docker.
+root_dir="$(cd "$(dirname "$0")/.." && pwd)"
+# A lock probe exercises serialization only and requires neither the SDK nor Docker.
 if [[ "${1:-}" != "--lock-probe" ]]; then
+  if [[ ! -f "$root_dir/packages/sdk/dist/index.mjs" ]]; then
+    echo "SDK_BUNDLE_REQUIRED: packages/sdk/dist/index.mjs missing; run npm run build --prefix packages/sdk from the repository root" >&2
+    exit 1
+  fi
   docker_gate_rc=0
   node "$(dirname "$0")/docker-gate.mjs" db:test || docker_gate_rc=$?
   if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi
   if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi
 fi
-root_dir="$(cd "$(dirname "$0")/.." && pwd)"
 source "$root_dir/scripts/db-test-lock"
 ENGRAMPORT_DB_TEST_LOCK_LABEL=run-db-tests
 db_test_lock_acquire || exit $?

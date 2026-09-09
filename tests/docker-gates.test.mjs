@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -11,6 +11,84 @@ import { dockerGate } from "../scripts/docker-gate.mjs";
 const root = path.resolve(import.meta.dirname, "..");
 const missing = { available: false, reason: "Docker endpoint unavailable: synthetic missing socket" };
 const gates = ["w1-7:canary", "db:test", "d1:mutation", "kms:test"];
+// Isolate the runner's bundle precondition from the workspace build. The empty
+// module is a presence fixture only; synthetic Docker stops before any SQL/test.
+function dbRunnerFixture(directory, source = readFileSync(path.join(root, "scripts/run-db-tests"), "utf8")) {
+  // Canonicalize macOS /var -> /private/var so the gate's direct-entry URL matches.
+  const fixture = path.join(realpathSync(directory), "db-runner");
+  mkdirSync(path.join(fixture, "scripts"), { recursive: true });
+  for (const file of ["docker-gate.mjs", "db-test-lock"]) {
+    writeFileSync(path.join(fixture, "scripts", file), readFileSync(path.join(root, "scripts", file)));
+  }
+  const runner = path.join(fixture, "scripts/run-db-tests");
+  writeFileSync(runner, source);
+  return { runner, dist: path.join(fixture, "packages/sdk/dist") };
+}
+
+test("database runner refuses an absent SDK before Docker and continues with a present bundle", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "db-sdk-precondition-"));
+  const source = readFileSync(path.join(root, "scripts/run-db-tests"), "utf8");
+  const trace = path.join(directory, "docker.trace");
+  const env = { ...process.env, CI: "true", ENGRAMPORT_REQUIRE_DOCKER: "1", PATH: `${directory}:${process.env.PATH}`,
+    ENGRAMPORT_DB_TEST_LOCK_PATH: path.join(directory, "db.lock"), DB_SDK_TRACE: trace };
+  delete env.ENGRAMPORT_DB_TEST_LOCK_OWNER;
+  try {
+    writeFileSync(path.join(directory, "docker"), `#!/bin/sh
+echo "$*" >> "$DB_SDK_TRACE"
+if [ "$1" = info ]; then echo synthetic-version; exit 0; fi
+echo DOCKER_EXECUTION_REACHED >&2
+exit 42
+`, { mode: 0o755 });
+    function observe(candidate) {
+      const { runner, dist } = dbRunnerFixture(directory, candidate);
+      rmSync(dist, { recursive: true, force: true });
+      rmSync(trace, { force: true });
+      const run = () => spawnSync("bash", [runner], { cwd: directory, env, encoding: "utf8", timeout: 20000 });
+      const absent = run();
+      assert.equal(absent.error, undefined);
+      assert.equal(absent.status, 1);
+      assert.equal(absent.stdout, "");
+      assert.equal(absent.stderr, "SDK_BUNDLE_REQUIRED: packages/sdk/dist/index.mjs missing; run npm run build --prefix packages/sdk from the repository root\n");
+      assert.equal(existsSync(trace), false, "missing SDK must refuse before any Docker call");
+      assert.equal(existsSync(env.ENGRAMPORT_DB_TEST_LOCK_PATH), false);
+      mkdirSync(dist, { recursive: true });
+      writeFileSync(path.join(dist, "index.mjs"), "export {};\n");
+      const present = run();
+      assert.equal(present.error, undefined);
+      assert.equal(present.status, 42);
+      assert.match(present.stderr, /DOCKER_EXECUTION_REACHED/);
+      assert.doesNotMatch(present.stdout + present.stderr, /SDK_BUNDLE_REQUIRED|DOCKER_GATE_SKIP/);
+      const calls = readFileSync(trace, "utf8").trim().split("\n");
+      assert.equal(calls[0], "info --format {{.ServerVersion}}");
+      assert.ok(calls.some(line => line.endsWith(" up -d --wait")), "present bundle reaches synthetic compose up");
+    }
+    observe(source);
+    const anchor = '[[ ! -f "$root_dir/packages/sdk/dist/index.mjs" ]]';
+    assert.ok(source.includes(anchor));
+    assert.throws(() => observe(source.replace(anchor, "false")), { code: "ERR_ASSERTION" });
+    assert.throws(() => observe(source.replace(anchor, "true")), { code: "ERR_ASSERTION" });
+    observe(source);
+    console.log("DB_SDK_PRECONDITION absent=one-line-refusal docker-calls=0 present=synthetic-compose-up removed-check=killed always-refuse=killed restored=passed");
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test("Actions builds the SDK before requiring Docker gates", () => {
+  const source = readFileSync(path.join(root, ".github/workflows/verify-proof.yml"), "utf8");
+  function check(workflow) {
+    const build = workflow.indexOf("        run: npm run build --prefix packages/sdk\n");
+    const gates = workflow.indexOf("      - name: Require Docker gates\n");
+    assert.ok(build >= 0 && gates > build, "SDK build must precede Docker gates");
+    assert.match(workflow.slice(0, build), /Actions run 34371411859/);
+  }
+  check(source);
+  const step = "      - name: Build SDK bundle for Docker gates\n        run: npm run build --prefix packages/sdk\n";
+  assert.ok(source.includes(step));
+  assert.throws(() => check(source.replace(step, "")), { code: "ERR_ASSERTION" });
+  assert.throws(() => check(source.replace(step, "") + step), { code: "ERR_ASSERTION" });
+  check(source);
+  console.log("SDK_WORKFLOW_ORDER baseline=passed missing-build=killed late-build=killed restored=passed");
+});
+
 // Keep the shim in step with the fixture's listed preconditions. This gate control
 // answers core_pattern, then stops at cleanup inventory, before host/container
 // preflight or any sink. Review new probes and the stopping point before updating
@@ -79,9 +157,12 @@ test("real entry points skip loudly locally, refuse in CI, and continue when Doc
   delete env.NODE_TEST_CONTEXT;
   delete env.ENGRAMPORT_DB_TEST_LOCK_OWNER;
   try {
+    const { runner, dist } = dbRunnerFixture(directory);
+    mkdirSync(dist, { recursive: true });
+    writeFileSync(path.join(dist, "index.mjs"), "export {};\n");
     writeFileSync(path.join(directory, "docker"), '#!/bin/sh\nif [ "$1" = info ]; then echo "synthetic missing socket" >&2; exit 1; fi\necho UNEXPECTED_DOCKER_EXECUTION >&2\nexit 42\n', { mode: 0o755 });
     const commands = [
-      ["bash", ["scripts/run-db-tests"], ["db:test"]],
+      ["bash", [runner], ["db:test"]],
       ["bash", ["scripts/run-d1-mutation-harness"], ["d1:mutation"]],
       ["bash", ["scripts/run-kms-tests"], ["kms:test"]],
       [process.execPath, ["--test", "tests/wizard-w1-7.test.mjs"], ["w1-7:canary"]],
@@ -98,7 +179,7 @@ test("real entry points skip loudly locally, refuse in CI, and continue when Doc
     }
     // Exercise the unchanged execution path without pretending this runs containers.
     writeFileSync(path.join(directory, "docker"), '#!/bin/sh\nif [ "$1" = info ]; then echo synthetic-version; exit 0; fi\necho DOCKER_EXECUTION_REACHED >&2\nexit 42\n');
-    for (const [command, args] of commands.filter(([, args]) => args.includes("scripts/run-db-tests") || args.includes("scripts/run-kms-tests"))) {
+    for (const [command, args] of commands.filter(([, , expected]) => expected.includes("db:test") || expected.includes("kms:test"))) {
       const result = spawnSync(command, args, { cwd: root, env, encoding: "utf8", timeout: 20000 });
       assert.notEqual(result.status, 0);
       assert.match(result.stdout + result.stderr, /DOCKER_EXECUTION_REACHED/);

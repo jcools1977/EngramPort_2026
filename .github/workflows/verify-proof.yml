@@ -24,6 +24,11 @@ jobs:
       - name: Run OIDC sessions on Node 22
         run: npm run session:test
 
+      # Actions run 34371411859: db:test imports @engramport/sdk from uncommitted dist/.
+      # Build the same bundle as sdk:buildable and sdk:package:test before Docker gates.
+      - name: Build SDK bundle for Docker gates
+        run: npm run build --prefix packages/sdk
+
       # F170: the W1-7 canary reads /dump/core; a piped host pattern sends dumps elsewhere.
       - name: Set plain core file pattern for W1-7 canary
         run: sudo sysctl -w kernel.core_pattern=core

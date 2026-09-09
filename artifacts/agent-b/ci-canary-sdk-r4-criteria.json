@@ -1,0 +1,36 @@
+[
+  {
+    "criterion_id": "bundle-precondition",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-sdk-r4-results.md#sha256=16e1086bfc3915aff9ef3a67e196b14f1cab0261c032c2b80ec1fb1a2b8e35e4"
+      }
+    ]
+  },
+  {
+    "criterion_id": "workflow-builds-first",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-sdk-r4-results.md#sha256=16e1086bfc3915aff9ef3a67e196b14f1cab0261c032c2b80ec1fb1a2b8e35e4"
+      }
+    ]
+  },
+  {
+    "criterion_id": "ci-green",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/ci-canary-sdk-r4-results.md#sha256=16e1086bfc3915aff9ef3a67e196b14f1cab0261c032c2b80ec1fb1a2b8e35e4"
+      },
+      {
+        "type": "event",
+        "event_id": "01a086d3-65fb-72b4-82be-4505025af19e"
+      }
+    ]
+  }
+]

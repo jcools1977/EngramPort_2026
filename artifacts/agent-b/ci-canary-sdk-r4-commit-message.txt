@@ -1,0 +1,7 @@
+Require SDK bundle before database Docker gates
+
+Add a pre-Docker bundle refusal and build the SDK in Actions before the gates.
+Observe absent/present behavior and discriminating mutations with isolated controls.
+
+Docker gate controls: 14 passed. Lock and surface controls: 6 passed.
+SDK build/import, lint, and shell syntax passed. Live Docker and Actions blocked.
