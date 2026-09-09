@@ -1,0 +1,4 @@
+Move Docker-free D1 controls before the Docker test stage
+
+Keep missing-socket entry paths prompt and preserve the 20-second control bound.
+Record revision-four timing, passing controls, and placement mutation evidence.

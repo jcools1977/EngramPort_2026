@@ -1,0 +1,25 @@
+
+> engramport@0.1.0 docker-gates:test
+> node --test tests/docker-gates.test.mjs tests/oidc-runtime-gates.test.mjs
+
+DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ every absent Docker gate emits exactly one named reason (0.910209ms)
+✔ CI and required Docker refuse missing endpoints without successful skips (0.183167ms)
+✔ reachable Docker continues without skip output even in required mode (0.044375ms)
+✔ silent-skip mutation is killed by the same output control (1.547ms)
+✔ Docker-free D1 controls run in the npm test chain before docker:test (0.505166ms)
+✔ real entry points skip loudly locally, refuse in CI, and continue when Docker responds (862.49725ms)
+OIDC_RUNTIME_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ known-bad OIDC runtime emits exactly one runtime and reason line (0.572792ms)
+✔ other runtimes continue without a skip (0.342375ms)
+✔ silent OIDC skip mutation is killed by the output control (1.326625ms)
+✔ durable entry point exits zero with one loud skip on Node 26.5.0 (172.056667ms)
+✔ Node 22 CI explicitly invokes session tests including the durable entry point (0.225459ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 902.756875

@@ -1,0 +1,170 @@
+command=node --test --test-name-pattern=Docker-free D1 controls tests/docker-gates.test.mjs label=baseline exit=0
+✔ Docker-free D1 controls run in the npm test chain before docker:test (0.604833ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33.69725
+command=node --test --test-name-pattern=Docker-free D1 controls tests/docker-gates.test.mjs label=controls-after-docker exit=1
+✖ Docker-free D1 controls run in the npm test chain before docker:test (2.187791ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36.241417
+
+✖ failing tests:
+
+test at tests/docker-gates.test.mjs:42:1
+✖ Docker-free D1 controls run in the npm test chain before docker:test (2.187791ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(controls >= 0 && controls < chain.indexOf("npm run docker:test"))
+  
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-d1e/tests/docker-gates.test.mjs:46:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+command=node --test --test-name-pattern=Docker-free D1 controls tests/docker-gates.test.mjs label=controls-after-docker-restored exit=0
+✔ Docker-free D1 controls run in the npm test chain before docker:test (0.629166ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.139458
+D1_PLACEMENT_MUTATION controls-after-docker baseline=0 applied=t control=1 restored=0 killed=t
+command=node --test --test-name-pattern=Docker-free D1 controls tests/docker-gates.test.mjs label=controls-back-inside-gate exit=1
+✖ Docker-free D1 controls run in the npm test chain before docker:test (1.124917ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36.324792
+
+✖ failing tests:
+
+test at tests/docker-gates.test.mjs:42:1
+✖ Docker-free D1 controls run in the npm test chain before docker:test (1.124917ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /d1-(?:oidc-classification|accounting|mutation-paths)\.test\.mjs/. Input:
+  
+  '#!/usr/bin/env bash\n' +
+    'set -euo pipefail\n' +
+    'node --test tests/d1-oidc-classification.test.mjs\n' +
+    '# A lock probe exercises serialization only and does not require Docker.\n' +
+    'if [[ "${1:-}" != "--lock-probe" ]]; then\n' +
+    '  docker_gate_rc=0\n' +
+    '  node "$(dirname "$0")/docker-gate.mjs" db:test || docker_gate_rc=$?\n' +
+    '  if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi\n' +
+    '  if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi\n' +
+    'fi\n' +
+    'root_dir="$(cd "$(dirname "$0")/.." && pwd)"\n' +
+    'source "$root_dir/scripts/db-test-lock"\n' +
+    'ENGRAMPORT_DB_TEST_LOCK_LABEL=run-db-tests\n' +
+    'db_test_lock_acquire || exit $?\n' +
+    'if [[ "${1:-}" == "--lock-probe" ]];then trap db_test_lock_release EXIT;db_test_lock_probe "${2:-}" "${3:-}";exit;fi\n' +
+    'compose=(docker compose -f "$root_dir/deploy/docker-compose.yml")\n' +
+    'cleanup() { "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true;db_test_lock_release; }\n' +
+    'trap cleanup EXIT\n' +
+    'cleanup\n' +
+    '"${compose[@]}" up -d --wait\n' +
+    'db=("${compose[@]}" exec -T postgres psql -v ON_ERROR_STOP=1)\n' +
+    `checksum="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0001_canonical_core.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0001_canonical_core.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0001_canonical_core\', \'$checksum\');"\n' +
+    'recorded_checksum="$("${db[@]}" -U engram_migrator -d engramport -Atc "SELECT checksum_sha256 FROM schema_migrations WHERE version=\'0001_canonical_core\';")"\n' +
+    'if [[ "$recorded_checksum" != "$checksum" ]]; then\n' +
+    '  echo "migration checksum mismatch: expected $checksum, recorded $recorded_checksum" >&2\n' +
+    '  exit 1\n' +
+    'fi\n' +
+    'echo "migration checksum verified: $recorded_checksum"\n' +
+    `checksum2="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0002_durable_custody.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0002_durable_custody.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0002_durable_custody\', \'$checksum2\');"\n' +
+    '"${db[@]}" -U postgres -d engramport -c "DO \\$\\$ BEGIN IF NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid=\'custody_rows\'::regclass) OR NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid=\'minted_references\'::regclass) OR NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid=\'custody_audit\'::regclass) THEN RAISE EXCEPTION \'custody tables must force RLS\'; END IF; END \\$\\$;"\n' +
+    `checksum3="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0003_durable_custody_correction.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0003_durable_custody_correction.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0003_durable_custody_correction\', \'$checksum3\');"\n' +
+    `checksum4="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0004_durable_custody_controls.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0004_durable_custody_controls.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0004_durable_custody_controls\', \'$checksum4\');"\n' +
+    `checksum5="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0005_d1e_authorization_derivation.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0005_d1e_authorization_derivation.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0005_d1e_authorization_derivation\', \'$checksum5\');"\n' +
+    `checksum6="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0006_d1e_model_derivation.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0006_d1e_model_derivation.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0006_d1e_model_derivation\', \'$checksum6\');"\n' +
+    `checksum7="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0007_d1e_auth_order_mapping.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0007_d1e_auth_order_mapping.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0007_d1e_auth_order_mapping\', \'$checksum7\');"\n' +
+    `checksum8="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0008_d1e_tenant_derivation.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0008_d1e_tenant_derivation.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0008_d1e_tenant_derivation\', \'$checksum8\');"\n' +
+    `checksum9="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0009_d1_acl_regression.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0009_d1_acl_regression.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0009_d1_acl_regression\', \'$checksum9\');"\n' +
+    `checksum10="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0010_m13_class_gates.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0010_m13_class_gates.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0010_m13_class_gates\', \'$checksum10\');"\n' +
+    '"${db[@]}" -U postgres -d engramport -c "DO \\$\\$ BEGIN IF has_function_privilege(\'engram_app\',\'derive_mint_membership(uuid)\',\'EXECUTE\') THEN RAISE EXCEPTION \'app must not execute derive helper\'; END IF; IF NOT has_function_privilege(\'engram_maintenance\',\'derive_mint_membership(uuid)\',\'EXECUTE\') THEN RAISE EXCEPTION \'maintenance must execute derive helper\'; END IF; END \\$\\$;"\n' +
+    '"${db[@]}" -U postgres -d engramport < "$root_dir/deploy/seed.sql"\n' +
+    '"${db[@]}" -U postgres -d engramport < "$root_dir/tests/isolation/rls.sql"\n' +
+    '"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/app-role-grants.sql"\n' +
+    '"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/constraints.sql"\n' +
+    '"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/discrimination.sql"\n' +
+    '"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1-regression.sql"\n' +
+    '"${db[@]}" -U postgres -d engramport -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES (\'11000000-0000-0000-0000-000000000001\',ARRAY[\'custody:mint:credential:3.3:B\'],clock_timestamp()+interval \'1 hour\') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;"\n' +
+    '"${db[@]}" -U postgres -d engramport -c "UPDATE founder_authorities f SET scopes=(SELECT array_agg(DISTINCT s) FROM unnest(COALESCE(f.scopes,ARRAY[]::text[]) || ARRAY[\'custody:mint:credential:3.12:A\',\'custody:mint:shape:3.12:A\',\'custody:mint:installation:3.12:A\']) s),expires_at=clock_timestamp()+interval \'1 hour\' WHERE principal_id=\'11000000-0000-0000-0000-000000000001\';"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES (\'3.3\',\'C3\',true,8,\'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089\') ON CONFLICT (credential_class) DO UPDATE SET passed=EXCLUDED.passed,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES (\'3.5\',\'C10\',true,8,\'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089\'),(\'3.12\',\'C14\',true,8,\'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089\') ON CONFLICT (credential_class) DO UPDATE SET passed=EXCLUDED.passed,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;"\n' +
+    `checksum11="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0011_d1f_fault_collision.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0011_d1f_fault_collision.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0011_d1f_fault_collision\', \'$checksum11\');"\n' +
+    `checksum12="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.readFileSync(process.argv[1])).digest('hex'))" "$root_dir/migrations/0012_d3_resolve_revoke.sql")"\n` +
+    '"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0012_d3_resolve_revoke.sql"\n' +
+    '"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0012_d3_resolve_revoke\', \'$checksum12\');"\n' +
+    `checksum13="$(node -e "const fs=require('fs'),c=require('crypto');process.stdout.write(c.createHash('sha256').update(fs.read`... 22705 more characters
+  
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-d1e/tests/docker-gates.test.mjs:50:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '#!/usr/bin/env bash\nset -euo pipefail\nnode --test tests/d1-oidc-classification.test.mjs\n# A lock probe exercises serialization only and does not require Docker.\nif [[ "${1:-}" != "--lock-probe" ]]; then\n  docker_gate_rc=0\n  node "$(dirname "$0")/docker-gate.mjs" db:test || docker_gate_rc=$?\n  if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi\n  if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi\nfi\nroot_dir="$(cd "$(dirname "$0")/.." && pwd)"\nsource "$root_dir/scripts/db-test-lock"\nENGRAMPORT_DB_TEST_LOCK_LABEL=run-db-tests\ndb_test_lock_acquire || exit $?\nif [[ "${1:-}" == "--lock-probe" ]];then trap db_test_lock_release EXIT;db_test_lock_probe "${2:-}" "${3:-}";exit;fi\ncompose=(docker compose -f "$root_dir/deploy/docker-compose.yml")\ncleanup() { "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true;db_test_lock_release; }\ntrap cleanup EXIT\ncleanup\n"${compose[@]}" up -d --wait\ndb=("${compose[@]}" exec -T postgres psql -v ON_ERROR_STOP=1)\nchecksum="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0001_canonical_core.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0001_canonical_core.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0001_canonical_core\', \'$checksum\');"\nrecorded_checksum="$("${db[@]}" -U engram_migrator -d engramport -Atc "SELECT checksum_sha256 FROM schema_migrations WHERE version=\'0001_canonical_core\';")"\nif [[ "$recorded_checksum" != "$checksum" ]]; then\n  echo "migration checksum mismatch: expected $checksum, recorded $recorded_checksum" >&2\n  exit 1\nfi\necho "migration checksum verified: $recorded_checksum"\nchecksum2="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0002_durable_custody.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0002_durable_custody.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0002_durable_custody\', \'$checksum2\');"\n"${db[@]}" -U postgres -d engramport -c "DO \\$\\$ BEGIN IF NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid=\'custody_rows\'::regclass) OR NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid=\'minted_references\'::regclass) OR NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid=\'custody_audit\'::regclass) THEN RAISE EXCEPTION \'custody tables must force RLS\'; END IF; END \\$\\$;"\nchecksum3="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0003_durable_custody_correction.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0003_durable_custody_correction.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0003_durable_custody_correction\', \'$checksum3\');"\nchecksum4="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0004_durable_custody_controls.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0004_durable_custody_controls.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0004_durable_custody_controls\', \'$checksum4\');"\nchecksum5="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0005_d1e_authorization_derivation.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0005_d1e_authorization_derivation.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0005_d1e_authorization_derivation\', \'$checksum5\');"\nchecksum6="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0006_d1e_model_derivation.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0006_d1e_model_derivation.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0006_d1e_model_derivation\', \'$checksum6\');"\nchecksum7="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0007_d1e_auth_order_mapping.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0007_d1e_auth_order_mapping.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0007_d1e_auth_order_mapping\', \'$checksum7\');"\nchecksum8="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0008_d1e_tenant_derivation.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0008_d1e_tenant_derivation.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0008_d1e_tenant_derivation\', \'$checksum8\');"\nchecksum9="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0009_d1_acl_regression.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0009_d1_acl_regression.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0009_d1_acl_regression\', \'$checksum9\');"\nchecksum10="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0010_m13_class_gates.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0010_m13_class_gates.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0010_m13_class_gates\', \'$checksum10\');"\n"${db[@]}" -U postgres -d engramport -c "DO \\$\\$ BEGIN IF has_function_privilege(\'engram_app\',\'derive_mint_membership(uuid)\',\'EXECUTE\') THEN RAISE EXCEPTION \'app must not execute derive helper\'; END IF; IF NOT has_function_privilege(\'engram_maintenance\',\'derive_mint_membership(uuid)\',\'EXECUTE\') THEN RAISE EXCEPTION \'maintenance must execute derive helper\'; END IF; END \\$\\$;"\n"${db[@]}" -U postgres -d engramport < "$root_dir/deploy/seed.sql"\n"${db[@]}" -U postgres -d engramport < "$root_dir/tests/isolation/rls.sql"\n"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/app-role-grants.sql"\n"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/constraints.sql"\n"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/discrimination.sql"\n"${db[@]}" -U postgres -d engramport < "$root_dir/tests/failure/d1-regression.sql"\n"${db[@]}" -U postgres -d engramport -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES (\'11000000-0000-0000-0000-000000000001\',ARRAY[\'custody:mint:credential:3.3:B\'],clock_timestamp()+interval \'1 hour\') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;"\n"${db[@]}" -U postgres -d engramport -c "UPDATE founder_authorities f SET scopes=(SELECT array_agg(DISTINCT s) FROM unnest(COALESCE(f.scopes,ARRAY[]::text[]) || ARRAY[\'custody:mint:credential:3.12:A\',\'custody:mint:shape:3.12:A\',\'custody:mint:installation:3.12:A\']) s),expires_at=clock_timestamp()+interval \'1 hour\' WHERE principal_id=\'11000000-0000-0000-0000-000000000001\';"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES (\'3.3\',\'C3\',true,8,\'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089\') ON CONFLICT (credential_class) DO UPDATE SET passed=EXCLUDED.passed,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES (\'3.5\',\'C10\',true,8,\'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089\'),(\'3.12\',\'C14\',true,8,\'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089\') ON CONFLICT (credential_class) DO UPDATE SET passed=EXCLUDED.passed,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;"\nchecksum11="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0011_d1f_fault_collision.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0011_d1f_fault_collision.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0011_d1f_fault_collision\', \'$checksum11\');"\nchecksum12="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.readFileSync(process.argv[1])).digest(\'hex\'))" "$root_dir/migrations/0012_d3_resolve_revoke.sql")"\n"${db[@]}" -U engram_migrator -d engramport < "$root_dir/migrations/0012_d3_resolve_revoke.sql"\n"${db[@]}" -U engram_migrator -d engramport -c "INSERT INTO schema_migrations(version, checksum_sha256) VALUES (\'0012_d3_resolve_revoke\', \'$checksum12\');"\nchecksum13="$(node -e "const fs=require(\'fs\'),c=require(\'crypto\');process.stdout.write(c.createHash(\'sha256\').update(fs.read'... 22705 more characters,
+    expected: /d1-(?:oidc-classification|accounting|mutation-paths)\.test\.mjs/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+command=node --test --test-name-pattern=Docker-free D1 controls tests/docker-gates.test.mjs label=controls-back-inside-gate-restored exit=0
+✔ Docker-free D1 controls run in the npm test chain before docker:test (0.604292ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.159375
+D1_PLACEMENT_MUTATION controls-back-inside-gate baseline=0 applied=t control=1 restored=0 killed=t
+D1_PLACEMENT_MUTATIONS executed=2 killed=2 survived=0

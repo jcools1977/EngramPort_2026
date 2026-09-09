@@ -1,0 +1,32 @@
+[
+  {
+    "criterion_id": "skip-path-fast",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev4-results.md#sha256=41398dfe0c3c4881ef376c0919f112afe4b8ee80838842e9860d6e6bcb609d79"
+      }
+    ]
+  },
+  {
+    "criterion_id": "controls-still-run",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev4-results.md#sha256=41398dfe0c3c4881ef376c0919f112afe4b8ee80838842e9860d6e6bcb609d79"
+      }
+    ]
+  },
+  {
+    "criterion_id": "gate-control-green",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-rev4-results.md#sha256=41398dfe0c3c4881ef376c0919f112afe4b8ee80838842e9860d6e6bcb609d79"
+      }
+    ]
+  }
+]

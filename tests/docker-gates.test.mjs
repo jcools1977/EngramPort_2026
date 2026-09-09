@@ -39,6 +39,16 @@ test("silent-skip mutation is killed by the same output control", async () => {
     console.log("DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1");
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+test("Docker-free D1 controls run in the npm test chain before docker:test", () => {
+  const { scripts } = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+  const chain = scripts.test.split(" && ");
+  const controls = chain.indexOf("npm run d1:controls:test");
+  assert.ok(controls >= 0 && controls < chain.indexOf("npm run docker:test"));
+  assert.equal(scripts["d1:controls:test"], "node --test tests/d1-oidc-classification.test.mjs");
+  const classification = readFileSync(path.join(root, "tests/d1-oidc-classification.test.mjs"), "utf8");
+  for (const name of ["d1-accounting", "d1-mutation-paths"]) assert.ok(classification.includes(`import "./${name}.test.mjs";`));
+  assert.doesNotMatch(readFileSync(path.join(root, "scripts/run-db-tests"), "utf8"), /d1-(?:oidc-classification|accounting|mutation-paths)\.test\.mjs/);
+});
 test("real entry points skip loudly locally, refuse in CI, and continue when Docker responds", () => {
   const directory = mkdtempSync(path.join(tmpdir(), "docker-gate-entry-"));
   const env = { ...process.env, CI: "", ENGRAMPORT_REQUIRE_DOCKER: "", PATH: `${directory}:${process.env.PATH}`, ENGRAMPORT_DB_TEST_LOCK_PATH: path.join(directory, "db.lock") };
@@ -47,7 +57,7 @@ test("real entry points skip loudly locally, refuse in CI, and continue when Doc
   try {
     writeFileSync(path.join(directory, "docker"), '#!/bin/sh\nif [ "$1" = info ]; then echo "synthetic missing socket" >&2; exit 1; fi\necho UNEXPECTED_DOCKER_EXECUTION >&2\nexit 42\n', { mode: 0o755 });
     const commands = [
-      ["bash", ["scripts/run-db-tests"], ["db:test", "d1:mutation"]],
+      ["bash", ["scripts/run-db-tests"], ["db:test"]],
       ["bash", ["scripts/run-d1-mutation-harness"], ["d1:mutation"]],
       ["bash", ["scripts/run-kms-tests"], ["kms:test"]],
       [process.execPath, ["--test", "tests/wizard-w1-7.test.mjs"], ["w1-7:canary"]],

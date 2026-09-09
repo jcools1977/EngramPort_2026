@@ -1,0 +1,4 @@
+command=bash scripts/run-db-tests fixture=synthetic-missing-socket exit=0 elapsed_seconds=0.224815 stdout_lines=1 stderr_bytes=0
+DOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: synthetic missing socket
+command=bash scripts/run-d1-mutation-harness fixture=synthetic-missing-socket exit=0 elapsed_seconds=0.040957 stdout_lines=1 stderr_bytes=0
+DOCKER_GATE_SKIP gate=d1:mutation reason=Docker endpoint unavailable: synthetic missing socket
