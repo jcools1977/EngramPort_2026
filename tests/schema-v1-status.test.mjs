@@ -19,7 +19,7 @@ const schemaFile = "schemas/event-v1.schema.json";
 const verifierFile = "packages/git-adapter/src/verify-log.mjs";
 const historicalEvent = "events/agent-b/20260908T194830Z_01a08290-9b52-7002-b704-44c3576f959b.md";
 const schema = JSON.parse(readFileSync(path.join(sourceRoot, schemaFile), "utf8"));
-const { COMPLETION_STATUSES, parseEvent } = await import(pathToFileURL(path.join(sourceRoot, verifierFile)).href);
+const { COMPLETION_STATUSES, EVENT_TYPES, parseEvent } = await import(pathToFileURL(path.join(sourceRoot, verifierFile)).href);
 const { appendEvent } = await import(pathToFileURL(path.join(sourceRoot, "packages/git-adapter/src/event-core.mjs")).href);
 function compile(value) {
   const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true });
@@ -43,6 +43,8 @@ test("F157 real blocked completion validates against the published schema", () =
 test("F157 schema and verifier vocabularies agree", () => {
   assert.ok(Object.isFrozen(COMPLETION_STATUSES));
   assert.deepEqual([...schema.$defs.result.properties.status.enum].sort(), [...COMPLETION_STATUSES].sort());
+  assert.ok(Object.isFrozen(EVENT_TYPES));
+  assert.deepEqual([...schema.properties.type.enum].sort(), [...EVENT_TYPES].sort());
 });
 
 test("F157 both consumers accept every status and reject an invented status", async () => {

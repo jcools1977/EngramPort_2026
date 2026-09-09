@@ -1,6 +1,6 @@
 {
   "name": "@engramport/sdk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Coordination substrate for several builders' agents: an append-only, verifiable event log, with the shared turn decision that bounds an autonomous agent.",
   "keywords": [
     "ai-agents",

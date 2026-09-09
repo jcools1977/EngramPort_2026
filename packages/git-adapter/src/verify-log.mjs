@@ -13,7 +13,7 @@ export const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 export const COMPLETION_STATUSES = Object.freeze(["satisfied", "unmet", "blocked"]);
 const COMPLETION_STATUS = new Set(COMPLETION_STATUSES);
 const CRITERION_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
-export const EVENT_TYPES = Object.freeze(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"]);
+export const EVENT_TYPES = Object.freeze(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment", "withdrawal"]);
 const TYPES = new Set(EVENT_TYPES);
 const BASE_KEYS = ["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256", "thread_config_sha256", "artifacts"];
 const V0_KEYS = new Set(BASE_KEYS);
@@ -425,17 +425,31 @@ export async function verifyLog(root, options = {}) {
   const replies = new Map();
   for (const event of events) {
     const parentId = event.meta.in_reply_to;
-    if (parentId === null) continue;
-    const parent = byId.get(parentId);
     const declaration = threadConfigs.get(event.meta.thread);
     const mode = declaration?.mode ?? projectConfig.defaultMode;
+    const withdrawal = event.meta.type === "withdrawal";
+    if (withdrawal) {
+      if (mode !== "strict_relay") errors.push(`${event.relative}: withdrawal requires strict_relay`); /* WITHDRAWAL_MODE */
+      if (!event.body.trim()) errors.push(`${event.relative}: withdrawal requires a non-empty reason`); /* WITHDRAWAL_REASON */
+      if (parentId === null) errors.push(`${event.relative}: withdrawal requires a parent`); /* WITHDRAWAL_PARENT */
+    }
+    if (parentId === null) continue;
+    const parent = byId.get(parentId);
     if (!parent) { errors.push(`${event.relative}: mode ${mode} violation; unknown reply target ${parentId}`); continue; }
     if (parent.meta.thread !== event.meta.thread) { errors.push(`${event.relative}: reply crosses threads`); continue; }
+    if (withdrawal) {
+      if (event.meta.from !== parent.meta.from) errors.push(`${event.relative}: withdrawal requires the original sender`); /* WITHDRAWAL_SENDER */
+      if (parent.meta.next === null || event.meta.next !== parent.meta.next) errors.push(`${event.relative}: withdrawal next must name the original addressee of an open turn`); /* WITHDRAWAL_NEXT */
+    }
+    if (parent.meta.type === "withdrawal") {
+      if (event.meta.type !== "completion") errors.push(`${event.relative}: withdrawal successor must be a completion`); /* WITHDRAWAL_COMPLETION */
+      if (event.meta.next !== null && event.meta.next !== parent.meta.from) errors.push(`${event.relative}: late completion next must name the sender or null`); /* WITHDRAWAL_COMPLETION_NEXT */
+    }
     if (!THREAD_MODES.has(mode)) {
       errors.push(`${event.relative}: unknown thread mode ${mode}`);
     } else if (mode === "strict_relay") {
-      if (parent.meta.next !== event.meta.from) errors.push(`${event.relative}: mode strict_relay violation; expected next actor ${parent.meta.next}`);
-      if (parent.meta.from === event.meta.from) errors.push(`${event.relative}: mode strict_relay violation; an actor may not reply to itself`);
+      if (!withdrawal && parent.meta.next !== event.meta.from) errors.push(`${event.relative}: mode strict_relay violation; expected next actor ${parent.meta.next}`);
+      if (!withdrawal && parent.meta.from === event.meta.from) errors.push(`${event.relative}: mode strict_relay violation; an actor may not reply to itself`);
     } else if (mode === "coordinator_led") {
       const coordinator = declaration?.coordinator;
       if (event.meta.from !== coordinator && parent.meta.from !== coordinator) {
@@ -501,7 +515,16 @@ export async function verifyLog(root, options = {}) {
       await resolveBoundReference(reference, event, `${event.relative}: bounded_context[${index}]`);
     }
     if (event.meta.type !== "completion") continue;
-    const parent = byId.get(event.meta.in_reply_to);
+    let parent = byId.get(event.meta.in_reply_to);
+    if (parent?.meta.type === "withdrawal") {
+      parent = byId.get(parent.meta.in_reply_to);
+      // Late work retains the original handoff's criteria and evidence contract.
+      // Other withdrawn event types have no handoff criteria to satisfy.
+      if (parent && parent.meta.type !== "handoff") {
+        if (event.meta.criteria_results !== undefined) errors.push(`${event.relative}: criteria_results requires an original handoff`); /* WITHDRAWAL_NO_CRITERIA */
+        continue;
+      }
+    }
     if (!parent || parent.meta.type !== "handoff") {
       errors.push(`${event.relative}: completion must reply to a handoff`);
       continue;

@@ -82,7 +82,9 @@ function resultFor(relative, id, reused) { return { ok: true, errors: [], relati
 
 export async function appendEvent(input, options = {}) {
   const cwd = options.cwd ?? process.cwd();
-  for (const required of ["actor", "thread", "type", "body"]) if (!input[required]) throw new Error(`append requires --${required}`);
+  for (const required of ["actor", "thread", "type", "body"]) {
+    if (!input[required] && !(required === "body" && input.type === "withdrawal" && input.body === "")) throw new Error(`append requires --${required}`);
+  }
   const schemaVersion = input.schemaVersion ?? 1;
   if (schemaVersion !== 1) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only"); /* V1_WRITER_CUTOVER */
   const artifacts = input.artifacts?.filter(Boolean) ?? [];

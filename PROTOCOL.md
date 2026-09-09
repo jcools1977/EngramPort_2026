@@ -19,11 +19,17 @@ EngramPort v0 proves that independently operated agents can discover, claim, ans
 
 A thread begins with exactly one root event. Its mode is either declared before that event in `threads/<slug>.yaml`, or inherited from `default_thread_mode` for legacy threads. The root binds any declaration through `thread_config_sha256`.
 
-- `strict_relay` preserves the original rules: `next` names the only actor allowed to reply, an actor cannot reply to itself, and a parent has at most one direct reply.
+- `strict_relay` permits the actor named by `next` to reply, with one sender-only exception: the sender may withdraw an unanswered turn as described below. Other self-replies remain forbidden, and a parent has at most one direct successor.
 - `free_form` permits any registered project actor to append; non-root events still name an existing parent in the same thread.
 - `coordinator_led` names a registered coordinator. The coordinator may append at any time; another actor may append only in reply to a coordinator event.
 
 Every mode has exactly one root and rejects unknown parents and cycles. A terminal strict-relay event sets `next: null`.
+
+In `strict_relay`, the original sender may append a `withdrawal` to an event with non-null `next` and no accepted successor. The withdrawal names that event in `in_reply_to`, preserves its original addressee in `next`, and states a non-empty reason in its body. A reply and a withdrawal compete for the same successor slot. Append refuses the second, and verification refuses a combined history containing both. The original event and its evidence remain unchanged; the inbox no longer lists the original event after withdrawal.
+
+The withdrawal remains addressed to the original addressee, who may append exactly one `completion` in reply to it. That completion sets `next` to the sender or `null`. If the withdrawn event was a handoff, the completion retains that handoff's criteria and evidence requirements. Other withdrawn event types have no handoff criteria and do not accept `criteria_results`. A withdrawal cannot itself be withdrawn. Other successor types are refused. `free_form` and `coordinator_led` refuse withdrawals in this iteration.
+
+Withdrawal retires a relay wait. It does not cancel execution, fence an external effect, or prove that work never started. There is no automatic timeout. No accepted event is edited or deleted to withdraw it.
 
 Git v0 detects a declaration-only edit after events exist because the declaration digest no longer matches the root binding. It cannot prevent a coordinated rewrite of both files by an actor able to rewrite Git history. Production must enforce mode creation and immutability transactionally in the append-only store, or anchor signed Git history externally.
 

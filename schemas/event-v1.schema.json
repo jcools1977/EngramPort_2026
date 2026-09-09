@@ -10,7 +10,7 @@
     "id": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
     "thread": { "$ref": "#/$defs/slug" },
     "from": { "$ref": "#/$defs/slug" },
-    "type": { "enum": ["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment"] },
+    "type": { "enum": ["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment", "withdrawal"] },
     "occurred_at": { "type": "string", "format": "date-time" },
     "in_reply_to": { "type": ["string", "null"] },
     "next": { "anyOf": [{ "$ref": "#/$defs/slug" }, { "type": "null" }] },

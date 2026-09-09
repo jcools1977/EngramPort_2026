@@ -1,0 +1,92 @@
+[
+  {
+    "criterion_id": "sender-withdraws",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "empty-reason-refused",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "non-sender-refused",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "single-successor",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "late-completion-once",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "other-self-replies-still-refused",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "non-strict-refused",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "schema-and-verifier-agree",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr-0052-withdrawal-results.md#sha256=41da5910a892b552bbbbdc2f027033eb96702b9dd86b0bd5c2edb8653bde9202"
+      }
+    ]
+  }
+]
