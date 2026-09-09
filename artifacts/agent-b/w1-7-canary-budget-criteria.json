@@ -1,0 +1,32 @@
+[
+  {
+    "criterion_id": "budget-explicit",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/w1-7-canary-budget-results.md#sha256=9eb9fa0c5ed8498da2981ee42f7d75a5560485efe1a6063764ca4e17c18e816f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "timeout-is-loud",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/w1-7-canary-budget-results.md#sha256=9eb9fa0c5ed8498da2981ee42f7d75a5560485efe1a6063764ca4e17c18e816f"
+      }
+    ]
+  },
+  {
+    "criterion_id": "canary-unchanged",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/w1-7-canary-budget-results.md#sha256=9eb9fa0c5ed8498da2981ee42f7d75a5560485efe1a6063764ca4e17c18e816f"
+      }
+    ]
+  }
+]

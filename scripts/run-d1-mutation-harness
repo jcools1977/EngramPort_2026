@@ -71,6 +71,8 @@ d1_current_name(){
     W1_1_OIDC_PROVIDER_*) printf 'W1_1_OIDC_PROVIDER_%s' "${pattern^^}" ;;
     W1_1_OIDC_DURABLE_*) printf 'W1_1_OIDC_DURABLE_%s' "${pattern^^}" ;;
     W1_8_SOURCE_PROPERTIES) printf 'W1_8_LIVE_%s' "${property^^}" ;;
+    W1_1_LIFECYCLE_PROPERTIES) local item=${property//-/_}; printf 'W1_1_LIFECYCLE_%s' "${item^^}" ;;
+    W1_1_SETUP_SESSION_PROPERTIES) local item=${property//-/_}; printf 'W1_1_SETUP_%s' "${item^^}" ;;
     W1_8_G_PROPERTIES) if [ "$control" = 3 ]; then printf '%s' W1_8_G3_G12; else printf 'W1_8_G%s' "$control"; fi ;;
     W1_1_MANAGER_CRITERION5_DIFFERENT) printf '%s' W1_1_MANAGER_DIFFERENT ;;
     *) printf '%s' "$name" ;;
@@ -122,6 +124,43 @@ d1_oidc_classify(){
     fail=1
   fi
 }
+# Read actual TAP timeout diagnostics, including the effective per-test budget.
+# A nonzero assertion failure without this diagnostic retains ordinary handling.
+d1_baseline_timeout(){
+  local outcome_name="$1" baseline_rc="$2" baseline_log="$3" detail
+  [ "$baseline_rc" != 0 ] || return 1
+  detail=$(node --input-type=module - "$baseline_log" <<'NODE'
+import {readFileSync} from 'node:fs';
+const text=readFileSync(process.argv[2],'utf8');
+const failures=[...text.matchAll(/^\s*not ok \d+ - (.+)\n([\s\S]*?^\s*\.\.\.)/gm)];
+for(const [,name,diagnostic] of failures){
+  if(!/^\s*failureType: 'testTimeoutFailure'\s*$/m.test(diagnostic))continue;
+  const budget=diagnostic.match(/^\s*error: ['"]test timed out after (\d+)ms['"]\s*$/m)?.[1];
+  if(budget){console.log(`test=${JSON.stringify(name)} budget_ms=${budget}`);break;}
+}
+NODE
+)
+  [ -n "$detail" ] || return 1
+  fail=1
+  d1_outcome '%s baseline-timeout %s exit=%s\n' "$outcome_name" "$detail" "$baseline_rc"
+  return 0
+}
+# Assertion wrappers print the process status and forward failed test output on
+# stderr. Run here, outside command substitution, so timeout accounting persists.
+d1_baseline(){
+  local result_variable="$1" outcome_name="$2" baseline_log baseline_rc
+  shift 2
+  baseline_log=$(mktemp) || { fail=1; return 1; }
+  baseline_rc=$("$@" 2>"$baseline_log")
+  cat "$baseline_log" >&2
+  printf -v "$result_variable" '%s' "$baseline_rc"
+  if d1_baseline_timeout "$outcome_name" "$baseline_rc" "$baseline_log"; then
+    rm -f "$baseline_log"
+    return 1
+  fi
+  rm -f "$baseline_log"
+  return 0
+}
 d1_summary(){
   local name
   for name in "${!d1_expected[@]}"; do
@@ -134,26 +173,26 @@ d1_summary(){
 }
 build(){ drop; psql_as postgres postgres -c "CREATE DATABASE $SDB OWNER engram_migrator;" >/dev/null || return 1; psql_as postgres "$SDB" < "$root_dir/deploy/init-extensions.sql" >/dev/null || return 1; for m in "$root_dir"/migrations/000[1-9]_*.sql "$root_dir"/migrations/001[0-9]_*.sql "$root_dir"/migrations/002[0-9]_*.sql; do [ -f "$m" ] || continue; psql_as engram_migrator "$SDB" < "$m" >/dev/null || return 1; done; psql_as postgres "$SDB" < "$root_dir/deploy/seed.sql" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO custody_inventory_models(credential_class,custody_model) VALUES ('3.2','B'),('3.12','A') ON CONFLICT DO NOTHING;" >/dev/null || return 1; psql_as engram_migrator "$SDB" -c "INSERT INTO credential_class_gates(credential_class,gate_id,passed,threat_revision,threat_digest) VALUES ('3.3','C3',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.5','C10',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'),('3.12','C14',true,8,'629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089') ON CONFLICT (credential_class) DO UPDATE SET passed=true,threat_revision=EXCLUDED.threat_revision,threat_digest=EXCLUDED.threat_digest;" >/dev/null || return 1; psql_as postgres "$SDB" -c "INSERT INTO founder_authorities(principal_id,scopes,expires_at) VALUES ('11000000-0000-0000-0000-000000000001',ARRAY['custody:mint:credential:3.3:B','custody:mint:credential:3.12:A','custody:mint:shape:3.12:A','custody:mint:installation:3.12:A'],clock_timestamp()+interval '2 hours'),('22000000-0000-0000-0000-000000000002',ARRAY['custody:mint:credential:3.3:B'],clock_timestamp()+interval '2 hours') ON CONFLICT(principal_id) DO UPDATE SET scopes=EXCLUDED.scopes,expires_at=EXCLUDED.expires_at;" >/dev/null; }
 assert_file(){ local fixture="$1" out rc; out=$(mktemp); psql_as engram_maintenance "$SDB" -f - < "$fixture" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" D2_BINDING_MODULE="$module" D2_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"; }
+run_d2(){ local module="$1" pattern="${2:-}"; D2_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" D2_APP_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" D2_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" D2_BINDING_MODULE="$module" D2_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/d2-live.test.mjs"; }
 assert_d2(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_d2 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_7(){ local module="$1" pattern="${2:-}"; W1_7_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_7_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_7_BINDING_MODULE="$module" W1_7_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
+run_w1_7(){ local module="$1" pattern="${2:-}"; W1_7_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_7_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_7_BINDING_MODULE="$module" W1_7_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
 assert_w1_7(){ local module="${1:-$root_dir/packages/git-adapter/src/d2-session-binding.mjs}" pattern="${2:-}" out rc; out=$(mktemp); run_w1_7 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_8(){ local module="$1" pattern="$2"; W1_8_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_8_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_8_BOUNDARY_MODULE="$module" W1_8_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-8-live.test.mjs"; }
-run_w1_1(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-1-durable-session.test.mjs"; }
+run_w1_8(){ local module="$1" pattern="$2"; W1_8_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_8_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_8_BOUNDARY_MODULE="$module" W1_8_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/wizard-w1-8-live.test.mjs"; }
+run_w1_1(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/wizard-w1-1-durable-session.test.mjs"; }
 assert_w1_1(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1 "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_lifecycle(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_LIFECYCLE_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-1-session-lifecycle.test.mjs"; }
+run_w1_1_lifecycle(){ local pattern="$1"; W1_1_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_LIFECYCLE_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/wizard-w1-1-session-lifecycle.test.mjs"; }
 assert_w1_1_lifecycle(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_lifecycle "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_manager(){ local module_root="$1" pattern="$2"; W1_1_MANAGER_MODULE_ROOT="$module_root" W1_1_MANAGER_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_MANAGER_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_MANAGER_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-session-criterion5-live.test.mjs"; }
+run_w1_1_manager(){ local module_root="$1" pattern="$2"; W1_1_MANAGER_MODULE_ROOT="$module_root" W1_1_MANAGER_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_MANAGER_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_MANAGER_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/workspace-session-criterion5-live.test.mjs"; }
 assert_w1_1_manager(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_manager "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_oidc(){ local module="$1" pattern="$2"; W1_1_OIDC_VERIFIER_MODULE="$module" W1_1_OIDC_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-verifier.test.mjs"; }
+run_w1_1_oidc(){ local module="$1" pattern="$2"; W1_1_OIDC_VERIFIER_MODULE="$module" W1_1_OIDC_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/workspace-oidc-verifier.test.mjs"; }
 assert_w1_1_oidc(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_oidc_client(){ local module_root="$1" pattern="$2"; W1_1_OIDC_CLIENT_MODULE_ROOT="$module_root" W1_1_OIDC_CLIENT_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-client.test.mjs"; }
+run_w1_1_oidc_client(){ local module_root="$1" pattern="$2"; W1_1_OIDC_CLIENT_MODULE_ROOT="$module_root" W1_1_OIDC_CLIENT_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/workspace-oidc-client.test.mjs"; }
 assert_w1_1_oidc_client(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_client "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_oidc_durable(){ local module_root="$1" pattern="$2"; W1_1_OIDC_DURABLE_MODULE_ROOT="$module_root" W1_1_OIDC_DURABLE_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/workspace-oidc-durable.test.mjs"; }
 assert_w1_1_oidc_durable(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_durable "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_oidc_provider(){ local module_root="$1" pattern="$2"; W1_1_OIDC_PROVIDER_MODULE_ROOT="$module_root" W1_1_OIDC_PROVIDER_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-provider.test.mjs"; }
+run_w1_1_oidc_provider(){ local module_root="$1" pattern="$2"; W1_1_OIDC_PROVIDER_MODULE_ROOT="$module_root" W1_1_OIDC_PROVIDER_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/workspace-oidc-provider.test.mjs"; }
 assert_w1_1_oidc_provider(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_provider "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_binding(){ local pattern="$1"; W1_1_BINDING_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_BINDING_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_BINDING_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/founder-binding-live.test.mjs"; }
+run_w1_1_binding(){ local pattern="$1"; W1_1_BINDING_DATABASE_URL="postgres://engram_maintenance:local-only-maintenance@127.0.0.1:55432/$SDB" W1_1_BINDING_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" W1_1_BINDING_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/founder-binding-live.test.mjs"; }
 assert_w1_1_binding(){ local pattern="$1" out rc; out=$(mktemp); run_w1_1_binding "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_enrollment_issuer(){ local out rc; out=$(mktemp); psql_as postgres "$SDB" -f - < "$root_dir/tests/failure/founder-enrollment-issuer.sql" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 agent_c_url(){ node -e 'console.log(require("node:url").pathToFileURL(process.argv[1]).href)' "$1"; }
@@ -189,11 +228,11 @@ run_port_watch(){ local module="$1" pattern="$2"; PORT_WATCH_MODULE="$(agent_c_u
 assert_port_watch(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_port_watch_shared(){ local module_root="$1" pattern="$2"; GIT_ADAPTER_EVENT_CORE_MODULE="$(agent_c_url "$module_root/packages/git-adapter/src/event-core.mjs")" PORT_WATCH_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/git-v0.test.mjs"; }
 assert_port_watch_shared(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_port_watch_shared "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_observation_live(){ local module_root="$1"; OBSERVATION_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" OBSERVATION_DATABASE_URL="postgres://127.0.0.1:55432/$SDB" OBSERVATION_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-timeout=10000 "$root_dir/tests/port-watch-observation-live.test.mjs"; }
+run_observation_live(){ local module_root="$1"; OBSERVATION_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" OBSERVATION_DATABASE_URL="postgres://127.0.0.1:55432/$SDB" OBSERVATION_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/port-watch-observation-live.test.mjs"; }
 assert_observation_live(){ local module_root="$1" out rc; out=$(mktemp); run_observation_live "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_port_watch_claim_live(){ local module_root="$1"; PORT_WATCH_CLAIM_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" PORT_WATCH_CLAIM_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" PORT_WATCH_CLAIM_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-timeout=10000 "$root_dir/tests/port-watch-claim-live.test.mjs"; }
+run_port_watch_claim_live(){ local module_root="$1"; PORT_WATCH_CLAIM_MODULE="$(agent_c_url "$module_root/packages/port-watch/src/index.mjs")" PORT_WATCH_CLAIM_DATABASE_URL="postgres://engram_app:local-only-app@127.0.0.1:55432/$SDB" PORT_WATCH_CLAIM_POSTGRES_DATABASE_URL="postgres://postgres:local-only-engramport@127.0.0.1:55432/$SDB" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/port-watch-claim-live.test.mjs"; }
 assert_port_watch_claim_live(){ local module_root="$1" out rc; out=$(mktemp); run_port_watch_claim_live "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_ONLY=1 SITE_EVENT_TYPES_MODULE="$(agent_c_url "$module")" SITE_EVENT_TYPE_OVERRIDE="$fabricated" node --test "$root_dir/tests/rendered-html.test.mjs"; }
+run_site_event_types(){ local module="$1" fabricated="${2:-}"; SITE_EVENT_TYPES_ONLY=1 SITE_EVENT_TYPES_MODULE="$(agent_c_url "$module")" SITE_EVENT_TYPE_OVERRIDE="$fabricated" node --test --test-reporter=tap "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_event_types(){ local module="$1" fabricated="${2:-}" out rc; out=$(mktemp); run_site_event_types "$module" "$fabricated" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_site_install_policy(){ local page="$1"; SITE_EVENT_TYPES_ONLY=1 SITE_PAGE_SOURCE="$page" node --test --test-reporter=tap --test-name-pattern='site install claims require a publishable package manifest' "$root_dir/tests/rendered-html.test.mjs"; }
 assert_site_install_policy(){ local page="$1" out rc; out=$(mktemp); run_site_install_policy "$page" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -208,7 +247,7 @@ run_repository_surface_policy(){
 assert_repository_surface_policy(){ local rules="$1" actor_root="${2:-$root_dir/actors}" index="${3:-}" verifier="${4:-$root_dir/packages/git-adapter/src/verify-log.mjs}" out rc; out=$(mktemp); run_repository_surface_policy "$rules" "$actor_root" "$index" "$verifier" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_pr_onboarding(){ local module="$1" pattern="$2"; PR_ONBOARDING_HELPER_MODULE="$(agent_c_url "$module")" node --test --test-reporter=tap --test-name-pattern="$pattern" "$root_dir/tests/pr-onboarding.test.mjs"; }
 assert_pr_onboarding(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_pr_onboarding "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
+run_d2_transaction(){ local module="$1" pattern="$2"; D2_TRANSACTION_BINDING_MODULE="$module" D2_TRANSACTION_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/d2-transaction-binding.test.mjs"; }
 assert_d2_transaction(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_d2_transaction "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_w1_8(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_8 "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 m3_probe(){
@@ -222,7 +261,7 @@ m3_probe(){
   rm -f "$out"
   return 0
 }
-run_canary(){ local module_root="$1"; W1_7_CANARY_MODULE_ROOT="$module_root" W1_7_CASE=canary node --test --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
+run_canary(){ local module_root="$1"; W1_7_CANARY_MODULE_ROOT="$module_root" W1_7_CASE=canary node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/wizard-w1-7.test.mjs"; }
 assert_canary(){ local module_root="$1" out rc; out=$(mktemp); run_canary "$module_root" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert_truncate(){ local out rc; out=$(mktemp); psql_as postgres "$SDB" -f - < "$root_dir/tests/failure/canonical-truncate.sql" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert(){ local first second third fourth; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); if [ "$second" != 0 ]; then echo "$second"; return 0; fi; third=$(assert_d2); if [ "$third" != 0 ]; then echo "$third"; return 0; fi; fourth=$(assert_truncate); echo "$fourth"; return 0; }
@@ -765,7 +804,7 @@ for line in "${MUTATIONS[@]}"; do
     source_root="$root_dir"
     if [ "$suite" = observation_rls ]; then
       build || { fail=1; continue; }
-      base=$(assert_observation_live "$source_root")
+      d1_baseline base "$(d1_current_name)" assert_observation_live "$source_root" || continue
       psql_as postgres "$SDB" -c "CREATE OR REPLACE FUNCTION observation_subject_matches(p_tenant_id uuid,p_subscriber_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS \$\$ SELECT true /* OBSERVATION_FORCED_RLS_SUBJECT_REMOVED */ \$\$; CREATE OR REPLACE FUNCTION get_observation_checkpoint(p_checkpoint_id uuid) RETURNS SETOF observation_checkpoints LANGUAGE sql SECURITY DEFINER SET search_path=public AS \$\$ SELECT * FROM observation_checkpoints WHERE checkpoint_id=p_checkpoint_id \$\$; ALTER FUNCTION get_observation_checkpoint(uuid) OWNER TO postgres;" >/dev/null 2>&1
       applied=$(psql_as postgres "$SDB" -Atc "SELECT position('OBSERVATION_FORCED_RLS_SUBJECT_REMOVED' in prosrc)>0 FROM pg_proc WHERE oid='observation_subject_matches(uuid,uuid)'::regprocedure" | tr -d '[:space:]')
       log="$mutation_dir/port-watch-observation-rls.log"; run_observation_live "$source_root" >"$log" 2>&1; after=$?
@@ -777,7 +816,7 @@ for line in "${MUTATIONS[@]}"; do
     fi
     if [ "$suite" = claim_live ]; then
       build || { fail=1; continue; }
-      base=$(assert_port_watch_claim_live "$source_root")
+      d1_baseline base "$(d1_current_name)" assert_port_watch_claim_live "$source_root" || continue
       psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'WHERE (claims.expires_at<=clock_timestamp() OR claims.lease_status<>''active'') /* PORT_WATCH_POSTGRES_EXCLUSIVITY */','WHERE true /* PORT_WATCH_POSTGRES_EXCLUSIVITY_REMOVED */') WHERE oid='acquire_port_watch_claim(text,text,text,uuid,uuid,integer)'::regprocedure;" >/dev/null 2>&1
       applied=$(psql_as postgres "$SDB" -Atc "SELECT position('PORT_WATCH_POSTGRES_EXCLUSIVITY_REMOVED' in prosrc)>0 AND position('claims.expires_at<=clock_timestamp()' in prosrc)=0 FROM pg_proc WHERE oid='acquire_port_watch_claim(text,text,text,uuid,uuid,integer)'::regprocedure" | tr -d '[:space:]')
       log="$mutation_dir/port-watch-postgres-claim.log"; run_port_watch_claim_live "$source_root" >"$log" 2>&1; after=$?
@@ -787,7 +826,7 @@ for line in "${MUTATIONS[@]}"; do
       [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ] || fail=1
       continue
     fi
-    if [ "$suite" = observation_live ]; then build || { fail=1; continue; }; base=$(assert_observation_live "$source_root"); elif [ "$suite" = shared ]; then base=$(assert_port_watch_shared "$source_root" "$test_pattern"); else base=$(assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern"); fi
+    if [ "$suite" = observation_live ]; then build || { fail=1; continue; }; d1_baseline base "$(d1_current_name)" assert_observation_live "$source_root" || continue; elif [ "$suite" = shared ]; then d1_baseline base "$(d1_current_name)" assert_port_watch_shared "$source_root" "$test_pattern" || continue; else d1_baseline base "$(d1_current_name)" assert_port_watch "$root_dir/packages/port-watch/src/index.mjs" "$test_pattern" || continue; fi
     variant_root="$mutation_dir/port-watch-$mode"; d1_mutate "$(d1_current_name)" make_port_watch_variant "$variant_root" "$mode" || { fail=1; continue; }
     variant_module="$variant_root/packages/port-watch/src/index.mjs"
     if grep -R -Fq "$marker" "$variant_root/packages"; then applied=t; else applied=f; fi
@@ -816,7 +855,7 @@ for line in "${MUTATIONS[@]}"; do
       AGENT_C_CREDENTIAL_FAILURE_REPORT) pattern=credential-unavailable-reporting; marker=AGENT_C_CREDENTIAL_FAILURE_REPORT_REMOVED ;;
     esac
     source_module="$root_dir/packages/agent-c-supervisor/src/index.mjs"
-    base=$(assert_agent_c "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_agent_c "$source_module" "$pattern" || continue
     variant="$mutation_dir/agent-c-$pattern.mjs"; d1_mutate "$(d1_current_name)" make_agent_c_variant "$variant" "$pattern" || { fail=1; continue; }
     marker_target="$variant"
     [ "$pattern" = credential-context ] && marker_target="$mutation_dir/agent-c-credential-context-boundary.mjs"
@@ -844,7 +883,7 @@ for line in "${MUTATIONS[@]}"; do
       *) echo "unknown report correspondent mutation $mutation" >&2; fail=1; continue ;;
     esac
     source_module="$root_dir/packages/git-adapter/src/report-correspondent.mjs"
-    base=$(assert_report_correspondent "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_report_correspondent "$source_module" "$pattern" || continue
     variant="$mutation_dir/report-correspondent-$mode.mjs"; d1_mutate "$(d1_current_name)" make_report_correspondent_variant "$variant" "$mode" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/report-correspondent-$mode.log"; run_report_correspondent "$variant" "$pattern" >"$log" 2>&1; after=$?
@@ -856,7 +895,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = CLI_ARGUMENT_REFUSAL ]; then
     source_module="$root_dir/packages/git-adapter/src/cli.mjs"
-    base=$(assert_cli_argument_refusal "$source_module")
+    d1_baseline base "$(d1_current_name)" assert_cli_argument_refusal "$source_module" || continue
     variant="$mutation_dir/cli-argument-refusal.mjs"; d1_mutate "$(d1_current_name)" make_cli_variant "$variant" || { fail=1; continue; }
     if grep -Fq CLI_ARGUMENT_REFUSAL_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/cli-argument-refusal.log"
@@ -869,7 +908,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = CONTRIBUTION_SUBSCRIPTION_CURRENCY ]; then
     source_module="$root_dir/packages/git-adapter/src/contribution-ledger.mjs"
-    base=$(assert_contribution_ledger "$source_module")
+    d1_baseline base "$(d1_current_name)" assert_contribution_ledger "$source_module" || continue
     variant_root="$mutation_dir/contribution-ledger"; d1_mutate "$(d1_current_name)" make_contribution_ledger_variant "$variant_root" || { fail=1; continue; }
     variant="$variant_root/contribution-ledger.mjs"
     if grep -Fq CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL_REMOVED "$variant"; then applied=t; else applied=f; fi
@@ -885,7 +924,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = GIT_ADAPTER_CORE_DELEGATION ]; then
     source_cli="$root_dir/packages/git-adapter/src/cli.mjs"
-    base=$(assert_git_adapter_core "$source_cli")
+    d1_baseline base "$(d1_current_name)" assert_git_adapter_core "$source_cli" || continue
     variant_root="$mutation_dir/git-adapter-core"; d1_mutate "$(d1_current_name)" make_git_adapter_core_variant "$variant_root" || { fail=1; continue; }
     variant_core="$variant_root/event-core.mjs"; variant_cli="$variant_root/cli.mjs"
     if grep -Fq GIT_ADAPTER_CORE_WRITE_REMOVED "$variant_core"; then applied=t; else applied=f; fi
@@ -901,7 +940,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = SDK_CORE_WRAPPER ]; then
     source_root="$root_dir"
-    base=$(assert_sdk_core_consumers "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_sdk_core_consumers "$source_root" || continue
     variant_root="$mutation_dir/sdk-core-wrapper"; d1_mutate "$(d1_current_name)" make_sdk_core_variant "$variant_root" || { fail=1; continue; }
     variant_core="$variant_root/packages/git-adapter/src/event-core.mjs"
     if grep -Fq SDK_CORE_WRITE_REMOVED "$variant_core"; then applied=t; else applied=f; fi
@@ -917,7 +956,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = SDK_PACKAGE_ISOLATION ]; then
     source_package="$root_dir/packages/sdk"
-    base=$(assert_sdk_package "$source_package")
+    d1_baseline base "$(d1_current_name)" assert_sdk_package "$source_package" || continue
     variant_root="$mutation_dir/sdk-package-isolation"; d1_mutate "$(d1_current_name)" make_sdk_package_variant "$variant_root" || { fail=1; continue; }
     if grep -Fq SDK_PACKAGE_ISOLATION_REMOVED "$variant_root/packages/sdk/package.json"; then applied=t; else applied=f; fi
     in_repo=$(assert_sdk_package_in_repo "$variant_root")
@@ -932,7 +971,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = SDK_PUBLISHED_SURFACE_WRITE ]; then
     source_package="$root_dir/packages/sdk"
-    base=$(assert_sdk_published_surface "$source_package")
+    d1_baseline base "$(d1_current_name)" assert_sdk_published_surface "$source_package" || continue
     variant_root="$mutation_dir/sdk-published-surface"; d1_mutate "$(d1_current_name)" make_sdk_published_surface_variant "$variant_root" || { fail=1; continue; }
     if grep -Fq SDK_PUBLISHED_SURFACE_WRITE_REMOVED "$variant_root/packages/sdk/dist/index.mjs"; then applied=t; else applied=f; fi
     in_repo=$(assert_sdk_package_in_repo "$root_dir")
@@ -947,7 +986,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = SECOND_BUILDER_COMPLETE_PATH ]; then
     source_root="$root_dir"
-    base=$(assert_second_builder "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_second_builder "$source_root" || continue
     variant_root="$mutation_dir/second-builder-complete"; d1_mutate "$(d1_current_name)" make_second_builder_variant "$variant_root" || { fail=1; continue; }
     variant_sdk="$variant_root/packages/sdk/src/index.mjs"
     if grep -Fq SECOND_BUILDER_COMPLETE_PATH_REMOVED "$variant_sdk"; then applied=t; else applied=f; fi
@@ -963,7 +1002,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = GIT_ADAPTER_CORE_OVERRIDE_GUARD ]; then
     source_cli="$root_dir/packages/git-adapter/src/cli.mjs"
-    base=$(assert_git_adapter_core_guard "$source_cli")
+    d1_baseline base "$(d1_current_name)" assert_git_adapter_core_guard "$source_cli" || continue
     variant_root="$mutation_dir/git-adapter-core-override"; d1_mutate "$(d1_current_name)" make_git_adapter_core_override_variant "$variant_root" || { fail=1; continue; }
     variant_cli="$variant_root/cli.mjs"
     if grep -Fq GIT_ADAPTER_CORE_OVERRIDE_GUARD_REMOVED "$variant_cli"; then applied=t; else applied=f; fi
@@ -986,7 +1025,7 @@ for line in "${MUTATIONS[@]}"; do
       EVENT_V1_TERMINAL_NEXT) mode=terminal-next; marker=V1_CLI_TERMINAL_NEXT_REMOVED; test_pattern='CLI terminal append normalizes --next null before hashing and preserves next validation' ;;
     esac
     source_root="$root_dir/packages/git-adapter/src"
-    base=$(assert_event_v1 "$source_root" "$test_pattern")
+    d1_baseline base "$(d1_current_name)" assert_event_v1 "$source_root" "$test_pattern" || continue
     variant_root="$mutation_dir/event-v1-$mode"; d1_mutate "$(d1_current_name)" make_event_v1_variant "$variant_root" "$mode" || { fail=1; continue; }
     if grep -R -Fq "$marker" "$variant_root"; then applied=t; else applied=f; fi
     log="$mutation_dir/event-v1-$mode.log"; run_event_v1 "$variant_root" "$test_pattern" >"$log" 2>&1; after=$?
@@ -1025,7 +1064,7 @@ for line in "${MUTATIONS[@]}"; do
     continue
   fi
   if [ "$mutation" = EVENT_EXTENSION_CASE ]; then
-    base=$(assert_event_extension_case)
+    d1_baseline base "$(d1_current_name)" assert_event_extension_case || continue
     verifier_variant="$mutation_dir/event-extension-case-verify.mjs"
     cli_variant="$mutation_dir/event-extension-case-cli.mjs"
     core_variant="$mutation_dir/event-extension-case-core.mjs"
@@ -1044,7 +1083,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = SITE_EVENT_TYPE_LINK ]; then
     source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
-    base=$(assert_site_event_types "$source_module")
+    d1_baseline base "$(d1_current_name)" assert_site_event_types "$source_module" || continue
     paired=$(assert_site_event_types "$source_module" fabricated.event)
     variant="$mutation_dir/site-event-types.mjs"; d1_mutate "$(d1_current_name)" make_site_event_types_variant "$variant" || { fail=1; continue; }
     if grep -Fq SITE_EVENT_TYPE_LINK_REMOVED "$variant"; then applied=t; else applied=f; fi
@@ -1057,7 +1096,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = SITE_UNPUBLISHED_INSTALL_CLAIM ]; then
     source_page="$root_dir/app/page.tsx"
-    base=$(assert_site_install_policy "$source_page")
+    d1_baseline base "$(d1_current_name)" assert_site_install_policy "$source_page" || continue
     variant="$mutation_dir/site-unpublished-install-claim.tsx"; d1_mutate "$(d1_current_name)" make_site_install_claim_variant "$variant" || { fail=1; continue; }
     if grep -Fq SITE_UNPUBLISHED_INSTALL_CLAIM "$variant" && [ "$(grep -Fo 'npm install @engramport/missing-sdk' "$variant" | wc -l | tr -d '[:space:]')" = 2 ]; then applied=t; else applied=f; fi
     log="$mutation_dir/site-unpublished-install-claim.log"; run_site_install_policy "$variant" >"$log" 2>&1; after=$?
@@ -1069,7 +1108,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = REPOSITORY_UNEXPECTED_PATH ]; then
     source_rules="$root_dir/AGENTS.md"
-    base=$(assert_repository_surface_policy "$source_rules")
+    d1_baseline base "$(d1_current_name)" assert_repository_surface_policy "$source_rules" || continue
     variant="$mutation_dir/repository-unexpected-path.index"
     GIT_INDEX_FILE="$variant" git read-tree HEAD || { fail=1; continue; }
     GIT_INDEX_FILE="$variant" git update-index --add --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,secrets/creds.env || { fail=1; continue; }
@@ -1083,7 +1122,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = ACTOR_REGISTRY_DRIFT_CHECK ]; then
     source_rules="$root_dir/AGENTS.md"
-    base=$(assert_repository_surface_policy "$source_rules")
+    d1_baseline base "$(d1_current_name)" assert_repository_surface_policy "$source_rules" || continue
     variant="$mutation_dir/actors"; d1_mutate "$(d1_current_name)" make_actor_registry_variant "$variant" || { fail=1; continue; }
     if grep -Fq ACTOR_REGISTRY_PREFIX_TAKEOVER "$variant/agent-b.yaml"; then applied=t; else applied=f; fi
     log="$mutation_dir/actor-registry-drift.log"; run_repository_surface_policy "$source_rules" "$variant" >"$log" 2>&1; after=$?
@@ -1105,7 +1144,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = ACTOR_PREFIX_NORMALIZATION ]; then
     source_rules="$root_dir/AGENTS.md"; source_module="$root_dir/packages/git-adapter/src/verify-log.mjs"
-    base=$(assert_repository_surface_policy "$source_rules"); variant="$mutation_dir/actor-prefix-normalization.mjs"; d1_mutate "$(d1_current_name)" make_actor_registry_verifier_variant "$variant" normalization || { fail=1; continue; }
+    d1_baseline base "$(d1_current_name)" assert_repository_surface_policy "$source_rules" || continue; variant="$mutation_dir/actor-prefix-normalization.mjs"; d1_mutate "$(d1_current_name)" make_actor_registry_verifier_variant "$variant" normalization || { fail=1; continue; }
     if grep -Fq ACTOR_PREFIX_NORMALIZATION_REMOVED "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/actor-prefix-normalization.log"; run_repository_surface_policy "$source_rules" "$root_dir/actors" "" "$variant" >"$log" 2>&1; after=$?
     forbidden=f; grep -Eq 'not ok [0-9]+ - actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities' "$log" && forbidden=t; [ "$forbidden" = t ] || cat "$log" >&2
@@ -1120,7 +1159,7 @@ for line in "${MUTATIONS[@]}"; do
     else
       mode=merged; marker=PR_ONBOARDING_MERGED_ACCEPTANCE_REMOVED; pattern='documented PR onboarding accepts the maintainer-merged registration'
     fi
-    base=$(assert_pr_onboarding "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_pr_onboarding "$source_module" "$pattern" || continue
     variant="$mutation_dir/pr-onboarding-$mode.mjs"; d1_mutate "$(d1_current_name)" make_pr_onboarding_variant "$variant" "$mode" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/pr-onboarding-$mode.log"; run_pr_onboarding "$variant" "$pattern" >"$log" 2>&1; after=$?
@@ -1139,7 +1178,7 @@ for line in "${MUTATIONS[@]}"; do
         azp) marker=W1_1_PROVIDER_AZP_REMOVED; expected='W1_1_OIDC_PROVIDER azp positive=accepted foreign=accepted' ;;
         subject) marker=W1_1_PROVIDER_SUBJECT_REMOVED; expected='W1_1_OIDC_PROVIDER subject surface=aud,azp,email,exp,iss,nonce,sub issuer=true value=recorded-synthetic-sub' ;;
       esac
-      base=$(assert_w1_1_oidc_provider "$root_dir" "$pattern")
+      d1_baseline base "$(d1_current_name)" assert_w1_1_oidc_provider "$root_dir" "$pattern" || continue
       variant="$mutation_dir/w1-1-oidc-provider-$pattern";d1_mutate "$(d1_current_name)" make_w1_1_oidc_provider_variant "$variant" "$pattern" || { fail=1;continue; }
       if grep -Rq "$marker" "$variant/packages/git-adapter/src";then applied=t;else applied=f;fi
       log="$mutation_dir/w1-1-oidc-provider-$pattern.log";run_w1_1_oidc_provider "$variant" "$pattern" >"$log" 2>&1;after=$?
@@ -1163,6 +1202,7 @@ for line in "${MUTATIONS[@]}"; do
       esac
       baseline_log="$mutation_dir/w1-1-oidc-durable-$pattern-baseline.log"
       run_w1_1_oidc_durable "$root_dir" "$pattern" >"$baseline_log" 2>&1;base=$?
+      if d1_baseline_timeout "$(d1_current_name)" "$base" "$baseline_log"; then continue; fi
       reason=$(d1_oidc_skip_reason "$base" "$baseline_log" "$pattern")
       if [ -n "$reason" ]; then
         d1_oidc_classify "$pattern" "$node_runtime" "$reason" "$base" f 0 f 0
@@ -1186,7 +1226,7 @@ for line in "${MUTATIONS[@]}"; do
       W1_1_OIDC_CLIENT_COMPOSITION) pattern=composition-store; marker=W1_1_OIDC_CLIENT_COMPOSITION_REMOVED; expected='W1_1_OIDC_CLIENT composition status=active postgres_creates=0 asserted_ignored=true identity_absent=true' ;;
       W1_1_OIDC_CLIENT_BINDER) pattern=binder; marker=W1_1_OIDC_CLIENT_BINDER_REMOVED; expected='W1_1_OIDC_CLIENT binder surface=identity_id,principal_id identity_absent=false' ;;
     esac
-    base=$(assert_w1_1_oidc_client "$root_dir" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_1_oidc_client "$root_dir" "$pattern" || continue
     variant="$mutation_dir/w1-1-oidc-client-$pattern";d1_mutate "$(d1_current_name)" make_w1_1_oidc_client_variant "$variant" "$pattern" || { fail=1;continue; }
     if grep -Rq "$marker" "$variant/packages/git-adapter/src";then applied=t;else applied=f;fi
     log="$mutation_dir/w1-1-oidc-client-$pattern.log";run_w1_1_oidc_client "$variant" "$pattern" >"$log" 2>&1;after=$?
@@ -1204,7 +1244,7 @@ for line in "${MUTATIONS[@]}"; do
       W1_1_BINDING_CONFLICT) pattern=conflict; anchor='IF binding_conflict /* W1_1_BINDING_CONFLICT_GUARD */ THEN'; replacement='IF false /* W1_1_BINDING_CONFLICT_REMOVED */ THEN'; marker=W1_1_BINDING_CONFLICT_REMOVED; expected='W1_1_BINDING conflict positive=54000000-0000-0000-0000-000000000004 negative=54000000-0000-0000-0000-000000000003 conflict_consumed=1' ;;
     esac
     build || { fail=1; continue; }
-    base=$(assert_w1_1_binding "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_1_binding "$pattern" || continue
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','$replacement') WHERE oid='resolve_founder_principal(text,text,uuid,uuid,uuid,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='resolve_founder_principal(text,text,uuid,uuid,uuid,uuid)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/w1-1-binding-$pattern.log"; run_w1_1_binding "$pattern" >"$log" 2>&1; after=$?
@@ -1216,7 +1256,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = W1_1_ENROLLMENT_ISSUER_APP_EXECUTE ]; then
     build || { fail=1; continue; }
-    base=$(assert_enrollment_issuer)
+    d1_baseline base "$(d1_current_name)" assert_enrollment_issuer || continue
     psql_as postgres "$SDB" -c "GRANT EXECUTE ON FUNCTION issue_founding_authorization(uuid,uuid,uuid,uuid,timestamptz) TO engram_app;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT has_function_privilege('engram_app','issue_founding_authorization(uuid,uuid,uuid,uuid,timestamptz)','EXECUTE');" | tr -d '[:space:]')
     after=$(assert_enrollment_issuer)
@@ -1240,7 +1280,7 @@ for line in "${MUTATIONS[@]}"; do
       W1_1_OIDC_RETENTION) pattern=retention; marker=W1_1_OIDC_RETENTION_CLEANUP_REMOVED; expected='W1_1_OIDC retention positive=retained negative=retained' ;;
     esac
     source_module="$root_dir/packages/git-adapter/src/oidc-verifier.mjs"
-    base=$(assert_w1_1_oidc "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_1_oidc "$source_module" "$pattern" || continue
     variant="$mutation_dir/w1-1-oidc-$pattern.mjs"; d1_mutate "$(d1_current_name)" make_w1_1_oidc_variant "$variant" "$pattern" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/w1-1-oidc-$pattern.log"; run_w1_1_oidc "$variant" "$pattern" >"$log" 2>&1; after=$?
@@ -1259,7 +1299,7 @@ for line in "${MUTATIONS[@]}"; do
       W1_1_MANAGER_CRITERION5_REPLAY) pattern=replay; expected="W1_1_CRITERION5 replay positive=authorized negative=accepted" ;;
     esac
     build || { fail=1; continue; }
-    base=$(assert_w1_1_manager "$root_dir" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_1_manager "$root_dir" "$pattern" || continue
     if [ "$pattern" = expired ]; then
       guard_variant="$mutation_dir/w1-1-manager-expired-guard"; live_variant="$mutation_dir/w1-1-manager-expired-live"
       d1_mutate "$(d1_current_name)" make_w1_1_manager_variant "$guard_variant" expired_guard_only || { fail=1; continue; }; guard_only=$(assert_w1_1_manager "$guard_variant" "$pattern")
@@ -1304,7 +1344,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = W1_1_REPEAT_SAFETY ]; then
     build || { fail=1; continue; }
-    base=$(assert_w1_1_lifecycle repeat-safety)
+    d1_baseline base "$(d1_current_name)" assert_w1_1_lifecycle repeat-safety || continue
     marker=W1_1_REPEAT_REPORT_REMOVED; anchor="RETURN swept;"; replacement="RETURN 1; /* $marker */"
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','$replacement') WHERE oid='sweep_expired_setup_session_delegations()'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='sweep_expired_setup_session_delegations()'::regprocedure" | tr -d '[:space:]')
@@ -1318,7 +1358,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = W1_1_LIFECYCLE_PROPERTIES ]; then
     for property in "${d1_lifecycle_properties[@]}"; do
       build || { fail=1; continue; }
-      base=$(assert_w1_1_lifecycle "$property")
+      d1_baseline base "$(d1_current_name)" assert_w1_1_lifecycle "$property" || continue
       if [ "$property" = ownership ]; then
         select_anchor="AND s.founder_principal_id=principal"; update_anchor="AND founder_principal_id=principal"; marker=W1_1_OWNERSHIP_PREDICATES_REMOVED
         psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(replace(prosrc,'$select_anchor','AND true /* $marker */'),'$update_anchor','AND true') WHERE oid='transition_setup_session_delegation(uuid,text)'::regprocedure;" >/dev/null || { fail=1; continue; }
@@ -1377,7 +1417,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = W1_1_SETUP_SESSION_PROPERTIES ]; then
     for property in "${d1_setup_properties[@]}"; do
       build || { fail=1; continue; }
-      base=$(assert_w1_1 "$property")
+      d1_baseline base "$(d1_current_name)" assert_w1_1 "$property" || continue
       case "$property" in
         nonsetup) marker=W1_1_NONSETUP_REMOVED; anchor="IF NOT setup_scopes_only(p_scopes) THEN"; expected="W1_1_CREATE nonsetup=accepted landed=1" ;;
         scope) marker=W1_1_SCOPE_REMOVED; anchor="IF NOT (p_scopes <@ authority_scopes) THEN"; expected="W1_1_CREATE scope=accepted landed=1" ;;
@@ -1413,7 +1453,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/credential-boundary.mjs"
     for property in "${d1_live_properties[@]}"; do
-      base=$(assert_w1_8 "$source_module" "$property")
+      d1_baseline base "$(d1_current_name)" assert_w1_8 "$source_module" "$property" || continue
       variant="$mutation_dir/w1-8-$property.mjs"; d1_mutate "$(d1_current_name)" make_w1_8_variant "$variant" "$property" || { fail=1; continue; }
       if grep -Fq "W1_8_$(printf '%s' "$property" | tr '[:lower:]' '[:upper:]')" "$variant"; then applied=t; else applied=f; fi
       log="$mutation_dir/w1-8-$property.log"; run_w1_8 "$variant" "$property" >"$log" 2>&1; after=$?
@@ -1434,7 +1474,7 @@ for line in "${MUTATIONS[@]}"; do
     else
       pattern="creation-expiry"; marker="W1_8_CREATE_EXPIRY_REMOVED"; anchor="IF p_expires_at > authority_expires_at THEN"; expected="W1_8_CREATE expiry=accepted landed=1"
     fi
-    base=$(assert_w1_8 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_8 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'$anchor','IF false /* $marker */ THEN') WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('$marker' in prosrc)>0 AND position('$anchor' in prosrc)=0 FROM pg_proc WHERE oid='create_invocation_grant(uuid,text,text,uuid,uuid,uuid,text[],text,text,timestamptz,uuid)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/${name}.log"; run_w1_8 "$source_module" "$pattern" >"$log" 2>&1; after=$?
@@ -1448,9 +1488,9 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/credential-boundary.mjs"
     for control in "${d1_grant_controls[@]}"; do
-      pattern="g$control"; base=$(assert_w1_8 "$source_module" "$pattern")
+      pattern="g$control"; d1_baseline base "$(d1_current_name)" assert_w1_8 "$source_module" "$pattern" || continue
       if [ "$control" = 3 ]; then
-        g12_base=$(assert_w1_8 "$source_module" g12)
+        d1_baseline g12_base "$(d1_current_name)" assert_w1_8 "$source_module" g12 || continue
         variant="$mutation_dir/w1-8-g3-g12.mjs"; d1_mutate "$(d1_current_name)" make_w1_8_variant "$variant" g3_g12 || { fail=1; continue; }
         if grep -Fq "W1_8_G3_G12_REMOVED" "$variant"; then applied=t; else applied=f; fi
         g3_log="$mutation_dir/w1-8-g3.log"; run_w1_8 "$variant" g3 >"$g3_log" 2>&1; starts_revoked=$?
@@ -1483,7 +1523,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D2_MODULE_SUBSTITUTION ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/substitution.mjs"; pattern="substitution"
-    base=$(assert_d2 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_d2 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$variant" substitution || { fail=1; continue; }
     if grep -Fq '[request.principalId ?? session.principalId]' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/substitution.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
@@ -1497,7 +1537,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="joint"
     local_variant="$mutation_dir/local-false.mjs"; scrub_variant="$mutation_dir/no-scrub.mjs"; joint_variant="$mutation_dir/joint.mjs"
-    base=$(assert_d2 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_d2 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$local_variant" local_false || { fail=1; continue; }; local_only=$(assert_d2 "$local_variant" "$pattern")
     d1_mutate "$(d1_current_name)" make_d2_variant "$scrub_variant" no_scrub || { fail=1; continue; }; scrub_only=$(assert_d2 "$scrub_variant" "$pattern")
     d1_mutate "$(d1_current_name)" make_d2_variant "$joint_variant" joint || { fail=1; continue; }
@@ -1512,7 +1552,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D2_MODULE_ROLE_GUARD ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/role.mjs"; pattern="role"
-    base=$(assert_d2 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_d2 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$variant" role || { fail=1; continue; }
     if ! grep -Fq 'SESSION_ROLE_INVALID' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/role.log"; capture_d2 "$variant" "$pattern" "$log"; after=$?
@@ -1529,7 +1569,7 @@ for line in "${MUTATIONS[@]}"; do
     else
       pattern=role; mode=transaction_role; marker=D2_TRANSACTION_ROLE_REMOVED; expected='D2_TRANSACTION_ROLE positive=accepted negative=accepted released=true'
     fi
-    base=$(assert_d2_transaction "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_d2_transaction "$source_module" "$pattern" || continue
     variant="$mutation_dir/d2-transaction-$pattern.mjs"; d1_mutate "$(d1_current_name)" make_d2_variant "$variant" "$mode" || { fail=1; continue; }
     if grep -Fq "$marker" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d2-transaction-$pattern.log"; run_d2_transaction "$variant" "$pattern" >"$log" 2>&1; after=$?
@@ -1542,7 +1582,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D2_MODULE_DIRTY_RELEASE ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; fault_variant="$mutation_dir/dirty-fault.mjs"; weak_variant="$mutation_dir/dirty-weakened.mjs"; pattern="dirty-success"
-    base=$(assert_d2 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_d2 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$fault_variant" dirty_fault || { fail=1; continue; }
     fault_log="$mutation_dir/dirty-fault.log"; capture_d2 "$fault_variant" "$pattern" "$fault_log"; fault_only=$?
     fault_clean=f; grep -Fq 'principal=""' "$fault_log" && fault_clean=t
@@ -1558,7 +1598,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_MODULE_ROLLBACK_MINT ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-rollback-mint.mjs"; pattern="atomic"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$variant" rollback_mint || { fail=1; continue; }
     if grep -Fq '      await client.query("ROLLBACK");' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d3-rollback-mint.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
@@ -1572,7 +1612,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     psql_as postgres "$SDB" -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002';" >/dev/null || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-swallow-refusal.mjs"; pattern="authorization"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$variant" swallow_refusal || { fail=1; continue; }
     if grep -Fq '01a02095-c806-7000-8000-000000000001' "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d3-swallow-refusal.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
@@ -1585,7 +1625,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_MODULE_CALLER_REFERENCE ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; variant="$mutation_dir/d3-caller-reference.mjs"; pattern="control-mapping"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     d1_mutate "$(d1_current_name)" make_d2_variant "$variant" caller_reference || { fail=1; continue; }
     if grep -Fq "app.d1f_forced_reference" "$variant"; then applied=t; else applied=f; fi
     log="$mutation_dir/d3-caller-reference.log"; capture_w1_7 "$variant" "$pattern" "$log"; after=$?
@@ -1598,7 +1638,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_REMOVE_EXPIRED_AUTHORITY ] || [ "$mutation" = D3_DB_REMOVE_REVOKED_AUTHORITY ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="control-mapping"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     if [ "$mutation" = D3_DB_REMOVE_EXPIRED_AUTHORITY ]; then
       psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,' OR g.expires_at<=clock_timestamp()',' /* D3_A8_M4_EXPIRED_REMOVED */') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
       applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_A8_M4_EXPIRED_REMOVED' in prosrc)>0 AND position('g.expires_at<=clock_timestamp()' in prosrc)=0 FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure" | tr -d '[:space:]'); expected='M4=accepted'
@@ -1617,7 +1657,7 @@ for line in "${MUTATIONS[@]}"; do
     build || { fail=1; continue; }
     psql_as postgres "$SDB" -c "DELETE FROM founder_authorities WHERE principal_id='22000000-0000-0000-0000-000000000002'; UPDATE founder_authorities SET scopes=array_append(scopes,'custody:mint:credential:3.2:B') WHERE principal_id='11000000-0000-0000-0000-000000000001' AND NOT ('custody:mint:credential:3.2:B'=ANY(scopes));" >/dev/null || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="authorization"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'IF NOT FOUND OR NOT gate.passed OR gate.threat_revision<>8 OR gate.threat_digest<>''629ae3f2654aba46e4c1158fc234c6b24831a369505ccf41878af3207b091089'' THEN RAISE EXCEPTION ''CLASS_GATE_NOT_PASSED'' USING ERRCODE=''42501'';END IF;','PERFORM set_config(''app.d3_mutation'',''D3_A8_M13_GATE_REMOVED'',true);') WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_A8_M13_GATE_REMOVED' in prosrc)>0 AND position('CLASS_GATE_NOT_PASSED' in prosrc)=0 FROM pg_proc WHERE oid='mint_custody_reference(text,epr_namespace,custody_model,text,jsonb)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/d3-m13-class-gate.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
@@ -1630,7 +1670,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_RESTORE_LOWEST_MEMBERSHIP ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="m3-membership"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "CREATE OR REPLACE FUNCTION derive_mint_membership(p_principal uuid) RETURNS TABLE(tenant_id uuid,project_id uuid) LANGUAGE sql SECURITY DEFINER SET search_path=public AS \$\$ SELECT pm.tenant_id,pm.project_id FROM project_memberships pm WHERE pm.principal_id=p_principal ORDER BY pm.tenant_id,pm.project_id LIMIT 1 \$\$;" >/dev/null || { fail=1; continue; }
     derivation_only=$(m3_probe MINT_ACTOR_CONTEXT_REFUSED)
     build >/dev/null 2>&1 || { fail=1; continue; }
@@ -1649,7 +1689,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_DROP_ACTIVE_BARRIER ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="m10-race"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "DROP INDEX custody_single_active;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT to_regclass('custody_single_active') IS NULL" | tr -d '[:space:]')
     log="$mutation_dir/d3-m10-race.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
@@ -1662,7 +1702,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_WEAKEN_RESOLUTION ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="resolution"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "DROP POLICY custody_read ON custody_rows; CREATE POLICY custody_read ON custody_rows FOR SELECT USING(true); DROP POLICY reference_read ON minted_references; CREATE POLICY reference_read ON minted_references FOR SELECT USING(true);" >/dev/null || { fail=1; continue; }
     rls_only=$(assert_w1_7 "$source_module" "$pattern")
     build >/dev/null 2>&1 || { fail=1; continue; }
@@ -1681,7 +1721,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_SKIP_REFERENCE_REVOKE ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="revocation"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'UPDATE minted_references SET revoked_at=revoked_time WHERE reference=p_reference;','PERFORM set_config(''app.d3_mutation'',''D3_REFERENCE_REVOKE_SKIPPED'',true);') WHERE oid='revoke_custody_reference(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_REFERENCE_REVOKE_SKIPPED' in prosrc)>0 AND position('UPDATE minted_references SET revoked_at=revoked_time WHERE reference=p_reference;' in prosrc)=0 FROM pg_proc WHERE oid='revoke_custody_reference(text)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/d3-revocation-atomicity.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
@@ -1695,7 +1735,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_USE_ISSUED_RETENTION_CLOCK ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="retention"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'coalesce(c.rotated_at,c.issued_at)','c.issued_at /* D3_RETENTION_WRONG_CLOCK */') WHERE oid='evaluate_custody_retention(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_RETENTION_WRONG_CLOCK' in prosrc)>0 AND position('coalesce(c.rotated_at,c.issued_at)' in prosrc)=0 FROM pg_proc WHERE oid='evaluate_custody_retention(text)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/d3-retention-clock.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
@@ -1709,7 +1749,7 @@ for line in "${MUTATIONS[@]}"; do
   if [ "$mutation" = D3_DB_USE_OLD_RETENTION_DURATION ]; then
     build || { fail=1; continue; }
     source_module="$root_dir/packages/git-adapter/src/d2-session-binding.mjs"; pattern="retention"
-    base=$(assert_w1_7 "$source_module" "$pattern")
+    d1_baseline base "$(d1_current_name)" assert_w1_7 "$source_module" "$pattern" || continue
     psql_as postgres "$SDB" -c "UPDATE pg_proc SET prosrc=replace(prosrc,'evaluated-clock_start>=retention_window','evaluated-clock_start>=interval ''400 days'' /* D3_RETENTION_OLD_DURATION */') WHERE oid='evaluate_custody_retention(text)'::regprocedure;" >/dev/null || { fail=1; continue; }
     applied=$(psql_as postgres "$SDB" -Atc "SELECT position('D3_RETENTION_OLD_DURATION' in prosrc)>0 AND position('evaluated-clock_start>=retention_window' in prosrc)=0 FROM pg_proc WHERE oid='evaluate_custody_retention(text)'::regprocedure" | tr -d '[:space:]')
     log="$mutation_dir/d3-retention-duration.log"; capture_w1_7 "$source_module" "$pattern" "$log"; after=$?
@@ -1722,7 +1762,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = D3_SOURCE_DISABLE_CANARY_DETECTOR ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-detector-disabled"
-    base=$(assert_canary "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_canary "$source_root" || continue
     d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" detector_disabled || { fail=1; continue; }
     if grep -Fq 'D3_CANARY_DETECTOR_DISABLED' "$variant_root/packages/git-adapter/src/credential-boundary.mjs" && ! grep -Fq 'if (SECRET.test(v)) return "CREDENTIAL_DETECTED";' "$variant_root/packages/git-adapter/src/credential-boundary.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-detector-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
@@ -1735,7 +1775,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = D3_SOURCE_NEUTER_CANARY_OBSERVER ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-observer-neutered"
-    base=$(assert_canary "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_canary "$source_root" || continue
     d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" observer_neutered || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 2 ] && ! grep -Fq 'const dirty=Boolean(await observers[sink]' "$variant_root/packages/git-adapter/src/custody-service.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
@@ -1748,7 +1788,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = D3_SOURCE_NEUTER_OPERATIONAL_OBSERVER ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-operational-observer-neutered"
-    base=$(assert_canary "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_canary "$source_root" || continue
     d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" operational_observer_neutered || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 1 ]; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-operational-observer-neutered.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
@@ -1761,7 +1801,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = D3_SOURCE_BYPASS_PROTECTED_OPERATION ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-protected-operation-bypassed"
-    base=$(assert_canary "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_canary "$source_root" || continue
     d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" protected_operation_bypassed || { fail=1; continue; }
     if [ "$(grep -Fo 'D3_CANARY_PROTECTED_OPERATION_BYPASSED' "$variant_root/packages/git-adapter/src/custody-service.mjs" | wc -l | tr -d '[:space:]')" = 1 ] && ! grep -Fq 'const operationSigned=typeof result?.signature==="string";' "$variant_root/packages/git-adapter/src/custody-service.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-protected-operation-bypassed.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
@@ -1774,7 +1814,7 @@ for line in "${MUTATIONS[@]}"; do
   fi
   if [ "$mutation" = D3_SOURCE_REMOVE_REPORT_INCIDENT ]; then
     source_root="$root_dir"; variant_root="$mutation_dir/canary-report-incident-disabled"
-    base=$(assert_canary "$source_root")
+    d1_baseline base "$(d1_current_name)" assert_canary "$source_root" || continue
     d1_mutate "$(d1_current_name)" make_canary_variant "$variant_root" report_incident_disabled || { fail=1; continue; }
     if grep -Fq 'D3_CANARY_REPORT_INCIDENT_DISABLED' "$variant_root/packages/git-adapter/src/report-boundary.mjs" && ! grep -Fq 'await incidentSink(incident);' "$variant_root/packages/git-adapter/src/report-boundary.mjs"; then applied=t; else applied=f; fi
     log="$mutation_dir/canary-report-incident-disabled.log"; run_canary "$variant_root" >"$log" 2>&1; after=$?
@@ -1800,7 +1840,7 @@ for line in "${MUTATIONS[@]}"; do
     continue
   fi
   build || { fail=1; continue; }
-  base=$(assert)
+  d1_baseline base "$(d1_current_name)" assert || continue
   psql_as postgres "$SDB" -c "$mutation" >/dev/null 2>&1
   applied=$(psql_as postgres "$SDB" -Atc "$check" | tr -d '[:space:]')
   after=$(assert)

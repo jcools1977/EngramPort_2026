@@ -1,0 +1,23 @@
+D3_CANARY_DETECTOR baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_OPERATIONAL_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_PROTECTED_OPERATION baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_REPORT_INCIDENT baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+D1_SYNTHETIC_TIMEOUT live_canary=blocked reason=no-Docker; only synthetic baselines ran
+D3_CANARY_OPERATIONAL_OBSERVER baseline=1 applied=t after=1 forbidden=f restored=1
+D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+D1_TIMEOUT_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET declared_ms=30000 scaled_canary=passed ordinary_default=timed-out budget_ms=100
+✔ all five canary branches count real synthetic baseline timeouts and fail before mutation (769.472875ms)
+✔ the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration (791.623083ms)
+✔ ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout (49.2175ms)
+✔ the declared canary budget overrides the default while an ordinary test retains its budget (331.501875ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1979.046916

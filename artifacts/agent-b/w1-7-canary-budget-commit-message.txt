@@ -1,0 +1,8 @@
+Give the W1-7 canary an explicit budget and classify baseline timeouts
+
+Allow 30 seconds for core-dump work and preserve all canary assertions.
+Count timed-out baselines as named failing outcomes before mutation.
+Record synthetic timeout evidence and the killed baseline=1 regression.
+
+Validation: D1 controls 21 passed; surface policy 4 passed; lint and
+Bash syntax passed. Live acceptance is blocked by the no-Docker boundary.
