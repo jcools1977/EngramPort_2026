@@ -1,0 +1,37 @@
+command: node --test artifacts/agent-b/suite-oidc-reproduce.mjs
+exit: 1
+
+  #  /opt/homebrew/Cellar/node/26.5.0/bin/node[57702]: void node::InternalCallbackScope::Close() at ../src/api/callback.cc:185
+  #  Assertion failed: (env_->execution_async_id()) == (0)
+
+----- Native stack trace -----
+
+ 1: 0x10a04a010 node::Assert(node::AssertionInfo const&) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 2: 0x10a011ce4 node::InternalCallbackScope::Close() (.cold.1) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 3: 0x108e78120 node::InternalCallbackScope::Close() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 4: 0x108e77e18 node::InternalCallbackScope::~InternalCallbackScope() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 5: 0x108f72ac0 node::PerIsolatePlatformData::RunForegroundTask(std::__1::unique_ptr<v8::Task, std::__1::default_delete<v8::Task>>) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 6: 0x108f71cd4 node::PerIsolatePlatformData::FlushForegroundTasksInternal() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+ 7: 0x1042623cc uv__async_io [/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib]
+ 8: 0x1042711b0 uv__io_poll [/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib]
+ 9: 0x104262b64 uv_run [/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib]
+10: 0x108e78fd0 node::SpinEventLoopInternal(node::Environment*) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+11: 0x108f4fdd0 node::NodeMainInstance::Run(node::ExitCode*, node::Environment*) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+12: 0x108f4fb04 node::NodeMainInstance::Run() [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+13: 0x108ef0fac node::Start(int, char**) [/opt/homebrew/Cellar/node/26.5.0/lib/libnode.147.dylib]
+14: 0x18963be00 start [/usr/lib/dyld]
+✖ artifacts/agent-b/suite-oidc-reproduce.mjs (121.062084ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.1105
+
+✖ failing tests:
+
+test at artifacts/agent-b/suite-oidc-reproduce.mjs:1:1
+✖ artifacts/agent-b/suite-oidc-reproduce.mjs (121.062084ms)
+  'test failed'

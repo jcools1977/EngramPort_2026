@@ -1,0 +1,129 @@
+✖ route (1.381833ms)
+✖ same-name (0.466708ms)
+✖ restart (0.2835ms)
+✖ atomic (0.356375ms)
+✖ expiry (0.247917ms)
+✖ cleanup (0.222ms)
+✖ redaction (0.257125ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 0
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 122.927334
+
+✖ failing tests:
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ route (1.381833ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:41:18
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ same-name (0.466708ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:49:18
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ restart (0.2835ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:58:16
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ atomic (0.356375ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:67:18
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ expiry (0.247917ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:75:16
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ cleanup (0.222ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:84:16
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workspace-oidc-durable.test.mjs:15:32
+✖ redaction (0.257125ms)
+  AssertionError [ERR_ASSERTION]: OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close (execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.
+      at runtime (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:19:10)
+      at file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:94:18
+      at temporary (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/workspace-oidc-durable.test.mjs:35:156)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '26.5.0',
+    expected: '26.5.0',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }

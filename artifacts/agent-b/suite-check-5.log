@@ -1,0 +1,95 @@
+
+> engramport@0.1.0 sdk:buildable
+> node --test tests/sdk-buildable.test.mjs
+
+✖ the SDK builds from source (192.816959ms)
+✖ the built package exports what deployments are told to import (0.285958ms)
+✖ the built turn decision still refuses everything it should (0.1115ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 228.624541
+
+✖ failing tests:
+
+test at tests/sdk-buildable.test.mjs:22:1
+✖ the SDK builds from source (192.816959ms)
+  Error: Command failed: npm run build --workspace @engramport/sdk
+  failed to load config from /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/vite.config.mjs
+  error during build:
+  Error: EPERM: operation not permitted, open '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956209112-7245b037eb1d58.mjs'
+      at async open (node:internal/fs/promises:1360:25)
+      at async Object.writeFile (node:internal/fs/promises:2104:14)
+      at async loadConfigFromBundledFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34889:3)
+      at async bundleAndLoadConfigFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34752:17)
+      at async loadConfigFromFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34719:42)
+      at async resolveConfig (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34345:22)
+      at async createBuilder (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:33530:17)
+      at async CAC.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/cli.js:766:19) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'open',
+    path: '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956209112-7245b037eb1d58.mjs'
+  }
+  npm error Lifecycle script `build` failed with error:
+  npm error code 1
+  npm error path /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk
+  npm error workspace @engramport/sdk@0.3.0
+  npm error location /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk
+  npm error command failed
+  npm error command sh -c vite build --config vite.config.mjs
+  
+      at genericNodeError (node:internal/errors:999:15)
+      at wrappedFn (node:internal/errors:544:14)
+      at checkExecSyncError (node:child_process:942:11)
+      at execFileSync (node:child_process:978:15)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/sdk-buildable.test.mjs:24:3)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    status: 1,
+    signal: null,
+    output: [ null, '\n> @engramport/sdk@0.3.0 build\n> vite build --config vite.config.mjs\n\n', "failed to load config from /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/vite.config.mjs\nerror during build:\nError: EPERM: operation not permitted, open '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956209112-7245b037eb1d58.mjs'\n    at async open (node:internal/fs/promises:1360:25)\n    at async Object.writeFile (node:internal/fs/promises:2104:14)\n    at async loadConfigFromBundledFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34889:3)\n    at async bundleAndLoadConfigFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34752:17)\n    at async loadConfigFromFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34719:42)\n    at async resolveConfig (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34345:22)\n    at async createBuilder (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:33530:17)\n    at async CAC.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/cli.js:766:19) {\n  errno: -1,\n  code: 'EPERM',\n  syscall: 'open',\n  path: '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956209112-7245b037eb1d58.mjs'\n}\nnpm error Lifecycle script `build` failed with error:\nnpm error code 1\nnpm error path /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error workspace @engramport/sdk@0.3.0\nnpm error location /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error command failed\nnpm error command sh -c vite build --config vite.config.mjs\n" ],
+    pid: 55700,
+    stdout: '\n> @engramport/sdk@0.3.0 build\n> vite build --config vite.config.mjs\n\n',
+    stderr: "failed to load config from /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/vite.config.mjs\nerror during build:\nError: EPERM: operation not permitted, open '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956209112-7245b037eb1d58.mjs'\n    at async open (node:internal/fs/promises:1360:25)\n    at async Object.writeFile (node:internal/fs/promises:2104:14)\n    at async loadConfigFromBundledFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34889:3)\n    at async bundleAndLoadConfigFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34752:17)\n    at async loadConfigFromFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34719:42)\n    at async resolveConfig (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34345:22)\n    at async createBuilder (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:33530:17)\n    at async CAC.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/cli.js:766:19) {\n  errno: -1,\n  code: 'EPERM',\n  syscall: 'open',\n  path: '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956209112-7245b037eb1d58.mjs'\n}\nnpm error Lifecycle script `build` failed with error:\nnpm error code 1\nnpm error path /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error workspace @engramport/sdk@0.3.0\nnpm error location /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error command failed\nnpm error command sh -c vite build --config vite.config.mjs\n"
+  }
+
+test at tests/sdk-buildable.test.mjs:30:1
+✖ the built package exports what deployments are told to import (0.285958ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs' imported from /Users/an2b/an2b/products/EngramPORT-suite/tests/sdk-buildable.test.mjs
+      at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+      at moduleResolve (node:internal/modules/esm/resolve:879:10)
+      at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)
+      at #resolve (node:internal/modules/esm/loader:690:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)
+      at node:internal/modules/esm/loader:639:32
+      at TracingChannel.tracePromise (node:diagnostics_channel:539:22) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs?t=1788956209121'
+  }
+
+test at tests/sdk-buildable.test.mjs:42:1
+✖ the built turn decision still refuses everything it should (0.1115ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs' imported from /Users/an2b/an2b/products/EngramPORT-suite/tests/sdk-buildable.test.mjs
+      at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+      at moduleResolve (node:internal/modules/esm/resolve:879:10)
+      at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)
+      at #resolve (node:internal/modules/esm/loader:690:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)
+      at node:internal/modules/esm/loader:639:32
+      at TracingChannel.tracePromise (node:diagnostics_channel:539:22) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs?t=1788956209121'
+  }

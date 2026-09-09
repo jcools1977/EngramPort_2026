@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# A lock probe exercises serialization only and does not require Docker.
+if [[ "${1:-}" != "--lock-probe" ]]; then
+  docker_gate_rc=0
+  node "$(dirname "$0")/docker-gate.mjs" db:test d1:mutation || docker_gate_rc=$?
+  if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi
+  if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi
+fi
 root_dir="$(cd "$(dirname "$0")/.." && pwd)"
 source "$root_dir/scripts/db-test-lock"
 ENGRAMPORT_DB_TEST_LOCK_LABEL=run-db-tests

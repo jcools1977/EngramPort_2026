@@ -12,7 +12,7 @@
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run scan:append:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run w1-7:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run docker-gates:test && npm run docker:test && npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run scan:append:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern '**/dist/**' --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "engram": "node scripts/engram",
@@ -41,7 +41,7 @@
     "w1-7:test": "node --test tests/wizard-w1-7.test.mjs",
     "w1-7:live:test": "node --test tests/wizard-w1-7-live.test.mjs",
     "kms:test": "bash scripts/run-kms-tests",
-    "verify:all": "npm test && npm run db:test && npm run kms:test && npm run lint",
+    "verify:all": "npm test && npm run lint",
     "dry-run:test": "node --test tests/workspace-dry-run.test.mjs",
     "session:test": "node --test tests/workspace-session.test.mjs tests/workspace-oidc-verifier.test.mjs tests/workspace-oidc-client.test.mjs tests/workspace-oidc-durable.test.mjs tests/workspace-oidc-provider.test.mjs",
     "session:async-negative": "node scripts/run-session-async-negative",
@@ -62,7 +62,9 @@
     "blast:test": "node --test tests/blast-radius.test.mjs",
     "sdk:buildable": "node --test tests/sdk-buildable.test.mjs",
     "completion:test": "node --test tests/completion-status.test.mjs",
-    "scan:append:test": "node --test tests/append-scan-policy.test.mjs && node tests/run-append-scan-mutations.mjs"
+    "scan:append:test": "node --test tests/append-scan-policy.test.mjs && node tests/run-append-scan-mutations.mjs",
+    "docker:test": "npm run w1-7:test && npm run db:test && npm run kms:test",
+    "docker-gates:test": "node --test tests/docker-gates.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

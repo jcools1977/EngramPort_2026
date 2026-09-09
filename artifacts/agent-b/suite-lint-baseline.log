@@ -1,0 +1,8 @@
+command: git show HEAD:tests/completion-status.test.mjs | node_modules/.bin/eslint --stdin --stdin-filename tests/completion-status.test.mjs
+exit: 1
+
+/Users/an2b/an2b/products/EngramPORT-suite/tests/completion-status.test.mjs
+  19:57  error  'readdirSync' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (1 error, 0 warnings)
+

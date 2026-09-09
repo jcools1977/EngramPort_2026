@@ -14,6 +14,12 @@ after(async()=>{for(const directory of temporaryDirectories)await rm(directory,{
 
 function check(name,operation){test(name,{skip:selected!=="all"&&selected!==name},operation);}
 async function runtime(persist,ttl=1000){
+  // The local Node 26.5.0/Miniflare reproducer aborts in InternalCallbackScope::Close
+  // before any OIDC worker request completes. Keep this a failure, never a skip.
+  assert.notEqual(process.versions.node,"26.5.0",
+    "OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close " +
+    "(execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; " +
+    "upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.");
   return new Miniflare({
     modules:true,
     modulesRoot:root,

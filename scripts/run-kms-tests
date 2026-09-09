@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+docker_gate_rc=0
+node "$(dirname "$0")/docker-gate.mjs" kms:test || docker_gate_rc=$?
+if [[ "$docker_gate_rc" == 77 ]]; then exit 0; fi
+if [[ "$docker_gate_rc" != 0 ]]; then exit "$docker_gate_rc"; fi
 
 name=engram-kms
 policy_file=""

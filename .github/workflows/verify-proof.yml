@@ -22,3 +22,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run proof
 
+      - name: Require Docker gates
+        run: npm run docker-gates:test && npm run docker:test
+        env:
+          ENGRAMPORT_REQUIRE_DOCKER: "1"

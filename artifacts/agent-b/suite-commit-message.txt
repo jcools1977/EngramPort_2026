@@ -1,0 +1,6 @@
+Make Docker test skips explicit and record remaining suite blocks
+
+Add required Docker mode, entry-point controls, and a silent-skip mutation.
+Fix the unused lint import and guard the observed Node 26.5.0 OIDC abort.
+Record the unconfirmed upstream cause, unavailable Docker, and blocked builds
+in agent-b completion evidence without claiming a green full suite.

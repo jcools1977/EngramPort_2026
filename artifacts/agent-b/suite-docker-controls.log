@@ -1,0 +1,18 @@
+
+> engramport@0.1.0 docker-gates:test
+> node --test tests/docker-gates.test.mjs
+
+DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ every absent Docker gate emits exactly one named reason (0.812333ms)
+✔ CI and required Docker refuse missing endpoints without successful skips (0.166333ms)
+✔ reachable Docker continues without skip output even in required mode (0.040333ms)
+✔ silent-skip mutation is killed by the same output control (1.427709ms)
+✔ real entry points skip loudly locally, refuse in CI, and continue when Docker responds (858.579208ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 896.013708

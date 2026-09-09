@@ -1,0 +1,328 @@
+
+> engramport@0.1.0 test
+> npm run docker-gates:test && npm run docker:test && npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run scan:append:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs
+
+
+> engramport@0.1.0 docker-gates:test
+> node --test tests/docker-gates.test.mjs
+
+DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ every absent Docker gate emits exactly one named reason (0.899583ms)
+✔ CI and required Docker refuse missing endpoints without successful skips (0.188959ms)
+✔ reachable Docker continues without skip output even in required mode (0.045584ms)
+✔ silent-skip mutation is killed by the same output control (1.614916ms)
+✔ real entry points skip loudly locally, refuse in CI, and continue when Docker responds (1799.766125ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1838.381458
+
+> engramport@0.1.0 docker:test
+> npm run w1-7:test && npm run db:test && npm run kms:test
+
+
+> engramport@0.1.0 w1-7:test
+> node --test tests/wizard-w1-7.test.mjs
+
+DOCKER_GATE_SKIP gate=w1-7:canary reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+﹣ section 10 canary observes ten vulnerable sinks and protects ten signing paths (0.424375ms) # SKIP
+✔ Vault boundary validates response, path, absence, token confinement (0.595625ms)
+✔ retention clock starts (0.072958ms)
+✔ Vault token detector coverage and clean near matches (1.1255ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 238.397792
+
+> engramport@0.1.0 db:test
+> bash scripts/run-db-tests
+
+DOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+DOCKER_GATE_SKIP gate=d1:mutation reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 kms:test
+> bash scripts/run-kms-tests
+
+DOCKER_GATE_SKIP gate=kms:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 proof
+> npm run proof:verify && npm run proof:test
+
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 495 events across 101 thread(s) and 3 actors
+
+> engramport@0.1.0 proof:test
+> node --test tests/git-v0.test.mjs
+
+✔ valid registered-actor relay verifies (78.88175ms)
+✔ actor record filename is bound to its declared slug (175.547791ms)
+✔ verification refuses unregistered Markdown event files while ignoring empty directories (487.125292ms)
+✔ verification aligns recursive Markdown discovery with validation and ignores non-events (394.891541ms)
+✔ uppercase Markdown forgery is accounted for and fails by path (250.585875ms)
+✔ event extension policy is shared by inbox while normal append stays lowercase (555.3965ms)
+events/agent-b/20260909T121706Z_01a08619-b1e4-7fb7-ae21-ef6638b6998f.md
+✔ append with an empty artifacts flag preserves artifact-free append behavior (501.154292ms)
+events/agent-b/20260909T121706Z_01a08619-b3d5-709d-9b97-942860c41d22.md
+events/agent-b/20260909T121706Z_01a08619-b507-7eee-92ce-7a304fc941f9.md
+✔ CLI terminal append normalizes --next null before hashing and preserves next validation (972.360167ms)
+events/agent-b/20260909T121707Z_01a08619-b79a-74ea-bd72-2335a0b0ce36.md
+✔ append refuses an unrecognized flag before writing and preserves known-good behavior (400.375791ms)
+events/agent-b/20260909T121707Z_01a08619-b92d-7169-988f-62b1d3ed3bdb.md
+✔ append refuses a second thread root without writing an event (568.327958ms)
+✔ exported append and inbox core preserve the event wire surface (476.079041ms)
+✔ CLI re-exports the same event-core binding the SDK must consume (0.133583ms)
+✔ version-1 retry returns the existing event and preserves event count (498.348667ms)
+✔ version-1 retry identity collision raises a distinct error without writing (505.374041ms)
+✔ version-1 completion requires exact criterion evidence coverage (804.214167ms)
+✔ live writer refuses version-0 append after cutover while historical v0 verifies (227.76425ms)
+✔ listInbox and Port Watch consume the same answered-work resolver (587.5135ms)
+✔ fresh copies reproduce the identical derived work-delivery set (489.081417ms)
+✔ pure work resolver excludes an answered event without project sequence fields (0.170875ms)
+✔ normal CLI execution cannot activate the harness core override (276.519417ms)
+✔ CLI append and inbox delegate to the exported core (492.146583ms)
+✔ modified content is rejected (234.179625ms)
+✔ unknown schema fields are rejected (227.133916ms)
+✔ actor directory ownership is enforced (226.591666ms)
+✔ unknown reply targets are rejected (229.665ms)
+✔ strict relay actor transitions are enforced (228.804917ms)
+✔ reply cycles are rejected (227.64475ms)
+✔ missing artifacts are rejected (239.405584ms)
+✔ artifact modification is rejected (262.154958ms)
+✔ artifact references must remain in author prefix (253.131541ms)
+✔ filename identity is enforced (242.954416ms)
+✔ free_form permits one actor to publish sequential events (243.941208ms)
+✔ free_form permits sibling replies (255.118959ms)
+✔ coordinator_led permits coordinator followed by two worker replies (241.684041ms)
+✔ strict_relay refuses an actor replying to itself and names the mode (254.403083ms)
+✔ strict_relay refuses a second reply and names the mode (276.763958ms)
+✔ free_form refuses an unknown parent and names the mode (266.918792ms)
+✔ free_form refuses a cycle (302.643083ms)
+✔ free_form refuses a second root with a precise mode error (333.386875ms)
+✔ coordinator_led refuses a worker root (310.885917ms)
+✔ coordinator_led refuses a worker replying to a worker (293.368334ms)
+✔ unknown thread modes fail closed (293.78475ms)
+✔ malformed thread mode declarations fail closed (267.007375ms)
+✔ a mode may be declared while a thread is empty (290.385708ms)
+✔ changing a declared mode after the first event violates its binding (292.23425ms)
+✔ a per-thread mode declaration cannot be added after the first event (301.908625ms)
+✔ changing mode cannot retroactively legitimize an invalid strict_relay branch (269.142125ms)
+✔ coordinator_led requires a coordinator (291.376208ms)
+✔ coordinator_led refuses an unknown coordinator (282.965625ms)
+✔ free_form supports invitation issuance, accepted, and terminal closure without an invitee actor (289.064375ms)
+✔ free_form supports invitation issuance, rejected, and terminal closure without an invitee actor (300.65ms)
+✔ free_form supports invitation issuance, expired, and terminal closure without an invitee actor (247.227208ms)
+✔ free_form supports invitation issuance, revoked, and terminal closure without an invitee actor (272.666333ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17344.625625
+
+> engramport@0.1.0 identity:test
+> node --test tests/commit-identity.test.mjs
+
+ACCEPTED_IDENTITY_MISMATCH 2f033ec52f2b1cc28228b347f2945f851b86d4c0 author=agent-a@engramport.local signer=luke@covenantsystems.ai date=2026-09-08T15:15:52-04:00 finding=F160
+ACCEPTED_IDENTITY_MISMATCH 502ab6f008f99ec52b07bb812e4d9f6745e88909 author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-08T15:56:34-04:00 finding=F160
+IDENTITY_REFUSAL unrecorded
+IDENTITY_REFUSAL nonexistent
+IDENTITY_REFUSAL author
+IDENTITY_REFUSAL signer
+IDENTITY_REFUSAL date
+IDENTITY_REFUSAL finding
+IDENTITY_REFUSAL duplicate
+IDENTITY_REFUSAL array
+IDENTITY_REFUSAL fields
+IDENTITY_REFUSAL full-sha
+IDENTITY_REFUSAL finding-format
+IDENTITY_REFUSAL unverified
+IDENTITY_REFUSAL not-mismatch
+IDENTITY_REFUSAL outside-history
+agent-commit: signing key at /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-A6M91b/foreign.pub is not bound to agent-b@engramport.local in /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-A6M91b/allowed_signers
+agent-commit: refusing to commit under a foreign or unverified signing key
+✔ repository signed mismatches require exact accepted records (1198.812ms)
+✔ record validates commits and each stated fact with paired refusals (344.066833ms)
+✔ agent-commit permits the actor key and refuses a foreign resolved key before commit (148.153ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1731.163
+
+> engramport@0.1.0 bctx:test
+> node --test tests/bounded-context-roundtrip.test.mjs
+
+✔ a reference in the format the validator accepts resolves to its content (2.530333ms)
+✔ the delimiter the resolver used to split on is now refused (0.779834ms)
+✔ a bound digest that no longer describes the file refuses (1.068959ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.490125
+
+> engramport@0.1.0 turn:test
+> node --test tests/turn-decision.test.mjs
+
+✔ a healthy observation is allowed in both phases (0.370417ms)
+✔ every declared refusal has a demonstration (0.256125ms)
+✔ every demonstration names a refusal the decision can actually produce (0.096042ms)
+✔ every guard field is reachable, so no guard is dead code (0.079584ms)
+✔ the kill switch cannot be masked by any other condition (0.056125ms)
+✔ acting as a person outranks every condition except the stop (0.040708ms)
+✔ an unreadable ledger refuses rather than counting as zero (0.068625ms)
+✔ demonstrateBounds reports every bound firing, and notices when one does not (0.118083ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.401709
+
+> engramport@0.1.0 completion:test
+> node --test tests/completion-status.test.mjs
+
+F157_REAL event=events/agent-b/20260908T194830Z_01a08290-9b52-7002-b704-44c3576f959b.md current=accepted pre-fix=rejected keyword=const
+✔ F157 real blocked completion validates against the published schema (33.981ms)
+✔ F157 schema and verifier vocabularies agree (0.326875ms)
+F157_CONSUMERS status=satisfied accepted=true
+F157_CONSUMERS status=unmet accepted=true
+F157_CONSUMERS status=blocked accepted=true
+F157_CONSUMERS status=probably-fine accepted=false
+F157_MUTATIONS baseline=0
+F157_MUTATION pre-fix-schema=killed control=F157 real blocked executed=1
+F157_MUTATION schema-extra-status=killed control=F157 schema and verifier executed=2
+F157_MUTATION verifier-missing-status=killed control=F157 schema and verifier executed=3
+F157_MUTATION verifier-private-copy=killed control=F157 both consumers executed=4
+F157_MUTATION verifier-guard-bypassed=killed control=F157 both consumers executed=5
+F157_MUTATIONS executed=5 killed=5 survived=0 restored=0
+✔ F157 both consumers accept every status and reject an invented status (43.203417ms)
+✔ F157 discriminating mutations (859.494333ms)
+✔ a completion reporting unmet is accepted and written (7.18975ms)
+✔ a completion reporting blocked is accepted and written (5.67875ms)
+✔ satisfied still works, so widening did not break the success path (6.486208ms)
+✔ an invented status is still refused, so the vocabulary is closed (5.1445ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1025.813125
+
+> engramport@0.1.0 sdk:buildable
+> node --test tests/sdk-buildable.test.mjs
+
+✖ the SDK builds from source (169.052958ms)
+✖ the built package exports what deployments are told to import (0.279833ms)
+✖ the built turn decision still refuses everything it should (0.122375ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 207.667042
+
+✖ failing tests:
+
+test at tests/sdk-buildable.test.mjs:22:1
+✖ the SDK builds from source (169.052958ms)
+  Error: Command failed: npm run build --workspace @engramport/sdk
+  failed to load config from /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/vite.config.mjs
+  error during build:
+  Error: EPERM: operation not permitted, open '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956244782-7c469c3168a23.mjs'
+      at async open (node:internal/fs/promises:1360:25)
+      at async Object.writeFile (node:internal/fs/promises:2104:14)
+      at async loadConfigFromBundledFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34889:3)
+      at async bundleAndLoadConfigFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34752:17)
+      at async loadConfigFromFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34719:42)
+      at async resolveConfig (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34345:22)
+      at async createBuilder (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:33530:17)
+      at async CAC.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/cli.js:766:19) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'open',
+    path: '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956244782-7c469c3168a23.mjs'
+  }
+  npm error Lifecycle script `build` failed with error:
+  npm error code 1
+  npm error path /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk
+  npm error workspace @engramport/sdk@0.3.0
+  npm error location /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk
+  npm error command failed
+  npm error command sh -c vite build --config vite.config.mjs
+  
+      at genericNodeError (node:internal/errors:999:15)
+      at wrappedFn (node:internal/errors:544:14)
+      at checkExecSyncError (node:child_process:942:11)
+      at execFileSync (node:child_process:978:15)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-suite/tests/sdk-buildable.test.mjs:24:3)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    status: 1,
+    signal: null,
+    output: [ null, '\n> @engramport/sdk@0.3.0 build\n> vite build --config vite.config.mjs\n\n', "failed to load config from /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/vite.config.mjs\nerror during build:\nError: EPERM: operation not permitted, open '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956244782-7c469c3168a23.mjs'\n    at async open (node:internal/fs/promises:1360:25)\n    at async Object.writeFile (node:internal/fs/promises:2104:14)\n    at async loadConfigFromBundledFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34889:3)\n    at async bundleAndLoadConfigFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34752:17)\n    at async loadConfigFromFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34719:42)\n    at async resolveConfig (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34345:22)\n    at async createBuilder (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:33530:17)\n    at async CAC.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/cli.js:766:19) {\n  errno: -1,\n  code: 'EPERM',\n  syscall: 'open',\n  path: '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956244782-7c469c3168a23.mjs'\n}\nnpm error Lifecycle script `build` failed with error:\nnpm error code 1\nnpm error path /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error workspace @engramport/sdk@0.3.0\nnpm error location /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error command failed\nnpm error command sh -c vite build --config vite.config.mjs\n" ],
+    pid: 57634,
+    stdout: '\n> @engramport/sdk@0.3.0 build\n> vite build --config vite.config.mjs\n\n',
+    stderr: "failed to load config from /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/vite.config.mjs\nerror during build:\nError: EPERM: operation not permitted, open '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956244782-7c469c3168a23.mjs'\n    at async open (node:internal/fs/promises:1360:25)\n    at async Object.writeFile (node:internal/fs/promises:2104:14)\n    at async loadConfigFromBundledFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34889:3)\n    at async bundleAndLoadConfigFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34752:17)\n    at async loadConfigFromFile (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34719:42)\n    at async resolveConfig (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:34345:22)\n    at async createBuilder (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/chunks/node.js:33530:17)\n    at async CAC.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT/node_modules/vite/dist/node/cli.js:766:19) {\n  errno: -1,\n  code: 'EPERM',\n  syscall: 'open',\n  path: '/Users/an2b/an2b/products/EngramPORT-suite/node_modules/.vite-temp/vite.config.mjs.timestamp-1788956244782-7c469c3168a23.mjs'\n}\nnpm error Lifecycle script `build` failed with error:\nnpm error code 1\nnpm error path /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error workspace @engramport/sdk@0.3.0\nnpm error location /Users/an2b/an2b/products/EngramPORT-suite/packages/sdk\nnpm error command failed\nnpm error command sh -c vite build --config vite.config.mjs\n"
+  }
+
+test at tests/sdk-buildable.test.mjs:30:1
+✖ the built package exports what deployments are told to import (0.279833ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs' imported from /Users/an2b/an2b/products/EngramPORT-suite/tests/sdk-buildable.test.mjs
+      at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+      at moduleResolve (node:internal/modules/esm/resolve:879:10)
+      at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)
+      at #resolve (node:internal/modules/esm/loader:690:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)
+      at node:internal/modules/esm/loader:639:32
+      at TracingChannel.tracePromise (node:diagnostics_channel:539:22) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs?t=1788956244791'
+  }
+
+test at tests/sdk-buildable.test.mjs:42:1
+✖ the built turn decision still refuses everything it should (0.122375ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs' imported from /Users/an2b/an2b/products/EngramPORT-suite/tests/sdk-buildable.test.mjs
+      at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+      at moduleResolve (node:internal/modules/esm/resolve:879:10)
+      at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)
+      at #resolve (node:internal/modules/esm/loader:690:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)
+      at node:internal/modules/esm/loader:639:32
+      at TracingChannel.tracePromise (node:diagnostics_channel:539:22) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///Users/an2b/an2b/products/EngramPORT-suite/packages/sdk/dist/index.mjs?t=1788956244791'
+  }

@@ -1,0 +1,32 @@
+
+> engramport@0.1.0 docker:test
+> npm run w1-7:test && npm run db:test && npm run kms:test
+
+
+> engramport@0.1.0 w1-7:test
+> node --test tests/wizard-w1-7.test.mjs
+
+DOCKER_GATE_SKIP gate=w1-7:canary reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+﹣ section 10 canary observes ten vulnerable sinks and protects ten signing paths (0.35125ms) # SKIP
+✔ Vault boundary validates response, path, absence, token confinement (0.540583ms)
+✔ retention clock starts (0.073084ms)
+✔ Vault token detector coverage and clean near matches (1.186541ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 476.387875
+
+> engramport@0.1.0 db:test
+> bash scripts/run-db-tests
+
+DOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+DOCKER_GATE_SKIP gate=d1:mutation reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 kms:test
+> bash scripts/run-kms-tests
+
+DOCKER_GATE_SKIP gate=kms:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock

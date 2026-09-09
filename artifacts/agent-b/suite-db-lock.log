@@ -1,0 +1,14 @@
+
+> engramport@0.1.0 db:lock-test
+> node --test tests/db-test-lock.test.mjs
+
+✔ both database entrypoints refuse a concurrent caller and leave the holder unaffected (155.434125ms)
+✔ a SIGKILL-stale lock is recovered by the other entrypoint (97.521458ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 287.179583
