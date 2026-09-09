@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { INIT_PATHS } from "../packages/git-adapter/src/init.mjs";
+import { assertHelp } from "./helpers/cli-help-contract.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const packageRoot = process.env.SDK_PACKAGE_ROOT ?? path.join(root, "packages/sdk");
@@ -23,6 +24,72 @@ async function pack(destination) {
   assert.ok(result?.filename, "npm pack must return a tarball filename");
   return { result, tarball: path.join(destination, result.filename) };
 }
+
+test("F167 CLI help documents JSON filenames and shapes, and missing documentation is killed", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "engramport-help-"));
+  try {
+    const cli = new URL("../packages/git-adapter/src/cli.mjs", import.meta.url);
+    const source = await readFile(cli, "utf8");
+    const relocated = (text) => text.replace(/from "(\.\/[^"]+)"/g, (_, relative) => `from ${JSON.stringify(new URL(relative, cli).href)}`);
+    const baseline = path.join(directory, "baseline.mjs");
+    await writeFile(baseline, relocated(source));
+    const invoke = (file, args) => execute(process.execPath, ["--input-type=module", "-e", `const { run } = await import(${JSON.stringify(file)}); process.exitCode = await run(${JSON.stringify(args)});`], directory);
+    for (const command of [[], ["append"], ["init"], ["verify"], ["inbox"], ["thread"], ["thread", "declare"], ["welcome", "verify"], ["setup", "compile"], ["setup", "dry-run"]]) {
+      assertHelp(invoke(baseline, [...command, "--help"]));
+    }
+    assert.deepEqual(await readdir(directory), ["baseline.mjs"], "help must not create a project");
+    // Compare the exact same output control against the pre-fix CLI and mutants.
+    const old = path.join(directory, "before.mjs");
+    await writeFile(old, relocated(execute("git", ["show", "HEAD:packages/git-adapter/src/cli.mjs"], root)));
+    const before = spawnSync(process.execPath, ["--input-type=module", "-e", `const { run } = await import(${JSON.stringify(old)}); process.exitCode = await run(["append", "--help"]);`], { cwd: directory, encoding: "utf8" });
+    // Only require the historical refusal while HEAD still predates the fix.
+    if (before.status !== 0) {
+      assert.match(before.stderr, /ARGUMENT_REFUSED: unrecognized flag --help/);
+      console.log(`F167_HELP_BEFORE exit=${before.status} ARGUMENT_REFUSED`);
+    }
+    for (const flag of ["bounded-context", "completion-criteria", "criteria-results"]) {
+      const mutant = path.join(directory, `${flag}.mjs`);
+      const changed = source.replaceAll(`--${flag} JSON_FILE`, "UNDOCUMENTED");
+      assert.notEqual(changed, source);
+      await writeFile(mutant, relocated(changed));
+      const output = invoke(mutant, ["append", "--help"]);
+      assert.throws(() => assertHelp(output), new RegExp(`missing JSON filename documentation: ${flag}`));
+      console.log(`F167_HELP_MUTATION flag=${flag} cli_exit=0 control=failed killed=true`);
+    }
+    assertHelp(invoke(baseline, ["append", "--help"]));
+    console.log("F167_HELP baseline=passed executed=3 killed=3 restored=passed");
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("F167 README walkthrough executes unchanged against a packed tarball", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "engramport-readme-"));
+  try {
+    const packed = await pack(directory);
+    const consumer = path.join(directory, "empty");
+    await mkdir(consumer);
+    assert.deepEqual(await readdir(consumer), []);
+    const readme = await readFile(path.join(root, "README.md"), "utf8");
+    const walkthrough = readme.split("<!-- second-builder:start -->")[1]?.split("<!-- second-builder:end -->")[0];
+    assert.ok(walkthrough, "README walkthrough markers are required");
+    const blocks = [...walkthrough.matchAll(/```sh\n([\s\S]*?)\n```/g)].map((match) => match[1]);
+    assert.equal(blocks.length, 3);
+    const script = blocks.join("\n");
+    const result = spawnSync("bash", ["-evx", "-o", "pipefail"], {
+      cwd: consumer, input: script, encoding: "utf8", maxBuffer: 4 * 1024 * 1024,
+      env: { ...process.env, ENGRAM_SDK: packed.tarball, npm_config_offline: "true", npm_config_cache: path.join(directory, "cache") },
+    });
+    const digest = execute("shasum", ["-a", "256", packed.tarball], directory).trim();
+    if (process.env.F167_TRANSCRIPT) await writeFile(process.env.F167_TRANSCRIPT,
+      `Packed with npm pack --silent --json --cache <temporary-cache> --pack-destination <temporary-directory> in packages/sdk.\nshasum -a 256: ${digest}\nEmpty starting directory: ${consumer}\nENGRAM_SDK=${packed.tarball}\nnpm_config_offline=true\nnpm_config_cache=${path.join(directory, "cache")}\nCommand: bash -evx -o pipefail (stdin is the three README sh blocks, unchanged)\nExit: ${result.status}\n\nSTDERR (verbatim commands and shell trace):\n${result.stderr}\nSTDOUT:\n${result.stdout}`);
+    assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`);
+    assert.match(result.stdout, /verified 2 events across 1 thread\(s\) and 2 actors/);
+    assert.match(result.stdout, /No open events addressed to builder/);
+    const bin = path.join(consumer, "tools/node_modules/.bin/engram");
+    assertHelp(execute(bin, ["--help"], consumer));
+    assertHelp(execute(bin, ["append", "--help"], consumer));
+    console.log("F167_WALKTHROUGH blocks=3 unchanged=true offline=true events=2 threads=1 actors=2 packed_help=passed");
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 test("publishable SDK manifest exposes only the bundled artifact", async () => {
   const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));

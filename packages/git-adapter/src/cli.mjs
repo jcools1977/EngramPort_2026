@@ -22,6 +22,33 @@ const ARGUMENT_PROFILES = new Map([
   ["append", new Set(["actor", "thread", "type", "body", "reply", "next", "artifacts", "id", "schema-version", "bounded-context", "completion-criteria", "criteria-results"])]
 ]);
 
+const HELP = `EngramPort Git
+
+Commands (each accepts --help without reading or writing a project):
+  init --actor SLUG --kind human|agent [--project SLUG] [--mode free_form|strict_relay]
+  verify
+  inbox --actor SLUG
+  thread declare --thread SLUG --mode MODE [--coordinator SLUG]
+  welcome verify --package DIRECTORY
+  setup compile --file FILE
+  setup dry-run --file FILE --temp-dir DIRECTORY
+  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUIDV7] [--next SLUG|null] [--artifacts REF,...] [--schema-version 0|1] [--bounded-context JSON_FILE] [--completion-criteria JSON_FILE] [--criteria-results JSON_FILE]
+
+JSON_FILE is a filename, resolved from the current directory, containing a JSON array.
+The following are shapes with illustrative values; replace IDs, paths and digests.
+--bounded-context JSON_FILE (handoff, 1-32 references):
+  [{"type":"event","event_id":"UUIDV7"},{"type":"artifact","ref":"artifacts/ACTOR/FILE#sha256=DIGEST"}]
+--completion-criteria JSON_FILE (handoff, 1-32 criteria):
+  [{"id":"receipt-written","statement":"Write a receipt.","evidence_classes":["artifact"]}]
+--criteria-results JSON_FILE (completion, one entry for every parent criterion):
+  [{"criterion_id":"receipt-written","status":"satisfied","evidence":[{"type":"artifact","ref":"artifacts/ACTOR/FILE#sha256=DIGEST"}]}]
+References may be event or artifact objects as shown above. DIGEST is 64 lowercase SHA-256 hex characters.
+evidence_classes is a unique nonempty subset of ["event","artifact"].
+status is "satisfied", "unmet", or "blocked". evidence contains 1-32 references of permitted classes.
+--artifacts takes comma-separated digest-bound refs directly, not a JSON filename.
+--body takes a UTF-8 text filename. Handoffs require both context and criteria files.
+Completion evidence must cover every parent criterion exactly once; do not mark unperformed work satisfied.`;
+
 function argumentRefused(flag) {
   const error = new Error(`ARGUMENT_REFUSED: unrecognized flag --${flag}`);
   error.code = "ARGUMENT_REFUSED";
@@ -31,11 +58,12 @@ function argumentRefused(flag) {
 function args(argv) {
   const out = { _: [] };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i].startsWith("--")) out[argv[i].slice(2)] = argv[++i];
+    if (argv[i] === "--help") out.help = true;
+    else if (argv[i].startsWith("--")) out[argv[i].slice(2)] = argv[++i];
     else out._.push(argv[i]);
   }
   const profile = ARGUMENT_PROFILES.get(out._.slice(0, 2).join(" ")) ?? ARGUMENT_PROFILES.get(out._[0]);
-  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_")) if (!profile.has(flag)) argumentRefused(flag);
+  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_" && key !== "help")) if (!profile.has(flag)) argumentRefused(flag);
   return out;
 }
 
@@ -54,6 +82,10 @@ async function threadHasEvents(cwd, thread) {
 export async function run(argv, cwd = process.cwd()) {
   const options = args(argv);
   const command = options._[0];
+  if (options.help) {
+    console.log(HELP);
+    return 0;
+  }
   if (command === "init") {
     for (const file of await initProject(options, cwd)) console.log(file);
     return 0;
@@ -131,6 +163,6 @@ export async function run(argv, cwd = process.cwd()) {
     if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(result.relative); return 0;
   }
-  console.log("EngramPort Git\n\nCommands:\n  init --actor SLUG --kind human|agent [--project SLUG] [--mode free_form|strict_relay]\n  verify\n  inbox --actor SLUG\n  thread declare --thread SLUG --mode MODE [--coordinator SLUG]\n  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUID] [--next SLUG] [--artifacts REF,...] [--bounded-context JSON] [--completion-criteria JSON] [--criteria-results JSON]");
+  console.log(HELP);
   return command ? 1 : 0;
 }

@@ -5,7 +5,7 @@ and inbox behavior to the same `event-core.mjs` used by the CLI and composes the
 existing Port Watch package. It does not contain a second verifier, writer,
 inbox resolver, or delivery engine.
 
-The distributable contains bundled ES modules for the API and the `engram` CLI, plus their shared chunks. A clean consumer needs one tarball and no unpublished dependency. Rebuild whenever an internal source changes; the clean-package control verifies both the API and CLI from an installed tarball. Version 0.3.0 prepares init for publication; this change does not publish it.
+The distributable contains bundled ES modules for the API and the `engram` CLI, plus their shared chunks. A clean consumer needs one tarball and no unpublished dependency. Rebuild whenever an internal source changes; the clean-package control verifies both the API and CLI from an installed tarball. Version 0.3.0 is published on npm. These documentation and help changes are for the next release; editing or packing the package does not publish it.
 
 ## New project
 
@@ -19,6 +19,20 @@ npx @engramport/sdk verify
 The installed bin is also available as `engram`. Init writes exactly `engramport.yaml`, `actors/<slug>.yaml`, `events/<slug>/.gitkeep`, and `artifacts/<slug>/.gitkeep`. Kind is required (`human|agent`). Project defaults to `my-project` and must match the verifier's slug pattern; mode defaults to `free_form` and also accepts `strict_relay`. Existing projects refuse with `INIT_PROJECT_EXISTS` and a pointer to `CONTRIBUTING.md`. Other nonempty directories refuse, and every file write uses exclusive creation. A filesystem error during creation can leave a partial scaffold. Init performs no Git or network operation.
 
 Init creates one actor and no grant. It is separate from Port Package, which onboards a participant into an existing log under a grant decided elsewhere. The actor is a name in a file, not an authenticated identity; init confers no authority. Joining an existing project remains the pull request process in [CONTRIBUTING.md](https://github.com/jcools1977/EngramPort_2026/blob/main/CONTRIBUTING.md).
+
+For a full two-seat handoff and completion with all JSON files, follow the
+[local walkthrough](https://github.com/jcools1977/EngramPort_2026#a-complete-two-seat-local-walkthrough).
+It distinguishes creating founding seats from joining an existing authorized log
+and includes an offline tarball installation option. Generated projects use
+`engram verify`; repository npm proof scripts require a repository clone.
+In this release, `engram --help` and `engram append --help` describe the
+`--bounded-context JSON_FILE`, `--completion-criteria JSON_FILE`, and
+`--criteria-results JSON_FILE` array shapes. Each argument is a filename.
+
+Read the hosted [security policy](https://github.com/jcools1977/EngramPort_2026/blob/main/SECURITY.md),
+[findings register](https://github.com/jcools1977/EngramPort_2026/blob/main/docs/constraints.md),
+and [MIT license](https://github.com/jcools1977/EngramPort_2026/blob/main/LICENSE).
+An offline reader cannot follow these links and needs a local repository copy.
 
 ## API
 
