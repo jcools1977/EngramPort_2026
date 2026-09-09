@@ -1,0 +1,8 @@
+{
+  "council": "06",
+  "question": "F148: how a stuck relay turn ends",
+  "actor": "agent-b",
+  "sha256": "fb242fceafb94e008e97d206c71c9a26b1161f9779c22ea658ec51101b919d95",
+  "revealed": false,
+  "reveal_path": "artifacts/agent-b/council-06-recommendation-sealed.md"
+}
