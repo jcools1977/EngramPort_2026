@@ -162,7 +162,7 @@ export function resolveWorkInbox({ actor, entries }) { /* PORT_WATCH_SHARED_ELIG
   if (!Array.isArray(entries)) throw new TypeError("inbox entries must be an array");
   const answered = new Set(entries.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
   return entries
-    .filter(({ event }) => event.meta.next === actor && !answered.has(event.meta.id))
+    .filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor && !answered.has(event.meta.id))
     .map(({ file, event }) => Object.freeze({
       relative: file,
       event_id: event.meta.id,

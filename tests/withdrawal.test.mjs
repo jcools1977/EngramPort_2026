@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, cpSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -36,12 +37,40 @@ async function seed(root) { return observed("seed", await add(root, {}), true); 
 async function withdraw(root, parent, fields = {}) { return add(root, { type: "withdrawal", reply: parent.event_id, ...fields }); }
 async function inbox(root) { return listInbox({ actor: "b", cwd: root }); }
 
+function cliInbox(root) {
+  const cli = pathToFileURL(path.join(source, "packages/git-adapter/src/cli.mjs")).href;
+  const result = spawnSync(process.execPath, ["--input-type=module", "-e",
+    `const { run } = await import(${JSON.stringify(cli)}); process.exitCode = await run(["inbox", "--actor", "b"]);`,
+  ], { cwd: root, encoding: "utf8", timeout: 10_000 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  return result.stdout.trim().split("\n").filter((line) => line.startsWith("events/"));
+}
+
+test("ADR52 F166 withdrawal excluded while ordinary handoff remains", async (t) => {
+  const root = project(t);
+  const evidence = observed("f166-evidence", await add(root, { thread: "evidence", next: null }), true);
+  const refs = [{ type: "event", event_id: evidence.event_id }];
+  const fields = { type: "handoff", boundedContext: refs, completionCriteria: [{ id: "c1", statement: "Report observed work", evidence_classes: ["event"] }] };
+  const h = observed("f166-handoff", await add(root, fields), true);
+  const ordinary = observed("f166-ordinary", await add(root, { ...fields, thread: "ordinary" }), true);
+  assert.deepEqual(cliInbox(root).sort(), [h.relative, ordinary.relative].sort());
+  const w = observed("f166-withdrawal", await withdraw(root, h), true);
+  const listed = cliInbox(root);
+  console.log(`F166_INBOX original=${listed.includes(h.relative)} withdrawal=${listed.includes(w.relative)} ordinary=${listed.includes(ordinary.relative)}`);
+  assert.deepEqual(listed, [ordinary.relative]);
+  const complete = () => add(root, { actor: "b", type: "completion", reply: w.event_id, next: "a", criteriaResults: [{ criterion_id: "c1", status: "unmet", evidence: refs }] });
+  observed("f166-late-completion", await complete(), true);
+  observed("f166-second-completion", await complete(), false, /parent has 2 replies/);
+  assert.deepEqual(cliInbox(root), [ordinary.relative]);
+  observed("f166-final-verify", await verifyLog(root), true);
+});
+
 test("ADR52 sender withdraws and inbox retires original", async (t) => {
   const root = project(t), e = await seed(root);
   assert.deepEqual(await inbox(root), [e.relative]);
   const w = observed("sender-withdraws", await withdraw(root, e), true);
-  assert.deepEqual(await inbox(root), [w.relative]);
-  console.log("ADR52_INBOX original=absent withdrawal=present");
+  assert.deepEqual(await inbox(root), []);
+  console.log("ADR52_INBOX original=absent withdrawal=absent");
   observed("real-withdrawal-verify", await verifyLog(root), true);
   const ajv = new Ajv({ strict: true, strictRequired: false }); addFormats(ajv);
   const validate = ajv.compile(JSON.parse(readFileSync(path.join(source, "schemas/event-v1.schema.json"))));
@@ -85,6 +114,8 @@ test("ADR52 forked history verifier", async (t) => {
 
 for (const next of [null, "a"]) test(`ADR52 late completion once next=${next}`, async (t) => {
   const root = project(t), e = await seed(root), w = observed("withdrawal", await withdraw(root, e), true);
+  assert.deepEqual(await inbox(root), []);
+  console.log(`F166_LATE_COMPLETION inbox=empty next=${next}`);
   const complete = () => add(root, { actor: "b", type: "completion", reply: w.event_id, next });
   observed("late-completion", await complete(), true);
   observed("second-completion", await complete(), false, /parent has 2 replies/);

@@ -1,0 +1,191 @@
+
+> engramport@0.1.0 withdrawal:test
+> node --test tests/withdrawal.test.mjs && node tests/run-withdrawal-mutations.mjs
+
+ADR52_OBS f166-evidence ok=true errors=[]
+ADR52_OBS f166-handoff ok=true errors=[]
+ADR52_OBS f166-ordinary ok=true errors=[]
+ADR52_OBS f166-withdrawal ok=true errors=[]
+F166_INBOX original=false withdrawal=false ordinary=true
+ADR52_OBS f166-late-completion ok=true errors=[]
+ADR52_OBS f166-second-completion ok=false errors=["events/a/20260909T131308Z_01a0864d-008e-723c-a226-c6537ab643fb.md: mode strict_relay violation; parent has 2 replies"]
+ADR52_OBS f166-final-verify ok=true errors=[]
+✔ ADR52 F166 withdrawal excluded while ordinary handoff remains (144.372583ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS sender-withdraws ok=true errors=[]
+ADR52_INBOX original=absent withdrawal=absent
+ADR52_OBS real-withdrawal-verify ok=true errors=[]
+ADR52_SCHEMA real-withdrawal=accepted
+✔ ADR52 sender withdraws and inbox retires original (33.310125ms)
+﹣ ADR52 pre-fix unknown type (0.087791ms) # SKIP
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS empty-reason ok=false errors=["events/a/20260909T131308Z_01a0864d-010d-75b1-a472-147b56c445cb.md: withdrawal requires a non-empty reason"]
+✔ ADR52 empty reason "" (11.3115ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS empty-reason ok=false errors=["events/a/20260909T131308Z_01a0864d-0118-7b0f-9429-1a0efbcae11e.md: withdrawal requires a non-empty reason"]
+✔ ADR52 empty reason " \t\n " (9.050333ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-sender ok=false errors=["events/b/20260909T131308Z_01a0864d-0122-7970-819a-cf5a68470fdf.md: withdrawal requires the original sender"]
+✔ ADR52 non-sender b (11.077ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-sender ok=false errors=["events/c/20260909T131308Z_01a0864d-012e-776f-8f27-e6e78b2421cd.md: withdrawal requires the original sender"]
+✔ ADR52 non-sender c (12.428542ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS first-successor ok=true errors=[]
+ADR52_OBS second-successor ok=false errors=["events/a/20260909T131308Z_01a0864d-0134-76ed-9358-7b8088bef804.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 single successor reply first (10.13475ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS first-successor ok=true errors=[]
+ADR52_OBS second-successor ok=false errors=["events/a/20260909T131308Z_01a0864d-013f-719d-b01e-a101467fda1e.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 single successor withdrawal first (10.52325ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS fork-withdrawal ok=true errors=[]
+ADR52_OBS fork-reply ok=true errors=[]
+ADR52_OBS fork-verifier ok=false errors=["events/a/20260909T131308Z_01a0864d-0149-7323-9372-3be086f53cab.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 forked history verifier (17.064ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+F166_LATE_COMPLETION inbox=empty next=null
+ADR52_OBS late-completion ok=true errors=[]
+ADR52_OBS second-completion ok=false errors=["events/a/20260909T131308Z_01a0864d-015d-7d5f-8cfa-be585a34775c.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 late completion once next=null (15.747458ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+F166_LATE_COMPLETION inbox=empty next=a
+ADR52_OBS late-completion ok=true errors=[]
+ADR52_OBS second-completion ok=false errors=["events/a/20260909T131308Z_01a0864d-016d-78d6-b643-bdeafad2257a.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 late completion once next=a (15.40075ms)
+ADR52_OBS evidence ok=true errors=[]
+ADR52_OBS handoff ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS missing-criteria ok=false errors=["events/b/20260909T131308Z_01a0864d-0185-7f05-a050-e081e5e25746.md: criteria_results is required for a version-1 handoff completion"]
+ADR52_OBS wrong-criteria ok=false errors=["events/b/20260909T131308Z_01a0864d-0189-7105-92b4-b314a9d2e551.md: completion missing criterion ids c1"]
+ADR52_OBS late-handoff-completion ok=true errors=[]
+✔ ADR52 original handoff criteria preserved (25.260666ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS non-handoff-criteria ok=false errors=["events/b/20260909T131308Z_01a0864d-0198-7d43-8c68-30bc99aea034.md: criteria_results requires an original handoff"]
+✔ ADR52 non-handoff criteria refused (9.642959ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-message ok=false errors=["events/a/20260909T131308Z_01a0864d-01a0-7536-b472-bd70f56ab49b.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01a0-7536-b472-bd70f56ab49b.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-handoff ok=false errors=["events/a/20260909T131308Z_01a0864d-01a5-714b-8385-e98b0054ae78.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01a5-714b-8385-e98b0054ae78.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-reply ok=false errors=["events/a/20260909T131308Z_01a0864d-01ab-71d2-b180-1625e37b1610.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01ab-71d2-b180-1625e37b1610.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-completion ok=false errors=["events/a/20260909T131308Z_01a0864d-01b3-7641-bbfe-d01b0c1cc6b0.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01b3-7641-bbfe-d01b0c1cc6b0.md: mode strict_relay violation; an actor may not reply to itself","events/a/20260909T131308Z_01a0864d-01b3-7641-bbfe-d01b0c1cc6b0.md: completion must reply to a handoff"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-artifact ok=false errors=["events/a/20260909T131308Z_01a0864d-01b7-791a-8acd-2f64cff6bf0f.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01b7-791a-8acd-2f64cff6bf0f.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-decision ok=false errors=["events/a/20260909T131308Z_01a0864d-01be-7a27-9090-853ab932d062.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01be-7a27-9090-853ab932d062.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-task ok=false errors=["events/a/20260909T131308Z_01a0864d-01c3-749a-9cfe-05679a7b1842.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01c3-749a-9cfe-05679a7b1842.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-acknowledgment ok=false errors=["events/a/20260909T131308Z_01a0864d-01c8-7580-adc5-b17c219895b7.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-01c8-7580-adc5-b17c219895b7.md: mode strict_relay violation; an actor may not reply to itself"]
+✔ ADR52 other self replies remain refused (54.229833ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-strict ok=false errors=["events/a/20260909T131308Z_01a0864d-01d6-7c80-bcd7-f9840ac1f8cb.md: withdrawal requires strict_relay"]
+✔ ADR52 non-strict free_form (6.98625ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-strict ok=false errors=["events/a/20260909T131308Z_01a0864d-01df-71c1-94cf-9ce29ea0c58d.md: withdrawal requires strict_relay"]
+✔ ADR52 non-strict coordinator_led (9.838709ms)
+ADR52_OBS root-withdrawal ok=false errors=["events/a/20260909T131308Z_01a0864d-01e4-725e-ad4a-8b0a97265215.md: withdrawal requires a parent"]
+✔ ADR52 parent required (5.273125ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS wrong-addressee ok=false errors=["events/a/20260909T131308Z_01a0864d-01ec-79dd-9a1d-f71488b09598.md: withdrawal next must name the original addressee of an open turn"]
+✔ ADR52 addressee binding null (7.088041ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS wrong-addressee ok=false errors=["events/a/20260909T131308Z_01a0864d-01f3-76b4-b4b1-bb71737cfa90.md: withdrawal next must name the original addressee of an open turn"]
+✔ ADR52 addressee binding c (6.362959ms)
+ADR52_OBS terminal ok=true errors=[]
+ADR52_OBS terminal-withdrawal ok=false errors=["events/a/20260909T131308Z_01a0864d-01fa-7fa9-a0ea-e47209f1c96c.md: withdrawal next must name the original addressee of an open turn"]
+✔ ADR52 terminal turn cannot withdraw (7.346834ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS duplicate-withdrawal ok=false errors=["events/a/20260909T131308Z_01a0864d-01fe-73aa-8a0a-7dcc512981e0.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 duplicate withdrawal refused (10.533291ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS non-completion ok=false errors=["events/b/20260909T131308Z_01a0864d-020f-7075-9084-ef6524510025.md: withdrawal successor must be a completion"]
+✔ ADR52 withdrawal successor completion only (10.74875ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS completion-routing ok=false errors=["events/b/20260909T131308Z_01a0864d-0219-7e54-b05c-ff2810e736a5.md: late completion next must name the sender or null"]
+✔ ADR52 late completion routing (12.742667ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS wrong-completer ok=false errors=["events/a/20260909T131308Z_01a0864d-0226-7331-843d-99d8015e4875.md: mode strict_relay violation; expected next actor b","events/a/20260909T131308Z_01a0864d-0226-7331-843d-99d8015e4875.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS wrong-completer ok=false errors=["events/c/20260909T131308Z_01a0864d-0230-7357-85a1-5306c0aa1d6c.md: mode strict_relay violation; expected next actor b"]
+✔ ADR52 late completion only addressee (20.606ms)
+ADR52_OBS seed ok=true errors=[]
+events/a/20260909T131308Z_01a0864d-0239-7f9d-8051-b762cb824bc9.md
+✔ ADR52 CLI accepts withdrawal (13.3575ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 560.308709
+ADR52_MUTATIONS baseline=0
+ADR52_PRE_FIX commit=799d96e3fa772f1e4ac8a8feaff8e452ce3f1b93 append=refused class=unknown-event-type self-replies=refused
+TAP version 13
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS pre-fix ok=false errors=["events/a/20260909T131309Z_01a0864d-056c-7ad9-b8c2-4d494a939a76.md: unknown event type withdrawal","events/a/20260909T131309Z_01a0864d-056c-7ad9-b8c2-4d494a939a76.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-056c-7ad9-b8c2-4d494a939a76.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 pre-fix unknown type
+ok 1 - ADR52 pre-fix unknown type
+  ---
+  duration_ms: 20.405834
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-message ok=false errors=["events/a/20260909T131309Z_01a0864d-057a-7a67-9b0e-d0b798170a5c.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-057a-7a67-9b0e-d0b798170a5c.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-handoff ok=false errors=["events/a/20260909T131309Z_01a0864d-0581-7345-b2d0-9d4bf0790ad3.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-0581-7345-b2d0-9d4bf0790ad3.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-reply ok=false errors=["events/a/20260909T131309Z_01a0864d-058a-7b51-8d8a-6d926e298ddd.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-058a-7b51-8d8a-6d926e298ddd.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-completion ok=false errors=["events/a/20260909T131309Z_01a0864d-0592-7674-9256-87a0d0d90ef0.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-0592-7674-9256-87a0d0d90ef0.md: mode strict_relay violation; an actor may not reply to itself","events/a/20260909T131309Z_01a0864d-0592-7674-9256-87a0d0d90ef0.md: completion must reply to a handoff"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-artifact ok=false errors=["events/a/20260909T131309Z_01a0864d-0599-7760-9f7e-1c2699cb97a4.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-0599-7760-9f7e-1c2699cb97a4.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-decision ok=false errors=["events/a/20260909T131309Z_01a0864d-05a0-797a-a479-0e7f31d93e65.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-05a0-797a-a479-0e7f31d93e65.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-task ok=false errors=["events/a/20260909T131309Z_01a0864d-05a8-75de-96a5-70724523a860.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-05a8-75de-96a5-70724523a860.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-acknowledgment ok=false errors=["events/a/20260909T131309Z_01a0864d-05ae-7d73-9e3c-1780f720988d.md: mode strict_relay violation; expected next actor b","events/a/20260909T131309Z_01a0864d-05ae-7d73-9e3c-1780f720988d.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 other self replies remain refused
+ok 2 - ADR52 other self replies remain refused
+  ---
+  duration_ms: 70.836375
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 151.330833
+
+ADR52_MUTATION name=sender-only removed=WITHDRAWAL_SENDER observation=non-sender:accepted control=failed executed=1
+ADR52_MUTATION name=non-empty-reason removed=WITHDRAWAL_REASON observation=empty-reason:accepted control=failed executed=2
+ADR52_MUTATION name=successor-reply-first removed=parent has ${count} replies observation=second-successor:accepted control=failed executed=3
+ADR52_MUTATION name=successor-withdrawal-first removed=parent has ${count} replies observation=second-successor:accepted control=failed executed=4
+ADR52_MUTATION name=forked-history-verifier removed=parent has ${count} replies observation=fork-verifier:accepted control=failed executed=5
+ADR52_MUTATION name=late-completion-once removed=parent has ${count} replies observation=second-completion:accepted control=failed executed=6
+ADR52_MUTATION name=strict-mode-only removed=WITHDRAWAL_MODE observation=non-strict:accepted control=failed executed=7
+ADR52_MUTATION name=parent-required removed=WITHDRAWAL_PARENT observation=root-withdrawal:accepted control=failed executed=8
+ADR52_MUTATION name=original-addressee removed=WITHDRAWAL_NEXT observation=wrong-addressee:accepted control=failed executed=9
+ADR52_MUTATION name=open-turn removed=WITHDRAWAL_NEXT observation=terminal-withdrawal:accepted control=failed executed=10
+ADR52_MUTATION name=completion-only removed=/* WITHDRAWAL_COMPLETION */ observation=non-completion:accepted control=failed executed=11
+ADR52_MUTATION name=completion-routing removed=WITHDRAWAL_COMPLETION_NEXT observation=completion-routing:accepted control=failed executed=12
+ADR52_MUTATION name=non-handoff-criteria removed=WITHDRAWAL_NO_CRITERIA observation=non-handoff-criteria:accepted control=failed executed=13
+ADR52_MUTATION name=schema-type-disagreement existing-one-definition-control=failed executed=14
+ADR52_MUTATION name=withdrawal-listed observation=original:false,withdrawal:true,ordinary:true control=failed executed=15
+ADR52_MUTATIONS executed=15 killed=15 survived=0 restored=0

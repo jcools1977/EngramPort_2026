@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "withdrawal-not-listed",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f166-withdrawal-inbox-results.md#sha256=1608b4b59848989f852055f5d7f72ec3d5d678ea52c12ef4b260c53e3cf3e42d"
+      }
+    ]
+  },
+  {
+    "criterion_id": "late-completion-still-lawful",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f166-withdrawal-inbox-results.md#sha256=1608b4b59848989f852055f5d7f72ec3d5d678ea52c12ef4b260c53e3cf3e42d"
+      }
+    ]
+  },
+  {
+    "criterion_id": "other-work-unchanged",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f166-withdrawal-inbox-results.md#sha256=1608b4b59848989f852055f5d7f72ec3d5d678ea52c12ef4b260c53e3cf3e42d"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f166-withdrawal-inbox-results.md#sha256=1608b4b59848989f852055f5d7f72ec3d5d678ea52c12ef4b260c53e3cf3e42d"
+      }
+    ]
+  }
+]

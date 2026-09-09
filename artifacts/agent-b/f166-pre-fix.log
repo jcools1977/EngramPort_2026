@@ -1,0 +1,44 @@
+TAP version 13
+# ADR52_OBS f166-evidence ok=true errors=[]
+# ADR52_OBS f166-handoff ok=true errors=[]
+# ADR52_OBS f166-ordinary ok=true errors=[]
+# ADR52_OBS f166-withdrawal ok=true errors=[]
+# F166_INBOX original=false withdrawal=true ordinary=true
+# Subtest: ADR52 F166 withdrawal excluded while ordinary handoff remains
+not ok 1 - ADR52 F166 withdrawal excluded while ordinary handoff remains
+  ---
+  duration_ms: 100.233375
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-wir/tests/withdrawal.test.mjs:49:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'events/a/20260909T131244Z_01a0864c-a179-7964-a197-c628a15be0ac.md',
+    +   'events/a/20260909T131244Z_01a0864c-a1a4-7bb8-be46-d03a39ffdcea.md'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'events/a/20260909T131244Z_01a0864c-a179-7964-a197-c628a15be0ac.md'
+  actual:
+    0: 'events/a/20260909T131244Z_01a0864c-a179-7964-a197-c628a15be0ac.md'
+    1: 'events/a/20260909T131244Z_01a0864c-a1a4-7bb8-be46-d03a39ffdcea.md'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-wir/tests/withdrawal.test.mjs:60:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 172.979583

@@ -1,0 +1,4 @@
+fix: exclude withdrawal notices from the work inbox (F166)
+
+Preserve lawful late completions and ordinary handoff delivery. Record CLI
+inbox controls, 15 killed withdrawal mutations, and the agent-b completion.

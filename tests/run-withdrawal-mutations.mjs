@@ -79,6 +79,18 @@ try {
   executed++;
   console.log(`ADR52_MUTATION name=schema-type-disagreement existing-one-definition-control=failed executed=${executed}`);
   reset();
+  const corePath = path.join(temporary, "packages/git-adapter/src/event-core.mjs");
+  const core = readFileSync(corePath, "utf8");
+  const exclusion = 'event.meta.type !== "withdrawal" && ';
+  assert.equal(core.split(exclusion).length, 2, "unique withdrawal inbox exclusion");
+  writeFileSync(corePath, core.replace(exclusion, ""));
+  const listedWithdrawal = run("^ADR52 F166 withdrawal excluded while ordinary handoff remains$");
+  assert.equal(listedWithdrawal.status, 1, listedWithdrawal.stdout + listedWithdrawal.stderr);
+  assert.match(listedWithdrawal.stdout, /not ok \d+ - ADR52 F166 withdrawal excluded while ordinary handoff remains/);
+  assert.match(listedWithdrawal.stdout, /F166_INBOX original=false withdrawal=true ordinary=true/);
+  executed++;
+  console.log(`ADR52_MUTATION name=withdrawal-listed observation=original:false,withdrawal:true,ordinary:true control=failed executed=${executed}`);
+  reset();
   const restored = run("^ADR52 (?!pre-fix)");
   assert.equal(restored.status, 0, restored.stdout + restored.stderr);
   console.log(`ADR52_MUTATIONS executed=${executed} killed=${executed} survived=0 restored=0`);
