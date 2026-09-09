@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";import test from "node:test";import {fileURLToPath,pathToFileURL} from "node:url";
 import {VaultTransitBoundary,retentionDue} from "../packages/git-adapter/src/custody-service.mjs";import {detectCredential} from "../packages/git-adapter/src/credential-boundary.mjs";
-import {runCanaryFixture} from "./helpers/w1-7-canary-fixture.mjs";
+import {checkCanaryCorePattern,runCanaryFixture} from "./helpers/w1-7-canary-fixture.mjs";
 
 import {dockerGate} from "../scripts/docker-gate.mjs";
 
@@ -12,6 +12,32 @@ const tenantY="10000000-0000-0000-0000-000000000001";
 const projectY="12000000-0000-0000-0000-000000000001";
 const selectedCase=process.env.W1_7_CASE??"";
 const enabled=name=>selectedCase===""||selectedCase===name;
+
+test("canary core pattern rejects incompatible synthetic host patterns before fixture work",async()=>{
+  for(const pattern of ["|/usr/share/apport/apport %p %s %c %P","/var/lib/cores/core","core.%p","other-core","","core\nsecond-line"]){
+    let reads=0;
+    const corePatternCommand=async(command,args)=>{
+      reads++;
+      assert.equal(command,"docker");
+      assert.deepEqual(args,["run","--rm","--entrypoint","cat","pgvector/pgvector:pg16","/proc/sys/kernel/core_pattern"]);
+      return {code:0,stdout:`${pattern}\n`,stderr:""};
+    };
+    await assert.rejects(()=>runCanaryFixture({corePatternCommand}),error=>{
+      assert.equal(error.message,`W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=${JSON.stringify(pattern)}; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)`);
+      assert.equal(error.message.split("\n").length,1);
+      assert.doesNotMatch(error.message,/ENOENT/);
+      console.log(error.message);
+      return true;
+    });
+    assert.equal(reads,1);
+  }
+});
+
+test("canary core pattern accepts the synthetic plain core file and proceeds",async()=>{
+  const pattern=await checkCanaryCorePattern(async()=>({code:0,stdout:"core\n",stderr:""}));
+  assert.equal(pattern,"core");
+  console.log("W1_7_CANARY_CORE_PATTERN synthetic=core precondition=passed continuation=reached scope=synthetic");
+});
 
 let PrincipalSessionBinding,Pool;
 if(durableUrl){

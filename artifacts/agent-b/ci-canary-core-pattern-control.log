@@ -1,0 +1,67 @@
+COMMAND W1_7_CASE=core-pattern node --test --test-name-pattern=canary core pattern tests/wizard-w1-7.test.mjs phase=baseline
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="|/usr/share/apport/apport %p %s %c %P"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="/var/lib/cores/core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core.%p"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="other-core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=""; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core\nsecond-line"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN synthetic=core precondition=passed continuation=reached scope=synthetic
+✔ canary core pattern rejects incompatible synthetic host patterns before fixture work (1.47625ms)
+✔ canary core pattern accepts the synthetic plain core file and proceeds (0.136166ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.131083
+CONTROL phase=baseline exit=0
+COMMAND W1_7_CASE=core-pattern node --test --test-name-pattern=canary core pattern tests/wizard-w1-7.test.mjs phase=always-reject-mutant
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="|/usr/share/apport/apport %p %s %c %P"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="/var/lib/cores/core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core.%p"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="other-core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=""; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core\nsecond-line"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+✔ canary core pattern rejects incompatible synthetic host patterns before fixture work (2.277458ms)
+✖ canary core pattern accepts the synthetic plain core file and proceeds (0.149333ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.462667
+
+✖ failing tests:
+
+test at tests/wizard-w1-7.test.mjs:36:1
+✖ canary core pattern accepts the synthetic plain core file and proceeds (0.149333ms)
+  Error: W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+      at checkCanaryCorePattern (file:///Users/an2b/an2b/products/EngramPORT-ci/tests/helpers/w1-7-canary-fixture.mjs:58:56)
+      at async TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-ci/tests/wizard-w1-7.test.mjs:37:17)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+CONTROL phase=always-reject-mutant exit=1
+COMMAND W1_7_CASE=core-pattern node --test --test-name-pattern=canary core pattern tests/wizard-w1-7.test.mjs phase=restored
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="|/usr/share/apport/apport %p %s %c %P"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="/var/lib/cores/core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core.%p"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="other-core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=""; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core\nsecond-line"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN synthetic=core precondition=passed continuation=reached scope=synthetic
+✔ canary core pattern rejects incompatible synthetic host patterns before fixture work (1.32425ms)
+✔ canary core pattern accepts the synthetic plain core file and proceeds (0.070334ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45.844625
+CONTROL phase=restored exit=0
+CORE_PATTERN_MUTATION baseline=0 mutant=1 restored=0 killed=true live_canary=blocked ci=blocked

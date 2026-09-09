@@ -24,6 +24,10 @@ jobs:
       - name: Run OIDC sessions on Node 22
         run: npm run session:test
 
+      # F170: the W1-7 canary reads /dump/core; a piped host pattern sends dumps elsewhere.
+      - name: Set plain core file pattern for W1-7 canary
+        run: sudo sysctl -w kernel.core_pattern=core
+
       - name: Require Docker gates
         run: npm run docker-gates:test && npm run docker:test
         env:

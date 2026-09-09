@@ -14,6 +14,7 @@ const project="20000000-0000-4000-8000-000000000002";
 const principal="20000000-0000-4000-8000-000000000003";
 const surfaces=["actors","events","artifacts","schemas","threads","engramport.yaml"];
 const worker=path.join(import.meta.dirname,"w1-7-canary-operation-worker.mjs");
+const coreImage="pgvector/pgvector:pg16";
 
 function setup(canary){return {schema_version:0,created_at:"2026-08-14T12:00:00Z",founder:{principal_id:"founder",scopes:["events:write"],assignable_trust:["untrusted_agent"],expires_at:null},repository:{provider:"github",owner:canary,name:"synthetic",default_branch:"main",permissions:["contents:read"],depends_on:[]},database:{mode:"connect_existing",target:"postgresql",depends_on:["repository.connect"]},participants:[],groups:[],import:{paths:["docs/"],include_history:true,depends_on:["repository.connect"]},welcome:{expiry_days:14,depends_on:[]}};}
 function authorization(){return {principal_id:principal,tenant_id:tenant,project_id:project,audience:"team",view_mode:"live_feed",role:"contributor",scopes:["events:read"],sensitivity_ceiling:"internal",allowed_visibilities:["project"],history_start_seq:0,policy_revision:"report-auth-v1",publication_approval:null};}
@@ -50,16 +51,24 @@ async function startSigningContext(){
   return {token,signer:"local-stub",port:18201,close:()=>new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()))};
 }
 async function runProtectedOperation(mode,landing,{canary,digest:knownDigest,moduleRoot,token,signer,port,store=null}){const env={...process.env};delete env.KMS_TOKEN;delete env.ENGRAM_CANARY_MATERIAL;const args=[worker,`protected_${mode}`,landing,...(store?[store]:[])];const input=JSON.stringify({canary,digest:knownDigest,moduleRoot,token,signer,port});const result=await runCommand(process.execPath,args,{env,input});const parsed=JSON.parse(result.stdout);assert.match(parsed.signature,/^vault:v\d+:/);assert.equal(parsed.signer,signer);return parsed;}
+export async function checkCanaryCorePattern(run=runCommand){
+  // F170: containers inherit the host pattern; both observers read /dump/core.
+  const {stdout}=await run("docker",["run","--rm","--entrypoint","cat",coreImage,"/proc/sys/kernel/core_pattern"]);
+  const pattern=stdout.replace(/\n$/,"");
+  if(pattern!=="core")throw new Error(`W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=${JSON.stringify(pattern)}; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)`);
+  return pattern;
+}
 async function coreOperation(root,material,containers,{digest:knownDigest=null,token=null,signer=null,port=null}={}){const dump=path.join(root,"core");await mkdir(dump,{recursive:true});await chmod(dump,0o777);const name=`engram-canary-core-${process.pid}-${Math.random().toString(16).slice(2)}`;containers.add(name);const vulnerable=Boolean(material);let command;const envArgs=[];
   if(vulnerable){command=`perl -e '$held=$ENV{ENGRAM_CANARY}; kill 11,$$; sleep 1'; crash_rc=$?; exit "$crash_rc"`;envArgs.push("-e",`ENGRAM_CANARY=${material}`);}
   else{const body=JSON.stringify({input:Buffer.from(knownDigest).toString("base64")});command=`( exec 3<>/dev/tcp/host.docker.internal/$KMS_PORT; printf "POST /v1/transit/sign/synth-a/sha2-256 HTTP/1.1\\r\\nHost: host.docker.internal:%s\\r\\nX-Vault-Token: %s\\r\\ncontent-type: application/json\\r\\nContent-Length: %s\\r\\nConnection: close\\r\\n\\r\\n%s" "$KMS_PORT" "$KMS_TOKEN" "\${#SIGN_BODY}" "$SIGN_BODY" >&3; cat <&3 > /dump/sign-response ) & sign_pid=$!; env -u KMS_TOKEN -u KMS_PORT -u SIGN_BODY perl -e '$held="synthetic-safe-protected-core"; kill 11,$$; sleep 1'; crash_rc=$?; wait "$sign_pid"; sign_rc=$?; test "$sign_rc" -eq 0 || exit "$sign_rc"; exit "$crash_rc"`;envArgs.push("-e",`KMS_TOKEN=${token}`,"-e",`KMS_PORT=${port}`,"-e",`SIGN_BODY=${body}`);}
-  const args=["run","--rm","--name",name,"--ulimit","core=-1","-v",`${dump}:/dump`,"-w","/dump",...envArgs,"--entrypoint","bash","pgvector/pgvector:pg16","-c",command];const result=await runCommand("docker",args,{allowFailure:true});containers.delete(name);assert.notEqual(result.code,0,"forced crash must exit nonzero");assert.match(result.stderr,/Segmentation fault\s+\(core dumped\)/);await readFile(path.join(dump,"core"));if(vulnerable)return {};
+  const args=["run","--rm","--name",name,"--ulimit","core=-1","-v",`${dump}:/dump`,"-w","/dump",...envArgs,"--entrypoint","bash",coreImage,"-c",command];const result=await runCommand("docker",args,{allowFailure:true});containers.delete(name);assert.notEqual(result.code,0,"forced crash must exit nonzero");assert.match(result.stderr,/Segmentation fault\s+\(core dumped\)/);await readFile(path.join(dump,"core"));if(vulnerable)return {};
   const response=await readFile(path.join(dump,"sign-response"),"utf8");const signature=response.match(/vault:v\d+:[^"\\]+/)?.[0];assert.match(signature??"",/^vault:v\d+:/,"protected core signing response missing");return {signature,signer};}
 async function landingContains(file,canary){try{return (await readFile(file)).includes(Buffer.from(canary));}catch(error){if(error.code==="ENOENT")return false;throw error;}}
 async function cleanupSnapshot(){const [containers,volumes,temp]=await Promise.all([runCommand("docker",["ps","-aq"]),runCommand("docker",["volume","ls","-q"]),readdir(os.tmpdir())]);return {containers:new Set(containers.stdout.trim().split("\n").filter(Boolean)),volumes:new Set(volumes.stdout.trim().split("\n").filter(Boolean)),temp:new Set(temp.filter(name=>name.startsWith("engram-canary-")))};}
 const added=(before,after)=>[...after].filter(value=>!before.has(value));
 
-export async function runCanaryFixture({moduleRoot,boundary}){
+export async function runCanaryFixture({moduleRoot,boundary,corePatternCommand=runCommand}){
+  await checkCanaryCorePattern(corePatternCommand);
   const cleanupBefore=await cleanupSnapshot();
   const directory=await mkdtemp(path.join(os.tmpdir(),"engram-canary-"));
   const containers=new Set();let signing;
