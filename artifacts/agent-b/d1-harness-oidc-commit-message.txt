@@ -1,0 +1,12 @@
+fix(d1): distinguish skipped OIDC baselines from executed mutations
+
+Preserve selected-test TAP skip reasons, account for not-exercised controls,
+and retain the original exercised-baseline kill conditions. Run the extracted
+classification control through db:test before the Docker availability gate.
+
+Validation: five classification controls and five killed mutations; eleven
+Docker, lock, and repository policy controls; lint and shell syntax pass.
+Live DB and D1 runs remain blocked by Docker socket permissions.
+
+EngramPort actor: agent-b
+Thread: d1-harness-oidc-runtime

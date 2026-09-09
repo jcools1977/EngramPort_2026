@@ -1,0 +1,67 @@
+[
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/d1-oidc-classification.test.mjs"
+    ],
+    "exit_code": 0,
+    "output": "W1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME route not-exercised\nW1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME same-name not-exercised\nW1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME restart not-exercised\nW1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME atomic not-exercised\nW1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME expiry not-exercised\nW1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME cleanup not-exercised\nW1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME redaction not-exercised\nD1 mutation harness: executed=149 not_exercised=7\nD1 mutation harness: all exercised controls discriminate\nSTATE executed=149 not_exercised=7 fail=0\nW1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME route killed\nW1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME same-name killed\nW1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME restart killed\nW1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME atomic killed\nW1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME expiry killed\nW1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME cleanup killed\nW1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME redaction killed\nD1 mutation harness: executed=156 not_exercised=0\nD1 mutation harness: all exercised controls discriminate\nSTATE executed=156 not_exercised=0 fail=0\nD1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-killed baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-executed baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION silent-skip baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION skip-sets-failure baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION obsolete-executed-total baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATIONS executed=5 killed=5\n\u2714 selected skipped baselines are loud, separately counted, and do not fail the harness (20.316208ms)\n\u2714 a running baseline retains all original kill requirements (103.34275ms)\n\u2714 skip classification preserves prior failures and refuses missing accounting (44.222375ms)\n\u2714 skip parsing uses the selected test's actual TAP reason, not unrelated skips (65.028583ms)\n\u2714 the control kills false execution, false kill, silent skip, and obsolete total mutations (278.099833ms)\n\u2139 tests 5\n\u2139 suites 0\n\u2139 pass 5\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 545.0715\n"
+  },
+  {
+    "command": [
+      "bash",
+      "-n",
+      "scripts/run-d1-mutation-harness",
+      "scripts/run-db-tests"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "db:test"
+    ],
+    "exit_code": 0,
+    "output": "\n> engramport@0.1.0 db:test\n> bash scripts/run-db-tests\n\nW1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME route not-exercised\nW1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME same-name not-exercised\nW1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME restart not-exercised\nW1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME atomic not-exercised\nW1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME expiry not-exercised\nW1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME cleanup not-exercised\nW1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal\nOUTCOME redaction not-exercised\nD1 mutation harness: executed=149 not_exercised=7\nD1 mutation harness: all exercised controls discriminate\nSTATE executed=149 not_exercised=7 fail=0\nW1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME route killed\nW1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME same-name killed\nW1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME restart killed\nW1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME atomic killed\nW1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME expiry killed\nW1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME cleanup killed\nW1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=1 forbidden=t restored=0\nOUTCOME redaction killed\nD1 mutation harness: executed=156 not_exercised=0\nD1 mutation harness: all exercised controls discriminate\nSTATE executed=156 not_exercised=0 fail=0\nD1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-killed baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-executed baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION silent-skip baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION skip-sets-failure baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATION obsolete-executed-total baseline=0 applied=t control=1 restored=0 killed=t\nD1_OIDC_CLASSIFICATION_MUTATIONS executed=5 killed=5\n\u2714 selected skipped baselines are loud, separately counted, and do not fail the harness (22.844167ms)\n\u2714 a running baseline retains all original kill requirements (106.929958ms)\n\u2714 skip classification preserves prior failures and refuses missing accounting (48.182833ms)\n\u2714 skip parsing uses the selected test's actual TAP reason, not unrelated skips (66.923333ms)\n\u2714 the control kills false execution, false kill, silent skip, and obsolete total mutations (295.332833ms)\n\u2139 tests 5\n\u2139 suites 0\n\u2139 pass 5\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 572.843833\nDOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock\nDOCKER_GATE_SKIP gate=d1:mutation reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock\n"
+  },
+  {
+    "command": [
+      "bash",
+      "scripts/run-d1-mutation-harness"
+    ],
+    "exit_code": 0,
+    "output": "DOCKER_GATE_SKIP gate=d1:mutation reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock\n"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/docker-gates.test.mjs",
+      "tests/db-test-lock.test.mjs",
+      "tests/repository-surface-policy.test.mjs"
+    ],
+    "exit_code": 0,
+    "output": "\u2714 both database entrypoints refuse a concurrent caller and leave the holder unaffected (148.644916ms)\n\u2714 a SIGKILL-stale lock is recovered by the other entrypoint (89.416625ms)\nDOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1\n\u2714 every absent Docker gate emits exactly one named reason (0.964833ms)\n\u2714 CI and required Docker refuse missing endpoints without successful skips (0.203166ms)\n\u2714 reachable Docker continues without skip output even in required mode (0.047708ms)\n\u2714 silent-skip mutation is killed by the same output control (1.674833ms)\n\u2714 real entry points skip loudly locally, refuse in CI, and continue when Docker responds (2579.926541ms)\nACTOR_REGISTRY_DRIFT_CHECK actors=3 scope=dirty-tree normalized=true disjoint=true\n\u2714 actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint (21.651875ms)\n\u2714 registry drift check passes when a clean checkout committed materially wrong registry bytes (111.834958ms)\n\u2714 actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities (2.059208ms)\nREPOSITORY_SURFACE_POLICY tracked=1211 actor_rule=true drift_rule=true shared_rule=true unaccounted=0\n\u2714 tracked repository paths are covered only by explicit written surfaces (25.037667ms)\n\u2139 tests 11\n\u2139 suites 0\n\u2139 pass 11\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 2618.067\n"
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exit_code": 0,
+    "output": "\n> engramport@0.1.0 lint\n> eslint . --ignore-pattern dist --ignore-pattern '**/dist/**' --ignore-pattern .next\n\n"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "output": ""
+  }
+]

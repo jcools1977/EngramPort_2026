@@ -1,0 +1,32 @@
+[
+  {
+    "criterion_id": "not-exercised-is-loud",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-harness-oidc-results.md#sha256=3b280fd4bbd403e808fe6b6a0ba7fdad3ccd68acbe7c7c64cf42f148c8254e05"
+      }
+    ]
+  },
+  {
+    "criterion_id": "exercised-unchanged",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-harness-oidc-results.md#sha256=3b280fd4bbd403e808fe6b6a0ba7fdad3ccd68acbe7c7c64cf42f148c8254e05"
+      }
+    ]
+  },
+  {
+    "criterion_id": "harness-does-not-fail-on-skip",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/d1-harness-oidc-results.md#sha256=3b280fd4bbd403e808fe6b6a0ba7fdad3ccd68acbe7c7c64cf42f148c8254e05"
+      }
+    ]
+  }
+]

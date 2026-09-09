@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
 set -uo pipefail
+# These functions are sourced by the Docker-free classification control below.
+# A successful process exit alone does not prove that the selected test ran.
+d1_oidc_skip_reason(){
+  local baseline="$1" baseline_log="$2" pattern="$3"
+  [ "$baseline" = 0 ] || return 1
+  sed -nE "s/^ok [0-9]+ - ${pattern} # SKIP (.+)$/\\1/p" "$baseline_log" | head -1
+}
+d1_oidc_classify(){
+  local pattern="$1" runtime="$2" reason="$3" base="$4" applied="$5" after="$6" forbidden="$7" restored="$8"
+  if [ "$base" = 0 ] && [ -n "$reason" ]; then
+    printf 'W1_1_OIDC_DURABLE_%s not-exercised runtime=%s reason=%s\n' "${pattern^^}" "$runtime" "$reason"
+    not_exercised=$((not_exercised+1))
+    oidc_outcome=not-exercised
+    return 0
+  fi
+  printf 'W1_1_OIDC_DURABLE_%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "${pattern^^}" "$base" "$applied" "$after" "$forbidden" "$restored"
+  executed=$((executed+1))
+  if [ "$base" = 0 ] && [ "$applied" = t ] && [ "$after" != 0 ] && [ "$forbidden" = t ] && [ "$restored" = 0 ]; then
+    oidc_outcome=killed
+  else
+    oidc_outcome=failed
+    fail=1
+  fi
+}
+d1_summary(){
+  [ "$((executed+not_exercised))" = 156 ] || fail=1
+  printf 'D1 mutation harness: executed=%s not_exercised=%s\n' "$executed" "$not_exercised"
+  [ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; return 1; }
+  echo 'D1 mutation harness: all exercised controls discriminate'
+}
+# Sourcing exposes only the classification functions, with no runtime side effects.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return 0; fi
 # A lock probe exercises serialization only and does not require Docker.
 if [[ "${1:-}" != "--lock-probe" ]]; then
   docker_gate_rc=0
@@ -35,7 +67,7 @@ run_w1_1_oidc(){ local module="$1" pattern="$2"; W1_1_OIDC_VERIFIER_MODULE="$mod
 assert_w1_1_oidc(){ local module="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc "$module" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_oidc_client(){ local module_root="$1" pattern="$2"; W1_1_OIDC_CLIENT_MODULE_ROOT="$module_root" W1_1_OIDC_CLIENT_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-client.test.mjs"; }
 assert_w1_1_oidc_client(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_client "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
-run_w1_1_oidc_durable(){ local module_root="$1" pattern="$2"; W1_1_OIDC_DURABLE_MODULE_ROOT="$module_root" W1_1_OIDC_DURABLE_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-durable.test.mjs"; }
+run_w1_1_oidc_durable(){ local module_root="$1" pattern="$2"; W1_1_OIDC_DURABLE_MODULE_ROOT="$module_root" W1_1_OIDC_DURABLE_CASE="$pattern" node --test --test-reporter=tap --test-timeout=10000 "$root_dir/tests/workspace-oidc-durable.test.mjs"; }
 assert_w1_1_oidc_durable(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_durable "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 run_w1_1_oidc_provider(){ local module_root="$1" pattern="$2"; W1_1_OIDC_PROVIDER_MODULE_ROOT="$module_root" W1_1_OIDC_PROVIDER_CASE="$pattern" node --test --test-timeout=10000 "$root_dir/tests/workspace-oidc-provider.test.mjs"; }
 assert_w1_1_oidc_provider(){ local module_root="$1" pattern="$2" out rc; out=$(mktemp); run_w1_1_oidc_provider "$module_root" "$pattern" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
@@ -611,6 +643,8 @@ capture_w1_7(){ local module="$1" pattern="$2" log="$3"; run_w1_7 "$module" "$pa
 mapfile -t MUTATIONS < <(cat "$root_dir/tests/failure/d1-mutations.txt" "$root_dir/tests/failure/d2-mutations.txt" "$root_dir/tests/failure/d3-mutations.txt" "$root_dir/tests/failure/w1-8-mutations.txt" "$root_dir/tests/failure/w1-1-mutations.txt" "$root_dir/tests/failure/w1-1-lifecycle-mutations.txt" "$root_dir/tests/failure/w1-1-manager-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-client-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-durable-mutations.txt" "$root_dir/tests/failure/w1-1-oidc-provider-mutations.txt" "$root_dir/tests/failure/w1-1-binding-mutations.txt")
 if [ "${1:-}" = "--negative" ]; then MUTATIONS=("NOOP|SELECT 1;|SELECT false"); fi
 executed=0
+not_exercised=0
+node_runtime="$(node --version)"
 for line in "${MUTATIONS[@]}"; do
   IFS='|' read -r name mutation check <<< "$line"
   if [[ "$mutation" = PORT_WATCH_* ]]; then
@@ -1018,14 +1052,20 @@ for line in "${MUTATIONS[@]}"; do
         cleanup) marker=W1_1_OIDC_DURABLE_CLEANUP_REMOVED; expected='W1_1_OIDC_DURABLE cleanup scheduled=true claimed=204/true alarm=true' ;;
         redaction) marker=W1_1_OIDC_DURABLE_REDACTION_REMOVED; expected='metadata=alarmAt,codeVerifier,expiresAt,nonce,present,status' ;;
       esac
-      base=$(assert_w1_1_oidc_durable "$root_dir" "$pattern")
+      baseline_log="$mutation_dir/w1-1-oidc-durable-$pattern-baseline.log"
+      run_w1_1_oidc_durable "$root_dir" "$pattern" >"$baseline_log" 2>&1;base=$?
+      reason=$(d1_oidc_skip_reason "$base" "$baseline_log" "$pattern")
+      if [ -n "$reason" ]; then
+        d1_oidc_classify "$pattern" "$node_runtime" "$reason" "$base" f 0 f 0
+        continue
+      fi
+      [ "$base" = 0 ] || cat "$baseline_log" >&2
       variant="$mutation_dir/w1-1-oidc-durable-$pattern";make_w1_1_oidc_durable_variant "$variant" "$pattern" || { fail=1;continue; }
       if grep -Rq "$marker" "$variant";then applied=t;else applied=f;fi
       log="$mutation_dir/w1-1-oidc-durable-$pattern.log";run_w1_1_oidc_durable "$variant" "$pattern" >"$log" 2>&1;after=$?
       forbidden=f;grep -Fq "$expected" "$log"&&forbidden=t;[ "$forbidden" = t ]||cat "$log" >&2
       restored=$(assert_w1_1_oidc_durable "$root_dir" "$pattern")
-      printf 'W1_1_OIDC_DURABLE_%s baseline=%s applied=%s after=%s forbidden=%s restored=%s\n' "${pattern^^}" "$base" "$applied" "$after" "$forbidden" "$restored"
-      executed=$((executed+1));[ "$base" = 0 ]&&[ "$applied" = t ]&&[ "$after" != 0 ]&&[ "$forbidden" = t ]&&[ "$restored" = 0 ]||fail=1
+      d1_oidc_classify "$pattern" "$node_runtime" "" "$base" "$applied" "$after" "$forbidden" "$restored"
     done
     continue
   fi
@@ -1674,7 +1714,6 @@ if [ "${1:-}" != "--negative" ]; then
   build >/dev/null 2>&1
   printf 'D4_M8_ACTOR_CLASS baseline=%s applied=%s after=%s forbidden=%s restored=0\n' "$d4_base" "$d4_applied" "$d4_after" "$d4_forbidden"
   executed=$((executed+1)); [ "$d4_base" != 0 ] && [ "$d4_applied" = t ] && [ "$d4_after" = 0 ] && [ "$d4_forbidden" = t ] || fail=1
-  [ "$executed" = 156 ] || fail=1
 fi
 if [ "${1:-}" = "--negative" ]; then echo 'NOOP false discrimination correctly rejected' >&2; exit 1; fi
-[ "$fail" = 0 ] || { echo 'D1 mutation harness failed' >&2; exit 1; }; echo "D1 mutation harness: all controls discriminate (executed=$executed)"
+d1_summary

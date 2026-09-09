@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ "${1:-}" != "--lock-probe" ]]; then
+  node --test "$(dirname "$0")/../tests/d1-oidc-classification.test.mjs"
+fi
 # A lock probe exercises serialization only and does not require Docker.
 if [[ "${1:-}" != "--lock-probe" ]]; then
   docker_gate_rc=0
