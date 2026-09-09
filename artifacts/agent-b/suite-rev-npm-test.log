@@ -1,0 +1,219 @@
+
+> engramport@0.1.0 test
+> npm run docker-gates:test && npm run docker:test && npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run scan:append:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs
+
+
+> engramport@0.1.0 docker-gates:test
+> node --test tests/docker-gates.test.mjs tests/oidc-runtime-gates.test.mjs
+
+DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ every absent Docker gate emits exactly one named reason (0.8045ms)
+✔ CI and required Docker refuse missing endpoints without successful skips (0.163958ms)
+✔ reachable Docker continues without skip output even in required mode (0.038833ms)
+✔ silent-skip mutation is killed by the same output control (1.517875ms)
+✔ real entry points skip loudly locally, refuse in CI, and continue when Docker responds (630.068959ms)
+OIDC_RUNTIME_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ known-bad OIDC runtime emits exactly one runtime and reason line (0.531625ms)
+✔ other runtimes continue without a skip (0.437625ms)
+✔ silent OIDC skip mutation is killed by the output control (1.244625ms)
+✔ durable entry point exits zero with one loud skip on Node 26.5.0 (144.531083ms)
+✔ Node 22 CI explicitly invokes session tests including the durable entry point (0.26375ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 666.397417
+
+> engramport@0.1.0 docker:test
+> npm run w1-7:test && npm run db:test && npm run kms:test
+
+
+> engramport@0.1.0 w1-7:test
+> node --test tests/wizard-w1-7.test.mjs
+
+DOCKER_GATE_SKIP gate=w1-7:canary reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+﹣ section 10 canary observes ten vulnerable sinks and protects ten signing paths (0.417125ms) # SKIP
+✔ Vault boundary validates response, path, absence, token confinement (0.650709ms)
+✔ retention clock starts (0.082ms)
+✔ Vault token detector coverage and clean near matches (1.360542ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 465.229709
+
+> engramport@0.1.0 db:test
+> bash scripts/run-db-tests
+
+DOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+DOCKER_GATE_SKIP gate=d1:mutation reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 kms:test
+> bash scripts/run-kms-tests
+
+DOCKER_GATE_SKIP gate=kms:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 proof
+> npm run proof:verify && npm run proof:test
+
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 507 events across 103 thread(s) and 3 actors
+
+> engramport@0.1.0 proof:test
+> node --test tests/git-v0.test.mjs
+
+✔ valid registered-actor relay verifies (82.628958ms)
+✔ actor record filename is bound to its declared slug (172.669208ms)
+✔ verification refuses unregistered Markdown event files while ignoring empty directories (466.422667ms)
+✔ verification aligns recursive Markdown discovery with validation and ignores non-events (380.6385ms)
+✔ uppercase Markdown forgery is accounted for and fails by path (240.166209ms)
+✔ event extension policy is shared by inbox while normal append stays lowercase (503.743875ms)
+events/agent-b/20260909T125419Z_01a0863b-c5ef-742a-9c19-584e981184b2.md
+✔ append with an empty artifacts flag preserves artifact-free append behavior (485.741ms)
+events/agent-b/20260909T125419Z_01a0863b-c7da-7bab-b098-0f7ffa700b15.md
+events/agent-b/20260909T125420Z_01a0863b-c919-7795-995f-4b60f4c24790.md
+✔ CLI terminal append normalizes --next null before hashing and preserves next validation (994.621792ms)
+events/agent-b/20260909T125420Z_01a0863b-cbc0-7a37-8c63-fc5cf6c69d54.md
+✔ append refuses an unrecognized flag before writing and preserves known-good behavior (424.243625ms)
+events/agent-b/20260909T125421Z_01a0863b-cd62-778c-a3b4-4d5d36c35e85.md
+✔ append refuses a second thread root without writing an event (583.826291ms)
+✔ exported append and inbox core preserve the event wire surface (498.580708ms)
+✔ CLI re-exports the same event-core binding the SDK must consume (0.124625ms)
+✔ version-1 retry returns the existing event and preserves event count (513.911083ms)
+✔ version-1 retry identity collision raises a distinct error without writing (508.033209ms)
+✔ version-1 completion requires exact criterion evidence coverage (849.639167ms)
+✔ live writer refuses version-0 append after cutover while historical v0 verifies (236.221125ms)
+✔ listInbox and Port Watch consume the same answered-work resolver (602.950958ms)
+✔ fresh copies reproduce the identical derived work-delivery set (518.951417ms)
+✔ pure work resolver excludes an answered event without project sequence fields (0.155084ms)
+✔ normal CLI execution cannot activate the harness core override (290.84775ms)
+✔ CLI append and inbox delegate to the exported core (498.93025ms)
+✔ modified content is rejected (241.768916ms)
+✔ unknown schema fields are rejected (243.488958ms)
+✔ actor directory ownership is enforced (238.406709ms)
+✔ unknown reply targets are rejected (246.361083ms)
+✔ strict relay actor transitions are enforced (248.653834ms)
+✔ reply cycles are rejected (245.643167ms)
+✔ missing artifacts are rejected (250.140875ms)
+✔ artifact modification is rejected (268.658625ms)
+✔ artifact references must remain in author prefix (261.325666ms)
+✔ filename identity is enforced (259.994625ms)
+✔ free_form permits one actor to publish sequential events (276.575667ms)
+✔ free_form permits sibling replies (237.924542ms)
+✔ coordinator_led permits coordinator followed by two worker replies (232.540791ms)
+✔ strict_relay refuses an actor replying to itself and names the mode (235.994ms)
+✔ strict_relay refuses a second reply and names the mode (230.857625ms)
+✔ free_form refuses an unknown parent and names the mode (234.456541ms)
+✔ free_form refuses a cycle (287.017167ms)
+✔ free_form refuses a second root with a precise mode error (235.432ms)
+✔ coordinator_led refuses a worker root (232.282709ms)
+✔ coordinator_led refuses a worker replying to a worker (245.6445ms)
+✔ unknown thread modes fail closed (239.317875ms)
+✔ malformed thread mode declarations fail closed (237.740125ms)
+✔ a mode may be declared while a thread is empty (232.511958ms)
+✔ changing a declared mode after the first event violates its binding (237.484458ms)
+✔ a per-thread mode declaration cannot be added after the first event (230.725209ms)
+✔ changing mode cannot retroactively legitimize an invalid strict_relay branch (235.406292ms)
+✔ coordinator_led requires a coordinator (233.335334ms)
+✔ coordinator_led refuses an unknown coordinator (234.647791ms)
+✔ free_form supports invitation issuance, accepted, and terminal closure without an invitee actor (250.944167ms)
+✔ free_form supports invitation issuance, rejected, and terminal closure without an invitee actor (232.63625ms)
+✔ free_form supports invitation issuance, expired, and terminal closure without an invitee actor (232.308875ms)
+✔ free_form supports invitation issuance, revoked, and terminal closure without an invitee actor (230.085709ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16682.019833
+
+> engramport@0.1.0 identity:test
+> node --test tests/commit-identity.test.mjs
+
+IDENTITY_REFUSAL unrecorded
+IDENTITY_REFUSAL nonexistent
+IDENTITY_REFUSAL author
+IDENTITY_REFUSAL signer
+IDENTITY_REFUSAL date
+IDENTITY_REFUSAL finding
+IDENTITY_REFUSAL duplicate
+IDENTITY_REFUSAL array
+IDENTITY_REFUSAL fields
+IDENTITY_REFUSAL full-sha
+IDENTITY_REFUSAL finding-format
+IDENTITY_REFUSAL unverified
+IDENTITY_REFUSAL not-mismatch
+IDENTITY_REFUSAL outside-history
+agent-commit: signing key at /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-uqIQ26/foreign.pub is not bound to agent-b@engramport.local in /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-uqIQ26/allowed_signers
+agent-commit: refusing to commit under a foreign or unverified signing key
+✖ repository signed mismatches require exact accepted records (963.190375ms)
+✔ record validates commits and each stated fact with paired refusals (270.721667ms)
+✔ agent-commit permits the actor key and refuses a foreign resolved key before commit (112.949792ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1382.198917
+
+✖ failing tests:
+
+test at tests/commit-identity.test.mjs:14:1
+✖ repository signed mismatches require exact accepted records (963.190375ms)
+  AssertionError [ERR_ASSERTION]: unrecorded signature/author disagreement:
+  dd73f52214b4aee364c05af323fe396a4b5a20bd author=agent-b@engramport.local signer=luke@covenantsystems.ai
+  d1fca740bacb2fd249077ee80dca766a37cebb6b author=agent-b@engramport.local signer=luke@covenantsystems.ai
+  9317124939f26d6af4bd5a3a1a0a596b2cfad257 author=agent-b@engramport.local signer=luke@covenantsystems.ai
+  + actual - expected
+  
+  + [
+  +   {
+  +     author: 'agent-b@engramport.local',
+  +     date: '2026-09-09T08:36:41-04:00',
+  +     sha: 'dd73f52214b4aee364c05af323fe396a4b5a20bd',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   },
+  +   {
+  +     author: 'agent-b@engramport.local',
+  +     date: '2026-09-09T08:22:28-04:00',
+  +     sha: 'd1fca740bacb2fd249077ee80dca766a37cebb6b',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   },
+  +   {
+  +     author: 'agent-b@engramport.local',
+  +     date: '2026-09-09T08:22:10-04:00',
+  +     sha: '9317124939f26d6af4bd5a3a1a0a596b2cfad257',
+  +     signer: 'luke@covenantsystems.ai',
+  +     status: 'G'
+  +   }
+  + ]
+  - []
+  
+      at identityControl (file:///Users/an2b/an2b/products/EngramPORT-suite2/tests/identity-control.mjs:42:10)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-suite2/tests/commit-identity.test.mjs:15:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { sha: 'dd73f52214b4aee364c05af323fe396a4b5a20bd', status: 'G', author: 'agent-b@engramport.local', signer: 'luke@covenantsystems.ai', date: '2026-09-09T08:36:41-04:00' }, { sha: 'd1fca740bacb2fd249077ee80dca766a37cebb6b', status: 'G', author: 'agent-b@engramport.local', signer: 'luke@covenantsystems.ai', date: '2026-09-09T08:22:28-04:00' }, { sha: '9317124939f26d6af4bd5a3a1a0a596b2cfad257', status: 'G', author: 'agent-b@engramport.local', signer: 'luke@covenantsystems.ai', date: '2026-09-09T08:22:10-04:00' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

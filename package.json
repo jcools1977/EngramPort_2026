@@ -64,7 +64,7 @@
     "completion:test": "node --test tests/completion-status.test.mjs",
     "scan:append:test": "node --test tests/append-scan-policy.test.mjs && node tests/run-append-scan-mutations.mjs",
     "docker:test": "npm run w1-7:test && npm run db:test && npm run kms:test",
-    "docker-gates:test": "node --test tests/docker-gates.test.mjs"
+    "docker-gates:test": "node --test tests/docker-gates.test.mjs tests/oidc-runtime-gates.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

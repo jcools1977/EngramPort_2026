@@ -4,6 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import test,{after} from "node:test";
 import { Miniflare, NoOpLog } from "miniflare";
+import { oidcRuntimeGate } from "./oidc-runtime-gate.mjs";
+
+const runtimeAllowed=oidcRuntimeGate();
 
 const root=process.env.W1_1_OIDC_DURABLE_MODULE_ROOT??path.resolve(import.meta.dirname,"..");
 const selected=process.env.W1_1_OIDC_DURABLE_CASE??"all";
@@ -12,14 +15,8 @@ const ISSUER="https://synthetic-issuer.invalid",CLIENT="engramport-durable-synth
 const temporaryDirectories=new Set();
 after(async()=>{for(const directory of temporaryDirectories)await rm(directory,{recursive:true,force:true});});
 
-function check(name,operation){test(name,{skip:selected!=="all"&&selected!==name},operation);}
+function check(name,operation){if(runtimeAllowed)test(name,{skip:selected!=="all"&&selected!==name},operation);}
 async function runtime(persist,ttl=1000){
-  // The local Node 26.5.0/Miniflare reproducer aborts in InternalCallbackScope::Close
-  // before any OIDC worker request completes. Keep this a failure, never a skip.
-  assert.notEqual(process.versions.node,"26.5.0",
-    "OIDC_RUNTIME_VERSION_REFUSED: Node 26.5.0 aborts in InternalCallbackScope::Close " +
-    "(execution_async_id != 0) during Miniflare startup after asynchronous filesystem work; " +
-    "upstream defect identity is unconfirmed. Rerun on the CI Node 22 runtime.");
   return new Miniflare({
     modules:true,
     modulesRoot:root,

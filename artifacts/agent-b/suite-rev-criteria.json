@@ -1,0 +1,32 @@
+[
+  {
+    "criterion_id": "oidc-loud-skip",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/suite-rev-results.md#sha256=152b56fec878ddc1b361efa85e206fbef7b1868bd17e8a4dbeaa8bbc2022cde7"
+      }
+    ]
+  },
+  {
+    "criterion_id": "oidc-runs-elsewhere",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/suite-rev-results.md#sha256=152b56fec878ddc1b361efa85e206fbef7b1868bd17e8a4dbeaa8bbc2022cde7"
+      }
+    ]
+  },
+  {
+    "criterion_id": "npm-test-green",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/suite-rev-results.md#sha256=152b56fec878ddc1b361efa85e206fbef7b1868bd17e8a4dbeaa8bbc2022cde7"
+      }
+    ]
+  }
+]

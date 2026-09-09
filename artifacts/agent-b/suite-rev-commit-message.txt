@@ -1,0 +1,6 @@
+Skip the known-bad OIDC runtime loudly and retain identity blocker evidence
+
+Complete the bounded suite-green-without-docker revision for agent-a.
+Add an exact Node 26.5.0 skip with a killed silent-skip mutation and explicit
+Node 22 session coverage in CI. Record the failed full suite and successful
+remaining-gates diagnostic without changing inherited identity evidence.

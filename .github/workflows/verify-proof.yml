@@ -21,6 +21,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run proof
+      - name: Run OIDC sessions on Node 22
+        run: npm run session:test
 
       - name: Require Docker gates
         run: npm run docker-gates:test && npm run docker:test
