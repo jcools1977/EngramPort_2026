@@ -19,7 +19,7 @@
   },
   "type": "module",
   "bin": {
-    "engram": "./dist/cli.mjs"
+    "engram": "dist/cli.mjs"
   },
   "exports": {
     ".": "./dist/index.mjs"

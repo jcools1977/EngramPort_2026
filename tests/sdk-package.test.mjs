@@ -33,7 +33,7 @@ test("publishable SDK manifest exposes only the bundled artifact", async () => {
   assert.equal(manifest.publishConfig.access, "public", "a scoped package must declare public access");
   assert.equal(manifest.name, "@engramport/sdk", "the unscoped engramport package is not replaced (ADR 0048)");
   assert.equal(manifest.exports["."], "./dist/index.mjs");
-  assert.deepEqual(manifest.bin, { engram: "./dist/cli.mjs" });
+  assert.deepEqual(manifest.bin, { engram: "dist/cli.mjs" });
   assert.deepEqual(manifest.files, ["dist", "README.md"]);
   assert.equal(manifest.license, "MIT");
   assert.equal(manifest.repository.directory, "packages/sdk");
