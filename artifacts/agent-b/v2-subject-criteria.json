@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "schema-and-protocol",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/v2-subject-results.md#sha256=a1da7f8bb0643221a211744a2e3a12f0f3fed6b11afbe41e1763e3d0ed888ae2"
+      }
+    ]
+  },
+  {
+    "criterion_id": "verifier-refuses-free-text",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/v2-subject-results.md#sha256=a1da7f8bb0643221a211744a2e3a12f0f3fed6b11afbe41e1763e3d0ed888ae2"
+      }
+    ]
+  },
+  {
+    "criterion_id": "mutation-kills",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/v2-subject-results.md#sha256=a1da7f8bb0643221a211744a2e3a12f0f3fed6b11afbe41e1763e3d0ed888ae2"
+      }
+    ]
+  },
+  {
+    "criterion_id": "history-verifies",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/v2-subject-results.md#sha256=a1da7f8bb0643221a211744a2e3a12f0f3fed6b11afbe41e1763e3d0ed888ae2"
+      }
+    ]
+  }
+]

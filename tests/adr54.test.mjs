@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -38,7 +39,7 @@ function observed(label, value, expected = true, pattern) {
   return value;
 }
 const unknown = () => ({ version: null, platform: null, tree_shape: null, observed_at: null });
-const environment = (platform = "linux", observed_at = "2026-09-10T18:00:00Z") => ({ version: { source_revision: "abc", dirty: false, runtime: "node22", subject: "fixture" }, platform, tree_shape: "root", observed_at });
+const environment = (platform = "linux", observed_at = "2026-09-10T18:00:00Z") => ({ version: { source_revision: "abc", dirty: false, runtime: "node22", subject: "worktree:fixture" }, platform, tree_shape: "root", observed_at });
 async function handoff(root, thread = "t", criteriaExtra = {}) {
   const seed = observed("seed", await add(root, { thread: `seed-${now}`, next: null }));
   const evidence = [{ type: "event", event_id: seed.event_id }];
@@ -235,4 +236,37 @@ test("ADR54 v2 handoff schema and restatement schema", async (t) => {
 test("ADR54 restatement shape guard", async (t) => {
   const root = project(t), { h, evidence } = await handoff(root);
   observed("restatement-extra", await add(root, { thread: "restated", schemaVersion: 2, type: "handoff", boundedContext: evidence, completionCriteria: [{ id: "c1", statement: "New assumption", evidence_classes: ["event"], restates: { handoff_id: h.event_id, environment: unknown(), extra: true } }] }), false, /invalid restates/);
+});
+
+for (const [label, subject, accepted] of [
+  ["blob", `blob:${"a".repeat(40)}`, true],
+  ["worktree", "worktree:packages/sdk/src/cli.mjs", true],
+  ["null", null, true],
+  ["bare", "packages/sdk/src/cli.mjs", false],
+  ["release", "0.5.0", false],
+  ["short-blob", "blob:abc", false],
+  ["uppercase-blob", `blob:${"A".repeat(40)}`, false],
+  ["empty-worktree", "worktree:", false],
+  ["space-worktree", "worktree:a b", false],
+  ["long-worktree", `worktree:${"a".repeat(201)}`, false],
+  ["max-worktree", `worktree:${"a".repeat(200)}`, true],
+]) test(`ADR54 subject ${label}`, async (t) => {
+  const root = project(t), { h, evidence } = await handoff(root);
+  const env = environment(); env.version.subject = subject;
+  const results = [result(evidence, "satisfied", env)];
+  const response = await completion(root, h, results);
+  observed(`subject-${label}`, response, accepted, accepted ? undefined : /V2_ENV_SUBJECT/);
+  // Validate schema independently, including refused candidates.
+  const meta = { schema_version: 2, id: "01900000-0000-7000-8000-000000000000", thread: "t", from: "b", type: "completion", occurred_at: "2026-09-10T18:00:00Z", in_reply_to: h.event_id, next: null, content_sha256: "a".repeat(64), intent_sha256: "a".repeat(64), criteria_results: results };
+  assert.equal(validates(meta), accepted, JSON.stringify(validates.errors));
+  if (accepted) observed(`subject-${label}-verify`, await verifyLog(root));
+  // Exercise the actual CLI and its unchanged error propagation.
+  writeFileSync(path.join(root, "body.md"), "Subject control.\n");
+  writeFileSync(path.join(root, "results.json"), JSON.stringify(results));
+  const cli = path.join(source, process.env.ADR54_USE_BUNDLE ? "packages/sdk/dist/cli.mjs" : "packages/sdk/src/cli.mjs");
+  const command = spawnSync(process.execPath, [cli, "append", "--actor", "b", "--thread", "t", "--type", "completion", "--reply", h.event_id, "--next", "null", "--body", "body.md", "--criteria-results", "results.json"], { cwd: root, encoding: "utf8", timeout: 30000 });
+  console.log(`ADR54_CLI subject-${label} exit=${command.status} output=${JSON.stringify(command.stdout + command.stderr)}`);
+  assert.equal(command.status, accepted ? 0 : 1);
+  if (!accepted) assert.match(command.stdout + command.stderr, /V2_ENV_SUBJECT/);
+  observed(`subject-${label}-cli-verify`, await verifyLog(root));
 });

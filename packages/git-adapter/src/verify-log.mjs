@@ -298,6 +298,7 @@ function validateEnvironment(environment, label, errors) {
   if (environment.version !== undefined && environment.version !== null) {
     const v = environment.version;
     if (!exactObject(v, ["source_revision", "dirty", "runtime", "subject"]) || ["source_revision", "runtime", "subject"].some((key) => v[key] !== null && typeof v[key] !== "string") || (v.dirty !== null && typeof v.dirty !== "boolean")) errors.push(`${label}: environment version must have nullable source_revision, dirty, runtime, subject`); /* V2_ENV_VERSION */
+    if (v && v.subject !== undefined && v.subject !== null && (typeof v.subject !== "string" || !/^(?:blob:[0-9a-f]{40}|worktree:[^\s]{1,200})$/.test(v.subject))) errors.push(`${label}: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null`); /* V2_ENV_SUBJECT */
   }
 }
 

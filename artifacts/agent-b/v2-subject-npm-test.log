@@ -1,0 +1,2243 @@
+
+> engramport@0.1.0 test
+> npm run docker-gates:test && npm run d1:controls:test && npm run docker:test && npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run withdrawal:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run scan:append:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs
+
+
+> engramport@0.1.0 docker-gates:test
+> node --test tests/docker-gates.test.mjs tests/oidc-runtime-gates.test.mjs
+
+DB_SDK_PRECONDITION absent=one-line-refusal docker-calls=0 present=synthetic-compose-up removed-check=killed always-refuse=killed restored=passed
+SDK_WORKFLOW_ORDER baseline=passed missing-build=killed late-build=killed restored=passed
+DOCKER_SHIM_CONTRACT baseline=passed added-probe=killed changed-list=killed restored=passed
+DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+DOCKER_SHIM_CONTINUATION core_pattern=answered inventory=execution-reached missing-answer=killed restored=passed scope=synthetic
+✔ database runner refuses an absent SDK before Docker and continues with a present bundle (389.808792ms)
+✔ Actions builds the SDK before requiring Docker gates (0.227667ms)
+✔ canary shim requires review when the fixture adds an unanswered precondition (0.748708ms)
+✔ every absent Docker gate emits exactly one named reason (0.259417ms)
+✔ CI and required Docker refuse missing endpoints without successful skips (0.077417ms)
+✔ reachable Docker continues without skip output even in required mode (0.039083ms)
+✔ silent-skip mutation is killed by the same output control (0.946875ms)
+✔ Docker-free D1 controls run in the npm test chain before docker:test (0.445542ms)
+✔ real entry points skip loudly locally, refuse in CI, and continue when Docker responds (931.194042ms)
+OIDC_RUNTIME_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+✔ known-bad OIDC runtime emits exactly one runtime and reason line (0.560041ms)
+✔ other runtimes continue without a skip (0.336708ms)
+✔ silent OIDC skip mutation is killed by the output control (1.306167ms)
+✔ durable entry point exits zero with one loud skip on Node 26.5.0 (169.3845ms)
+✔ Node 22 CI explicitly invokes session tests including the durable entry point (0.570958ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1364.54675
+
+> engramport@0.1.0 d1:controls:test
+> node --test tests/d1-oidc-classification.test.mjs
+
+D1_VARIANT_DRIFT executed=125 loaded=131 synthetic_rewritten=125 failures=0
+D1_DRIFT_NEGATIVE executed=125 failures=5 correspondent-load=detected port-watch-anchor=detected
+D1_TREE_NEGATIVE executed=125 failures=1 whole-tree-rewrite=detected
+D3_CANARY_DETECTOR baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_OPERATIONAL_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_PROTECTED_OPERATION baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_REPORT_INCIDENT baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+D1_SYNTHETIC_TIMEOUT live_canary=blocked reason=no-Docker; only synthetic baselines ran
+D3_CANARY_OPERATIONAL_OBSERVER baseline=1 applied=t after=1 forbidden=f restored=1
+D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+D1_TIMEOUT_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET declared_ms=30000 scaled_canary=passed ordinary_default=timed-out budget_ms=100
+D1_REV3_REAL_FOUR
+CLI_ARGUMENT_REFUSAL baseline=0 applied=t after=1 forbidden=t restored=0
+EVENT_EXTENSION_CASE baseline=0 applied=t after=1 verifier_forbidden=t cli_forbidden=t restored=0
+SITE_UNPUBLISHED_INSTALL_CLAIM baseline=0 applied=t after=1 forbidden=t restored=0
+PORT_WATCH_SHARED_ELIGIBILITY baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: executed=4 not_exercised=0 negative_control=0 expected_total=4
+D1 mutation harness: all exercised controls discriminate
+D1_REV3_ABSENT_ANCHOR baseline=0 applied=t control=1 restored=0 killed=t
+CLI_ARGUMENT_REFUSAL applied=f mutation_error=$'[stdin]:4\nif(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);\n                          ^\n\nError: anchor absent: D1_NONEXISTENT_ANCHOR_REV3\n    at [stdin]:4:33\n    at runScriptInThisContext (node:internal/vm:219:10)\n    at node:internal/process/execution:483:12\n    at [stdin]-wrapper:6:24\n    at runScriptInContext (node:internal/process/execution:481:60)\n    at evalFunction (node:internal/process/execution:315:30)\n    at asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n\nNode.js v26.5.0' helper=make_cli_variant exit=1
+D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+D1_REV3_PRINTF_BYPASS baseline=0 applied=t control=1 restored=0 killed=t
+EVENT_EXTENSION_CASE baseline=0 applied=t after=1 verifier_forbidden=t cli_forbidden=t restored=0
+D1 mutation harness: executed=0 not_exercised=0 negative_control=0 expected_total=1
+D1 missing outcome: EVENT_EXTENSION_CASE
+D1 mutation harness failed
+D1_BOUND_INVENTORY source=artifacts/agent-a/d1-live-run-2-2026-09-09.md sha256=eb5ada7fa3ccd595064bf557aaefd367b15248414aebb7d97f45ec0e808b7337 names=156 exit=1
+D1 mutation harness: executed=147 not_exercised=7 negative_control=1 expected_total=157
+D1 unknown outcome: W1_1_MANAGER_RETENTION
+D1 missing outcome: PORT_WATCH_SHARED_ELIGIBILITY
+D1 missing outcome: SITE_UNPUBLISHED_INSTALL_CLAIM
+D1 mutation harness failed
+D1_BOUND_LIMIT inventory-only entries do not prove mutation success; no live db:test execution occurred
+D1_DERIVED_ACCOUNTING baseline_total=157 extended_total=159 baseline=0 extended=0; inventory replay only
+D1_ACCOUNTING_MUTATION drop-one-counter baseline=0 applied=t control=1 restored=0 killed=t
+D1 mutation harness: executed=155 not_exercised=0 negative_control=1 expected_total=157
+D1_ACCOUNTING_MUTATION drop-one-outcome baseline=0 applied=t control=1 restored=0 killed=t
+D1 mutation harness: executed=155 not_exercised=0 negative_control=1 expected_total=157
+D1_ACCOUNTING_MUTATION drop-noop-counter baseline=0 applied=t control=1 restored=0 killed=t
+D1 mutation harness: executed=156 not_exercised=0 negative_control=0 expected_total=157
+D1_ACCOUNTING_MUTATIONS executed=3 killed=3 survived=0
+D1_ACTUAL_BRANCHES_FIXED
+NOOP baseline=0 applied=f after=0 restored=0
+NOOP_STATE executed=0 negative_control=1
+D4_M8_ACTOR_CLASS baseline=1 applied=t after=0 forbidden=t restored=0
+D4_STATE executed=1 negative_control=1 fail=0
+D1_ACTUAL_BRANCHES_PRIOR
+NOOP_STATE executed=0
+D4_M8_ACTOR_CLASS baseline=1 applied=t after=0 forbidden=t restored=0
+D4_STATE executed=1 fail=0
+D1_AGENT_C_REWRITES fourth-import=rewritten pre-fix-bounded-context=unrewritten baseline=0 applied=t control=1 restored=0 killed=t
+AGENT_C_CREDENTIAL_REFERENCE mutant-load-failed baseline=0 applied=t after=1 error={"code":"ERR_MODULE_NOT_FOUND","message":"Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-agent-c-lh7TEH/intentionally-missing-module.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-agent-c-lh7TEH/agent-c-credential-reference.mjs"}
+D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+D1_AGENT_C_LOAD_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+AGENT_C_CREDENTIAL_REFERENCE not ok 1 - credential-reference
+AGENT_C_CREDENTIAL_SHAPE not ok 2 - credential-shape
+AGENT_C_CREDENTIAL_CONTEXT not ok 3 - credential-context
+AGENT_C_WRITE_PREFIX not ok 11 - write-prefix
+AGENT_C_TURN_ENFORCEMENT not ok 12 - turn-enforcement
+AGENT_C_REPLY_TARGET not ok 13 - reply-target
+AGENT_C_RESULT_REVIEW not ok 14 - result-review
+AGENT_C_POLLER_SILENCE not ok 15 - inbox-poller
+AGENT_C_CREDENTIAL_EGRESS not ok 16 - credential-egress
+AGENT_C_PROVIDER_DIAGNOSIS not ok 19 - provider-diagnosis
+AGENT_C_PROVIDER_ERROR_EGRESS not ok 20 - provider-error-egress
+AGENT_C_SCHEDULED_SILENCE not ok 21 - scheduled-poller-silence
+AGENT_C_CREDENTIAL_FAILURE_REPORT not ok 22 - credential-unavailable-reporting
+AGENT_C_CREDENTIAL_REFERENCE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_SHAPE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_CONTEXT baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_WRITE_PREFIX baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_TURN_ENFORCEMENT baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_REPLY_TARGET baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_RESULT_REVIEW baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_POLLER_SILENCE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_EGRESS baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_PROVIDER_DIAGNOSIS baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_PROVIDER_ERROR_EGRESS baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_SCHEDULED_SILENCE baseline=0 applied=t after=1 forbidden=t restored=0
+AGENT_C_CREDENTIAL_FAILURE_REPORT baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: executed=13 not_exercised=0 negative_control=0 expected_total=13
+D1 mutation harness: all exercised controls discriminate
+W1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME route not-exercised
+W1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME same-name not-exercised
+W1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME restart not-exercised
+W1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME atomic not-exercised
+W1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME expiry not-exercised
+W1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME cleanup not-exercised
+W1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+OUTCOME redaction not-exercised
+D1 mutation harness: executed=0 not_exercised=7 negative_control=0 expected_total=7
+D1 mutation harness: all exercised controls discriminate
+STATE executed=0 not_exercised=7 fail=0
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME route killed
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME same-name killed
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME restart killed
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME atomic killed
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME expiry killed
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME cleanup killed
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=1 forbidden=t restored=0
+OUTCOME redaction killed
+D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+D1 mutation harness: all exercised controls discriminate
+STATE executed=7 not_exercised=0 fail=0
+D1_OIDC_REAL_OUTPUT case=route command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 137.711625
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 141.001792
+D1_OIDC_REAL_OUTPUT case=same-name command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 126.091875
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.561958
+D1_OIDC_REAL_OUTPUT case=restart command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 126.443125
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.66
+D1_OIDC_REAL_OUTPUT case=atomic command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 124.61175
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.564958
+D1_OIDC_REAL_OUTPUT case=expiry command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 126.807458
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 130.163209
+D1_OIDC_REAL_OUTPUT case=cleanup command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 125.913208
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.110041
+D1_OIDC_REAL_OUTPUT case=redaction command=node --test --test-reporter=tap --test-timeout=10000 tests/workspace-oidc-durable.test.mjs exit=0
+TAP version 13
+# OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+1..0
+# Subtest: tests/workspace-oidc-durable.test.mjs
+ok 1 - tests/workspace-oidc-durable.test.mjs
+  ---
+  duration_ms: 125.464709
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.98075
+D1_OIDC_CROSSED_FIXED
+W1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME route not-exercised
+W1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME same-name not-exercised
+W1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME restart not-exercised
+W1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME atomic not-exercised
+W1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME expiry not-exercised
+W1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME cleanup not-exercised
+W1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+OUTCOME redaction not-exercised
+D1 mutation harness: executed=0 not_exercised=7 negative_control=0 expected_total=7
+D1 mutation harness: all exercised controls discriminate
+STATE executed=0 not_exercised=7 fail=0
+D1_OIDC_CROSSED_MUTANT pre-fix-classifier
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME route failed
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME same-name failed
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME restart failed
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME atomic failed
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME expiry failed
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME cleanup failed
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME redaction failed
+D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+STATE executed=7 not_exercised=0 fail=1
+D1_OIDC_CROSSED_MUTATION pre-fix-classifier baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CROSSED_MUTANT reader-marker-drift
+W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME route failed
+W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME same-name failed
+W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME restart failed
+W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME atomic failed
+W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME expiry failed
+W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME cleanup failed
+W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=0 forbidden=f restored=0
+OUTCOME redaction failed
+D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+STATE executed=7 not_exercised=0 fail=1
+D1_OIDC_CROSSED_MUTATION reader-marker-drift baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CROSSED_MUTATIONS executed=2 killed=2; only the seven selected definitions are accounted; no other executions are seeded
+D1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-killed baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-executed baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION silent-skip baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION skip-sets-failure baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATION executed-only-total baseline=0 applied=t control=1 restored=0 killed=t
+D1_OIDC_CLASSIFICATION_MUTATIONS executed=5 killed=5
+✔ D1 every source variant applies, loads, and rewrites an added import (10977.901541ms)
+✔ D1 drift control rejects a broken correspondent import and a missing Port Watch anchor (11117.864167ms)
+✔ D1 drift control rejects import rewriting in a relocatable whole-tree canary (10953.368167ms)
+✔ all five canary branches count real synthetic baseline timeouts and fail before mutation (758.639416ms)
+✔ the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration (763.388833ms)
+✔ ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout (45.061ms)
+✔ the declared canary budget overrides the default while an ordinary test retains its budget (323.186666ms)
+✔ D1 real mutation paths kill all four and restore their actual baselines (9580.275ms)
+✔ D1 nonexistent anchor is a named, counted failing outcome through the real helper (5536.34025ms)
+✔ D1 control kills an outcome printf bypass in the actual extension branch (11579.404708ms)
+✔ D1 failed helper names follow the expanded definition names (8.561ms)
+✔ D1 accounting derives its inventory and refuses the bound live inventory mismatch (21.194125ms)
+✔ D1 accounting follows added definitions and property iterations without a literal total (52.553375ms)
+✔ D1 accounting kills skipped counters, omitted output accounting, NOOP omission, and duplicate masking (238.963958ms)
+✔ D1 prior NOOP and D4 branches demonstrate one omitted count, not two (27.813833ms)
+✔ agent-c builder derives adapter rewrites including a synthetic fourth import (103.923916ms)
+✔ agent-c missing module is named, counted, and fails the actual harness branch (878.863041ms)
+✔ all declared agent-c mutants apply and produce per-case failures through the harness (16605.337042ms)
+✔ selected skipped baselines are loud, separately counted, and do not fail the harness (46.924084ms)
+✔ a running baseline retains all original kill requirements (238.855167ms)
+✔ skip classification preserves prior failures and refuses missing accounting (101.862709ms)
+✔ skip parsing uses the selected test's actual TAP reason, not unrelated skips (87.3665ms)
+✔ real durable output crosses into the classifier and kills pre-fix and marker-drift readers (1305.752459ms)
+✔ the control kills false execution, false kill, silent skip, and executed-only total mutations (672.229958ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82073.341375
+
+> engramport@0.1.0 docker:test
+> npm run w1-7:test && npm run db:test && npm run kms:test
+
+
+> engramport@0.1.0 w1-7:test
+> node --test tests/wizard-w1-7.test.mjs
+
+DOCKER_GATE_SKIP gate=w1-7:canary reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="|/usr/share/apport/apport %p %s %c %P"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="/var/lib/cores/core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core.%p"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="other-core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=""; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core\nsecond-line"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+W1_7_CANARY_CORE_PATTERN synthetic=core precondition=passed continuation=reached scope=synthetic
+✔ canary core pattern rejects incompatible synthetic host patterns before fixture work (1.259375ms)
+✔ canary core pattern accepts the synthetic plain core file and proceeds (0.068708ms)
+﹣ section 10 canary observes ten vulnerable sinks and protects ten signing paths (0.067541ms) # SKIP
+✔ Vault boundary validates response, path, absence, token confinement (0.335208ms)
+✔ retention clock starts (0.072417ms)
+✔ Vault token detector coverage and clean near matches (1.379625ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 237.46925
+
+> engramport@0.1.0 db:test
+> bash scripts/run-db-tests
+
+DOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 kms:test
+> bash scripts/run-kms-tests
+
+DOCKER_GATE_SKIP gate=kms:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 proof
+> npm run proof:verify && npm run proof:test
+
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 609 events across 129 thread(s) and 3 actors
+
+> engramport@0.1.0 proof:test
+> node --test tests/git-v0.test.mjs
+
+✔ valid registered-actor relay verifies (122.428041ms)
+✔ actor record filename is bound to its declared slug (257.127458ms)
+✔ verification refuses unregistered Markdown event files while ignoring empty directories (713.737417ms)
+✔ verification aligns recursive Markdown discovery with validation and ignores non-events (592.610542ms)
+✔ uppercase Markdown forgery is accounted for and fails by path (363.120583ms)
+✔ event extension policy is shared by inbox while normal append stays lowercase (768.682542ms)
+events/agent-b/20260910T233715Z_01a08dae-c375-7cb9-899e-a53a7f3de239.md
+✔ append with an empty artifacts flag preserves artifact-free append behavior (745.188625ms)
+events/agent-b/20260910T233716Z_01a08dae-c667-7ea0-ac75-c341606c2a5a.md
+events/agent-b/20260910T233717Z_01a08dae-c864-7e50-9466-d9d3ec9b0dee.md
+✔ CLI terminal append normalizes --next null before hashing and preserves next validation (1545.182375ms)
+events/agent-b/20260910T233718Z_01a08dae-cc6b-77ac-a07f-bc186df09482.md
+✔ append refuses an unrecognized flag before writing and preserves known-good behavior (625.933625ms)
+events/agent-b/20260910T233718Z_01a08dae-cedf-7365-b5c5-f1fe7f4528dd.md
+✔ append refuses a second thread root without writing an event (917.645875ms)
+✔ exported append and inbox core preserve the event wire surface (762.062375ms)
+✔ CLI re-exports the same event-core binding the SDK must consume (0.149667ms)
+✔ version-1 retry returns the existing event and preserves event count (782.831875ms)
+✔ version-1 retry identity collision raises a distinct error without writing (769.549625ms)
+✔ version-1 completion requires exact criterion evidence coverage (1278.446417ms)
+✔ live writer refuses version-0 append after cutover while historical v0 verifies (362.503375ms)
+✔ listInbox and Port Watch consume the same answered-work resolver (898.254125ms)
+✔ fresh copies reproduce the identical derived work-delivery set (772.163708ms)
+✔ pure work resolver excludes an answered event without project sequence fields (0.185334ms)
+✔ normal CLI execution cannot activate the harness core override (408.642375ms)
+✔ CLI append and inbox delegate to the exported core (756.437208ms)
+✔ modified content is rejected (358.171709ms)
+✔ unknown schema fields are rejected (386.368416ms)
+✔ actor directory ownership is enforced (350.964875ms)
+✔ unknown reply targets are rejected (361.17475ms)
+✔ strict relay actor transitions are enforced (359.7145ms)
+✔ reply cycles are rejected (378.186834ms)
+✔ missing artifacts are rejected (366.55175ms)
+✔ artifact modification is rejected (365.56225ms)
+✔ artifact references must remain in author prefix (361.579042ms)
+✔ filename identity is enforced (361.19375ms)
+✔ free_form permits one actor to publish sequential events (361.567416ms)
+✔ free_form permits sibling replies (367.27775ms)
+✔ coordinator_led permits coordinator followed by two worker replies (364.142791ms)
+✔ strict_relay refuses an actor replying to itself and names the mode (363.187375ms)
+✔ strict_relay refuses a second reply and names the mode (364.197333ms)
+✔ free_form refuses an unknown parent and names the mode (366.000834ms)
+✔ free_form refuses a cycle (359.091667ms)
+✔ free_form refuses a second root with a precise mode error (367.9075ms)
+✔ coordinator_led refuses a worker root (364.570166ms)
+✔ coordinator_led refuses a worker replying to a worker (364.027708ms)
+✔ unknown thread modes fail closed (358.942834ms)
+✔ malformed thread mode declarations fail closed (369.94125ms)
+✔ a mode may be declared while a thread is empty (359.954584ms)
+✔ changing a declared mode after the first event violates its binding (369.848583ms)
+✔ a per-thread mode declaration cannot be added after the first event (363.544042ms)
+✔ changing mode cannot retroactively legitimize an invalid strict_relay branch (367.68275ms)
+✔ coordinator_led requires a coordinator (365.244292ms)
+✔ coordinator_led refuses an unknown coordinator (366.932459ms)
+✔ free_form supports invitation issuance, accepted, and terminal closure without an invitee actor (362.539875ms)
+✔ free_form supports invitation issuance, rejected, and terminal closure without an invitee actor (370.225333ms)
+✔ free_form supports invitation issuance, expired, and terminal closure without an invitee actor (360.033792ms)
+✔ free_form supports invitation issuance, revoked, and terminal closure without an invitee actor (359.392666ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25159.650417
+
+> engramport@0.1.0 identity:test
+> node --test tests/commit-identity.test.mjs
+
+ACCEPTED_IDENTITY_MISMATCH 2f033ec52f2b1cc28228b347f2945f851b86d4c0 author=agent-a@engramport.local signer=luke@covenantsystems.ai date=2026-09-08T15:15:52-04:00 finding=F160
+ACCEPTED_IDENTITY_MISMATCH 502ab6f008f99ec52b07bb812e4d9f6745e88909 author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-08T15:56:34-04:00 finding=F160
+ACCEPTED_IDENTITY_MISMATCH 9317124939f26d6af4bd5a3a1a0a596b2cfad257 author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-09T08:22:10-04:00 finding=F164
+ACCEPTED_IDENTITY_MISMATCH d1fca740bacb2fd249077ee80dca766a37cebb6b author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-09T08:22:28-04:00 finding=F164
+ACCEPTED_IDENTITY_MISMATCH dd73f52214b4aee364c05af323fe396a4b5a20bd author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-09T08:36:41-04:00 finding=F164
+IDENTITY_REFUSAL unrecorded
+IDENTITY_REFUSAL nonexistent
+IDENTITY_REFUSAL author
+IDENTITY_REFUSAL signer
+IDENTITY_REFUSAL date
+IDENTITY_REFUSAL finding
+IDENTITY_REFUSAL duplicate
+IDENTITY_REFUSAL array
+IDENTITY_REFUSAL fields
+IDENTITY_REFUSAL full-sha
+IDENTITY_REFUSAL finding-format
+IDENTITY_REFUSAL unverified
+IDENTITY_REFUSAL not-mismatch
+IDENTITY_REFUSAL outside-history
+agent-commit: signing key at /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-15oZ9R/foreign.pub is not bound to agent-b@engramport.local in /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-15oZ9R/allowed_signers
+agent-commit: refusing to commit under a foreign or unverified signing key
+✔ repository signed mismatches require exact accepted records (2054.242916ms)
+✔ record validates commits and each stated fact with paired refusals (324.561375ms)
+✔ agent-commit permits the actor key and refuses a foreign resolved key before commit (133.767916ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2552.143625
+
+> engramport@0.1.0 bctx:test
+> node --test tests/bounded-context-roundtrip.test.mjs
+
+✔ a reference in the format the validator accepts resolves to its content (2.619375ms)
+✔ the delimiter the resolver used to split on is now refused (0.770541ms)
+✔ a bound digest that no longer describes the file refuses (0.992417ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.715792
+
+> engramport@0.1.0 turn:test
+> node --test tests/turn-decision.test.mjs
+
+✔ a healthy observation is allowed in both phases (0.381083ms)
+✔ every declared refusal has a demonstration (0.266959ms)
+✔ every demonstration names a refusal the decision can actually produce (0.070875ms)
+✔ every guard field is reachable, so no guard is dead code (0.067291ms)
+✔ the kill switch cannot be masked by any other condition (0.050709ms)
+✔ acting as a person outranks every condition except the stop (0.037542ms)
+✔ an unreadable ledger refuses rather than counting as zero (0.062542ms)
+✔ demonstrateBounds reports every bound firing, and notices when one does not (0.1065ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.411916
+
+> engramport@0.1.0 completion:test
+> node --test tests/completion-status.test.mjs
+
+F157_REAL event=events/agent-b/20260908T194830Z_01a08290-9b52-7002-b704-44c3576f959b.md current=accepted pre-fix=rejected keyword=const
+✔ F157 real blocked completion validates against the published schema (37.685917ms)
+✔ F157 schema and verifier vocabularies agree (0.478375ms)
+F157_CONSUMERS status=satisfied accepted=true
+F157_CONSUMERS status=unmet accepted=true
+F157_CONSUMERS status=blocked accepted=true
+F157_CONSUMERS status=probably-fine accepted=false
+F157_MUTATIONS baseline=0
+F157_MUTATION pre-fix-schema=killed control=F157 real blocked executed=1
+F157_MUTATION schema-extra-status=killed control=F157 schema and verifier executed=2
+F157_MUTATION verifier-missing-status=killed control=F157 schema and verifier executed=3
+F157_MUTATION verifier-private-copy=killed control=F157 both consumers executed=4
+F157_MUTATION verifier-guard-bypassed=killed control=F157 both consumers executed=5
+F157_MUTATIONS executed=5 killed=5 survived=0 restored=0
+✔ F157 both consumers accept every status and reject an invented status (38.688833ms)
+✔ F157 discriminating mutations (836.374959ms)
+✔ a completion reporting unmet is accepted and written (25.829791ms)
+✔ a completion reporting blocked is accepted and written (24.706375ms)
+✔ satisfied still works, so widening did not break the success path (23.722208ms)
+✔ an invented status is still refused, so the vocabulary is closed (15.08225ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1053.042083
+
+> engramport@0.1.0 withdrawal:test
+> node --test tests/withdrawal.test.mjs && node tests/run-withdrawal-mutations.mjs
+
+ADR52_OBS f166-evidence ok=true errors=[]
+ADR52_OBS f166-handoff ok=true errors=[]
+ADR52_OBS f166-ordinary ok=true errors=[]
+ADR52_OBS f166-withdrawal ok=true errors=[]
+F166_INBOX original=false withdrawal=false ordinary=true
+ADR52_OBS f166-late-completion ok=true errors=[]
+ADR52_OBS f166-second-completion ok=false errors=["events/a/20260910T233742Z_01a08daf-2a74-7391-afda-b21f0ee33a79.md: mode strict_relay violation; parent has 2 replies"]
+ADR52_OBS f166-final-verify ok=true errors=[]
+✔ ADR52 F166 withdrawal excluded while ordinary handoff remains (154.562416ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS sender-withdraws ok=true errors=[]
+ADR52_INBOX original=absent withdrawal=absent
+ADR52_OBS real-withdrawal-verify ok=true errors=[]
+ADR52_SCHEMA real-withdrawal=accepted
+✔ ADR52 sender withdraws and inbox retires original (31.06375ms)
+﹣ ADR52 pre-fix unknown type (0.075125ms) # SKIP
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS empty-reason ok=false errors=["events/a/20260910T233742Z_01a08daf-2afb-7255-b11a-7e9508e043e4.md: withdrawal requires a non-empty reason"]
+✔ ADR52 empty reason "" (10.947084ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS empty-reason ok=false errors=["events/a/20260910T233742Z_01a08daf-2b05-7c03-b8e7-6a2d0cc7ee77.md: withdrawal requires a non-empty reason"]
+✔ ADR52 empty reason " \t\n " (8.190459ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-sender ok=false errors=["events/b/20260910T233742Z_01a08daf-2b0e-769a-be5a-ee9c95289c4d.md: withdrawal requires the original sender"]
+✔ ADR52 non-sender b (9.222208ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-sender ok=false errors=["events/c/20260910T233742Z_01a08daf-2b17-72c6-8041-a953b507686d.md: withdrawal requires the original sender"]
+✔ ADR52 non-sender c (9.54375ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS first-successor ok=true errors=[]
+ADR52_OBS second-successor ok=false errors=["events/a/20260910T233742Z_01a08daf-2b1c-79a7-806c-27adba46684c.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 single successor reply first (9.634042ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS first-successor ok=true errors=[]
+ADR52_OBS second-successor ok=false errors=["events/a/20260910T233742Z_01a08daf-2b26-7593-a1f3-2bfed5254e31.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 single successor withdrawal first (10.201042ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS fork-withdrawal ok=true errors=[]
+ADR52_OBS fork-reply ok=true errors=[]
+ADR52_OBS fork-verifier ok=false errors=["events/a/20260910T233742Z_01a08daf-2b30-7ea8-b743-af4fb71b1abc.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 forked history verifier (15.109792ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+F166_LATE_COMPLETION inbox=empty next=null
+ADR52_OBS late-completion ok=true errors=[]
+ADR52_OBS second-completion ok=false errors=["events/a/20260910T233742Z_01a08daf-2b42-7215-9eb7-d1885354b7e6.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 late completion once next=null (16.186833ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+F166_LATE_COMPLETION inbox=empty next=a
+ADR52_OBS late-completion ok=true errors=[]
+ADR52_OBS second-completion ok=false errors=["events/a/20260910T233742Z_01a08daf-2b52-7db7-8d43-8c6e8c286ca0.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 late completion once next=a (16.474041ms)
+ADR52_OBS evidence ok=true errors=[]
+ADR52_OBS handoff ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS missing-criteria ok=false errors=["events/b/20260910T233742Z_01a08daf-2b6a-7c26-8921-25240d841aa5.md: criteria_results is required for a version-1 handoff completion"]
+ADR52_OBS wrong-criteria ok=false errors=["events/b/20260910T233742Z_01a08daf-2b6d-7a1a-ad60-36ea9a22dcc4.md: completion missing criterion ids c1"]
+ADR52_OBS late-handoff-completion ok=true errors=[]
+✔ ADR52 original handoff criteria preserved (21.758834ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS non-handoff-criteria ok=false errors=["events/b/20260910T233742Z_01a08daf-2b7c-74e3-942a-5bd8308d7f77.md: criteria_results requires an original handoff"]
+✔ ADR52 non-handoff criteria refused (10.966542ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-message ok=false errors=["events/a/20260910T233742Z_01a08daf-2b84-7e41-80ed-82cb5103c73d.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2b84-7e41-80ed-82cb5103c73d.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-handoff ok=false errors=["events/a/20260910T233742Z_01a08daf-2b8a-746d-9c50-47c621e954c4.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2b8a-746d-9c50-47c621e954c4.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-reply ok=false errors=["events/a/20260910T233742Z_01a08daf-2b8f-732b-8ef4-8d2095d39af8.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2b8f-732b-8ef4-8d2095d39af8.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-completion ok=false errors=["events/a/20260910T233742Z_01a08daf-2b96-7a1b-a8e9-53ced57fcb87.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2b96-7a1b-a8e9-53ced57fcb87.md: mode strict_relay violation; an actor may not reply to itself","events/a/20260910T233742Z_01a08daf-2b96-7a1b-a8e9-53ced57fcb87.md: completion must reply to a handoff"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-artifact ok=false errors=["events/a/20260910T233742Z_01a08daf-2b9b-77f4-9760-e16b132d2e43.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2b9b-77f4-9760-e16b132d2e43.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-decision ok=false errors=["events/a/20260910T233742Z_01a08daf-2ba1-7422-a4f1-1ba152599097.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2ba1-7422-a4f1-1ba152599097.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-task ok=false errors=["events/a/20260910T233742Z_01a08daf-2ba7-7aba-a326-1c2f674e9523.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2ba7-7aba-a326-1c2f674e9523.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS self-acknowledgment ok=false errors=["events/a/20260910T233742Z_01a08daf-2bac-7cee-8afa-57be8c241b97.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2bac-7cee-8afa-57be8c241b97.md: mode strict_relay violation; an actor may not reply to itself"]
+✔ ADR52 other self replies remain refused (56.24575ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-strict ok=false errors=["events/a/20260910T233742Z_01a08daf-2bbc-731f-86b9-f8abb3b9ca28.md: withdrawal requires strict_relay"]
+✔ ADR52 non-strict free_form (7.159458ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS non-strict ok=false errors=["events/a/20260910T233742Z_01a08daf-2bc3-7f9a-b013-d8fd9fdebbd7.md: withdrawal requires strict_relay"]
+✔ ADR52 non-strict coordinator_led (7.136417ms)
+ADR52_OBS root-withdrawal ok=false errors=["events/a/20260910T233742Z_01a08daf-2bc7-7676-ac7f-ab586179c3d4.md: withdrawal requires a parent"]
+✔ ADR52 parent required (4.498167ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS wrong-addressee ok=false errors=["events/a/20260910T233742Z_01a08daf-2bcf-77f0-bfa4-589838e60536.md: withdrawal next must name the original addressee of an open turn"]
+✔ ADR52 addressee binding null (6.847667ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS wrong-addressee ok=false errors=["events/a/20260910T233742Z_01a08daf-2bd5-77b5-976c-b2c616ea8b2c.md: withdrawal next must name the original addressee of an open turn"]
+✔ ADR52 addressee binding c (6.520958ms)
+ADR52_OBS terminal ok=true errors=[]
+ADR52_OBS terminal-withdrawal ok=false errors=["events/a/20260910T233742Z_01a08daf-2bdd-7627-960a-f648d395f7da.md: withdrawal next must name the original addressee of an open turn"]
+✔ ADR52 terminal turn cannot withdraw (8.5295ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS duplicate-withdrawal ok=false errors=["events/a/20260910T233742Z_01a08daf-2be2-7819-83ca-0d6f3a20493d.md: mode strict_relay violation; parent has 2 replies"]
+✔ ADR52 duplicate withdrawal refused (9.968334ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS non-completion ok=false errors=["events/b/20260910T233742Z_01a08daf-2bf2-7fe7-aaf2-286d7906141c.md: withdrawal successor must be a completion"]
+✔ ADR52 withdrawal successor completion only (10.394ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS completion-routing ok=false errors=["events/b/20260910T233742Z_01a08daf-2bfd-7aee-b5fe-42eaa053b0dc.md: late completion next must name the sender or null"]
+✔ ADR52 late completion routing (11.104375ms)
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS wrong-completer ok=false errors=["events/a/20260910T233742Z_01a08daf-2c07-7e8f-9fb9-99264e5a9150.md: mode strict_relay violation; expected next actor b","events/a/20260910T233742Z_01a08daf-2c07-7e8f-9fb9-99264e5a9150.md: mode strict_relay violation; an actor may not reply to itself"]
+ADR52_OBS seed ok=true errors=[]
+ADR52_OBS withdrawal ok=true errors=[]
+ADR52_OBS wrong-completer ok=false errors=["events/c/20260910T233742Z_01a08daf-2c10-7a28-976a-6ea424d782e9.md: mode strict_relay violation; expected next actor b"]
+✔ ADR52 late completion only addressee (19.794833ms)
+ADR52_OBS seed ok=true errors=[]
+events/a/20260910T233742Z_01a08daf-2c19-7242-a915-cba0aba23224.md
+✔ ADR52 CLI accepts withdrawal (10.893125ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 536.283375
+ADR52_MUTATIONS baseline=0
+ADR52_PRE_FIX commit=799d96e3fa772f1e4ac8a8feaff8e452ce3f1b93 append=refused class=unknown-event-type self-replies=refused
+TAP version 13
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS pre-fix ok=false errors=["events/a/20260910T233743Z_01a08daf-2ee3-77d2-8e15-292f4321b7d6.md: unknown event type withdrawal","events/a/20260910T233743Z_01a08daf-2ee3-77d2-8e15-292f4321b7d6.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2ee3-77d2-8e15-292f4321b7d6.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 pre-fix unknown type
+ok 1 - ADR52 pre-fix unknown type
+  ---
+  duration_ms: 14.582208
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-message ok=false errors=["events/a/20260910T233743Z_01a08daf-2eec-7bf7-aa03-21a0a98d9cd0.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2eec-7bf7-aa03-21a0a98d9cd0.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-handoff ok=false errors=["events/a/20260910T233743Z_01a08daf-2ef2-7e6d-b207-d2fff96c2a14.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2ef2-7e6d-b207-d2fff96c2a14.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-reply ok=false errors=["events/a/20260910T233743Z_01a08daf-2ef8-793b-89dc-de62523495f2.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2ef8-793b-89dc-de62523495f2.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-completion ok=false errors=["events/a/20260910T233743Z_01a08daf-2efd-7703-9de7-b48d8dd86832.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2efd-7703-9de7-b48d8dd86832.md: mode strict_relay violation; an actor may not reply to itself","events/a/20260910T233743Z_01a08daf-2efd-7703-9de7-b48d8dd86832.md: completion must reply to a handoff"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-artifact ok=false errors=["events/a/20260910T233743Z_01a08daf-2f03-7cd3-b7ee-945e4f34f5c0.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2f03-7cd3-b7ee-945e4f34f5c0.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-decision ok=false errors=["events/a/20260910T233743Z_01a08daf-2f09-7939-94fb-0de58490ddd3.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2f09-7939-94fb-0de58490ddd3.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-task ok=false errors=["events/a/20260910T233743Z_01a08daf-2f0f-77c4-97c8-13aacba88df1.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2f0f-77c4-97c8-13aacba88df1.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-acknowledgment ok=false errors=["events/a/20260910T233743Z_01a08daf-2f16-71f6-8299-ba59a53e6bd9.md: mode strict_relay violation; expected next actor b","events/a/20260910T233743Z_01a08daf-2f16-71f6-8299-ba59a53e6bd9.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 other self replies remain refused
+ok 2 - ADR52 other self replies remain refused
+  ---
+  duration_ms: 57.434666
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 121.462792
+
+ADR52_MUTATION name=sender-only removed=WITHDRAWAL_SENDER observation=non-sender:accepted control=failed executed=1
+ADR52_MUTATION name=non-empty-reason removed=WITHDRAWAL_REASON observation=empty-reason:accepted control=failed executed=2
+ADR52_MUTATION name=successor-reply-first removed=parent has ${count} replies observation=second-successor:accepted control=failed executed=3
+ADR52_MUTATION name=successor-withdrawal-first removed=parent has ${count} replies observation=second-successor:accepted control=failed executed=4
+ADR52_MUTATION name=forked-history-verifier removed=parent has ${count} replies observation=fork-verifier:accepted control=failed executed=5
+ADR52_MUTATION name=late-completion-once removed=parent has ${count} replies observation=second-completion:accepted control=failed executed=6
+ADR52_MUTATION name=strict-mode-only removed=WITHDRAWAL_MODE observation=non-strict:accepted control=failed executed=7
+ADR52_MUTATION name=parent-required removed=WITHDRAWAL_PARENT observation=root-withdrawal:accepted control=failed executed=8
+ADR52_MUTATION name=original-addressee removed=WITHDRAWAL_NEXT observation=wrong-addressee:accepted control=failed executed=9
+ADR52_MUTATION name=open-turn removed=WITHDRAWAL_NEXT observation=terminal-withdrawal:accepted control=failed executed=10
+ADR52_MUTATION name=completion-only removed=/* WITHDRAWAL_COMPLETION */ observation=non-completion:accepted control=failed executed=11
+ADR52_MUTATION name=completion-routing removed=WITHDRAWAL_COMPLETION_NEXT observation=completion-routing:accepted control=failed executed=12
+ADR52_MUTATION name=non-handoff-criteria removed=WITHDRAWAL_NO_CRITERIA observation=non-handoff-criteria:accepted control=failed executed=13
+ADR52_MUTATION name=schema-type-disagreement existing-one-definition-control=failed executed=14
+ADR52_MUTATION name=withdrawal-listed observation=original:false,withdrawal:true,ordinary:true control=failed executed=15
+ADR52_MUTATIONS executed=15 killed=15 survived=0 restored=0
+
+> engramport@0.1.0 sdk:buildable
+> node --test tests/sdk-buildable.test.mjs
+
+✔ the SDK builds from source (230.894333ms)
+✔ the built package exports what deployments are told to import (3.379ms)
+✔ the built turn decision still refuses everything it should (0.687167ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 270.631167
+
+> engramport@0.1.0 blast:test
+> node --test tests/blast-radius.test.mjs
+
+✔ exactly separates planted current, stale, and broken registrations without skipping later entries (112.680959ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+CURRENT entry 1 "fresh" canonical="canonical.js" location="downstream-fresh:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+STALE entry 2 "behind-a" canonical="canonical.js" location="downstream-behind-a:lib/shared.js" vendored_on=2026-09-08 recorded=131e1a10fd517c113c1458379cb41e666de12d485a197a74cdd88e11baf23971 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+BROKEN registration entry 3 "absent" canonical="missing.js" location="downstream-absent:lib/shared.js": canonical file absent
+STALE entry 4 "behind-b" canonical="canonical.js" location="downstream-behind-b:lib/shared.js" vendored_on=2026-09-08 recorded=aefae4c7adb7518f18dc6c5a22a2c361388a8f2414fc5b338945f7340bfe2719 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+CURRENT entry 5 "fresh-last" canonical="canonical.js" location="downstream-fresh-last:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 5; current=2; stale=2; broken=1
+✔ all current passes; canonical mutation makes every dependent copy stale without registry changes (322.260792ms)
+ℹ npm run blast-radius; exit=0
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+CURRENT entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+CURRENT entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+CURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 3; current=3; stale=0; broken=0
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+STALE entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+STALE entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+CURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 3; current=1; stale=2; broken=0
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+STALE entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+STALE entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6
+CURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 3; current=1; stale=2; broken=0
+✔ an isolated absent canonical file is a broken registration and exits nonzero (108.367833ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+BROKEN registration entry 1 "missing" canonical="absent.js" location="downstream-missing:lib/shared.js": canonical file absent
+Registered copies: 1; current=0; stale=0; broken=1
+✔ an unregistered file is ignored and empty coverage is explicit (216.673333ms)
+ℹ npm run blast-radius; exit=0
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+CURRENT entry 1 "registered" canonical="canonical.js" location="downstream-registered:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 1; current=1; stale=0; broken=0
+ℹ npm run blast-radius; exit=0
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registered copies: 0; current=0; stale=0; broken=0
+No copies registered; this is not evidence of downstream currency.
+✔ malformed entries fail without concealing valid entries (108.525458ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+BROKEN registration entry 1 undefined canonical=undefined location=undefined: missing or duplicate registration id
+BROKEN registration entry 2 "bad-digest" canonical="canonical.js" location="downstream-bad-digest:lib/shared.js": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)
+BROKEN registration entry 3 "bad-date" canonical="canonical.js" location="downstream-bad-date:lib/shared.js": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)
+BROKEN registration entry 4 "no-location" canonical="canonical.js" location=" ": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)
+CURRENT entry 5 "duplicate" canonical="canonical.js" location="downstream-duplicate:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+BROKEN registration entry 6 "duplicate" canonical="canonical.js" location="downstream-duplicate:lib/shared.js": missing or duplicate registration id
+CURRENT entry 7 "last" canonical="canonical.js" location="downstream-last:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9
+Registered copies: 7; current=2; stale=0; broken=5
+✔ canonical paths cannot escape the repository directly or through a symlink (110.900333ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+BROKEN registration entry 1 "traversal" canonical="../outside.js" location="downstream-traversal:lib/shared.js": canonical_path must be relative and inside this repository
+BROKEN registration entry 2 "absolute" canonical="/outside.js" location="downstream-absolute:lib/shared.js": canonical_path must be relative and inside this repository
+BROKEN registration entry 3 "symlink" canonical="escape.js" location="downstream-symlink:lib/shared.js": canonical_path resolves outside this repository
+Registered copies: 3; current=0; stale=0; broken=3
+✔ missing and malformed registry fail closed while retaining the coverage statement (319.615333ms)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registry check failed: ENOENT: no such file or directory, open '/Users/an2b/an2b/products/EngramPORT-subj/artifacts/agent-b/blast-radius-fixture-QNBPXP/registry/downstream-copies.json'
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registry check failed: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+ℹ npm run blast-radius; exit=1
+> engramport@0.1.0 blast-radius
+> node scripts/blast-radius
+
+Coverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.
+Registry check failed: Invalid registry schema or coverage declaration
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1336.793292
+
+> engramport@0.1.0 scan:test
+> node --test tests/scan-covers-policy-limit.test.mjs
+
+✔ a clean prompt larger than the scanner default is scanned, not refused (2.090792ms)
+✔ a credential planted deep inside a large prompt is still caught (2.780958ms)
+✔ beyond the policy limit it still fails closed (0.885375ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.686166
+
+> engramport@0.1.0 scan:append:test
+> node --test tests/append-scan-policy.test.mjs && node tests/run-append-scan-mutations.mjs
+
+OBSERVED append clean artifact bytes=96000 accepted=true
+✔ clean-large-artifact (20.612959ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+✔ artifact-size (22.718166ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ artifact-credential (16.212ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+✔ body-size (20.640917ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ body-credential (14.9255ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000051 limit=1000000
+✔ envelope-size (5.984208ms)
+OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+✔ envelope-credential (4.656125ms)
+OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000002 limit=1000000
+✔ utf8-and-escaping (43.86575ms)
+✔ supervisor-shared-limit (4.37475ms)
+✔ supervisor-credential (0.76575ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 194.617625
+CONTROL production=passed
+CONTROL shared-limit-lowered-to-100000=passed
+OBSERVED pre-fix event-core clean artifact refused=CREDENTIAL_INPUT_REFUSED
+F156_MUTATION old-default=killed control=clean-large-artifact executed=1
+F156_MUTATION size-as-credential=killed control=artifact-size executed=2
+F156_MUTATION missing-byte-count=killed control=artifact-size executed=3
+F156_MUTATION missing-limit=killed control=artifact-size executed=4
+F156_MUTATION artifact-scan-removed=killed control=artifact-credential executed=5
+F156_MUTATION body-scan-removed=killed control=body-credential executed=6
+F156_MUTATION envelope-scan-removed=killed control=envelope-credential executed=7
+F156_MUTATION scan-truncated=killed control=artifact-credential executed=8
+F156_MUTATION serialized-instead-of-utf8=killed control=utf8-and-escaping executed=9
+F156_MUTATION body-size-bypassed=killed control=body-size executed=10
+F156_MUTATION envelope-size-bypassed=killed control=envelope-size executed=11
+F156_MUTATION append-restates-limit=killed control=artifact-size executed=12
+F156_MUTATION supervisor-restates-limit=killed control=supervisor-shared-limit executed=13
+F156_MUTATION supervisor-truncated=killed control=supervisor-credential executed=14
+F156_MUTATION supervisor-size-details-lost=killed control=supervisor-shared-limit executed=15
+F156_MUTATIONS executed=15 killed=15 survived=0
+
+> engramport@0.1.0 counts:test
+> node --test tests/readme-counts.test.mjs
+
+✔ README counts match the repository (2.601833ms)
+✔ the check observes drift in each claim independently (1.396917ms)
+✔ the check fails loudly when a claim sentence is reworded away (1.15775ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45.465208
+
+> engramport@0.1.0 onboarding:test
+> node --test tests/pr-onboarding.test.mjs
+
+PR_ONBOARDING_UNMERGED_REFUSAL proposal=present head=absent refused=true
+✔ documented PR onboarding refuses an unmerged local registration (233.919834ms)
+PR_ONBOARDING_MERGED_ACCEPTANCE proposal=merged head=present accepted=true
+✔ documented PR onboarding accepts the maintainer-merged registration (435.656125ms)
+✔ the documented path has no prose-only or machine-only operation (0.1555ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 707.768583
+
+> engramport@0.1.0 ledger:test
+> node --test tests/contribution-ledger.test.mjs
+
+CONTRIBUTION_LEDGER actors=3 events=609 source=verified-engramport-log
+✔ contribution ledger reports every registered actor from the verified log (154.852375ms)
+CONTRIBUTION_METERED actor=agent-c reviews=29 tokens=536866 usd_ticks=22660680000
+✔ agent-c metered totals reconcile with every referenced review artifact (138.353958ms)
+CONTRIBUTION_SUBSCRIPTION actor=agent-a work=observed currency=refused
+✔ subscription contribution renders work without a fictional currency figure (152.031917ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 487.374791
+
+> engramport@0.1.0 sdk:package:test
+> node --test tests/sdk-package.test.mjs && node scripts/run-sdk-init-mutations
+
+F167_HELP_MUTATION flag=bounded-context cli_exit=0 control=failed killed=true
+F167_HELP_MUTATION flag=completion-criteria cli_exit=0 control=failed killed=true
+F167_HELP_MUTATION flag=criteria-results cli_exit=0 control=failed killed=true
+F167_HELP baseline=passed executed=3 killed=3 restored=passed
+✔ F167 CLI help documents JSON filenames and shapes, and missing documentation is killed (461.5585ms)
+F167_WALKTHROUGH blocks=3 unchanged=true offline=true events=2 threads=1 actors=2 packed_help=passed
+✔ F167 README walkthrough executes unchanged against a packed tarball (1308.185333ms)
+✔ publishable SDK manifest exposes only the bundled artifact (361.750792ms)
+{"case":"success","kind":"agent","mode":"free_form","files":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},"zero":"✓ verified 0 events across 0 thread(s) and 1 actors","append":"events/clean-builder/20260910T233754Z_01a08daf-5a04-7e8b-a22d-41f6bd82f1b3.md","one":"✓ verified 1 events across 1 thread(s) and 1 actors"}
+{"case":"success","kind":"human","mode":"strict_relay","files":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"9a0724de601f5ffcfdf2469caa1bbbb5ca0ce8f9242daf2a45699969af882b91","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"afe59e9c06f294c59441acad068aa603d9d12198532fe2173683585056007acf","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},"zero":"✓ verified 0 events across 0 thread(s) and 1 actors","append":"events/clean-builder/20260910T233754Z_01a08daf-5a8f-72bd-9233-f97bd84c717a.md","one":"✓ verified 1 events across 1 thread(s) and 1 actors"}
+{"case":"existing-project","status":1,"stdout":"","stderr":"engram: INIT_PROJECT_EXISTS: joining an existing project requires the pull request process in CONTRIBUTING.md\n","before":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"},"after":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"}}
+{"case":"invalid-slug","status":1,"stdout":"","stderr":"engram: INIT_ACTOR_REFUSED: --actor must match the verifier's SLUG pattern\n","before":{},"after":{}}
+{"case":"missing-actor","status":1,"stdout":"","stderr":"engram: INIT_ACTOR_REFUSED: --actor must match the verifier's SLUG pattern\n","before":{},"after":{}}
+{"case":"missing-kind","status":1,"stdout":"","stderr":"engram: INIT_KIND_REQUIRED: --kind human|agent is required\n","before":{},"after":{}}
+{"case":"invalid-kind","status":1,"stdout":"","stderr":"engram: INIT_KIND_REFUSED: --kind must be human or agent\n","before":{},"after":{}}
+{"case":"invalid-mode","status":1,"stdout":"","stderr":"engram: INIT_MODE_REFUSED: --mode must be free_form or strict_relay\n","before":{},"after":{}}
+{"case":"invalid-project","status":1,"stdout":"","stderr":"engram: INIT_PROJECT_REFUSED: --project must match the verifier's SLUG pattern\n","before":{},"after":{}}
+{"case":"existing-actor","status":1,"stdout":"","stderr":"engram: INIT_PATH_EXISTS: actors/clean-builder.yaml already exists\n","before":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"},"after":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"}}
+{"case":"nonempty","status":1,"stdout":"","stderr":"engram: INIT_NOT_EMPTY: init requires an empty directory\n","before":{"unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"},"after":{"unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"}}
+{"case":"symlink-parent","status":1,"stdout":"","stderr":"engram: INIT_NOT_EMPTY: init requires an empty directory\n","before":{"actors":"745ad2f63dcd56b47c403273196cc3dcf02bd2cf10a3936a9a6cb19d68d31a76"},"after":{"actors":"745ad2f63dcd56b47c403273196cc3dcf02bd2cf10a3936a9a6cb19d68d31a76"}}
+{"case":"unknown-flag","status":1,"stdout":"","stderr":"engram: ARGUMENT_REFUSED: unrecognized flag --force\n","before":{},"after":{}}
+F174_PACKED_CHECKOUT attribute=present autocrlf=true exact_bytes=true verify=passed
+F174_PACKED_MUTATION drop_attribute=true autocrlf=true CRLF=observed verification=refused executed=1 killed=1
+✔ packed SDK installs outside repository, imports, and appends (2408.560084ms)
+✔ packed SDK exercises every client method and verifies promised writes (586.359666ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5166.976458
+{"mutation":"existing-project","baseline":"passed","after":"killed","observation":{"case":"existing-project","status":1,"stdout":"","stderr":"engram: INIT_PATH_EXISTS: engramport.yaml already exists\n","before":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"},"after":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"}}}
+{"mutation":"invalid-slug","baseline":"passed","after":"killed","observation":{"case":"invalid-slug","status":0,"stdout":"engramport.yaml\nactors/Bad-slug.yaml\nevents/Bad-slug/.gitkeep\nartifacts/Bad-slug/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/Bad-slug.yaml":"8ec01c6fc08f9e38fd744f00720e0a4b2296629aa9e27b7b33b030dc8313e09a","artifacts/Bad-slug/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/Bad-slug/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"missing-kind","baseline":"passed","after":"killed","observation":{"case":"missing-kind","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"invalid-kind","baseline":"passed","after":"killed","observation":{"case":"invalid-kind","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"5eb56476a2a53cf02b9e22f4a1c14d7d5b8584156ad8fa44d2f5b1c196fb191e","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"invalid-mode","baseline":"passed","after":"killed","observation":{"case":"invalid-mode","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"4d1857a2866d2db8c25630734d26ee123f5b0290422bb470f4cfd54626450944","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"invalid-project","baseline":"passed","after":"killed","observation":{"case":"invalid-project","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"5ff0b92909e3036db1715f37640019284b75a221d438913062be1672c2f6bc88","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"existing-actor","baseline":"passed","after":"killed","observation":{"case":"existing-actor","status":1,"stdout":"","stderr":"engram: INIT_NOT_EMPTY: init requires an empty directory\n","before":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"},"after":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"}}}
+{"mutation":"nonempty","baseline":"passed","after":"killed","observation":{"case":"nonempty","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{"unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"}}}
+{"mutation":"unknown-flag","baseline":"passed","after":"killed","observation":{"case":"unknown-flag","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"exclusive-write","baseline":"passed","after":"killed","observation":{"case":"exclusive-write","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","content":"protocol: engramport-git-v0\nproject: my-project\nmode: free_form\ndefault_thread_mode: free_form\nevent_root: events\nactor_root: actors\nartifact_root: artifacts\nhash_profile: engramport-git-body-v0\nschema_version: 0\n"}}
+SDK_INIT_MUTATIONS executed=10 killed=10 restored=10
+
+> engramport@0.1.0 sdk:test
+> npm run sdk:build && node --test tests/sdk.test.mjs
+
+
+> engramport@0.1.0 sdk:build
+> npm run build --workspace @engramport/sdk
+
+
+> @engramport/sdk@0.5.0 build
+> vite build --config vite.config.mjs
+
+vite v8.0.13 building client environment for production...
+[2Ktransforming...(node:67094) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ 57 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.mjs               24.38 kB │ gzip:  6.69 kB
+dist/cli.mjs                 31.46 kB │ gzip:  9.35 kB
+dist/event-core-DHMXj_Jw.js  50.00 kB │ gzip: 12.78 kB
+
+✓ built in 47ms
+✔ workspace resolves the advertised SDK manifest locally (1.729542ms)
+✔ SDK append delegates to event-core (8.742167ms)
+✔ SDK exposes typed append, inbox, causal reply, bounded handoff, and intent retry (16.045375ms)
+✔ SDK exposes the existing Port Watch delivery path without implementing another resolver (10.110042ms)
+✔ unregistered actor and out-of-prefix artifact are honestly refused without authorization claims (4.532834ms)
+✔ SDK publishes four claim qualifiers with honest dependency coverage (0.531209ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.82725
+
+> engramport@0.1.0 second-builder:test
+> node --test tests/second-builder.test.mjs
+
+SECOND_BUILDER_SDK append=accepted inbox=discovered completion=accepted impersonation=accepted disposition_read=accepted disposition_write=accepted
+✔ synthetic second builder completes the public SDK path and exposes the authorization gaps (31.526167ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72.8145
+
+> engramport@0.1.0 agent-c:test
+> node --test tests/agent-c-supervisor.test.mjs && node scripts/run-agent-c-supervisor-mutations
+
+✔ credential-reference (0.578375ms)
+✔ credential-shape (0.1085ms)
+✔ credential-context (454.334458ms)
+✔ bounded-context-delivery (289.851334ms)
+✔ bounded-context-missing-event (298.615167ms)
+✔ bounded-context-event-digest (302.104333ms)
+✔ bounded-context-artifact-digest (238.5465ms)
+✔ legacy-artifact-digest (297.547834ms)
+✔ bounded-context-size (249.068834ms)
+✔ bounded-context-deduplication (289.996166ms)
+✔ write-prefix (263.508208ms)
+✔ turn-enforcement (796.939791ms)
+✔ reply-target (259.249458ms)
+✔ result-review (280.081583ms)
+✔ inbox-poller (691.349666ms)
+✔ credential-egress (988.375041ms)
+✔ stubbed-review-appends-through-cli (1009.398375ms)
+✔ xai-client-metrics (0.356167ms)
+✔ provider-diagnosis (0.177708ms)
+✔ provider-error-egress (0.116709ms)
+✔ scheduled-poller-silence (0.144333ms)
+✔ credential-unavailable-reporting (0.118875ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6755.376625
+AGENT_C_MUTATION credential-reference=killed
+AGENT_C_MUTATION credential-shape=killed
+AGENT_C_MUTATION credential-context=killed
+AGENT_C_MUTATION write-prefix=killed
+AGENT_C_MUTATION turn-enforcement=killed
+AGENT_C_MUTATION reply-target=killed
+AGENT_C_MUTATION result-review=killed
+AGENT_C_MUTATION inbox-poller=killed
+AGENT_C_MUTATION credential-egress=killed
+AGENT_C_MUTATION provider-diagnosis=killed
+AGENT_C_MUTATION provider-error-egress=killed
+AGENT_C_MUTATION scheduled-poller-silence=killed
+AGENT_C_MUTATION credential-unavailable-reporting=killed
+AGENT_C_MUTATION bounded-context-delivery=killed
+AGENT_C_MUTATION bounded-context-missing-event=killed
+AGENT_C_MUTATION bounded-context-event-digest=killed
+AGENT_C_MUTATION bounded-context-artifact-digest=killed
+AGENT_C_MUTATION legacy-artifact-digest=killed
+AGENT_C_MUTATION bounded-context-size=killed
+AGENT_C_MUTATION bounded-context-deduplication=killed
+
+> engramport@0.1.0 agent-c:spend-test
+> node --test tests/agent-c-spend-gate.test.mjs tests/agent-c-spend-ledger.test.mjs && node tests/run-spend-ledger-mutations.mjs
+
+✔ a run under the ceiling is allowed (0.371792ms)
+✔ the kill switch refuses, and its absence does not (0.051458ms)
+✔ reaching the ceiling refuses; one tick short still runs (0.106083ms)
+✔ a run that would cross the ceiling is refused before it spends (0.065958ms)
+✔ an unreadable spend total refuses rather than counting as zero (0.081208ms)
+✔ a missing or nonsensical cap refuses rather than defaulting to unlimited (0.052333ms)
+✔ spend is summed only for the day in question (0.49925ms)
+✔ a review with an unreadable cost throws instead of being skipped (0.292958ms)
+✔ the shipped defaults are the ones ADR 0036 states (0.086209ms)
+✔ day bucketing is UTC and does not drift with local time (0.086541ms)
+OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ unreadable-root (43.747125ms)
+OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+✔ missing-root (17.145208ms)
+OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ altered-bytes (20.376792ms)
+OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ unreferenced-file (19.828542ms)
+OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ invalid-event (18.556375ms)
+OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+✔ valid-sum (33.255958ms)
+OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ file-read-failure (18.518208ms)
+OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+✔ post-verification-edit (18.212ms)
+OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+✔ same-buffer-cost (17.559666ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 247.11475
+CONTROL production=passed
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 55.515875
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 16.76975
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 17.259875
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 18.085792
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 17.002917
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 31.006334
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 19.162125
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 17.195791
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 17.22575
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 249.39075
+
+CONTROL pre-fix-955a9b60f148430c3582ccbaa9123661d38cd302=passed
+TAP version 13
+# OBSERVED pre-fix permission=EACCES readableTicks=10000000000 {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 40.205667
+  type: 'test'
+  ...
+# OBSERVED pre-fix missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED pre-fix missing-root-alone {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 16.514334
+  type: 'test'
+  ...
+# OBSERVED pre-fix altered-cost-to-zero {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 16.582333
+  type: 'test'
+  ...
+# OBSERVED pre-fix unreferenced-zero-cost {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 16.090708
+  type: 'test'
+  ...
+# OBSERVED pre-fix invalid-event {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 14.879084
+  type: 'test'
+  ...
+# OBSERVED pre-fix unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 30.358083
+  type: 'test'
+  ...
+# OBSERVED pre-fix file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 18.091292
+  type: 'test'
+  ...
+# OBSERVED pre-fix edit-after-verification {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 16.78925
+  type: 'test'
+  ...
+# OBSERVED pre-fix cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 16.529833
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 225.771334
+
+PRE_FIX new-unreadable-control=failed-as-expected
+KILLED hide-directory-failure case=unreadable-root exit=1
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreadable-root
+not ok 1 - unreadable-root
+  ---
+  duration_ms: 42.057917
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:52:17)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 80.73825
+
+KILLED refuse-missing-root case=missing-root exit=1
+TAP version 13
+# OBSERVED production missing-root-mixed {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: missing-root
+not ok 1 - missing-root
+  ---
+  duration_ms: 24.691959
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:63:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.890458
+
+KILLED trust-unreferenced-file case=unreferenced-file exit=1
+TAP version 13
+# OBSERVED production unreferenced-zero-cost {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreferenced-file
+not ok 1 - unreferenced-file
+  ---
+  duration_ms: 26.631042
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:91:15)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.229041
+
+KILLED trust-altered-cost case=altered-bytes exit=1
+TAP version 13
+# OBSERVED production altered-cost-to-zero {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: altered-bytes
+not ok 1 - altered-bytes
+  ---
+  duration_ms: 24.726292
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:78:15)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 64.277875
+
+KILLED trust-unaccepted-event case=invalid-event exit=1
+TAP version 13
+# OBSERVED production invalid-event {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: invalid-event
+not ok 1 - invalid-event
+  ---
+  duration_ms: 25.731334
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:105:15)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 64.549541
+
+KILLED skip-buffer-digest case=post-verification-edit exit=1
+TAP version 13
+# OBSERVED production edit-after-verification {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: post-verification-edit
+not ok 1 - post-verification-edit
+  ---
+  duration_ms: 26.534834
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:150:42)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.298333
+
+KILLED reread-cost-after-hashing case=same-buffer-cost exit=1
+TAP version 13
+# OBSERVED production cost-buffer-interleaving {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: same-buffer-cost
+not ok 1 - same-buffer-cost
+  ---
+  duration_ms: 33.695292
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'DAILY_CAP_REACHED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'DAILY_CAP_REACHED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:169:12)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 73.395125
+
+KILLED drop-root-cost case=valid-sum exit=1
+TAP version 13
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: valid-sum
+not ok 1 - valid-sum
+  ---
+  duration_ms: 39.859
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 10000000000
+    - 30000000000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 30000000000
+  actual: 10000000000
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-subj/tests/agent-c-spend-ledger.test.mjs:116:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 81.530417
+
+CONTROL restoration=passed
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 47.699167
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 17.779834
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 19.79475
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 20.780167
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 18.253917
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 33.5745
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 18.133833
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 16.749
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 17.309375
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 247.991125
+
+SPEND_LEDGER_MUTATIONS executed=8 killed=8
+
+> engramport@0.1.0 d2:test
+> node --test tests/d2-session-binding.test.mjs tests/d2-transaction-binding.test.mjs
+
+✔ D2 refuses unbound sessions before acquiring a connection (0.486959ms)
+✔ D2 binds verified principal and session while ignoring caller identity fields (0.36675ms)
+D2_TRANSACTION_UNBOUND positive=accepted negative=SESSION_UNBOUND no_checkout=true
+D2_TRANSACTION_ROLE positive=accepted negative=SESSION_ROLE_INVALID released=true
+✔ D2 transaction guards: all (0.92975ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38.664916
+
+> engramport@0.1.0 w1-6:test
+> node --test tests/wizard-w1-6.test.mjs
+
+✔ N1 nested secret and N2 future field are rejected without disclosure (1.998208ms)
+✔ F9 inline plan credential refused while reference form is accepted (0.101ms)
+✔ N3 unknown shape and N4 provider registration fail closed; clean positive (0.075584ms)
+✔ N5 provider shape shadowing is refused and trusted shape wins (0.068084ms)
+✔ N6 detector and N7 registry errors refuse (0.08425ms)
+✔ N8 size and N9 depth limits refuse, clean positive remains (0.098417ms)
+✔ N10 unsafe URLs refuse while HTTPS without authority is accepted (0.107083ms)
+✔ N11 foreign and N12 revoked references refuse (0.070125ms)
+✔ N13 refusal contains no record values (0.055208ms)
+✔ N14 registry revision is pinned and mutation cannot alter accepted result (0.087083ms)
+✔ G1 forged, G2 expired, G3 revoked grants refuse; GP succeeds (0.379084ms)
+✔ G4/G5 tenant and project mismatch refuse (0.056084ms)
+✔ G6/G7 provider and capability mismatch refuse (0.036541ms)
+✔ G8/G9 principal and actor mismatch refuse (0.042958ms)
+✔ G10 scope superset refuses rather than narrows (0.025ms)
+✔ G11 caller-supplied grantor cannot substitute resolver authority (0.041958ms)
+✔ G12 revocation re-read and G13 session revocation refuse (0.046125ms)
+✔ G14 custody revocation refuses while GP live custody succeeds (0.056542ms)
+✔ genuine guard-removal mutations accept fixtures and restore shipped modules (12.343292ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.069792
+
+> engramport@0.1.0 report:test
+> node --test tests/report-boundary.test.mjs
+
+✔ normative report schemas are installed byte-for-byte (2.8775ms)
+✔ well-formed live_feed envelope validates (0.494125ms)
+✔ well-formed terminal_ticker envelope validates (0.092708ms)
+✔ well-formed daily_briefing envelope validates (0.057375ms)
+✔ well-formed executive_view envelope validates (0.067166ms)
+✔ well-formed technical_view envelope validates (0.047709ms)
+✔ well-formed public_view envelope validates (0.070166ms)
+✔ well-formed collaborator_briefing envelope validates (0.046041ms)
+✔ well-formed progress.published payload validates (0.079292ms)
+✔ well-formed risk.raised payload validates (0.05825ms)
+✔ well-formed risk.retired payload validates (0.325875ms)
+✔ well-formed blocker.raised payload validates (0.045416ms)
+✔ well-formed blocker.cleared payload validates (0.023125ms)
+✔ well-formed test.recorded payload validates (0.019209ms)
+✔ well-formed incident.opened payload validates (0.016958ms)
+✔ well-formed incident.resolved payload validates (0.013875ms)
+✔ well-formed report.generated payload validates (0.044833ms)
+✔ fact ids present in source_event_ids validate (0.107958ms)
+✔ generated evidence exclusion has an explicit opt-in positive control (0.214041ms)
+✔ public input requires allowlisted evidence and human approval but performs no publication (1.408917ms)
+✔ malformed envelope refused: unknown envelope field (0.135ms)
+✔ malformed envelope refused: missing generated label (0.074084ms)
+✔ malformed envelope refused: false generated label (0.0505ms)
+✔ malformed envelope refused: empty fact event ids (0.047542ms)
+✔ malformed envelope refused: absent fact event ids (0.061ms)
+✔ malformed envelope refused: fact id absent from sources (0.060583ms)
+✔ malformed envelope refused: inference missing basis (0.053792ms)
+✔ malformed envelope refused: inference missing confidence (0.056542ms)
+✔ malformed envelope refused: empty source event ids (0.066125ms)
+✔ public_view without publication is refused (0.058042ms)
+✔ public_view above public sensitivity is refused (0.062917ms)
+✔ progress.published refuses free-form notes (0.04575ms)
+✔ progress.published refuses free-form reasoning (0.028833ms)
+✔ progress.published refuses free-form thoughts (0.025625ms)
+✔ progress.published refuses free-form scratchpad (0.029416ms)
+✔ test.recorded requires negative_controls_ran (0.050333ms)
+✔ authorization is validated before the authorized source is called (0.180083ms)
+✔ raw candidate sources are structurally refused (0.057833ms)
+✔ unauthorized context input is refused (0.090333ms)
+✔ above sensitivity ceiling input is refused (0.060667ms)
+✔ unauthorized visibility input is refused (0.058458ms)
+✔ cross-project input is refused (0.054125ms)
+✔ post-as_of_seq input is refused (0.063208ms)
+✔ generated-as-evidence input is refused (0.070625ms)
+✔ digest mismatch input is refused (0.322208ms)
+✔ evidence outside authorized history is refused (0.132917ms)
+✔ public_view refuses evidence not on the explicit publishable allowlist (0.100292ms)
+✔ public_view refuses self-approval before retrieval (0.063209ms)
+✔ public_view refuses missing human approval before retrieval (0.042666ms)
+✔ public approval digest is invalidated by an evidence-set change (0.122167ms)
+✔ authorized output is byte-identical whether restricted records exist or not (0.223ms)
+✔ auditable input identity binds ids, digests, sequence, authorization, model, and reporter revision (0.268291ms)
+✔ envelope must match the authorized input exactly (0.133792ms)
+✔ audit record binds inputs and labels output without reproducibility claim (0.119542ms)
+ℹ tests 54
+ℹ suites 0
+ℹ pass 54
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57.842084
+
+> engramport@0.1.0 report:r2:test
+> node --test tests/report-r2.test.mjs
+
+✔ identical authorized state is byte-identical with stable ordering and as_of_seq (2.003125ms)
+✔ identical authorized state is byte-identical across processes (34.718834ms)
+✔ a newly authorized event changes evidence and as_of_seq and wakes once (0.451875ms)
+✔ unchanged authorized state invokes the generator exactly zero times across 100 repetitions (3.062125ms)
+✔ unauthorized-only higher sequence changes neither evidence nor as_of_seq and invokes zero times (0.188417ms)
+✔ a source leak aborts with the R1 authorization error (0.36025ms)
+✔ report.generated cannot enter the R2 evidence set (0.079083ms)
+✔ discriminating controls fail against naive all-visible max-sequence assembly (0.095625ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.735375
+
+> engramport@0.1.0 report:correspondent:test
+> node --test tests/report-correspondent.test.mjs
+
+✔ the checked-in claim manifest generates an inert, balanced lab-report draft (176.576541ms)
+✔ a disclosed finding referenced in SECURITY.md is citable (156.803209ms)
+✔ a disclosed finding absent from SECURITY.md is refused by finding id (152.886667ms)
+✔ an unfixed finding is refused and fixed status requires a canonical agent-a disposition (437.561333ms)
+✔ an untraceable event or artifact is refused (299.098292ms)
+✔ a triumph-only report is a reporting defect (0.500125ms)
+✔ reviewer circulation is outside the manifest boundary (0.350083ms)
+✔ publication preparation observes refusal without explicit digest-bound approval (151.457916ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1418.671
+
+> engramport@0.1.0 welcome:test
+> node --test tests/welcome-package.test.mjs
+
+✔ valid package reports unchanged structural grant (379.952458ms)
+✔ tampered part bytes (477.513334ms)
+✔ missing part (496.650125ms)
+✔ extra unlisted part (475.522833ms)
+✔ unknown manifest field (435.706875ms)
+✔ altered identity grant (435.789083ms)
+✔ valid signature over tampered part list (439.158875ms)
+✔ unknown signing key (439.185125ms)
+✔ revoked signing key (431.803666ms)
+✔ expired package (439.14225ms)
+✔ revoked invitation (436.62875ms)
+✔ open invitation (434.933791ms)
+✔ invitation unknown field (434.9155ms)
+✔ absent checkpoint (439.821583ms)
+✔ inconsistent checkpoint chain (450.775375ms)
+✔ context role escalation (342.200375ms)
+✔ operator impersonation (376.704208ms)
+✔ identity contradiction (337.454167ms)
+✔ welcome verify CLI reports grant and exits nonzero on violation (499.144791ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8248.751584
+
+> engramport@0.1.0 setup:test
+> node --test tests/workspace-setup*.test.mjs
+
+✔ finite founder refuses non-expiring participant; both non-expiring is positive (2.343042ms)
+✔ finite owner refuses non-expiring agent; bounded agent is positive (0.24625ms)
+✔ authorized founder assigns verified_human to human (0.17325ms)
+✔ participant cannot claim trust founder cannot assign (0.16675ms)
+✔ agent cannot receive verified_human even when founder can assign it (0.162417ms)
+✔ unsupported trust elevation is refused (0.171791ms)
+✔ guest trust remains untrusted_agent (0.233459ms)
+✔ schema rejects unknown fields with positive control (2.47975ms)
+✔ cyclic dependencies refused (0.314667ms)
+✔ unsatisfiable dependency refused (0.225125ms)
+✔ scope exceeding founder refused (0.216291ms)
+✔ grant outliving founder refused (0.34875ms)
+✔ guest defaults enforced (0.223084ms)
+✔ agent scope exceeding owner refused (0.213917ms)
+✔ agent expiry exceeding owner refused (0.43725ms)
+✔ unapproved GitHub permission refused (0.20825ms)
+✔ merge permission refused (0.184125ms)
+✔ self-asserted elevated trust refused (0.169917ms)
+✔ dependency order is stable and step digests are complete (0.676833ms)
+✔ serialized plan reloads with stable portable identity (0.369208ms)
+✔ comments and key order do not affect digests; material parameters do (0.716583ms)
+✔ CLI compiles JSON-compatible workspace.setup.yaml (36.847291ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82.141292
+
+> engramport@0.1.0 watch:test
+> node --test tests/port-watch.test.mjs
+
+✔ observation delivery cannot obtain a turn through the real consumer call site (1.160958ms)
+✔ checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected (0.47075ms)
+✔ checkpoint chain binds the prior checkpoint body digest (0.162375ms)
+✔ stable delivery id deduplicates the same canonical batch (0.105709ms)
+✔ unchanged authorized work set invokes runner exactly zero times across many ticks (105.124125ms)
+✔ authorized addressed work wakes without project sequence or implementation-authority fields (2.787542ms)
+✔ waking grants exactly actor scopes and never supervisor scopes (2.115041ms)
+✔ completion stores no position and an unanswered work item remains eligible at least once (3.735875ms)
+✔ reply-derived removal changes the set without a cursor mutation (3.688042ms)
+✔ disposable cache is keyed to log state and deletion changes load count, never the set (1.852ms)
+✔ changed log state cannot reuse a stale cached work set (1.069417ms)
+✔ concurrent ticks reserve one invocation slot before either runner call (2.39525ms)
+✔ separate PortWatch and store instances sharing a claim root still invoke once (2.169084ms)
+✔ lease expiry permits explicit at-least-once redelivery (5.251459ms)
+✔ legacy active run requires explicit expiry before log-derived migration (2.701167ms)
+✔ inactive legacy cursor is ignored and removed rather than imported (2.234959ms)
+✔ rewind is unavailable because position is derived from the log (0.270833ms)
+✔ off by default, pause, and stop each block new wakes (4.109667ms)
+✔ stop revokes an active local claim (2.560834ms)
+✔ decision function is deterministic and has no cursor input (0.081459ms)
+✔ cadence defaults to 240 and bounded jitter never skips tick (0.070417ms)
+✔ unbranded broad inbox source is structurally refused (0.28875ms)
+✔ claim file contains only local WIP state, never a delivery position (1.779167ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 187.483625
+
+> engramport@0.1.0 session:test
+> node --test tests/workspace-session.test.mjs tests/workspace-oidc-verifier.test.mjs tests/workspace-oidc-client.test.mjs tests/workspace-oidc-durable.test.mjs tests/workspace-oidc-provider.test.mjs
+
+W1_1_OIDC_CLIENT auth_start configured=true unique=true pkce=S256
+W1_1_OIDC_CLIENT transaction positive=accepted expired=OIDC_TRANSACTION_EXPIRED retained=0
+W1_1_OIDC_CLIENT callback positive=accepted mismatch=OIDC_STATE_REFUSED redirect=OIDC_REDIRECT_URI_REFUSED replay=OIDC_STATE_REFUSED retained=0/0/0/0
+W1_1_OIDC_CLIENT composition status=active postgres_creates=1 asserted_ignored=true identity_absent=true
+W1_1_OIDC_CLIENT binder surface=principal_id identity_absent=true
+✔ auth-start (2.993125ms)
+✔ transaction-state (0.81675ms)
+✔ callback (0.704125ms)
+✔ composition-store (1.113166ms)
+✔ binder (0.11325ms)
+OIDC_RUNTIME_SKIP runtime=Node 26.5.0 reason=Miniflare startup aborts in InternalCallbackScope::Close (execution_async_id != 0) after asynchronous filesystem work; upstream defect identity unconfirmed; rerun on CI Node 22
+✔ tests/workspace-oidc-durable.test.mjs (127.3025ms)
+W1_1_OIDC_PROVIDER discovery issuer=true hosts=accounts.google.com,oauth2.googleapis.com,www.googleapis.com auth_path=/o/oauth2/v2/auth mismatch=OIDC_DISCOVERY_ISSUER_REFUSED unresolved=OIDC_CLIENT_SECRET_UNRESOLVED before_fetch=true
+W1_1_OIDC_PROVIDER jwks first=a overlap=b unknown=c disappeared=OIDC_KEY_NOT_FOUND expired_refresh=d kids=c,d
+W1_1_OIDC_PROVIDER exchange id_only=id_token verifier=true client=true negative=OIDC_CLIENT_REFUSED retained=0/0
+W1_1_OIDC_PROVIDER azp positive=accepted foreign=OIDC_AUTHORIZED_PARTY_REFUSED
+W1_1_OIDC_PROVIDER subject surface=iss,sub issuer=true value=recorded-synthetic-sub
+✔ discovery (8.866708ms)
+✔ jwks-lifecycle (119.034125ms)
+✔ exchange (0.306291ms)
+✔ azp (56.333959ms)
+✔ subject (0.119584ms)
+W1_1_OIDC signature positive=accepted negative=OIDC_SIGNATURE_REFUSED
+W1_1_OIDC rotation positive=accepted negative=OIDC_KEY_RETIRED
+W1_1_OIDC alg-none positive=accepted negative=OIDC_ALGORITHM_NONE_REFUSED
+W1_1_OIDC alg-hs256 positive=accepted negative=OIDC_ALGORITHM_CONFUSION_REFUSED
+W1_1_OIDC issuer positive=accepted negative=OIDC_ISSUER_REFUSED
+W1_1_OIDC audience positive=accepted negative=OIDC_AUDIENCE_REFUSED
+W1_1_OIDC expiry positive=accepted negative=OIDC_EXPIRED
+W1_1_OIDC nonce positive=accepted negative=OIDC_NONCE_REFUSED
+W1_1_OIDC claims-surface positive=aud,exp,iss,nonce,sub negative=absent
+W1_1_OIDC retention positive=cleared negative=cleared
+✔ signature (2.805292ms)
+✔ rotation (1.017417ms)
+✔ alg-none (0.8875ms)
+✔ alg-hs256 (0.675083ms)
+✔ issuer (0.846083ms)
+✔ audience (0.838584ms)
+✔ expiry (0.809417ms)
+✔ nonce (0.78025ms)
+✔ claims-surface (0.764ms)
+✔ retention (0.942ms)
+✔ session binds authenticated founder with narrowed scopes and absolute expiry (0.87375ms)
+✔ approved step executes only within its live session (1.620292ms)
+✔ completion structurally removes identity, delegation, approval, and credential (0.468792ms)
+✔ expired session refuses approved execution and leaves no identity (0.223334ms)
+✔ untouched expired delegation is swept while an untouched live session remains counted (0.129209ms)
+✔ torn-down session cannot authorize and replayed approval is refused (0.266042ms)
+✔ approval from session A cannot execute under session B (0.224375ms)
+✔ scope and expiry ceilings reuse W0 predicates (0.107125ms)
+✔ non-setup scope and unbounded session are refused (0.124917ms)
+✔ abandonment leaves no partial authority (0.21975ms)
+✔ state machine is deterministic under injected clock and ids (0.3795ms)
+✔ authenticator returns identity only and fixture credential is never stored (0.086084ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 224.887791
+
+> engramport@0.1.0 approval:test
+> node --test tests/workspace-approval.test.mjs
+
+✔ digests and portable plan identity survive serialization and another process (35.272875ms)
+✔ compiled serialized reloaded plan executes under its genuine grouped approval (0.877833ms)
+✔ grouped approval authorizes all five steps in approved order (0.309834ms)
+✔ diffing a plan against itself is empty (0.362834ms)
+✔ source dependency order is normalized only during compilation (0.296917ms)
+✔ reordered steps are refused with paired genuine-plan control (0.852791ms)
+✔ inserted step is refused with paired genuine-plan control (0.395833ms)
+✔ removed step is refused with paired genuine-plan control (0.285875ms)
+✔ substituted step is refused with paired genuine-plan control (0.324416ms)
+✔ modified parameters are refused with paired genuine-plan control (0.387291ms)
+✔ forged but self-consistent plan is not authorized by a genuine approval (0.57ms)
+✔ one consequential flag change is self-consistent but refused by genuine approval (0.36325ms)
+✔ all consequential flags changed is the refused F8 control (0.278083ms)
+✔ added dependency is self-consistent but refused by genuine approval (0.24375ms)
+✔ removed dependency is self-consistent but refused by genuine approval (0.227042ms)
+✔ wire dependency order is verified verbatim and never normalized (0.431083ms)
+✔ cross-plan approval is refused with paired approved-plan control (0.297167ms)
+✔ action v3 digest preserves step id and kind coverage (0.042ms)
+✔ action v3 coverage is deny-by-default with only its self digest excluded (0.048459ms)
+✔ a future wire field is preserved, covered, diffed, and refused without an exclusion (0.28525ms)
+✔ v2 wire is refused with a specific profile error and differs from v3 plan identity (0.214416ms)
+✔ tampered serialized plan is refused on load with paired round trip (0.15225ms)
+✔ verified plan parameters are deeply immutable (0.126791ms)
+✔ hand-built step list is refused at approval and execution (0.148916ms)
+✔ structured diff reports all classes, covered fields, and parameter paths (0.9705ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.931
+
+> engramport@0.1.0 dry-run:test
+> node --test tests/workspace-dry-run.test.mjs
+
+✔ valid plan transcript exactly covers compiled sequence and digests (3.656459ms)
+✔ dry-run output is deterministic (0.811709ms)
+✔ headline: provisioning, pull-request, and import effects cause zero side effects (0.581417ms)
+✔ compiler-refused plan produces no transcript (0.558458ms)
+✔ hand-built or cloned step list cannot bypass compiler (0.93125ms)
+✔ temporary directory is required (0.22925ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54.266709
+
+> engramport@0.1.0 db:lock-test
+> node --test tests/db-test-lock.test.mjs
+
+✔ both database entrypoints refuse a concurrent caller and leave the holder unaffected (151.646125ms)
+✔ a SIGKILL-stale lock is recovered by the other entrypoint (101.665875ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 287.0705
+
+> engramport@0.1.0 db:static-test
+> node --test tests/app-role-grants-static.test.mjs
+
+✔ app role has no blanket all-table grant (0.515208ms)
+✔ app writes are limited to canonical append tables (0.489791ms)
+✔ app retains explicit reads needed by RLS and delegation trigger (0.176959ms)
+✔ maintenance remains separate authorization writer (0.124959ms)
+✔ future database controls assert exact permission errors and positive paths (0.058417ms)
+✔ database runner executes grant controls after postgres seed (0.115917ms)
+✔ founding issuer is a dormant dedicated-role capability (0.248083ms)
+✔ founding issuer refusal has a live app-role proof (0.120125ms)
+✔ observation disposition is private, forced-RLS, append-only, and function mediated (0.117709ms)
+✔ portable work claims are private, function mediated, and database-exclusive (0.168542ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.158209
+
+> engramport@0.1.0 dispatch:test
+> node --test tests/workspace-dispatch-gate.test.mjs
+
+✔ exact current threat-model revision and digest permit only a complete Tier A registry (2.239666ms)
+✔ dispatch gate refuses missing evidence (0.544875ms)
+✔ dispatch gate refuses stale evidence (0.382583ms)
+✔ dispatch gate refuses wrong digest evidence (0.352875ms)
+✔ dispatch gate refuses waiver evidence (0.265083ms)
+✔ document binding is the canonical file digest (0.387291ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.120083
+
+> engramport@0.1.0 build
+> WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build
+
+
+  vinext build  (Vite 8.0.13)
+
+(node:78889) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[1/5] analyze client references...
+[2Ktransforming...✓ 224 modules transformed.
+rendering chunks...
+✓ built in 521ms
+[2/5] analyze server references...
+[2Ktransforming...✓ 74 modules transformed.
+rendering chunks...
+✓ built in 40ms
+[3/5] build rsc environment...
+[2Ktransforming...✓ 222 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 225ms
+[4/5] build client environment...
+[2Ktransforming...✓ 115 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 221ms
+[5/5] build ssr environment...
+[2Ktransforming...✓ 80 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 150ms
+[0m
+  Route (app)
+  ─ ? /
+
+  ? Unknown
+
+  ? Some routes could not be classified. vinext currently uses static analysis
+    and cannot detect dynamic API usage (headers(), cookies(), etc.) at build time.
+    Automatic classification will be improved in a future release.
+
+  Build complete. Run `vinext start` to start the production server.
+
+✔ server-renders the EngramPort product site (48.140709ms)
+✔ ships product metadata and removes the starter preview (0.95575ms)
+✔ site install claims require a publishable package manifest (1.309875ms)
+SITE_EVENT_TYPES handoff,reply,artifact,completion=accepted
+✔ site console event types remain linked to the verifier vocabulary (0.43675ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.756208
