@@ -1,0 +1,7 @@
+{
+  "council": "07",
+  "actor": "agent-b",
+  "sha256": "398c4b908c18a906cd2a96aa1e8476b24ae3385fbc1a7a99edab5a76ceedaa10",
+  "revealed": false,
+  "reveal_path": "artifacts/agent-b/council-07-recommendation-sealed.md"
+}
