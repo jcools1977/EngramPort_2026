@@ -1,0 +1,31 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08d68-209a-76d5-9b17-b98b3d7a3df6",
+  "target_thread": "preflight-f174",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "feasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-10T22:20:09.686Z",
+  "review_completed_at": "2026-09-10T22:24:13.346Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 3,
+  "token_use": {
+    "input_tokens": 5748,
+    "output_tokens": 492,
+    "total_tokens": 19482
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 931320000,
+    "cost_usd": 0.093132
+  },
+  "summary": "Dispatch to agent-b is feasible: every mandatory edit sits on shared surfaces already in bounds (git-adapter init/verify-log, sdk bundle, tests, one PROTOCOL.md paragraph, constraints.md append). The second draft’s discriminator (CRLF-normalize worktree bytes only after an exact artifact mismatch; both-rewritten-and-edited stays a hash mismatch; no HEAD/blob) is implementable without a commit, and the three named observation matrices can discriminate prevention vs diagnosis vs content edit. Non-blocking defects remain: PROTOCOL.md has no “artifact digest rule” to hang the paragraph on; the read-list points at hashBody, whose body profile is the wrong discriminator; F174 closure text must not claim this tree is checkout-safe, because AGENTS.md and the bounds forbid adding `.gitattributes` here.",
+  "findings": [
+    "PROTOCOL.md has no artifact-digest rule. The only digest language is the repository-contract bullet that artifact references include a SHA-256 digest, plus the canonical *body* hash section. The required PROTOCOL.md change cannot be inserted “under the artifact digest rule” as written; agent-b would have to place a new paragraph. Still one paragraph, so not blocking, but the named insertion point is absent.",
+    "The read-list’s appeal to hashBody contradicts objective 2. hashBody is the event body profile (CRLF→LF, strip trailing whitespace/newlines, exactly one LF). Reusing it for CHECKOUT_ALTERED_BYTES would miss a pure line-ending rewrite on files whose trailing newlines change under that profile, and would label trailing-whitespace edits as checkout alteration. The helper must be exact-byte digest plus a CRLF-only retry; hashBody is reference material at best, not the comparison.",
+    "Bounds plus AGENTS.md forbid adding `.gitattributes` to this repository (not a listed shared root file; not in the allowed edit set). Init can still write `* -text` into *new* scaffolds. docs/constraints.md therefore cannot close F174 as “a log must verify on any checkout” for this tree; honest closure is limited to new init roots plus named diagnosis of artifact CRLF rewrites. The claim that AGENTS.md is untouched because nothing it states changes is false of that boundary."
+  ]
+}

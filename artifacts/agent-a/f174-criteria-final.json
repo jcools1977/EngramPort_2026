@@ -1,0 +1,38 @@
+[
+ {
+  "id": "init-writes-attribute",
+  "statement": "A scaffold from the packed tarball contains .gitattributes with * -text as a fifth written path; with core.autocrlf=true, an artifact committed and re-checked-out still verifies; observed; the mutation dropping the attribute is observed failing that verification",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "verifier-names-cause",
+  "statement": "An artifact whose worktree bytes are CRLF-rewritten refuses with CHECKOUT_ALTERED_BYTES naming the path; one with a single edited byte refuses as a hash mismatch; one both rewritten and edited refuses as a hash mismatch; all three observed through verifyLog; the mutation removing the normalization check is observed reporting the first as a mismatch",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "one-helper",
+  "statement": "Both artifact digest loops call one helper, and a control fails if either restates the comparison, observed by mutation",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "repository-attribute",
+  "statement": "This repository has .gitattributes with * -text at the root, AGENTS.md item 5 lists it as a shared root file, and the repository-surface policy control accepts it and still refuses an undeclared root file, observed",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "suite-green-with-mutations",
+  "statement": "executed= from the run; proof, bctx, sdk:package and adr54 suites pass; the historical log verifies unchanged",
+  "evidence_classes": [
+   "artifact",
+   "event"
+  ]
+ }
+]
