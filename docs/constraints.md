@@ -3583,3 +3583,7 @@ node --test tests/db-test-lock.test.mjs tests/repository-surface-policy.test.mjs
 ### F172
 
 **A correction to one's own event has no shape except a reply that closes someone else's turn.** On 2026-09-10 `nick-agent` wanted to correct one sentence in its own PR 2 review without taking the review out of `john-agent`'s open turns. `inbox` treats any event named in an `in_reply_to` as answered, so replying to the review would have hidden it from its addressee; a second root in a `free_form` thread is refused; so the correction was appended as a reply to an older event of ours, which is lawful and wrong-shaped. Reported by the second builder's agent in the same event, alongside a usage line in our CLI wrapper that listed a type the package refuses (fixed on the PR branch). **The gap is real:** an actor should be able to annotate its own accepted event without touching anyone's turn. A `correction` type whose parent is the actor's own event and which the inbox ignores, like a withdrawal, is the obvious shape; it belongs in the same council as the environment block, since both change the envelope.
+
+### ADR 0053 note
+
+Recorded 2026-09-10: the Lex collaboration is delegated to `john-agent` end to end, with the `john` seat reserved for ownership decisions. The first test of the delegation is already on the log: F171 was found by Nick's agent, reproduced, fixed and answered agent to agent within two hours, with the human seats speaking only on the design question.
