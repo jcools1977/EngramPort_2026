@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -142,6 +143,24 @@ export async function appendEvent(input, options = {}) {
   const source = `---\n${meta.join("\n")}\n---\n${input.body.trimEnd()}\n`;
   const candidate = await verifyLog(cwd, { candidateEvent: { relative, source } });
   if (!candidate.ok) return { ok: false, errors: candidate.errors, relative };
+
+  // Candidate verification has already checked each pin against exact disk bytes.
+  const references = [...artifacts, ...(boundedContext ?? []).filter(r => r.type === "artifact").map(r => r.ref),
+    ...(criteriaResults ?? []).flatMap(r => r.evidence.filter(e => e.type === "artifact").map(e => e.ref))];
+  for (const reference of new Set(references)) {
+    const relative = reference.split("#", 1)[0];
+    try {
+      const git = args => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+      // Compare Git blob IDs, not a Git object ID with the envelope's SHA-256.
+      // --no-filters represents the already-verified pin; neither command stores objects.
+      if (git(["hash-object", "--", relative]) !== git(["hash-object", "--no-filters", "--", relative])) {
+        throw appendError("ARTIFACT_CHECKOUT_REWRITE", `${relative}: checkout would store different bytes than were pinned; use * -text in .gitattributes`);
+      }
+    } catch (error) {
+      if (error.code === "ARTIFACT_CHECKOUT_REWRITE") throw error;
+      throw appendError("ARTIFACT_GIT_CHECK_REFUSED", `${relative}: cannot check the bytes Git would store; Git must be available and hash-object must succeed; use * -text in .gitattributes to preserve pinned bytes`);
+    }
+  } /* ARTIFACT_GIT_BYTES_CHECK */
 
   await mkdir(path.dirname(file), { recursive: true });
   try { await writeFile(file, source, { flag: "wx" }); }

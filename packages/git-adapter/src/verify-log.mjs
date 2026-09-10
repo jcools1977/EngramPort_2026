@@ -84,7 +84,11 @@ async function verifyArtifactDigest(artifactPath, relative, expected, label, err
     if (digest === expected) return;
     // Latin-1 round-trips every byte, including non-UTF-8 artifacts.
     const normalized = Buffer.from(bytes.toString("latin1").replace(/\r\n/g, "\n"), "latin1");
-    if (createHash("sha256").update(normalized).digest("hex") === expected) {
+    // Reconstruct the CRLF form for a CRLF pin now read from an LF checkout.
+    // This is a compatible byte transformation, not evidence of its historical cause.
+    const crlf = Buffer.from(normalized.toString("latin1").replace(/(?<!\r)\n/g, "\r\n"), "latin1");
+    if (createHash("sha256").update(normalized).digest("hex") === expected ||
+        createHash("sha256").update(crlf).digest("hex") === expected) {
       errors.push(`${label}: CHECKOUT_ALTERED_BYTES for ${relative}; use * -text in .gitattributes and restore the pinned artifact bytes`);
     } else {
       errors.push(`${label}: artifact hash mismatch for ${relative}`);

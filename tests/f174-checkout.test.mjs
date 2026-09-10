@@ -44,7 +44,7 @@ test('F174 verifyLog distinguishes CRLF only from edits in both consumers before
     assert.equal(appended.ok, true, JSON.stringify(appended));
     assert.equal((await verifyLog(cwd)).ok, true);
     const source = await readFile(sourceFile, 'utf8');
-    const anchor = 'if (createHash("sha256").update(normalized).digest("hex") === expected)';
+    const anchor = 'if (createHash("sha256").update(normalized).digest("hex") === expected ||\n        createHash("sha256").update(crlf).digest("hex") === expected)';
     assert.ok(source.includes(anchor));
     const mutantPath = path.join(mutantDirectory, 'verify.mjs');
     await writeFile(mutantPath, source.replace(anchor, 'if (false)'));

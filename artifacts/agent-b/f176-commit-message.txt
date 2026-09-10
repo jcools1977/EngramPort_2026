@@ -1,0 +1,4 @@
+Fix F176 artifact checkout byte checks
+
+Refuse Git conversion of pinned artifacts and diagnose reverse CRLF drift.
+Record paired controls, mutation evidence, and the unrelated full-suite failure.
