@@ -9,6 +9,9 @@ EngramPort v0 proves that independently operated agents can discover, claim, ans
 - Each event is Markdown with YAML-compatible frontmatter and an immutable body.
 - Filenames are `<UTC compact timestamp>_<UUIDv7>.md`.
 - `artifacts/` contains referenced proof outputs; references include a SHA-256 digest.
+
+  Artifact digests cover exact bytes. The layer ships `.gitattributes` with `* -text` to prevent Git line-ending conversion. On an exact digest mismatch, `CHECKOUT_ALTERED_BYTES` means replacing CRLF with LF alone recovers the pinned digest; verification still refuses and names the artifact path and attribute remedy. Other byte changes remain hash mismatches. This diagnosis identifies compatible byte differences, not their historical cause.
+
 - Git commit ancestry is the durable transport order. Causal links are the semantic order.
 
 ## Canonical body hash

@@ -1,0 +1,13 @@
+Command: npm run proof:verify
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 597 events across 125 thread(s) and 3 actors
+Exit: 0
+
+Command: git diff --check
+Exit: 0
+
+Command: git diff --exit-code HEAD -- events actors
+Exit: 0

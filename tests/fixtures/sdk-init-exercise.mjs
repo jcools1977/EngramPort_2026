@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 
 const [bin, selected = "all"] = process.argv.slice(2);
-const expectedFiles = ["actors/clean-builder.yaml", "artifacts/clean-builder/.gitkeep", "engramport.yaml", "events/clean-builder/.gitkeep"];
+const expectedFiles = [".gitattributes", "actors/clean-builder.yaml", "artifacts/clean-builder/.gitkeep", "engramport.yaml", "events/clean-builder/.gitkeep"];
 const defaults = ["init", "--actor", "clean-builder", "--kind", "agent"];
 
 async function snapshot(cwd, prefix = "") {
@@ -54,7 +54,7 @@ if (selected === "all" || selected === "success") {
       assert.deepEqual(Object.keys(files).sort(), expectedFiles);
       assert.deepEqual((await readdir(cwd, { recursive: true })).sort(), [
         ...expectedFiles, "actors", "artifacts", "artifacts/clean-builder", "events", "events/clean-builder",
-      ].sort(), "init creates only the four files and their parent directories");
+      ].sort(), "init creates only the five files and their parent directories");
       for (const file of expectedFiles.filter((file) => file.endsWith(".gitkeep"))) {
         assert.equal(await readFile(path.join(cwd, file), "utf8"), "");
       }

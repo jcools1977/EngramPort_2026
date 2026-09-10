@@ -20,7 +20,7 @@ const sharedDirectories = [
   "migrations", "packages", "public", "registry", "schemas", "scripts", "tests", "threads", "worker",
 ];
 const sharedRootFiles = [
-  ".gitguard-allow", ".gitignore", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "ENGRAMPORT_ENGINEERING_SPEC.md",
+  ".gitattributes", ".gitguard-allow", ".gitignore", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "ENGRAMPORT_ENGINEERING_SPEC.md",
   "LICENSE",
   "ONE PROJECT WHOLE FLEET.png", "PROTOCOL.md", "README.md",
   "SECURITY.md", "agent-c.env.example",
@@ -29,7 +29,7 @@ const sharedRootFiles = [
   "vite.config.ts",
 ];
 const sharedDirectoriesRule = "Shared editable directories are: `.github/`, `.openai/`, `app/`, `build/`, `db/`, `deploy/`, `docs/`, `drizzle/`, `examples/`, `migrations/`, `packages/`, `public/`, `registry/`, `schemas/`, `scripts/`, `tests/`, `threads/`, and `worker/`.";
-const sharedRootFilesRule = "Shared editable root files are: `.gitguard-allow`, `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `ENGRAMPORT_ENGINEERING_SPEC.md`, `LICENSE`, `ONE PROJECT WHOLE FLEET.png`, `PROTOCOL.md`, `README.md`, `SECURITY.md`, `agent-c.env.example`, `drizzle.config.ts`, `engramport.yaml`, `eslint.config.mjs`, `next-env.d.ts`, `next.config.ts`, `oidc.env.example`, `package-lock.json`, `package.json`, `postcss.config.mjs`, `tsconfig.json`, and `vite.config.ts`.";
+const sharedRootFilesRule = "Shared editable root files are: `.gitattributes`, `.gitguard-allow`, `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `ENGRAMPORT_ENGINEERING_SPEC.md`, `LICENSE`, `ONE PROJECT WHOLE FLEET.png`, `PROTOCOL.md`, `README.md`, `SECURITY.md`, `agent-c.env.example`, `drizzle.config.ts`, `engramport.yaml`, `eslint.config.mjs`, `next-env.d.ts`, `next.config.ts`, `oidc.env.example`, `package-lock.json`, `package.json`, `postcss.config.mjs`, `tsconfig.json`, and `vite.config.ts`.";
 
 function inSurface(path, prefix) {
   return path === prefix || path.startsWith(`${prefix}/`);
@@ -96,7 +96,7 @@ test("tracked repository paths are covered only by explicit written surfaces", a
   const actorDriftDeclared = rules.includes(driftRule);
   const sharedEditingDeclared = rules.includes(sharedDirectoriesRule) && rules.includes(sharedRootFilesRule);
   const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: root }).toString("utf8").split("\0").filter(Boolean);
-  const classifications = tracked.map((path) => {
+  const classify = (path) => {
     if (path.startsWith("events/")) {
       const actor = actorOwnershipDeclared && actors.find(({ eventDirectory }) => inSurface(path, eventDirectory));
       return { path, surface: actor ? `event:${actor.slug}` : null };
@@ -110,7 +110,12 @@ test("tracked repository paths are covered only by explicit written surfaces", a
     const topLevel = path.split("/", 1)[0];
     if (path.includes("/") && sharedDirectories.includes(topLevel)) return { path, surface: sharedEditingDeclared ? `shared:${topLevel}` : null };
     return { path, surface: null };
-  });
+  };
+  assert.equal(classify(".gitattributes").surface, "shared:file");
+  assert.equal(classify("undeclared-f174-root.txt").surface, null);
+  assert.equal(await readFile(join(root, ".gitattributes"), "utf8"), "* -text\n");
+  console.log("F174_SURFACE attribute=accepted undeclared_root=refused");
+  const classifications = tracked.map(classify);
   const unaccounted = classifications.filter(({ surface }) => surface === null).map(({ path }) => path);
   console.log(`REPOSITORY_SURFACE_POLICY tracked=${tracked.length} actor_rule=${actorOwnershipDeclared} drift_rule=${actorDriftDeclared} shared_rule=${sharedEditingDeclared} unaccounted=${unaccounted.length}`);
   assert.deepEqual(unaccounted, [], `tracked paths not accounted for by ${rulesLabel}:\n${unaccounted.join("\n")}`);

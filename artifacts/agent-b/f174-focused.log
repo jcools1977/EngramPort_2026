@@ -1,0 +1,28 @@
+Command: node --test tests/f174-checkout.test.mjs tests/repository-surface-policy.test.mjs
+F174_HELPER_MUTATION consumer=label control=failed
+F174_HELPER_MUTATION consumer=event.relative control=failed
+F174_HELPER_MUTATIONS executed=2 killed=2 restored=passed
+✔ F174 both digest consumers share one helper and restated comparisons are killed (2.506917ms)
+F174_VERIFY case=crlf errors=["events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: bounded_context[0]: CHECKOUT_ALTERED_BYTES for artifacts/builder/evidence.bin; use * -text in .gitattributes and restore the pinned artifact bytes","events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: CHECKOUT_ALTERED_BYTES for artifacts/builder/evidence.bin; use * -text in .gitattributes and restore the pinned artifact bytes"]
+F174_NORMALIZATION_MUTATION executed=1 killed=1 errors=["events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+F174_VERIFY case=edit errors=["events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+F174_VERIFY case=both errors=["events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+F174_VERIFY case=trailing-space errors=["events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T222752Z_01a08d6f-3baf-7c73-8f1d-d3d5d976f8bb.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+✔ F174 verifyLog distinguishes CRLF only from edits in both consumers before a commit (24.039459ms)
+ACTOR_REGISTRY_DRIFT_CHECK actors=3 scope=dirty-tree normalized=true disjoint=true
+✔ actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint (28.491416ms)
+✔ registry drift check passes when a clean checkout committed materially wrong registry bytes (134.061584ms)
+✔ actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities (2.548334ms)
+F174_SURFACE attribute=accepted undeclared_root=refused
+REPOSITORY_SURFACE_POLICY tracked=1491 actor_rule=true drift_rule=true shared_rule=true unaccounted=0
+✔ tracked repository paths are covered only by explicit written surfaces (26.673791ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 230.806375
+
+Exit: 0

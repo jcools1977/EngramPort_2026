@@ -7,6 +7,8 @@ import test from "node:test";
 import { INIT_PATHS } from "../packages/git-adapter/src/init.mjs";
 import { assertHelp } from "./helpers/cli-help-contract.mjs";
 
+import { exerciseCheckout } from "./fixtures/f174-checkout.mjs";
+
 const root = path.resolve(import.meta.dirname, "..");
 const packageRoot = process.env.SDK_PACKAGE_ROOT ?? path.join(root, "packages/sdk");
 
@@ -150,10 +152,11 @@ test("packed SDK installs outside repository, imports, and appends", async () =>
     `);
     const output = execute("node", ["exercise.mjs"], consumer);
     assert.match(output, /SDK_CLEAN_INSTALL package=imported append=accepted repository=absent/);
-    assert.deepEqual(INIT_PATHS, ["engramport.yaml", "actors/<slug>.yaml", "events/<slug>/.gitkeep", "artifacts/<slug>/.gitkeep"]);
+    assert.deepEqual(INIT_PATHS, ["engramport.yaml", "actors/<slug>.yaml", "events/<slug>/.gitkeep", "artifacts/<slug>/.gitkeep", ".gitattributes"]);
     await writeFile(path.join(consumer, "init-exercise.mjs"), await readFile(path.join(root, "tests/fixtures/sdk-init-exercise.mjs"), "utf8"));
     const initOutput = execute("node", ["init-exercise.mjs", path.join(consumer, "node_modules/.bin/engram")], consumer);
     console.log(initOutput.trim());
+    await exerciseCheckout(path.join(consumer, "node_modules/.bin/engram"));
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

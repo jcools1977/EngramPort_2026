@@ -5,7 +5,7 @@ import { SLUG } from "./verify-log.mjs";
 // This is the complete file creation set. No repository files are copied.
 export const INIT_PATHS = Object.freeze([
   "engramport.yaml", "actors/<slug>.yaml",
-  "events/<slug>/.gitkeep", "artifacts/<slug>/.gitkeep",
+  "events/<slug>/.gitkeep", "artifacts/<slug>/.gitkeep", ".gitattributes",
 ]);
 
 function refuse(code, message) {
@@ -33,7 +33,7 @@ export async function initProject({ actor, kind, project = "my-project", mode = 
   const contents = [
     `protocol: engramport-git-v0\nproject: ${project}\nmode: ${mode}\ndefault_thread_mode: ${mode}\nevent_root: events\nactor_root: actors\nartifact_root: artifacts\nhash_profile: engramport-git-body-v0\nschema_version: 0\n`,
     `schema_version: 0\nslug: ${actor}\ndisplay_name: ${actor}\nkind: ${kind}\nprovider: unspecified\ncapabilities: []\nevent_directory: events/${actor}\nartifact_prefix: artifacts/${actor}\n`,
-    "", "",
+    "", "", "* -text\n",
   ];
   // Exclusive directory creation also refuses a concurrently inserted directory
   // or symlink. A filesystem error may leave a partial scaffold; never delete or

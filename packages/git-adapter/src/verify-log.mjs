@@ -75,6 +75,23 @@ export function hashBody(body) {
   return createHash("sha256").update(body.replace(/\r\n/g, "\n").trimEnd() + "\n", "utf8").digest("hex");
 }
 
+// Share exact-byte validation across envelope artifacts and bound evidence.
+async function verifyArtifactDigest(artifactPath, relative, expected, label, errors) {
+  try {
+    if (!(await stat(artifactPath)).isFile()) throw new Error("not a file");
+    const bytes = await readFile(artifactPath);
+    const digest = createHash("sha256").update(bytes).digest("hex");
+    if (digest === expected) return;
+    // Latin-1 round-trips every byte, including non-UTF-8 artifacts.
+    const normalized = Buffer.from(bytes.toString("latin1").replace(/\r\n/g, "\n"), "latin1");
+    if (createHash("sha256").update(normalized).digest("hex") === expected) {
+      errors.push(`${label}: CHECKOUT_ALTERED_BYTES for ${relative}; use * -text in .gitattributes and restore the pinned artifact bytes`);
+    } else {
+      errors.push(`${label}: artifact hash mismatch for ${relative}`);
+    }
+  } catch { errors.push(`${label}: missing artifact ${relative}`); }
+}
+
 function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
   if (value && typeof value === "object") {
@@ -554,11 +571,7 @@ export async function verifyLog(root, options = {}) {
     const artifactPath = path.resolve(root, match[1]);
     const owner = [...artifactReferences.keys()].find((prefix) => artifactPath.startsWith(`${prefix}${path.sep}`));
     if (!owner) { errors.push(`${label}: artifact reference is outside registered actor prefixes`); return; }
-    try {
-      if (!(await stat(artifactPath)).isFile()) throw new Error("not a file");
-      const digest = createHash("sha256").update(await readFile(artifactPath)).digest("hex");
-      if (digest !== match[2]) errors.push(`${label}: artifact hash mismatch for ${match[1]}`);
-    } catch { errors.push(`${label}: missing artifact ${match[1]}`); }
+    await verifyArtifactDigest(artifactPath, match[1], match[2], label, errors);
   };
 
   for (const event of events.filter((item) => item.meta.schema_version >= 1)) {
@@ -617,11 +630,7 @@ export async function verifyLog(root, options = {}) {
       const artifactPath = path.resolve(root, match[1]);
       const authorPrefix = path.resolve(root, actors.get(event.meta.from)?.artifactPrefix ?? "");
       if (!artifactPath.startsWith(authorPrefix + path.sep)) { errors.push(`${event.relative}: artifact-prefix ownership violation for ${match[1]}`); continue; }
-      try {
-        if (!(await stat(artifactPath)).isFile()) throw new Error("not a file");
-        const digest = createHash("sha256").update(await readFile(artifactPath)).digest("hex");
-        if (digest !== match[2]) errors.push(`${event.relative}: artifact hash mismatch for ${match[1]}`);
-      } catch { errors.push(`${event.relative}: missing artifact ${match[1]}`); }
+      await verifyArtifactDigest(artifactPath, match[1], match[2], event.relative, errors);
     }
   }
 
