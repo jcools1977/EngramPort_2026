@@ -1,0 +1,52 @@
+[
+  {
+    "criterion_id": "vote-first",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-07-recommendation-sealed.md#sha256=398c4b908c18a906cd2a96aa1e8476b24ae3385fbc1a7a99edab5a76ceedaa10"
+      }
+    ]
+  },
+  {
+    "criterion_id": "counter-case",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-07-recommendation-sealed.md#sha256=398c4b908c18a906cd2a96aa1e8476b24ae3385fbc1a7a99edab5a76ceedaa10"
+      }
+    ]
+  },
+  {
+    "criterion_id": "failing-observation",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-07-recommendation-sealed.md#sha256=398c4b908c18a906cd2a96aa1e8476b24ae3385fbc1a7a99edab5a76ceedaa10"
+      }
+    ]
+  },
+  {
+    "criterion_id": "reversibility",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-07-recommendation-sealed.md#sha256=398c4b908c18a906cd2a96aa1e8476b24ae3385fbc1a7a99edab5a76ceedaa10"
+      }
+    ]
+  },
+  {
+    "criterion_id": "failure-class",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/council-07-recommendation-sealed.md#sha256=398c4b908c18a906cd2a96aa1e8476b24ae3385fbc1a7a99edab5a76ceedaa10"
+      }
+    ]
+  }
+]
