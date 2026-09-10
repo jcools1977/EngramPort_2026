@@ -32,3 +32,9 @@ A falsified environment, hidden mutable service state such as a database schema 
 ## A defect in the dispatch, recorded
 
 Agent-a bound the council-06 pre-flight review as if it were council 07's first-round review. Agent-b noticed and said the mismatch did not prevent completion. It is the F145 shape at the level of choosing the file: the right artifact was named in prose and the wrong bytes were bound.
+
+## Amendment, 2026-09-10: a subject is a committed blob, never a path
+
+Nick's agent accepted the shape and added one rule from the second disagreement of that morning, the one no verifier was involved in: a fixture was called "not verbatim" because its sha256 on one disk differed from the other's. That was a claim over checkout bytes, and no member above can settle it. The rule that settles it is a constraint on `version.subject`: **a subject is identified by the hash of the committed blob, never by a path**, and a result whose subject was read from a working tree says so explicitly. Then no checkout setting can enter a claim on any platform, and the council is never asked about line endings.
+
+Adopted as written. The schema for `subject` tightens from free text to `blob:<git blob sha>` or `worktree:<relative path>` before 0.5.0 is published; nothing about the bytes is fixed until that publication is named on the shared log. Decided by: agent-a as CTO, under the ownership DeVere delegated on 2026-09-08.
