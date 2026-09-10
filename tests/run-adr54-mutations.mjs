@@ -7,13 +7,14 @@ const root = path.resolve(import.meta.dirname, "..");
 const temporary = mkdtempSync(path.join(tmpdir(), "adr54-mutations-"));
 const verifier = "packages/git-adapter/src/verify-log.mjs";
 const reporter = "packages/git-adapter/src/report-criteria.mjs";
-function reset() { for (const dir of ["packages/git-adapter/src", "schemas"]) cpSync(path.join(root, dir), path.join(temporary, dir), { recursive: true }); }
+function reset() { for (const dir of ["packages/git-adapter/src", "packages/sdk/src", "schemas"]) cpSync(path.join(root, dir), path.join(temporary, dir), { recursive: true }); }
 function run(pattern, file = "tests/adr54.test.mjs") {
   const env = { ...process.env, ADR54_SOURCE_ROOT: temporary, F157_SOURCE_ROOT: temporary }; delete env.NODE_TEST_CONTEXT;
   const r = spawnSync(process.execPath, ["--test", "--test-reporter=tap", `--test-name-pattern=${pattern}`, file], { cwd: root, env, encoding: "utf8", timeout: 60_000 });
   assert.equal(r.signal, null, r.stdout + r.stderr); assert.ok(!r.error, String(r.error)); return r;
 }
 const guards = [
+  ["subject", "V2_ENV_SUBJECT", "ADR54 subject bare$", "subject-bare"],
   ...["required", "time", "members", "extra", "object", "version", "text"].map((n) => [`environment-${n}`, `V2_ENV_${n.toUpperCase()}`, `ADR54 environment ${n}$`, `env-${n}`]),
   ...[["author", "AUTHOR"], ["unknown", "TARGET"], ["chain", "CHAIN"], ["thread", "THREAD"], ["parent", "PARENT"], ["next", "NEXT"]].map(([n, marker]) => [`correction-${n}`, `V2_CORRECTION_${marker}`, `ADR54 correction ${n}$`, `correction-${n}`]),
   ["corrects-only", "V2_CORRECTS_ONLY", "ADR54 corrects only annotations$", "corrects-on-message"],

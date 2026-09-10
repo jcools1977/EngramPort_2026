@@ -1,0 +1,236 @@
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-required ok=false errors=["events/b/20260910T180003Z_01a08c7a-08b8-79d9-890b-47c28b93b9f2.md: criteria_results[0]: environment is required"]
+✔ ADR54 environment required (16.300417ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-time ok=false errors=["events/b/20260910T180006Z_01a08c7a-1470-7fcf-b703-7b01d4a3dcc7.md: criteria_results[0]: environment observed_at must be an ISO date-time or null"]
+✔ ADR54 environment time (10.402584ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-members ok=false errors=["events/b/20260910T180009Z_01a08c7a-2028-7d0b-a62a-72413eec8740.md: criteria_results[0]: environment missing member"]
+✔ ADR54 environment members (10.614458ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-extra ok=false errors=["events/b/20260910T180012Z_01a08c7a-2be0-7c7b-99cf-8648d9fb7340.md: criteria_results[0]: environment has an extra member"]
+✔ ADR54 environment extra (9.564125ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-object ok=false errors=["events/b/20260910T180015Z_01a08c7a-3798-7ed7-9c4a-05313e019c38.md: criteria_results[0]: environment must be an object"]
+✔ ADR54 environment object (10.911583ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-version ok=false errors=["events/b/20260910T180018Z_01a08c7a-4350-7b06-af8e-66922ef71546.md: criteria_results[0]: environment version must have nullable source_revision, dirty, runtime, subject"]
+✔ ADR54 environment version (9.836667ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS env-text ok=false errors=["events/b/20260910T180021Z_01a08c7a-4f08-705b-8dc4-36750180e9ca.md: criteria_results[0]: environment platform and tree_shape must be text or null"]
+✔ ADR54 environment text (9.941125ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS v1-no-environment ok=true errors=[]
+ADR54_OBS v2-environment ok=true errors=[]
+ADR54_OBS v2-environment ok=true errors=[]
+ADR54_OBS v2-environment ok=true errors=[]
+ADR54_OBS missing-version ok=false errors=["events/b/20260910T180028Z_01a08c7a-6a60-7de2-b363-af26374cf8e0.md: criteria_results[0]: environment missing member"]
+ADR54_OBS missing-platform ok=false errors=["events/b/20260910T180029Z_01a08c7a-6e48-780e-8116-91c5b04476cf.md: criteria_results[0]: environment missing member"]
+ADR54_OBS missing-tree_shape ok=false errors=["events/b/20260910T180030Z_01a08c7a-7230-79ab-a587-ac7bf967ea67.md: criteria_results[0]: environment missing member"]
+ADR54_OBS missing-observed_at ok=false errors=["events/b/20260910T180031Z_01a08c7a-7618-7777-b79c-53ed9fcc1316.md: criteria_results[0]: environment missing member"]
+ADR54_OBS bad-time ok=false errors=["events/b/20260910T180032Z_01a08c7a-7a00-79f3-af1e-45c28aa54bec.md: criteria_results[0]: environment observed_at must be an ISO date-time or null"]
+ADR54_OBS bad-time ok=false errors=["events/b/20260910T180033Z_01a08c7a-7de8-7f5c-b927-a2f372258f10.md: criteria_results[0]: environment observed_at must be an ISO date-time or null"]
+ADR54_OBS bad-time ok=false errors=["events/b/20260910T180034Z_01a08c7a-81d0-7499-bfb7-37e5169abfd9.md: criteria_results[0]: environment observed_at must be an ISO date-time or null"]
+ADR54_OBS bad-time ok=false errors=["events/b/20260910T180035Z_01a08c7a-85b8-7c9f-90e0-b35881020728.md: criteria_results[0]: environment observed_at must be an ISO date-time or null"]
+ADR54_OBS verify-environments ok=true errors=[]
+✔ ADR54 environment acceptance and schema agreement (48.456958ms)
+✔ ADR54 vocabulary one definition (0.392292ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS opposite-observations ok=true errors=[]
+ADR54_OBS later-linux-pass ok=true errors=[]
+ADR54_REPORT one-environment=contested
+ADR54_OBS later-mac-pass ok=true errors=[]
+ADR54_REPORT both-environments=observed
+✔ ADR54 contested clears only after both environments (28.063625ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS opposite-observations ok=true errors=[]
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_REPORT owner=decided-by-owner
+✔ ADR54 owner restatement (20.361542ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS restatement-non-owner ok=false errors=["events/b/20260910T180048Z_01a08c7a-b880-7cb3-8aea-b87d7dda18bd.md: restates requires an existing criterion owned by the handoff author"]
+✔ ADR54 restatement owner guard (9.281833ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS one-result ok=true errors=[]
+ADR54_OBS two-result ok=true errors=[]
+ADR54_REPORT separate-handoffs=observed count=2
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+✔ ADR54 separate handoffs and cannot tell (30.259417ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS correction-author ok=false errors=["events/b/20260910T180058Z_01a08c7a-df90-7000-8000-000000000001.md: correction requires the original author"]
+ADR54_OBS correction-author-verify ok=false errors=["events/b/20260910T180058Z_01a08c7a-df90-7000-8000-000000000001.md: correction requires the original author"]
+✔ ADR54 correction author (6.6725ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS correction-unknown ok=false errors=["events/a/20260910T180101Z_01a08c7a-eb48-7000-8000-000000000001.md: correction target must exist"]
+ADR54_OBS correction-unknown-verify ok=false errors=["events/a/20260910T180101Z_01a08c7a-eb48-7000-8000-000000000001.md: correction target must exist"]
+✔ ADR54 correction unknown (7.052167ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS first ok=true errors=[]
+ADR54_OBS first-verify ok=true errors=[]
+ADR54_OBS correction-chain ok=false errors=["events/a/20260910T180106Z_01a08c7a-fed0-7000-8000-000000000001.md: correction cannot target a correction"]
+ADR54_OBS correction-chain-verify ok=false errors=["events/a/20260910T180106Z_01a08c7a-fed0-7000-8000-000000000001.md: correction cannot target a correction"]
+✔ ADR54 correction chain (10.462583ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS other-thread ok=true errors=[]
+ADR54_OBS correction-thread ok=false errors=["events/a/20260910T180110Z_01a08c7b-0e70-7000-8000-000000000001.md: correction crosses threads"]
+ADR54_OBS correction-thread-verify ok=false errors=["events/a/20260910T180110Z_01a08c7b-0e70-7000-8000-000000000001.md: correction crosses threads"]
+✔ ADR54 correction thread (9.967416ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS correction-parent ok=false errors=["events/a/20260910T180113Z_01a08c7b-1a28-7000-8000-000000000001.md: correction in_reply_to must be null"]
+ADR54_OBS correction-parent-verify ok=false errors=["events/a/20260910T180113Z_01a08c7b-1a28-7000-8000-000000000001.md: correction in_reply_to must be null"]
+✔ ADR54 correction parent (6.513333ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS correction-next ok=false errors=["events/a/20260910T180116Z_01a08c7b-25e0-7000-8000-000000000001.md: correction next must be null"]
+ADR54_OBS correction-next-verify ok=false errors=["events/a/20260910T180116Z_01a08c7b-25e0-7000-8000-000000000001.md: correction next must be null"]
+✔ ADR54 correction next (7.200417ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS own-correction ok=true errors=[]
+ADR54_OBS own-correction-verify ok=true errors=[]
+ADR54_INBOX mode=strict_relay original=true correction=false
+ADR54_OBS recipient-reply ok=true errors=[]
+ADR54_OBS second-root ok=false errors=["thread t: mode strict_relay violation; thread already has a root"]
+ADR54_OBS final-verify ok=true errors=[]
+✔ ADR54 correction inbox strict_relay (16.617916ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS own-correction ok=true errors=[]
+ADR54_OBS own-correction-verify ok=true errors=[]
+ADR54_INBOX mode=free_form original=true correction=false
+ADR54_OBS recipient-reply ok=true errors=[]
+ADR54_OBS second-root ok=false errors=["thread t: mode free_form violation; thread already has a root"]
+ADR54_OBS final-verify ok=true errors=[]
+✔ ADR54 correction inbox free_form (15.1385ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS own-correction ok=true errors=[]
+ADR54_OBS own-correction-verify ok=true errors=[]
+ADR54_INBOX mode=coordinator_led original=true correction=false
+ADR54_OBS recipient-reply ok=true errors=[]
+ADR54_OBS second-root ok=false errors=["thread t: mode coordinator_led violation; thread already has a root","events/a/20260910T180132Z_01a08c7b-6460-727e-b38f-26887024918c.md: thread_config_sha256 is permitted only on the first event"]
+ADR54_OBS final-verify ok=true errors=[]
+✔ ADR54 correction inbox coordinator_led (14.728709ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS original-unmet ok=true errors=[]
+ADR54_OBS annotation ok=true errors=[]
+ADR54_OBS annotation-verify ok=true errors=[]
+ADR54_REPORT original-status=unmet correction=01a08c7b-7400-7000-8000-000000000001
+ADR54_OBS trace ok=true errors=[]
+✔ ADR54 correction report preserves both (30.34775ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS retry-first ok=true errors=[]
+ADR54_OBS retry-reused ok=true errors=[]
+ADR54_RETRY different-corrects=APPEND_INTENT_COLLISION
+ADR54_OBS v2-message ok=true errors=[]
+ADR54_OBS v1-correction-refused ok=false errors=["events/a/20260910T180145Z_01a08c7b-9728-7d31-84d2-be56864ebdc6.md: unknown field corrects","events/a/20260910T180145Z_01a08c7b-9728-7d31-84d2-be56864ebdc6.md: unknown event type correction"]
+ADR54_RETRY reused=true different-corrects=collision different-version=collision
+✔ ADR54 retry canonical v2 (16.798208ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS corrects-on-message ok=false errors=["events/a/20260910T180147Z_01a08c7b-9ef8-7dc0-9fe6-d91c6d0d1a57.md: corrects is permitted only on correction"]
+✔ ADR54 corrects only annotations (7.226083ms)
+ADR54_OBS review ok=true errors=[]
+ADR54_OBS annotation ok=true errors=[]
+ADR54_OBS annotation-verify ok=true errors=[]
+ADR54_OBS reply-to-correction ok=false errors=["events/b/20260910T180151Z_01a08c7b-ae98-7bc7-81e3-174ef8da2376.md: correction cannot be a reply target"]
+✔ ADR54 correction cannot receive replies (10.211333ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+✔ ADR54 v2 handoff schema and restatement schema (14.551916ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS restatement-extra ok=false errors=["events/a/20260910T180158Z_01a08c7b-c9f0-701c-a188-302bcf9febef.md: completion_criteria[0]: invalid restates"]
+✔ ADR54 restatement shape guard (8.083458ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-blob ok=true errors=[]
+ADR54_OBS subject-blob-verify ok=true errors=[]
+ADR54_CLI subject-blob exit=0 output="events/b/20260910T233540Z_01a08dad-4e2f-7363-a876-15c41fa0e66e.md\n"
+ADR54_OBS subject-blob-cli-verify ok=true errors=[]
+✔ ADR54 subject blob (51.766709ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-worktree ok=true errors=[]
+ADR54_OBS subject-worktree-verify ok=true errors=[]
+ADR54_CLI subject-worktree exit=0 output="events/b/20260910T233540Z_01a08dad-4e61-7d6c-b60f-8fe56f94a945.md\n"
+ADR54_OBS subject-worktree-cli-verify ok=true errors=[]
+✔ ADR54 subject worktree (50.3705ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-null ok=true errors=[]
+ADR54_OBS subject-null-verify ok=true errors=[]
+ADR54_CLI subject-null exit=0 output="events/b/20260910T233540Z_01a08dad-4e94-706e-b9bd-ff080c6db05a.md\n"
+ADR54_OBS subject-null-cli-verify ok=true errors=[]
+✔ ADR54 subject null (51.050292ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-bare ok=false errors=["events/b/20260910T180210Z_01a08c7b-f8d0-7fe4-a19e-cddb31076535.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-bare exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4ec6-79cd-9a65-aa06b67904f1.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-bare-cli-verify ok=true errors=[]
+✔ ADR54 subject bare (47.009166ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-release ok=false errors=["events/b/20260910T180213Z_01a08c7c-0488-7a5e-ad56-263d5b62ebc4.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-release exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4ef4-7d41-ad4d-7d3fc6d7a294.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-release-cli-verify ok=true errors=[]
+✔ ADR54 subject release (47.00025ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-short-blob ok=false errors=["events/b/20260910T180216Z_01a08c7c-1040-7efb-ad56-665a28675f95.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-short-blob exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4f24-72a9-b170-b17686429a9f.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-short-blob-cli-verify ok=true errors=[]
+✔ ADR54 subject short-blob (47.095625ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-uppercase-blob ok=false errors=["events/b/20260910T180219Z_01a08c7c-1bf8-70dd-abf8-bec5599cc973.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-uppercase-blob exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4f53-7bc9-b5ef-3dfd48bd9055.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-uppercase-blob-cli-verify ok=true errors=[]
+✔ ADR54 subject uppercase-blob (46.335292ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-empty-worktree ok=false errors=["events/b/20260910T180222Z_01a08c7c-27b0-7335-971c-b40be561f56a.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-empty-worktree exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4f83-769c-af79-7335a5aace84.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-empty-worktree-cli-verify ok=true errors=[]
+✔ ADR54 subject empty-worktree (48.805042ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-space-worktree ok=false errors=["events/b/20260910T180225Z_01a08c7c-3368-7506-be49-cffec7222f99.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-space-worktree exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4fb2-71cf-8f68-73360cec1d86.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-space-worktree-cli-verify ok=true errors=[]
+✔ ADR54 subject space-worktree (46.755125ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-long-worktree ok=false errors=["events/b/20260910T180228Z_01a08c7c-3f20-7dfd-9816-cfc7f4201aa1.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null"]
+ADR54_CLI subject-long-worktree exit=1 output="Event refused because log would be invalid:\nevents/b/20260910T233540Z_01a08dad-4fe0-732e-8fea-7f18abed586f.md: criteria_results[0]: V2_ENV_SUBJECT: subject must be blob:<40 lowercase hex> or worktree:<relative path> or null\n"
+ADR54_OBS subject-long-worktree-cli-verify ok=true errors=[]
+✔ ADR54 subject long-worktree (46.123916ms)
+ADR54_OBS seed ok=true errors=[]
+ADR54_OBS handoff ok=true errors=[]
+ADR54_OBS subject-max-worktree ok=true errors=[]
+ADR54_OBS subject-max-worktree-verify ok=true errors=[]
+ADR54_CLI subject-max-worktree exit=0 output="events/b/20260910T233540Z_01a08dad-5012-707a-b099-757ee14fdf21.md\n"
+ADR54_OBS subject-max-worktree-cli-verify ok=true errors=[]
+✔ ADR54 subject max-worktree (52.125917ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1012.93175

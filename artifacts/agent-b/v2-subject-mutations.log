@@ -1,0 +1,29 @@
+ADR54_MUTATIONS baseline=0
+ADR54_MUTATION name=subject killed=true witness=# ADR54_OBS subject-bare ok=true errors=[] executed=1
+ADR54_MUTATION name=environment-required killed=true witness=# ADR54_OBS env-required ok=true errors=[] executed=2
+ADR54_MUTATION name=environment-time killed=true witness=# ADR54_OBS env-time ok=true errors=[] executed=3
+ADR54_MUTATION name=environment-members killed=true witness=# ADR54_OBS env-members ok=true errors=[] executed=4
+ADR54_MUTATION name=environment-extra killed=true witness=# ADR54_OBS env-extra ok=true errors=[] executed=5
+ADR54_MUTATION name=environment-object killed=true witness=# ADR54_OBS env-object ok=true errors=[] executed=6
+ADR54_MUTATION name=environment-version killed=true witness=# ADR54_OBS env-version ok=true errors=[] executed=7
+ADR54_MUTATION name=environment-text killed=true witness=# ADR54_OBS env-text ok=true errors=[] executed=8
+ADR54_MUTATION name=correction-author killed=true witness=# ADR54_OBS correction-author ok=true errors=[] executed=9
+ADR54_MUTATION name=correction-unknown killed=true witness=# ADR54_OBS correction-unknown ok=true errors=[] executed=10
+ADR54_MUTATION name=correction-chain killed=true witness=# ADR54_OBS correction-chain ok=true errors=[] executed=11
+ADR54_MUTATION name=correction-thread killed=true witness=# ADR54_OBS correction-thread ok=true errors=[] executed=12
+ADR54_MUTATION name=correction-parent killed=true witness=# ADR54_OBS correction-parent ok=true errors=[] executed=13
+ADR54_MUTATION name=correction-next killed=true witness=# ADR54_OBS correction-next ok=true errors=[] executed=14
+ADR54_MUTATION name=corrects-only killed=true witness=# ADR54_OBS corrects-on-message ok=true errors=[] executed=15
+ADR54_MUTATION name=reply-edge killed=true witness=# ADR54_OBS reply-to-correction ok=true errors=[] executed=16
+ADR54_MUTATION name=restatement-shape killed=true witness=# ADR54_OBS restatement-extra ok=true errors=[] executed=17
+ADR54_MUTATION name=owner-only killed=true witness=# ADR54_OBS restatement-non-owner ok=true errors=[] executed=18
+ADR54_MUTATION name=retry-corrects killed=true witness=# ADR54_RETRY different-corrects=reused executed=19
+ADR54_MUTATION name=handoff-key killed=true witness=# ADR54_REPORT separate-handoffs=contested count=1 executed=20
+ADR54_MUTATION name=clear-one-environment killed=true witness=# ADR54_REPORT one-environment=observed executed=21
+ADR54_MUTATION name=never-clear killed=true witness=# ADR54_REPORT both-environments=contested executed=22
+ADR54_MUTATION name=owner-restatement-ignored killed=true witness=# ADR54_REPORT owner=contested executed=23
+ADR54_MUTATION name=replace-original killed=true witness=# ADR54_REPORT original-status=undefined correction=01a08c7a-0ca0-7000-8000-000000000001 executed=24
+ADR54_MUTATION name=one-root killed=true witness=# ADR54_OBS second-root ok=true errors=[] executed=25
+ADR54_MUTATION name=v2-vocabulary killed=true witness=    -   'correction',     3: 'correction' executed=26
+ADR54_MUTATION name=existing-one-definition-v2 killed=true executed=27
+ADR54_MUTATIONS executed=27 killed=27 survived=0 restored=0

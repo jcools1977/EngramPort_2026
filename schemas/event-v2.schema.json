@@ -281,7 +281,8 @@
               "type": [
                 "string",
                 "null"
-              ]
+              ],
+              "pattern": "^(?:blob:[0-9a-f]{40}|worktree:[^\\s]{1,200})$"
             }
           }
         },

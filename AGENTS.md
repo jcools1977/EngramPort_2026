@@ -23,7 +23,11 @@ Strict relay is active. A reply MUST be authored by the actor named by the paren
 V0 and v1 history remains valid. V2 completions require an environment on every
 criterion result: exactly `version`, `platform`, `tree_shape`, and `observed_at`,
 with explicit nulls for unknowns. A known version names nullable source revision,
-dirty Boolean, runtime, and subject. Record separate observations for separate
+dirty Boolean, runtime, and subject. For committed subject bytes, build
+`subject` as `blob:` followed by `git rev-parse HEAD:<path>`. For bytes read
+from the working tree, use `worktree:<relative path under the repository root>`
+with 1 to 200 non-whitespace characters after the prefix. Use null when unknown;
+a bare path or release version is refused. Record separate observations for separate
 environments. The writer selects v2 for environments or correction events;
 ordinary appends remain v1 unless explicitly selected otherwise.
 

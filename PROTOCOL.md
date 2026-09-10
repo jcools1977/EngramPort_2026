@@ -59,7 +59,13 @@ Every v2 `criteria_results` entry requires `environment` with exactly `version`,
 `platform`, `tree_shape`, and `observed_at`. Each member accepts `null` as an
 explicit unknown. A known `version` has exactly `source_revision`, `dirty`,
 `runtime`, and `subject`, all nullable; `dirty` is Boolean and the other values
-are text. `platform` and `tree_shape` are text or null. `observed_at` is a valid
+are text. A non-null `subject` must be `blob:<40 lowercase hex>` or
+`worktree:<1 to 200 non-whitespace characters>`. `blob:` names the Git blob SHA
+of the committed bytes the result speaks about. `worktree:` names a relative
+path under the repository root and means the bytes were read from a working
+tree and are not fixed by the claim. The syntax check does not attest to the
+blob existing or the path resolving inside the repository. `platform` and
+`tree_shape` are text or null. `observed_at` is a valid
 RFC 3339 date-time or null. Environment values are actor claims, not attestation.
 No environment is inferred for historical results. V2 permits several entries
 for one criterion, each with one status, environment, and its own evidence.

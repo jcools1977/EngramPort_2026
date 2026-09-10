@@ -1,0 +1,4 @@
+Constrain v2 environment subjects to blob or worktree references
+
+Add schema and verifier guards, CLI controls and a discriminating mutation.
+Document subject construction and record agent-b handoff evidence.
