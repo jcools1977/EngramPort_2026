@@ -1,0 +1,35 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08d5d-64d9-776b-b01f-e595d3373224",
+  "target_thread": "preflight-f174",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-10T22:15:15.372Z",
+  "review_completed_at": "2026-09-10T22:19:12.736Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 5646,
+    "output_tokens": 882,
+    "total_tokens": 19094
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 912120000,
+    "cost_usd": 0.091212
+  },
+  "summary": "The F174 draft cannot be completed as a single mandatory package. verifier-names-cause and the prescribed HEAD-blob detector contradict each other: blob==pinned with a dirty worktree is the same predicate for autocrlf CRLF and for an uncommitted edited byte, so the required pair of refusal codes is not observable. checkout-member also contradicts suite-green and AGENTS.md: making checkout required on every v2 environment refuses results without it, while the historical log must still verify and AGENTS.md (out of bounds) still demands exactly four environment members. Body-hash CRLF normalization further makes the objective’s body path unobservable. Authority covers the named shared paths; the conjunction of criteria does not.",
+  "findings": [
+    "verifier-names-cause is unsatisfiable under the stated algorithm. Objective 2 says: on hash mismatch, if HEAD’s tracked blob matches the pinned digest and only the checkout differs, refuse CHECKOUT_ALTERED_BYTES; genuine tampering remains a hash mismatch. An autocrlf CRLF worktree and a one-byte worktree edit are the same triple (worktree ≠ blob, blob == pinned). The criterion still requires observing CRLF → CHECKOUT_ALTERED_BYTES and an edited byte → hash mismatch, plus a mutation that collapses both to mismatch. No discriminator (EOL-only transform vs arbitrary dirty worktree vs blob/digest tamper) is specified, so the two-way test cannot distinguish the claimed property.",
+    "Objective 2 also fires the same HEAD comparison on body hash mismatch. PROTOCOL.md’s canonical body hash already normalizes CRLF to LF before SHA-256, so an autocrlf-only event body will not mismatch and will not reach CHECKOUT_ALTERED_BYTES. That half of the objective cannot be observed; only artifact bytes could, and even then only with a rule the dispatch does not write.",
+    "checkout-member and suite-green-with-mutations cannot both hold on the evidenced rules. The draft requires environment to grow a mandatory fifth member and to refuse v2 results without checkout, while the historical log must verify unchanged and no v2 event may be added on this live log. There is no evidence the live log has zero v2 criteria_results, and no dual-schema/grandfathering path. Refusing ‘without checkout’ is a breaking verify of any existing v2 result.",
+    "AGENTS.md is outside bounds and currently requires every v2 criterion environment to be exactly version, platform, tree_shape, and observed_at. The named actor cannot amend that bootstrap rule, so shipping a required checkout member leaves an in-repo control that still treats the fifth member as forbidden. That is a bounds/objective gap, not a later cleanup item.",
+    "‘The schema through a real v2 result with and without checkout’ conflicts with ‘No v2 event on this live log.’ Criterion evidence_classes for checkout-member are artifact-only, which would allow an isolated fixture, but the observation prose does not confine it. As written, meeting the observation method violates the bound.",
+    "F174 is not ADR 0054’s stated trigger for a fifth identity member. The ADR’s contest key is version/platform/tree_shape on already-recorded results; autocrlf rewriting is a working-tree filter on one tree, which .gitattributes plus a distinct verify refusal can address without forcing {autocrlf,eol} onto every future v2 result. The draft asserts the ADR exception is met ‘the same day’ rather than showing two disagreeing environments that checkout would separate. The dated amendment is a policy expansion, not completion of the ADR’s own rule.",
+    "‘0.5.0 is unpublished so this is free’ is not supported by the supplied evidence (no package manifest or publish state). Schema freedom is an unevidenced prerequisite, not a current-state fact. Init adding * -text is otherwise in bounds: INIT_PATHS in packages/git-adapter/src/init.mjs has no .gitattributes today, and packages/, schemas/, tests/, PROTOCOL.md, and the two docs append paths are shared surfaces. That local edit does not rescue the contradictory mandatory observations."
+  ]
+}
