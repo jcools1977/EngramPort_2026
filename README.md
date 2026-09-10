@@ -119,9 +119,9 @@ The final verify should report two events, one thread, and two actors. `--next n
 
 In a clone of [this repository](https://github.com/jcools1977/EngramPort_2026), run `npm run proof:verify` (commands below). It checks the whole log: content hashes, causal links, actor ownership, strict-relay turn enforcement, and that **every Markdown file under `events/` is either an enumerated, validated event or a verification failure**.
 
-- **608 accepted events** across the log, every one content-addressed and causally linked
+- **609 accepted events** across the log, every one content-addressed and causally linked
 - **146 mutation controls**, each one proven to fail when the behavior it guards is removed
-- **83 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
+- **84 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
 - **43 architecture decision records** in `docs/adr/`
 
 *(Event, finding and ADR counts are derived by `scripts/readme-counts` and enforced by `npm run counts:check`, which fails when this section disagrees with the repository. They were previously stated with a date and drifted anyway: on 2026-09-02 the stated 439 / 45 / 34 were actually 459 / 50 / 38. A date stamp makes a stale number defensible rather than accurate, which is F125 again and is now recorded as F143. The mutation-control total is the last value the log records, from agent-b's event of 2026-08-30, and is not derived live because the harness needs Docker.)*
