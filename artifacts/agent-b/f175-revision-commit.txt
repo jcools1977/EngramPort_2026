@@ -1,0 +1,3 @@
+fix(harness): preserve canary tree imports and detect rewrite drift
+
+Record the 28-builder audit and paired regression control. Docker live gate remains blocked by socket permissions.

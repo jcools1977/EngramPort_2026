@@ -12,12 +12,13 @@ test('D1 every source variant applies, loads, and rewrites an added import', () 
   assert.equal(inventory.length, [...source.matchAll(/^make_\w+_variant\(\)\{/gm)].length);
   for (const builder of inventory) {
     assert.match(builder.body, /d1_variant_node/);
-    assert.doesNotMatch(builder.body, /fs\.writeFileSync/);
+    if (builder.name !== 'make_canary_variant') assert.doesNotMatch(builder.body, /fs\.writeFileSync/);
   }
   const result = runDrift({synthetic: true});
   console.log(`D1_VARIANT_DRIFT executed=${result.executed} loaded=${result.loaded} synthetic_rewritten=${result.syntheticRewritten} failures=${result.failures.length}`);
   assert.deepEqual(result.failures, []);
-  assert.ok(result.syntheticRewritten >= result.executed);
+  assert.ok(result.syntheticRewritten + result.relativePreserved >= result.executed);
+  assert.equal(result.relativePreserved, 5);
 });
 
 test('D1 drift control rejects a broken correspondent import and a missing Port Watch anchor', () => {
@@ -40,5 +41,24 @@ test('D1 drift control rejects a broken correspondent import and a missing Port 
     assert.ok(result.failures.some(message => /PORT_WATCH_SHARED_ELIGIBILITY.*anchor\/build failure/.test(message) && message.includes('F175_INTENTIONALLY_MISSING_ANCHOR')));
     assert.equal(result.failures.length, 5);
     console.log(`D1_DRIFT_NEGATIVE executed=${result.executed} failures=${result.failures.length} correspondent-load=detected port-watch-anchor=detected`);
+  } finally { rmSync(directory, {recursive: true, force: true}); }
+});
+
+
+test('D1 drift control rejects import rewriting in a relocatable whole-tree canary', () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'd1-tree-negative-'));
+  try {
+    const source = readFileSync(path.resolve(import.meta.dirname, '../scripts/run-d1-mutation-harness'), 'utf8');
+    const start = source.indexOf('make_canary_variant(){');
+    const end = source.indexOf('make_w1_8_variant(){', start);
+    const section = source.slice(start, end);
+    assert.equal(section.split('fs.writeFileSync(file,text);').length, 6);
+    const broken = section.replaceAll('fs.writeFileSync(file,text);', 'writeVariant(file,text);');
+    const harness = path.join(directory, 'broken.bash');
+    writeFileSync(harness, source.replace(section, broken));
+    const result = runDrift({harness});
+    assert.equal(result.failures.length, 1);
+    assert.ok(result.failures.every(message => /make_canary_variant:.*whole-tree import rewritten/.test(message)));
+    console.log(`D1_TREE_NEGATIVE executed=${result.executed} failures=${result.failures.length} whole-tree-rewrite=detected`);
   } finally { rmSync(directory, {recursive: true, force: true}); }
 });

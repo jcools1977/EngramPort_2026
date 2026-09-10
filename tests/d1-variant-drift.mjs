@@ -26,7 +26,7 @@ export function runDrift({root = path.resolve(import.meta.dirname, '..'), harnes
   const build = spawnSync(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'build', '--config', 'vite.config.mjs'], {cwd: path.join(snapshot, 'packages/sdk'), encoding: 'utf8', timeout: 30000});
   const failures = [], observations = [];
   if (build.status !== 0) failures.push(`SDK prerequisite build failed: ${build.stderr || build.error}`);
-  let executed = 0, loaded = 0, syntheticRewritten = 0;
+  let executed = 0, loaded = 0, syntheticRewritten = 0, relativePreserved = 0;
   if (synthetic) {
     function inject(folder) {
       const entries = readdirSync(folder, {withFileTypes: true});
@@ -65,7 +65,13 @@ export function runDrift({root = path.resolve(import.meta.dirname, '..'), harnes
       for (const file of files.filter(file => file.endsWith('.mjs'))) {
         // The site variant changes TSX, not an ECMAScript module.
         if (builder.name === 'make_site_install_claim_variant') continue;
-        if (synthetic && builder.name !== 'make_sdk_package_variant') {
+        if (builder.name === 'make_canary_variant') {
+          const text = readFileSync(file, 'utf8');
+          const specifiers = [...text.matchAll(/["']((?:file:|\.{1,2}\/)[^"'\r\n]+\.mjs)["']/g)].map(match => match[1]);
+          if (specifiers.some(specifier => specifier.startsWith('file:'))) failures.push(`${name} whole-tree import rewritten: ${file}`);
+          else relativePreserved++;
+          if (synthetic && !text.includes('"./__f175_synthetic.mjs"')) failures.push(`${name} relative synthetic import missing: ${file}`);
+        } else if (synthetic && builder.name !== 'make_sdk_package_variant') {
           const text = readFileSync(file, 'utf8');
           if (!text.includes('__f175_synthetic.mjs') || /["']\.\/__f175_synthetic\.mjs["']/.test(text)) failures.push(`${name} synthetic import not rewritten: ${file}`);
           else syntheticRewritten++;
@@ -78,11 +84,11 @@ export function runDrift({root = path.resolve(import.meta.dirname, '..'), harnes
       observations.push(`${name} applied=t`);
     }
   } finally { rmSync(directory, {recursive: true, force: true}); }
-  return {executed, loaded, syntheticRewritten, failures, observations};
+  return {executed, loaded, syntheticRewritten, relativePreserved, failures, observations};
 }
 if (process.argv[1] === import.meta.filename) {
   const result = runDrift({harness: process.argv[2]});
   for (const failure of result.failures) console.error(failure);
-  console.log(`D1_VARIANT_DRIFT executed=${result.executed} loaded=${result.loaded} synthetic_rewritten=${result.syntheticRewritten} failures=${result.failures.length}`);
+  console.log(`D1_VARIANT_DRIFT executed=${result.executed} loaded=${result.loaded} synthetic_rewritten=${result.syntheticRewritten} relative_preserved=${result.relativePreserved} failures=${result.failures.length}`);
   process.exitCode = result.failures.length ? 1 : 0;
 }

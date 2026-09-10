@@ -1,0 +1,2 @@
+make_canary_variant:report_incident_disabled whole-tree import rewritten: /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-BKKjMj/103/tree/packages/git-adapter/src/report-boundary.mjs
+D1_VARIANT_DRIFT executed=125 loaded=131 synthetic_rewritten=0 relative_preserved=4 failures=1

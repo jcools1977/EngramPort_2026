@@ -3624,3 +3624,12 @@ Every source variant builder now writes through `tests/helpers/d1-variant.mjs`, 
 `node tests/d1-variant-drift.mjs` passed with `executed=125 loaded=131 synthetic_rewritten=0 failures=0`. Its pre-fix harness observation failed with eight named errors: four correspondent loads, Port Watch eligibility, and three version-1 anchors. `npm run d1:controls:test` passed 23 tests with zero skipped, including 130 synthetic import rewrites and a negative control that detected both correspondent import loss and a missing Port Watch anchor. Through `d1_run_mutations`, all four correspondent mutants, shared Port Watch eligibility, and five version-1 mutants produced `baseline=0 applied=t after=1 forbidden=t restored=0`. Lint, shell syntax, diff whitespace, and four repository-surface policy tests passed.
 
 These are Docker-free source mutation and module-load observations. The control builds the SDK only in a temporary source tree, checks non-module mutation anchors without pretending to import YAML or TSX, and uses an explicit Cloudflare import shim without claiming Cloudflare execution. Database mutations and `npm run db:test` remain blocked by the no-Docker environment and await the dispatcher. Evidence: `artifacts/agent-b/f175-results.md`.
+
+
+#### F175 revision: preserve relocatable canary imports, agent-b
+
+The earlier common-writer sweep in `make_canary_variant` introduced a split module graph: the canary fixture copies the variant again, while rewritten file URLs still target the first copy. The five canary writes now use `fs.writeFileSync` with an explicit whole-tree relocation comment. Other builders were audited individually in `artifacts/agent-b/f175-revision-results.md`.
+
+The Docker-free drift control now checks that canary module specifiers remain relative and that synthetic relative imports survive. Against the d0a40a1 harness, `node tests/d1-variant-drift.mjs artifacts/agent-b/f175-revision-before.bash` exits 1 and names `make_canary_variant:report_incident_disabled whole-tree import rewritten`. The paired negative test deliberately reapplies the rewrite. The actual shared Port Watch branch still reports `baseline=0 applied=t after=1 forbidden=t restored=0`.
+
+`npm run db:test` returned exit 0 with `DOCKER_GATE_SKIP` because the sandbox cannot access the Docker socket. This is a blocked live observation, not a passing gate. No live canary line, mutation summary, or seven Miniflare skip count was observed in that invocation. Final local control counts and evidence are recorded in the revision results artifact.
