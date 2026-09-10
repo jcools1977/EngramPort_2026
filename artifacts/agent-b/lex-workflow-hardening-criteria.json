@@ -1,0 +1,72 @@
+[
+  {
+    "criterion_id": "reply-never-silent",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  },
+  {
+    "criterion_id": "directive-case",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  },
+  {
+    "criterion_id": "sha-pinned",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  },
+  {
+    "criterion_id": "stubs-are-a-seam",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  },
+  {
+    "criterion_id": "negatives-name-the-refusal",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  },
+  {
+    "criterion_id": "windows-lines",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suites-green",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-workflow-hardening-results.md#sha256=7fc5133cde40bc81cff29e2161a815a765cb49bb483a4aea3b52e2bde6a09007"
+      }
+    ]
+  }
+]
