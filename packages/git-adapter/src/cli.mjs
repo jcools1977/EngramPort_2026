@@ -19,7 +19,7 @@ const ARGUMENT_PROFILES = new Map([
   ["verify", new Set()],
   ["thread declare", new Set(["thread", "mode", "coordinator"])],
   ["inbox", new Set(["actor"])],
-  ["append", new Set(["actor", "thread", "type", "body", "reply", "next", "artifacts", "id", "schema-version", "bounded-context", "completion-criteria", "criteria-results"])]
+  ["append", new Set(["actor", "thread", "type", "body", "reply", "next", "artifacts", "id", "schema-version", "corrects", "bounded-context", "completion-criteria", "criteria-results"])]
 ]);
 
 const HELP = `EngramPort Git
@@ -32,7 +32,7 @@ Commands (each accepts --help without reading or writing a project):
   welcome verify --package DIRECTORY
   setup compile --file FILE
   setup dry-run --file FILE --temp-dir DIRECTORY
-  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUIDV7] [--next SLUG|null] [--artifacts REF,...] [--schema-version 0|1] [--bounded-context JSON_FILE] [--completion-criteria JSON_FILE] [--criteria-results JSON_FILE]
+  append --actor SLUG --thread SLUG --type TYPE --body FILE [--id UUIDV7] [--reply UUIDV7] [--next SLUG|null] [--artifacts REF,...] [--schema-version 1|2] [--corrects UUIDV7] [--bounded-context JSON_FILE] [--completion-criteria JSON_FILE] [--criteria-results JSON_FILE]
 
 JSON_FILE is a filename, resolved from the current directory, containing a JSON array.
 The following are shapes with illustrative values; replace IDs, paths and digests.
@@ -159,7 +159,7 @@ export async function run(argv, cwd = process.cwd()) {
     const criteriaResults = await readJsonArray("criteria-results");
     const schemaVersion = options["schema-version"] === undefined ? undefined : Number(options["schema-version"]);
     const next = options.next === "null" ? null : options.next; /* V1_CLI_TERMINAL_NEXT */
-    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next, artifacts, schemaVersion, boundedContext, completionCriteria, criteriaResults }, { cwd, id: options.id });
+    const result = await appendEvent({ actor: options.actor, thread: options.thread, type: options.type, body, reply: options.reply, next, artifacts, schemaVersion, corrects: options.corrects, boundedContext, completionCriteria, criteriaResults }, { cwd, id: options.id });
     if (!result.ok) { console.error(`Event refused because log would be invalid:\n${result.errors.join("\n")}`); return 1; }
     console.log(result.relative); return 0;
   }

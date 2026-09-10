@@ -1,0 +1,15 @@
+
+> engramport@0.1.0 sdk:buildable
+> node --test tests/sdk-buildable.test.mjs
+
+✔ the SDK builds from source (291.511417ms)
+✔ the built package exports what deployments are told to import (3.606667ms)
+✔ the built turn decision still refuses everything it should (0.769583ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 332.247416

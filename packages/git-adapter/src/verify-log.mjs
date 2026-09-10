@@ -14,10 +14,12 @@ export const COMPLETION_STATUSES = Object.freeze(["satisfied", "unmet", "blocked
 const COMPLETION_STATUS = new Set(COMPLETION_STATUSES);
 const CRITERION_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 export const EVENT_TYPES = Object.freeze(["message", "handoff", "reply", "completion", "artifact", "decision", "task", "acknowledgment", "withdrawal"]);
-const TYPES = new Set(EVENT_TYPES);
+export const EVENT_TYPES_V2 = Object.freeze([...EVENT_TYPES, "correction"]);
+const TYPES = new Set(EVENT_TYPES_V2);
 const BASE_KEYS = ["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256", "thread_config_sha256", "artifacts"];
 const V0_KEYS = new Set(BASE_KEYS);
 const V1_KEYS = new Set([...BASE_KEYS, "intent_sha256", "bounded_context", "completion_criteria", "criteria_results"]);
+const V2_KEYS = new Set([...V1_KEYS, "corrects"]);
 const THREAD_MODES = new Set(["strict_relay", "free_form", "coordinator_led"]);
 const EVIDENCE_CLASSES = new Set(["event", "artifact"]);
 const MAX_CONTEXT_REFS = 32;
@@ -81,11 +83,13 @@ function canonicalJson(value) {
   return JSON.stringify(value);
 }
 
-export function hashAppendIntent({ actor, thread, type, reply = null, next = null, content_sha256, artifacts = [], bounded_context = null, completion_criteria = null, criteria_results = null }) {
+export function hashAppendIntent({ actor, thread, type, reply = null, next = null, content_sha256, artifacts = [], bounded_context = null, completion_criteria = null, criteria_results = null, schema_version = 1, corrects = null }) {
   const intent = {
     actor, artifacts, bounded_context, completion_criteria, content_sha256,
     criteria_results, next, reply, thread, type,
   };
+  // Preserve the historical v1 hash profile byte for byte. V2 binds its version and annotation edge.
+  if (schema_version >= 2) Object.assign(intent, { schema_version, corrects }); /* V2_INTENT_FIELDS */
   return createHash("sha256").update(`engramport-append-intent-v1\n${canonicalJson(intent)}\n`, "utf8").digest("hex");
 }
 
@@ -249,6 +253,33 @@ function validateReference(reference, label, errors) {
   }
 }
 
+function exactObject(value, members) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) && members.every((key) => Object.hasOwn(value, key)) && Object.keys(value).every((key) => members.includes(key));
+}
+
+function validObservedAt(value) {
+  if (typeof value !== "string") return false;
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:[Zz]|([+-])(\d{2}):(\d{2}))$/);
+  if (!match || !Number.isFinite(Date.parse(value))) return false;
+  const [, year, month, day, hour, minute, second, , offsetHour = "0", offsetMinute = "0"] = match;
+  return +month >= 1 && +month <= 12 && +day >= 1 && +day <= new Date(Date.UTC(+year, +month, 0)).getUTCDate() && +hour < 24 && +minute < 60 && +second < 60 && +offsetHour < 24 && +offsetMinute < 60;
+}
+
+function validateEnvironment(environment, label, errors) {
+  if (environment === undefined) errors.push(`${label}: environment is required`); /* V2_ENV_REQUIRED */
+  if (environment === undefined) return;
+  if (!environment || typeof environment !== "object" || Array.isArray(environment)) { errors.push(`${label}: environment must be an object`); return; } /* V2_ENV_OBJECT */
+  const members = ["version", "platform", "tree_shape", "observed_at"];
+  if (members.some((key) => !Object.hasOwn(environment, key))) errors.push(`${label}: environment missing member`); /* V2_ENV_MEMBERS */
+  if (Object.keys(environment).some((key) => !members.includes(key))) errors.push(`${label}: environment has an extra member`); /* V2_ENV_EXTRA */
+  if (environment.observed_at !== undefined && environment.observed_at !== null && !validObservedAt(environment.observed_at)) errors.push(`${label}: environment observed_at must be an ISO date-time or null`); /* V2_ENV_TIME */
+  if (["platform", "tree_shape"].some((key) => environment[key] !== undefined && environment[key] !== null && typeof environment[key] !== "string")) errors.push(`${label}: environment platform and tree_shape must be text or null`); /* V2_ENV_TEXT */
+  if (environment.version !== undefined && environment.version !== null) {
+    const v = environment.version;
+    if (!exactObject(v, ["source_revision", "dirty", "runtime", "subject"]) || ["source_revision", "runtime", "subject"].some((key) => v[key] !== null && typeof v[key] !== "string") || (v.dirty !== null && typeof v.dirty !== "boolean")) errors.push(`${label}: environment version must have nullable source_revision, dirty, runtime, subject`); /* V2_ENV_VERSION */
+  }
+}
+
 function validateV1Envelope(event, relative, errors) {
   const m = event.meta;
   if (!SHA256.test(m.intent_sha256 ?? "")) errors.push(`${relative}: invalid intent_sha256`);
@@ -268,7 +299,12 @@ function validateV1Envelope(event, relative, errors) {
       m.completion_criteria.forEach((criterion, index) => {
         const label = `${relative}: completion_criteria[${index}]`;
         if (!criterion || typeof criterion !== "object" || Array.isArray(criterion)) { errors.push(`${label}: criterion must be an object`); return; }
-        if (Object.keys(criterion).sort().join(",") !== "evidence_classes,id,statement") errors.push(`${label}: fields must be id, statement, and evidence_classes`);
+        if (Object.keys(criterion).filter((key) => !(m.schema_version === 2 && key === "restates")).sort().join(",") !== "evidence_classes,id,statement") errors.push(`${label}: fields must be id, statement, and evidence_classes`);
+        if (criterion.restates !== undefined && m.schema_version === 2) {
+          const r = criterion.restates;
+          if (!r || typeof r !== "object" || Object.keys(r).sort().join(",") !== "environment,handoff_id" || !UUID_V7.test(r.handoff_id ?? "")) errors.push(`${label}: invalid restates`); /* V2_RESTATES_SHAPE */
+          validateEnvironment(r?.environment, `${label}.restates`, errors);
+        }
         if (!CRITERION_ID.test(criterion.id ?? "")) errors.push(`${label}: invalid criterion id`);
         else if (ids.has(criterion.id)) errors.push(`${relative}: duplicate criterion id ${criterion.id}`);
         else ids.add(criterion.id);
@@ -286,7 +322,8 @@ function validateV1Envelope(event, relative, errors) {
       else m.criteria_results.forEach((result, index) => {
         const label = `${relative}: criteria_results[${index}]`;
         if (!result || typeof result !== "object" || Array.isArray(result)) { errors.push(`${label}: result must be an object`); return; }
-        if (Object.keys(result).sort().join(",") !== "criterion_id,evidence,status") errors.push(`${label}: fields must be criterion_id, status, and evidence`);
+        if (Object.keys(result).filter((key) => !(m.schema_version === 2 && key === "environment")).sort().join(",") !== "criterion_id,evidence,status") errors.push(`${label}: fields must be criterion_id, status, and evidence`);
+        if (m.schema_version === 2) validateEnvironment(result.environment, label, errors);
         if (!CRITERION_ID.test(result.criterion_id ?? "")) errors.push(`${label}: invalid criterion_id`);
         // A completion could previously only report success. A builder that did
         // the work published structured results; a builder that was blocked
@@ -310,20 +347,20 @@ function validateShape(event, relative, errors) {
   for (const key of ["schema_version", "id", "thread", "from", "type", "occurred_at", "in_reply_to", "next", "content_sha256"]) {
     if (!Object.hasOwn(m, key)) errors.push(`${relative}: missing required field ${key}`);
   }
-  const keys = m.schema_version === 0 ? V0_KEYS : m.schema_version === 1 ? V1_KEYS : new Set(BASE_KEYS);
+  const keys = m.schema_version === 0 ? V0_KEYS : m.schema_version === 1 ? V1_KEYS : m.schema_version === 2 ? V2_KEYS : new Set(BASE_KEYS);
   for (const key of Object.keys(m)) if (!keys.has(key)) errors.push(`${relative}: unknown field ${key}`);
-  if (m.schema_version !== 0 && m.schema_version !== 1) errors.push(`${relative}: schema_version must be 0 or 1`);
+  if (m.schema_version !== 0 && m.schema_version !== 1 && m.schema_version !== 2) errors.push(`${relative}: schema_version must be 0, 1, or 2`);
   if (!UUID_V7.test(m.id ?? "")) errors.push(`${relative}: id must be a lowercase UUIDv7`);
   if (!SLUG.test(m.thread ?? "")) errors.push(`${relative}: invalid thread slug`);
   if (!SLUG.test(m.from ?? "")) errors.push(`${relative}: invalid from actor`);
-  if (!TYPES.has(m.type)) errors.push(`${relative}: unknown event type ${m.type}`);
+  if (!(m.schema_version === 2 ? EVENT_TYPES_V2 : EVENT_TYPES).includes(m.type)) errors.push(`${relative}: unknown event type ${m.type}`);
   if (!Number.isFinite(Date.parse(m.occurred_at))) errors.push(`${relative}: occurred_at must be an ISO date-time`);
   if (m.in_reply_to !== null && !UUID_V7.test(m.in_reply_to ?? "")) errors.push(`${relative}: invalid in_reply_to`);
   if (m.next !== null && !SLUG.test(m.next ?? "")) errors.push(`${relative}: invalid next actor`);
   if (!SHA256.test(m.content_sha256 ?? "")) errors.push(`${relative}: invalid content_sha256`);
   if (m.thread_config_sha256 !== undefined && !SHA256.test(m.thread_config_sha256)) errors.push(`${relative}: invalid thread_config_sha256`);
   if (m.artifacts !== undefined && (!Array.isArray(m.artifacts) || m.artifacts.some((item) => typeof item !== "string"))) errors.push(`${relative}: artifacts must be an array of strings`);
-  if (m.schema_version === 1) validateV1Envelope(event, relative, errors);
+  if (m.schema_version >= 1) validateV1Envelope(event, relative, errors);
 }
 
 export async function verifyLog(root, options = {}) {
@@ -371,8 +408,10 @@ export async function verifyLog(root, options = {}) {
       if (!name.toLowerCase().endsWith(`_${parsed.meta.id}.md`)) errors.push(`${relative}: filename UUID does not match event id`);
       if (parsed.meta.from !== actor.slug) errors.push(`${relative}: actor-directory ownership violation`);
       if (hashBody(parsed.body) !== parsed.meta.content_sha256) errors.push(`${relative}: content hash mismatch`);
-      if (parsed.meta.schema_version === 1) {
+      if (parsed.meta.schema_version >= 1) {
         const expectedIntent = hashAppendIntent({
+          schema_version: parsed.meta.schema_version,
+          corrects: parsed.meta.corrects ?? null,
           actor: parsed.meta.from,
           thread: parsed.meta.thread,
           type: parsed.meta.type,
@@ -406,7 +445,7 @@ export async function verifyLog(root, options = {}) {
 
   const roots = new Map();
   for (const [thread, threadEvents] of eventsByThread) {
-    const threadRoots = threadEvents.filter((event) => event.meta.in_reply_to === null);
+    const threadRoots = threadEvents.filter((event) => event.meta.in_reply_to === null && event.meta.type !== "correction");
     if (threadRoots.length > 1) errors.push(`thread ${thread}: mode ${threadConfigs.get(thread)?.mode ?? projectConfig.defaultMode} violation; thread already has a root`);
     if (threadRoots.length === 1) roots.set(thread, threadRoots[0]);
     const declaration = threadConfigs.get(thread);
@@ -427,6 +466,18 @@ export async function verifyLog(root, options = {}) {
     const parentId = event.meta.in_reply_to;
     const declaration = threadConfigs.get(event.meta.thread);
     const mode = declaration?.mode ?? projectConfig.defaultMode;
+    if (event.meta.type === "correction") {
+      const target = byId.get(event.meta.corrects);
+      if (!target) errors.push(`${event.relative}: correction target must exist`); /* V2_CORRECTION_TARGET */
+      if (target && target.meta.from !== event.meta.from) errors.push(`${event.relative}: correction requires the original author`); /* V2_CORRECTION_AUTHOR */
+      if (target && target.meta.thread !== event.meta.thread) errors.push(`${event.relative}: correction crosses threads`); /* V2_CORRECTION_THREAD */
+      if (target?.meta.type === "correction") errors.push(`${event.relative}: correction cannot target a correction`); /* V2_CORRECTION_CHAIN */
+      if (parentId !== null) errors.push(`${event.relative}: correction in_reply_to must be null`); /* V2_CORRECTION_PARENT */
+      if (event.meta.next !== null) errors.push(`${event.relative}: correction next must be null`); /* V2_CORRECTION_NEXT */
+      continue;
+    }
+    if (event.meta.corrects !== undefined) errors.push(`${event.relative}: corrects is permitted only on correction`); /* V2_CORRECTS_ONLY */
+    if (byId.get(parentId)?.meta.type === "correction") errors.push(`${event.relative}: correction cannot be a reply target`); /* V2_CORRECTION_REPLY */
     const withdrawal = event.meta.type === "withdrawal";
     if (withdrawal) {
       if (mode !== "strict_relay") errors.push(`${event.relative}: withdrawal requires strict_relay`); /* WITHDRAWAL_MODE */
@@ -469,7 +520,7 @@ export async function verifyLog(root, options = {}) {
     const mode = declaration?.mode ?? projectConfig.defaultMode;
     if (!THREAD_MODES.has(mode)) errors.push(`thread ${thread}: unknown thread mode ${mode}`);
     if (mode === "coordinator_led") {
-      for (const event of threadEvents.filter((item) => item.meta.in_reply_to === null && item.meta.from !== declaration?.coordinator)) {
+      for (const event of threadEvents.filter((item) => item.meta.in_reply_to === null && item.meta.type !== "correction" && item.meta.from !== declaration?.coordinator)) {
         errors.push(`${event.relative}: mode coordinator_led violation; root must be authored by coordinator ${declaration?.coordinator}`);
       }
     }
@@ -510,9 +561,14 @@ export async function verifyLog(root, options = {}) {
     } catch { errors.push(`${label}: missing artifact ${match[1]}`); }
   };
 
-  for (const event of events.filter((item) => item.meta.schema_version === 1)) {
+  for (const event of events.filter((item) => item.meta.schema_version >= 1)) {
     for (const [index, reference] of (event.meta.bounded_context ?? []).entries()) {
       await resolveBoundReference(reference, event, `${event.relative}: bounded_context[${index}]`);
+    }
+    for (const criterion of event.meta.completion_criteria ?? []) {
+      if (criterion.restates === undefined) continue;
+      const target = byId.get(criterion.restates?.handoff_id);
+      if (!target || target.meta.type !== "handoff" || target.meta.from !== event.meta.from || !target.meta.completion_criteria?.some((c) => c.id === criterion.id) || target.meta.id === event.meta.id) errors.push(`${event.relative}: restates requires an existing criterion owned by the handoff author`); /* V2_RESTATES_OWNER */
     }
     if (event.meta.type !== "completion") continue;
     let parent = byId.get(event.meta.in_reply_to);
@@ -540,7 +596,7 @@ export async function verifyLog(root, options = {}) {
       continue;
     }
     const resultIds = results.map((result) => result?.criterion_id);
-    if (new Set(resultIds).size !== resultIds.length) errors.push(`${event.relative}: duplicate criterion result id`);
+    if (event.meta.schema_version < 2 && new Set(resultIds).size !== resultIds.length) errors.push(`${event.relative}: duplicate criterion result id`);
     const missing = [...criteria.keys()].filter((id) => !resultIds.includes(id));
     const unknown = resultIds.filter((id) => !criteria.has(id));
     if (missing.length) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`); /* V1_CRITERIA_EXACT_COVERAGE */

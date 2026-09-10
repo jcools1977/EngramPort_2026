@@ -85,8 +85,8 @@ export async function appendEvent(input, options = {}) {
   for (const required of ["actor", "thread", "type", "body"]) {
     if (!input[required] && !(required === "body" && input.type === "withdrawal" && input.body === "")) throw new Error(`append requires --${required}`);
   }
-  const schemaVersion = input.schemaVersion ?? 1;
-  if (schemaVersion !== 1) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only"); /* V1_WRITER_CUTOVER */
+  const schemaVersion = input.schemaVersion ?? (input.type === "correction" || (Array.isArray(input.criteriaResults) && input.criteriaResults.some((r) => r && Object.hasOwn(r, "environment"))) ? 2 : 1);
+  if (schemaVersion !== 1 && schemaVersion !== 2) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 or 2"); /* V1_WRITER_CUTOVER */
   const artifacts = input.artifacts?.filter(Boolean) ?? [];
   const boundedContext = input.boundedContext;
   const completionCriteria = input.completionCriteria;
@@ -101,6 +101,8 @@ export async function appendEvent(input, options = {}) {
   const occurredAt = occurredAtForId(id);
   const contentSha256 = hashBody(input.body);
   const intentSha256 = hashAppendIntent({
+    schema_version: schemaVersion,
+    corrects: input.corrects ?? null,
     actor: input.actor,
     thread: input.thread,
     type: input.type,
@@ -116,19 +118,20 @@ export async function appendEvent(input, options = {}) {
   await verifyLog(cwd, { throwOnError: true });
   const existing = await findEventById(cwd, id);
   if (existing) {
-    if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */
+    if (existing.event.meta.schema_version === schemaVersion && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */
     throw appendError("APPEND_INTENT_COLLISION", `event identity ${id} already binds a different canonical intent`); /* V1_RETRY_COLLISION */
   }
 
   const meta = [
-    line("schema_version", 1), line("id", id), line("thread", input.thread), line("from", input.actor),
+    line("schema_version", schemaVersion), line("id", id), line("thread", input.thread), line("from", input.actor),
     line("type", input.type), line("occurred_at", occurredAt), line("in_reply_to", input.reply ?? null),
     line("next", input.next ?? null), line("content_sha256", contentSha256), line("intent_sha256", intentSha256),
   ];
-  if (!input.reply) {
+  if (!input.reply && input.type !== "correction") {
     const declaration = await readThreadDeclaration(cwd, input.thread);
     if (declaration) meta.push(line("thread_config_sha256", hashThreadConfig(declaration)));
   }
+  if (input.corrects !== undefined) meta.push(line("corrects", input.corrects));
   if (artifacts.length) meta.push(line("artifacts", artifacts));
   if (boundedContext !== undefined) meta.push(line("bounded_context", boundedContext));
   if (completionCriteria !== undefined) meta.push(line("completion_criteria", completionCriteria));
@@ -146,7 +149,7 @@ export async function appendEvent(input, options = {}) {
     if (error.code !== "EEXIST") throw error;
     await verifyLog(cwd, { throwOnError: true });
     const raced = await findEventById(cwd, id);
-    if (raced?.event.meta.schema_version === 1 && raced.event.meta.intent_sha256 === intentSha256) return resultFor(raced.relative, id, true);
+    if (raced?.event.meta.schema_version === schemaVersion && raced.event.meta.intent_sha256 === intentSha256) return resultFor(raced.relative, id, true);
     throw appendError("APPEND_INTENT_COLLISION", `event identity ${id} was occupied by a different canonical intent`);
   }
   const written = await verifyLog(cwd);
@@ -162,7 +165,7 @@ export function resolveWorkInbox({ actor, entries }) { /* PORT_WATCH_SHARED_ELIG
   if (!Array.isArray(entries)) throw new TypeError("inbox entries must be an array");
   const answered = new Set(entries.map(({ event }) => event.meta.in_reply_to).filter(Boolean));
   return entries
-    .filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor && !answered.has(event.meta.id))
+    .filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.type !== "correction" && event.meta.next === actor && !answered.has(event.meta.id))
     .map(({ file, event }) => Object.freeze({
       relative: file,
       event_id: event.meta.id,

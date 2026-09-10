@@ -1,0 +1,82 @@
+[
+  {
+    "criterion_id": "environment-required",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "contested-derived",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "correction-edges",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "retry-identity-v2",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "correction-invisible-to-inbox",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "report-shows-both",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "schema-agrees",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  },
+  {
+    "criterion_id": "suite-green-with-mutations",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/adr54-results.md#sha256=6886eafa8f5b3520991752695cf8dd7a8d7e5da51f1140e830311f3581af6e50"
+      }
+    ]
+  }
+]

@@ -19,7 +19,7 @@ const schemaFile = "schemas/event-v1.schema.json";
 const verifierFile = "packages/git-adapter/src/verify-log.mjs";
 const historicalEvent = "events/agent-b/20260908T194830Z_01a08290-9b52-7002-b704-44c3576f959b.md";
 const schema = JSON.parse(readFileSync(path.join(sourceRoot, schemaFile), "utf8"));
-const { COMPLETION_STATUSES, EVENT_TYPES, parseEvent } = await import(pathToFileURL(path.join(sourceRoot, verifierFile)).href);
+const { COMPLETION_STATUSES, EVENT_TYPES, EVENT_TYPES_V2, parseEvent } = await import(pathToFileURL(path.join(sourceRoot, verifierFile)).href);
 const { appendEvent } = await import(pathToFileURL(path.join(sourceRoot, "packages/git-adapter/src/event-core.mjs")).href);
 function compile(value) {
   const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true });
@@ -45,6 +45,10 @@ test("F157 schema and verifier vocabularies agree", () => {
   assert.deepEqual([...schema.$defs.result.properties.status.enum].sort(), [...COMPLETION_STATUSES].sort());
   assert.ok(Object.isFrozen(EVENT_TYPES));
   assert.deepEqual([...schema.properties.type.enum].sort(), [...EVENT_TYPES].sort());
+  const v2 = JSON.parse(readFileSync(path.join(sourceRoot, "schemas/event-v2.schema.json"), "utf8"));
+  assert.ok(Object.isFrozen(EVENT_TYPES_V2));
+  assert.deepEqual([...v2.properties.type.enum].sort(), [...EVENT_TYPES_V2].sort());
+  assert.deepEqual([...v2.$defs.result.properties.status.enum].sort(), [...COMPLETION_STATUSES].sort());
 });
 
 test("F157 both consumers accept every status and reject an invented status", async () => {

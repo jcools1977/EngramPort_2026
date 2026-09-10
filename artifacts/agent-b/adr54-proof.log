@@ -1,0 +1,79 @@
+
+> engramport@0.1.0 proof
+> npm run proof:verify && npm run proof:test
+
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 577 events across 119 thread(s) and 3 actors
+
+> engramport@0.1.0 proof:test
+> node --test tests/git-v0.test.mjs
+
+✔ valid registered-actor relay verifies (133.450959ms)
+✔ actor record filename is bound to its declared slug (306.614875ms)
+✔ verification refuses unregistered Markdown event files while ignoring empty directories (739.746958ms)
+✔ verification aligns recursive Markdown discovery with validation and ignores non-events (560.063958ms)
+✔ uppercase Markdown forgery is accounted for and fails by path (393.72ms)
+✔ event extension policy is shared by inbox while normal append stays lowercase (665.234833ms)
+events/agent-b/20260910T172711Z_01a08c5b-f483-7af8-a2af-c8bb44753337.md
+✔ append with an empty artifacts flag preserves artifact-free append behavior (639.71975ms)
+events/agent-b/20260910T172712Z_01a08c5b-f702-7a53-8393-3ba40dcb1500.md
+events/agent-b/20260910T172712Z_01a08c5b-f8c6-7e14-9cd2-020844aaa0d2.md
+✔ CLI terminal append normalizes --next null before hashing and preserves next validation (1454.024958ms)
+events/agent-b/20260910T172713Z_01a08c5b-fcc5-7e34-b468-d3d820ac49b5.md
+✔ append refuses an unrecognized flag before writing and preserves known-good behavior (556.953083ms)
+events/agent-b/20260910T172714Z_01a08c5b-fedb-79d9-9260-1ed731ad01e5.md
+✔ append refuses a second thread root without writing an event (747.633791ms)
+✔ exported append and inbox core preserve the event wire surface (642.460459ms)
+✔ CLI re-exports the same event-core binding the SDK must consume (0.150416ms)
+✔ version-1 retry returns the existing event and preserves event count (656.887875ms)
+✔ version-1 retry identity collision raises a distinct error without writing (661.848375ms)
+✔ version-1 completion requires exact criterion evidence coverage (1137.530166ms)
+✔ live writer refuses version-0 append after cutover while historical v0 verifies (345.238416ms)
+✔ listInbox and Port Watch consume the same answered-work resolver (863.318542ms)
+✔ fresh copies reproduce the identical derived work-delivery set (762.689292ms)
+✔ pure work resolver excludes an answered event without project sequence fields (0.186541ms)
+✔ normal CLI execution cannot activate the harness core override (363.320667ms)
+✔ CLI append and inbox delegate to the exported core (647.5775ms)
+✔ modified content is rejected (298.576583ms)
+✔ unknown schema fields are rejected (331.369917ms)
+✔ actor directory ownership is enforced (322.142542ms)
+✔ unknown reply targets are rejected (326.489959ms)
+✔ strict relay actor transitions are enforced (308.515917ms)
+✔ reply cycles are rejected (292.259167ms)
+✔ missing artifacts are rejected (289.975875ms)
+✔ artifact modification is rejected (298.661209ms)
+✔ artifact references must remain in author prefix (313.72825ms)
+✔ filename identity is enforced (304.215083ms)
+✔ free_form permits one actor to publish sequential events (312.85725ms)
+✔ free_form permits sibling replies (306.456792ms)
+✔ coordinator_led permits coordinator followed by two worker replies (297.931333ms)
+✔ strict_relay refuses an actor replying to itself and names the mode (305.194583ms)
+✔ strict_relay refuses a second reply and names the mode (310.208125ms)
+✔ free_form refuses an unknown parent and names the mode (313.403666ms)
+✔ free_form refuses a cycle (318.305ms)
+✔ free_form refuses a second root with a precise mode error (307.479917ms)
+✔ coordinator_led refuses a worker root (310.581666ms)
+✔ coordinator_led refuses a worker replying to a worker (307.637666ms)
+✔ unknown thread modes fail closed (306.975041ms)
+✔ malformed thread mode declarations fail closed (293.47575ms)
+✔ a mode may be declared while a thread is empty (290.579458ms)
+✔ changing a declared mode after the first event violates its binding (307.969625ms)
+✔ a per-thread mode declaration cannot be added after the first event (325.4035ms)
+✔ changing mode cannot retroactively legitimize an invalid strict_relay branch (320.658416ms)
+✔ coordinator_led requires a coordinator (320.278666ms)
+✔ coordinator_led refuses an unknown coordinator (312.333209ms)
+✔ free_form supports invitation issuance, accepted, and terminal closure without an invitee actor (366.420834ms)
+✔ free_form supports invitation issuance, rejected, and terminal closure without an invitee actor (345.126041ms)
+✔ free_form supports invitation issuance, expired, and terminal closure without an invitee actor (353.277875ms)
+✔ free_form supports invitation issuance, revoked, and terminal closure without an invitee actor (333.547416ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22387.89975

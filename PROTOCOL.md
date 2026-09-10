@@ -42,3 +42,51 @@ The body is human-readable Markdown. Headings are conventional rather than autho
 ## Safe publish sequence
 
 Run the verifier, append with the CLI, run the verifier again, commit, then push. If push is rejected, pull with rebase and retry. Conflicts are surfaced to the operator; automation never force-pushes.
+
+## Version 2 observations and corrections
+
+The reader accepts v0, v1, and v2. Version 1 remains closed and unchanged.
+Append defaults to v1, selects v2 for a correction or a completion containing an
+`environment`, and also accepts explicit `--schema-version 2`. This is a per-event
+cutover. V1 retains its historical canonical intent hash. V2 additionally binds
+`schema_version` and `corrects`; retrying the same id and canonical intent reuses
+the event, while a changed version or correction target collides.
+
+Every v2 `criteria_results` entry requires `environment` with exactly `version`,
+`platform`, `tree_shape`, and `observed_at`. Each member accepts `null` as an
+explicit unknown. A known `version` has exactly `source_revision`, `dirty`,
+`runtime`, and `subject`, all nullable; `dirty` is Boolean and the other values
+are text. `platform` and `tree_shape` are text or null. `observed_at` is a valid
+RFC 3339 date-time or null. Environment values are actor claims, not attestation.
+No environment is inferred for historical results. V2 permits several entries
+for one criterion, each with one status, environment, and its own evidence.
+Every parent criterion must still be covered and unknown criterion ids are refused.
+
+The canonical criteria report joins on handoff id and criterion id. It keeps all
+observations and derives `contested` when active observations have differing
+statuses in different environments. Environment identity uses `version`,
+`platform`, and `tree_shape`, excluding the observation timestamp. The projection
+orders events by `occurred_at`, then id; this is deterministic claimed chronology,
+not proof of execution or independently authenticated acceptance time. Within one
+event, differing statuses for one environment are retained together. A conflict
+pins the disagreeing environments. It clears only after later observations in
+all those environments agree, or the owner re-states the criterion. A later pass
+in just one environment leaves it contested. A report with no results says
+`cannot-tell`. Neither `contested` nor `decided-by-owner` is an actor result status.
+
+An owner re-states a criterion by appending a v2 handoff whose criterion has the
+same id, a new statement, and `restates: {"handoff_id":"UUIDv7","environment":{...}}`.
+The target must be an existing handoff criterion owned by that author. The named
+environment is the assumed environment. The report labels the original criterion
+`decided-by-owner`, preserves its observations, and reports the new handoff
+separately. Prose alone does not clear a conflict. Further completions remain
+subject to each thread's existing relay rules; v2 does not add reply slots.
+
+A v2 `correction` uses `corrects` to name an existing event in the same thread
+by the same author. It cannot target a correction, receive replies, or carry
+handoff/completion fields. Both `in_reply_to` and `next` must be null. It is a
+non-root annotation, so a thread still has one causal root. It does not bind a
+thread declaration, consume the original's successor slot, or remove the original
+from the inbox in any thread mode. Reports list the annotation beside the original
+and preserve the original status. Use `append --type correction --corrects UUIDv7`;
+accepted events and their evidence remain immutable.

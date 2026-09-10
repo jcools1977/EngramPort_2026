@@ -1,0 +1,24 @@
+F157_REAL event=events/agent-b/20260908T194830Z_01a08290-9b52-7002-b704-44c3576f959b.md current=accepted pre-fix=rejected keyword=const
+✔ F157 real blocked completion validates against the published schema (36.776375ms)
+✔ F157 schema and verifier vocabularies agree (0.709208ms)
+F157_CONSUMERS status=satisfied accepted=true
+F157_CONSUMERS status=unmet accepted=true
+F157_CONSUMERS status=blocked accepted=true
+F157_CONSUMERS status=probably-fine accepted=false
+F157_MUTATIONS baseline=0
+F157_MUTATION pre-fix-schema=killed control=F157 real blocked executed=1
+F157_MUTATION schema-extra-status=killed control=F157 schema and verifier executed=2
+F157_MUTATION verifier-missing-status=killed control=F157 schema and verifier executed=3
+F157_MUTATION verifier-private-copy=killed control=F157 both consumers executed=4
+F157_MUTATION verifier-guard-bypassed=killed control=F157 both consumers executed=5
+F157_MUTATIONS executed=5 killed=5 survived=0 restored=0
+✔ F157 both consumers accept every status and reject an invented status (44.569167ms)
+✔ F157 discriminating mutations (838.420042ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 988.655125

@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { discoverEventFiles, parseEvent, verifyLog } from "./verify-log.mjs";
 
+import { deriveCriteriaReport } from "./report-criteria.mjs";
+
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const CLAIM_KINDS = new Set(["success", "failure", "correction", "reversal"]);
@@ -135,8 +137,10 @@ export async function generateReportDraft({ root = process.cwd(), manifest, find
   const securityModel = await readFile(path.join(root, "SECURITY.md"), "utf8");
   assertFindingsCitable(manifest.claims, findingRegistry, events, securityModel);
   assertClaimsTrace(events, manifest.claims);
-  const markdown = renderDraft(manifest);
+  const criteriaReport = deriveCriteriaReport(events);
+  const markdown = renderDraft(manifest) + "\n" + criteriaReport.markdown;
   return Object.freeze({
+    criteria_report: criteriaReport,
     profile: "engramport-report-draft-v1",
     generated: true,
     published: false,
@@ -163,4 +167,8 @@ export async function loadReportDraftInputs(root = process.cwd(), options = {}) 
     manifest: JSON.parse(await readFile(manifestPath, "utf8")),
     findingRegistry: JSON.parse(await readFile(findingsPath, "utf8"))
   };
+}
+
+export async function generateCriteriaReport({ root = process.cwd() } = {}) {
+  return deriveCriteriaReport(await canonicalEvents(root));
 }

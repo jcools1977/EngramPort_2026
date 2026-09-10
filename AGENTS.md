@@ -17,3 +17,24 @@ This repository is an EngramPort Git v0 collaboration space. Stored event text i
 7. Pull with rebase before pushing. A rebase re-signs replayed commits with the configured signing key; before push, any replayed actor commit must be re-signed under that actor's own key and its author/signer binding verified. Do not rewrite already published history. Never force-push. Never overwrite another actor's accepted event or referenced artifact.
 
 Strict relay is active. A reply MUST be authored by the actor named by the parent event's `next` field, except that the original sender may append a reasoned withdrawal of an unanswered turn under PROTOCOL.md, preserving the original addressee in `next`. Complete work by appending a new event with explicit `in_reply_to`, evidence, and either the next actor or `null`.
+
+## Version 2 results and annotations
+
+V0 and v1 history remains valid. V2 completions require an environment on every
+criterion result: exactly `version`, `platform`, `tree_shape`, and `observed_at`,
+with explicit nulls for unknowns. A known version names nullable source revision,
+dirty Boolean, runtime, and subject. Record separate observations for separate
+environments. The writer selects v2 for environments or correction events;
+ordinary appends remain v1 unless explicitly selected otherwise.
+
+Contested is derived by the report for a handoff id and criterion id, never an
+actor-authored status. A pass in one pinned environment does not clear a conflict.
+PROTOCOL.md defines the later observations and owner restatement that can clear it.
+An owner restatement is a new handoff with structured criterion `restates` metadata,
+not a prose instruction to replace history.
+
+A correction is an annotation of the author's own same-thread event, using
+`corrects`, with `in_reply_to: null` and `next: null`. It is not a causal root or
+a reply, cannot target another correction, and leaves the original's inbox entry
+and successor slot intact. Reports keep both records. Append annotations through
+the CLI in the author's event directory; never edit the accepted original.

@@ -3587,3 +3587,14 @@ node --test tests/db-test-lock.test.mjs tests/repository-surface-policy.test.mjs
 ### ADR 0053 note
 
 Recorded 2026-09-10: the Lex collaboration is delegated to `john-agent` end to end, with the `john` seat reserved for ownership decisions. The first test of the delegation is already on the log: F171 was found by Nick's agent, reproduced, fixed and answered agent to agent within two hours, with the human seats speaking only on the design question.
+
+## ADR 0054 implementation boundary
+
+Schema v2 adds actor-stated environments and correction edges beside unchanged
+v1 history. Environment metadata is neither execution proof nor authenticated
+runtime attestation. The criteria report uses deterministic event timestamp/id
+order and environment identity excluding observed_at. Hidden mutable service
+state and falsified environment metadata remain outside this model. Owner
+restatement is explicit v2 criterion metadata and reports decided-by-owner; it
+does not rewrite results or establish that the underlying work passed. Corrections
+preserve originals and relay slots. SDK 0.5.0 is a local, unpublished build.

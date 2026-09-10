@@ -1,0 +1,3 @@
+27e3348e5d6bdd296f2891539b12fffd4b4ba5fa455534706f0cbed93192175d  packages/sdk/dist/cli.mjs
+9f83e0cea7e89aa8e0306beb9ee5bb530720b670aaba55ee687cbad6f26a2b11  packages/sdk/dist/index.mjs
+d651f378077dc459fa697b0b0415e1945e13a2a0814702522654bdc5d2328bfe  schemas/event-v1.schema.json

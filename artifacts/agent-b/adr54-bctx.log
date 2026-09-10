@@ -1,0 +1,15 @@
+
+> engramport@0.1.0 bctx:test
+> node --test tests/bounded-context-roundtrip.test.mjs
+
+✔ a reference in the format the validator accepts resolves to its content (3.024459ms)
+✔ the delimiter the resolver used to split on is now refused (1.097625ms)
+✔ a bound digest that no longer describes the file refuses (1.266958ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46.573291
