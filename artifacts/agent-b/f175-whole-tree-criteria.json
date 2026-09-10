@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "whole-tree-no-rewrite",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-whole-tree-results.md#sha256=d6cd641e6fb53ca3b5ce8d907c6378dbacca3d9b5ec345db6a9470733e533160"
+      }
+    ]
+  },
+  {
+    "criterion_id": "drift-control-generalized",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-whole-tree-results.md#sha256=d6cd641e6fb53ca3b5ce8d907c6378dbacca3d9b5ec345db6a9470733e533160"
+      }
+    ]
+  },
+  {
+    "criterion_id": "durable-mutants-node-22",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-whole-tree-results.md#sha256=d6cd641e6fb53ca3b5ce8d907c6378dbacca3d9b5ec345db6a9470733e533160"
+      }
+    ]
+  },
+  {
+    "criterion_id": "controls-green",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-whole-tree-results.md#sha256=d6cd641e6fb53ca3b5ce8d907c6378dbacca3d9b5ec345db6a9470733e533160"
+      }
+    ]
+  }
+]

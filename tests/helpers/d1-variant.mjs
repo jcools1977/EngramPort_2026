@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-// Preserve copied module graphs by resolving against each copied source file.
 // Detached variants resolve against their original source, with explicit
 // substitutions only for dependencies intentionally mutated in the same case.
 function rewriteVariantImports(text, source, overrides = {}) {
