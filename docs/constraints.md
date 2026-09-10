@@ -3598,3 +3598,7 @@ state and falsified environment metadata remain outside this model. Owner
 restatement is explicit v2 criterion metadata and reports decided-by-owner; it
 does not rewrite results or establish that the underlying work passed. Corrections
 preserve originals and relay slots. SDK 0.5.0 is a local, unpublished build.
+
+### F173
+
+**The dispatcher patched a workflow by hand and pushed it with its own control red.** Correcting agent-b's anonymous fetch to an authenticated checkout on the private `lex-service` repository was right; committing and pushing before re-running the control that asserts the workflow's permission set was not, and the control failed on the next run. Fixed in the following commit, with the control now stating the private-repo policy. **Then the register entry for this was appended in the wrong repository**, because the shell was still in the PR worktree after the push, and a `git pull --rebase` ran there as well. Both undone before anything was committed. Two lessons already in the register apply: a hand patch by the dispatcher is still a change that must be observed passing before push, and the handoff should have said the repository is private in the first place. A third is new: a command chain that switches repositories carries its directory as state, and every `cd` in it is a place the next command can land wrong.
