@@ -1,0 +1,59 @@
+[
+ {
+  "id": "environment-required",
+  "statement": "A v2 completion without environment, with a malformed observed_at, with a missing member, or with a fifth member, is each refused at append, observed; one with the four named members and explicit unknowns is accepted; a v1 completion without environment is still accepted; the mutation removing each rule is observed accepting what it should refuse",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "contested-derived",
+  "statement": "Two v2 observations for one criterion under one handoff with opposite statuses and different environments are both accepted and the report derives contested; a later pass in one environment leaves it contested; a pass in both clears it; an owner re-statement of the criterion naming the assumed environment clears it; the same criterion id under two handoffs is not contested; a thread with no results still reports cannot-tell and never contested; the mutation removing the handoff key is observed conflating them",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "correction-edges",
+  "statement": "A correction of another actor's event, of an unknown target, and of a correction are each refused; the author's own succeeds with in_reply_to null and the one-root rule still holds; observed through append and verifyLog; each rule's mutation observed",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "retry-identity-v2",
+  "statement": "A v2 event retried with the same id and canonical intent returns reused; the same id with a different corrects, or a different schema_version, collides; observed through appendEvent",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "correction-invisible-to-inbox",
+  "statement": "After an author corrects its addressed review, the recipient's inbox still lists the review and the recipient's reply is still accepted, in strict_relay, free_form and coordinator_led, observed through inbox and append",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "report-shows-both",
+  "statement": "The report lists a correction beside its original with the original's status unchanged, observed through the report's output; a mutation that replaces the original is observed and killed",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "schema-agrees",
+  "statement": "A real v2 event validates against event-v2.schema.json and the verifier; the one-definition control covers the v2 vocabulary, observed by mutation",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "suite-green-with-mutations",
+  "statement": "executed= from the run over every mutation named above; proof, completion, withdrawal, bctx, report and sdk suites pass; the historical log verifies unchanged",
+  "evidence_classes": [
+   "artifact",
+   "event"
+  ]
+ }
+]
