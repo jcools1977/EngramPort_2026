@@ -1,0 +1,7 @@
+REPORT_UNFIXED_FINDING_GUARD baseline=0 applied=t after=1 forbidden=t restored=0
+REPORT_DISCLOSED_STATUS_SUPPORT baseline=0 applied=t after=1 forbidden=t restored=0
+REPORT_DISCLOSED_SECURITY_REFERENCE baseline=0 applied=t after=1 forbidden=t restored=0
+REPORT_FIXED_DISPOSITION_GUARD baseline=0 applied=t after=1 forbidden=t restored=0
+PORT_WATCH_SHARED_ELIGIBILITY baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+D1 mutation harness: all exercised controls discriminate

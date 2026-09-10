@@ -1,0 +1,15 @@
+ACTOR_REGISTRY_DRIFT_CHECK actors=3 scope=dirty-tree normalized=true disjoint=true
+✔ actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint (27.880875ms)
+✔ registry drift check passes when a clean checkout committed materially wrong registry bytes (136.3075ms)
+✔ actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities (2.420833ms)
+F174_SURFACE attribute=accepted undeclared_root=refused
+REPOSITORY_SURFACE_POLICY tracked=1507 actor_rule=true drift_rule=true shared_rule=true unaccounted=0
+✔ tracked repository paths are covered only by explicit written surfaces (27.77325ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 231.5515

@@ -266,8 +266,11 @@ assert_canary(){ local module_root="$1" out rc; out=$(mktemp); run_canary "$modu
 assert_truncate(){ local out rc; out=$(mktemp); psql_as postgres "$SDB" -f - < "$root_dir/tests/failure/canonical-truncate.sql" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert(){ local first second third fourth; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); if [ "$second" != 0 ]; then echo "$second"; return 0; fi; third=$(assert_d2); if [ "$third" != 0 ]; then echo "$third"; return 0; fi; fourth=$(assert_truncate); echo "$fourth"; return 0; }
 plant_d1f_residue(){ psql_as postgres "$SDB" -c "INSERT INTO custody_rows(id,tenant_id,project_id,namespace,credential_class,custody_model,inventory_model,required_scope,key_locator,metadata,minted_by_principal_id,terminal_at,retention_policy) VALUES ('d1f00000-0000-4000-8000-000000000011','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','credential','3.3','B','B','custody:mint:credential:3.3:B','d1f-m11','{}','11000000-0000-0000-0000-000000000001',clock_timestamp(),'RET-AUDIT-400');" >/dev/null; }
+# Shared import-derived writer for every variant builder. Tests using a
+# partial source tree may explicitly supply the helper from the real checkout.
+d1_variant_node(){ node --import "${D1_VARIANT_HELPER:-$root_dir/tests/helpers/d1-variant.mjs}" "$@"; }
 make_d2_variant(){
-  node - "$root_dir/packages/git-adapter/src/d2-session-binding.mjs" "$1" "$2" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/d2-session-binding.mjs" "$1" "$2" <<'NODE'
 const fs=require("node:fs"); const [source,target,mode]=process.argv.slice(2); let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){ if(!text.includes(anchor)) throw new Error(`anchor absent: ${anchor}`); text=text.split(anchor).join(replacement); }
 function replaceFirst(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
@@ -282,18 +285,18 @@ if(mode==="dirty_weakened") replace("client.release(scrubError)","client.release
 if(mode==="rollback_mint") replace('      await client.query("COMMIT");','      await client.query("ROLLBACK");');
 if(mode==="swallow_refusal") replace("      throw error;",'      return { reference: "epr:credential:01a02095-c806-7000-8000-000000000001", principalId: session.principalId };');
 if(mode==="caller_reference") replace('      const result = await client.query(\n        "SELECT mint_custody_reference','      if (typeof request.reference === "string") await client.query("SELECT set_config(\'app.d1f_forced_reference\', $1, true)", [request.reference]);\n      const result = await client.query(\n        "SELECT mint_custody_reference');
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_w1_1_manager_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target/packages/git-adapter"
   cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const managerFile=path.join(root,"packages/git-adapter/src/workspace-session.mjs"),storeFile=path.join(root,"packages/git-adapter/src/workspace-session-store.mjs");
-function replace(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);fs.writeFileSync(file,text.replace(anchor,replacement));}
-function replaceLast(file,anchor,replacement){let text=fs.readFileSync(file,"utf8"),index=text.lastIndexOf(anchor);if(index<0)throw new Error(`anchor absent: ${anchor}`);text=text.slice(0,index)+replacement+text.slice(index+anchor.length);fs.writeFileSync(file,text);}
+function replace(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);writeVariant(file,text.replace(anchor,replacement));}
+function replaceLast(file,anchor,replacement){let text=fs.readFileSync(file,"utf8"),index=text.lastIndexOf(anchor);if(index<0)throw new Error(`anchor absent: ${anchor}`);text=text.slice(0,index)+replacement+text.slice(index+anchor.length);writeVariant(file,text);}
 const liveAnchor='      return {session:null,state:normalizeRow(inspected)};';
 const liveReplacement='      return {session:normalizeRow({...inspected,active:true,effective_state:"active"}),state:normalizeRow(inspected)}; /* W1_1_MANAGER_LIVENESS_REMOVED */';
 const known=["expired","expired_guard_only","liveness_only","revoked","revoked-execute","different","different_manager_only","different_store_only","replay","replay_guard_only","replay_retention_only"];
@@ -323,8 +326,8 @@ make_w1_1_oidc_variant(){
   local target="$1" mode="$2"
   mkdir -p "$(dirname "$target")"
   cp "$root_dir/packages/git-adapter/src/oidc-verifier.mjs" "$target" || return 1
-  node - "$target" "$mode" <<'NODE'
-const fs=require("node:fs");const [file,mode]=process.argv.slice(2);let text=fs.readFileSync(file,"utf8");
+  d1_variant_node - "$target" "$mode" "$root_dir/packages/git-adapter/src/oidc-verifier.mjs" <<'NODE'
+const fs=require("node:fs");const [file,mode,source]=process.argv.slice(2);let text=fs.readFileSync(file,"utf8");
 function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="signature")replace('      if(!verifySignature("RSA-SHA256",signingInput,selected.key,signature))refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");','      if(false /* W1_1_OIDC_SIGNATURE_REMOVED */)refuse("OIDC_SIGNATURE_REFUSED","signature verification failed");');
 else if(mode==="rotation")replace('      if(selected.status!=="active")refuse("OIDC_KEY_RETIRED","retired signing key refused");','      if(false /* W1_1_OIDC_ROTATION_REMOVED */)refuse("OIDC_KEY_RETIRED","retired signing key refused");');
@@ -343,17 +346,17 @@ else if(mode==="nonce")replace('      if(typeof nonce!=="string"||nonce.length==
 else if(mode==="claims-surface")replace('      return freezeClaims(payload);','      return Object.freeze({...payload}); /* W1_1_OIDC_CLAIMS_SURFACE_REMOVED */');
 else if(mode==="retention")replace('    }finally{inFlight.delete(transient);}','    }finally{void transient; /* W1_1_OIDC_RETENTION_CLEANUP_REMOVED */}');
 else throw new Error(`unknown OIDC variant ${mode}`);
-fs.writeFileSync(file,text);
+writeVariant(file,text,source);
 NODE
 }
 make_w1_1_oidc_client_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target/packages/git-adapter"
   cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const clientFile=path.join(root,"packages/git-adapter/src/oidc-client.mjs"),transactionFile=path.join(root,"packages/git-adapter/src/oidc-transaction-store.mjs"),compositionFile=path.join(root,"packages/git-adapter/src/founder-setup-composition.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
 if(mode==="auth-start")mutate(clientFile,'code_challenge:codeChallenge,code_challenge_method:"S256"','code_challenge:codeVerifier,code_challenge_method:"plain" /* W1_1_OIDC_CLIENT_AUTH_START_REMOVED */');
 else if(mode==="transaction-state"){
   mutate(clientFile,'if(transaction.expiresAt<=clock().getTime() /* W1_1_OIDC_CLIENT_EXPIRY_GUARD */)','if(false /* W1_1_OIDC_CLIENT_TRANSACTION_REMOVED */)');
@@ -371,10 +374,10 @@ make_w1_1_oidc_durable_variant(){
   cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
   cp "$root_dir"/worker/*.mjs "$target/worker/" || return 1
   cp "$root_dir/tests/fixtures/oidc-durable-worker.mjs" "$target/tests/fixtures/" || return 1
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const entryFile=path.join(root,"worker/entry.mjs"),runtimeFile=path.join(root,"worker/oidc-runtime.mjs"),objectFile=path.join(root,"worker/oidc-transaction-durable-object.mjs"),clientFile=path.join(root,"packages/git-adapter/src/oidc-client.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
 if(mode==="route")mutate(entryFile,'if(isOidcRoute(url))return routeOidcRequest(request,env,{boundary:await boundaryFor(env),...oidcOptions}); /* W1_1_OIDC_REAL_WORKER_ROUTE */','if(false /* W1_1_OIDC_DURABLE_ROUTE_REMOVED */)return routeOidcRequest(request,env,{boundary:await boundaryFor(env),...oidcOptions});');
 else if(mode==="same-name")mutate(runtimeFile,'this.#namespace.getByName(state).claim(consumer); /* W1_1_OIDC_DO_SAME_NAME_CLAIM */','this.#namespace.getByName(`${state}-callback`).claim(consumer); /* W1_1_OIDC_DURABLE_SAME_NAME_REMOVED */');
 else if(mode==="restart")mutate(objectFile,'await this.ctx.storage.put(RECORD_KEY,transaction); /* W1_1_OIDC_DO_PERSISTED_RECORD */','void transaction; /* W1_1_OIDC_DURABLE_RESTART_REMOVED */');
@@ -392,10 +395,10 @@ make_w1_1_oidc_provider_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target/packages/git-adapter"
   cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const providerFile=path.join(root,"packages/git-adapter/src/oidc-provider.mjs");
-function mutate(anchor,replacement){let text=fs.readFileSync(providerFile,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(providerFile,text);}
+function mutate(anchor,replacement){let text=fs.readFileSync(providerFile,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(providerFile,text);}
 if(mode==="discovery")mutate('authorizationEndpoint:httpsEndpoint(document.authorization_endpoint,"authorization_endpoint"), /* W1_1_PROVIDER_DISCOVERY_ENDPOINTS */','authorizationEndpoint:new URL("/authorize",configured).toString(), /* W1_1_PROVIDER_DISCOVERY_REMOVED */');
 else if(mode==="jwks-lifecycle")mutate('      this.#keys=replacement; /* W1_1_PROVIDER_JWKS_REPLACE */','      this.#keys=new Map([...this.#keys,...replacement]); /* W1_1_PROVIDER_JWKS_REPLACE_REMOVED */');
 else if(mode==="exchange")mutate('grant_type:"authorization_code",code_verifier:required(codeVerifier,"codeVerifier") /* W1_1_PROVIDER_EXCHANGE_PKCE */','grant_type:"authorization_code",omitted_code_verifier:required(codeVerifier,"codeVerifier") /* W1_1_PROVIDER_EXCHANGE_REMOVED */');
@@ -405,7 +408,7 @@ else throw new Error(`unknown provider OIDC variant ${mode}`);
 NODE
 }
 make_agent_c_variant(){
-  node - "$root_dir/packages/agent-c-supervisor/src/index.mjs" "$1" "$2" "$root_dir" <<'NODE'
+  d1_variant_node - "$root_dir/packages/agent-c-supervisor/src/index.mjs" "$1" "$2" "$root_dir" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
 const [source,target,mode,root]=process.argv.slice(2);
 let boundary=path.join(root,"packages/git-adapter/src/credential-boundary.mjs");
@@ -415,15 +418,9 @@ if(mode==="credential-context"){
   if(anchors.length!==1)throw new Error("credential identifier precision anchor not exact");
   boundaryText=boundaryText.replace(anchors[0],'const CREDENTIAL_ASSIGNMENT = /(?:api[_-]?key|client[_-]?secret|password|token|private[_-]?key)\\s*[:=]\\s*[^\\s]{8,}/i; /* AGENT_C_CREDENTIAL_CONTEXT_REMOVED */');
   boundary=path.join(path.dirname(target),"agent-c-credential-context-boundary.mjs");
-  fs.writeFileSync(boundary,boundaryText);
+  writeVariant(boundary,boundaryText,path.join(root,"packages/git-adapter/src/credential-boundary.mjs"));
 }
-// Discover quoted adapter specifiers in the source, including future imports.
-// Only the credential-context mutation substitutes a different dependency.
-let text=fs.readFileSync(source,"utf8").replace(/(["'])(\.\.\/\.\.\/git-adapter\/src\/[^"'\r\n]+\.mjs)\1/g,(_match,quote,specifier)=>{
-  const dependency=specifier==="../../git-adapter/src/credential-boundary.mjs"
-    ? boundary : path.resolve(path.dirname(source),specifier);
-  return quote+pathToFileURL(dependency).href+quote;
-});
+let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="credential-reference")replace('if (typeof credential !== "string" || !credential || credential.startsWith("op://")) refuse("CREDENTIAL_UNRESOLVED");','if (typeof credential !== "string" || !credential /* AGENT_C_CREDENTIAL_REFERENCE_REMOVED */) refuse("CREDENTIAL_UNRESOLVED");');
 else if(mode==="credential-shape")replace('  if (/\\s/.test(credential) || /^[A-Za-z_][A-Za-z0-9_]*=/.test(credential)) refuse("CREDENTIAL_MALFORMED");','  void credential; /* AGENT_C_CREDENTIAL_SHAPE_REMOVED */');
@@ -443,11 +440,11 @@ else if(mode==="provider-error-egress")replace('      assertNoCredential(respons
 else if(mode==="scheduled-poller-silence")replace('  if (!actionable.length) return { status: "idle", actionable: [] }; /* AGENT_C_SCHEDULED_SILENCE */','  if (false) return { status: "idle", actionable: [] }; /* AGENT_C_SCHEDULED_SILENCE_REMOVED */');
 else if(mode==="credential-unavailable-reporting")replace('    await log("ERROR CREDENTIAL_UNAVAILABLE"); /* AGENT_C_CREDENTIAL_FAILURE_REPORT */\n    await notify("Agent C credential unavailable; review was not started.");','    void log; /* AGENT_C_CREDENTIAL_FAILURE_REPORT_REMOVED */\n    void notify;');
 else throw new Error(`unknown agent-c variant ${mode}`);
-fs.writeFileSync(target,text);
+writeVariant(target,text,source,{"../../git-adapter/src/credential-boundary.mjs":boundary});
 NODE
 }
 make_report_correspondent_variant(){
-  node - "$root_dir/packages/git-adapter/src/report-correspondent.mjs" "$1" "$root_dir" "$2" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/report-correspondent.mjs" "$1" "$root_dir" "$2" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
 const [source,target,root,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 function mutate(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`report correspondent anchor not exact: ${anchor} mode=${mode}`);text=text.replace(anchor,replacement);}
@@ -456,8 +453,7 @@ else if(mode==="security-reference")mutate('      if (!new RegExp(`\\\\b${claim.
 else if(mode==="unfixed")mutate('    if (record.status === "unfixed") refuse("UNFIXED_FINDING_REFUSED", `${claim.id} cites ${claim.finding_id}, which agent-a marks unfixed`); /* REPORT_UNFIXED_FINDING_GUARD */','    void record.status; /* REPORT_UNFIXED_FINDING_GUARD_REMOVED */');
 else if(mode==="fixed-disposition")mutate('    if (!disposition || disposition.from !== "agent-a") refuse("FIXED_FINDING_DISPOSITION_INVALID", `${claim.finding_id} fixed status is not backed by a canonical agent-a event`); /* REPORT_FIXED_DISPOSITION_GUARD */','    void disposition; /* REPORT_FIXED_DISPOSITION_GUARD_REMOVED */');
 else throw new Error(`unknown report correspondent variant ${mode}`);
-text=text.replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src/verify-log.mjs")).href));
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 run_cli_argument_refusal(){ GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$1")" node --test --test-reporter=tap --test-name-pattern='append refuses an unrecognized flag' "$root_dir/tests/git-v0.test.mjs"; }
@@ -465,40 +461,38 @@ assert_cli_argument_refusal(){ local out rc; out=$(mktemp); run_cli_argument_ref
 run_event_extension_case(){ GIT_ADAPTER_VERIFY_MODULE="$(agent_c_url "$1")" GIT_ADAPTER_CLI_MODULE="$(agent_c_url "$2")" node --test --test-reporter=tap --test-name-pattern='uppercase Markdown forgery|event extension policy is shared by inbox' "$root_dir/tests/git-v0.test.mjs"; }
 assert_event_extension_case(){ local out rc; out=$(mktemp); run_event_extension_case "$root_dir/packages/git-adapter/src/verify-log.mjs" "$root_dir/packages/git-adapter/src/cli.mjs" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; }
 make_cli_variant(){
-  node - "$root_dir/packages/git-adapter/src/cli.mjs" "$1" "$root_dir" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/cli.mjs" "$1" "$root_dir" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
 const [source,target,root]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 const anchor='  if (profile) for (const flag of Object.keys(out).filter((key) => key !== "_" && key !== "help")) if (!profile.has(flag)) argumentRefused(flag);';
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,'  void profile; /* CLI_ARGUMENT_REFUSAL_REMOVED */');
-for(const name of ["init.mjs","verify-log.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs","event-core.mjs"]){
-  text=text.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
-}
-fs.writeFileSync(target,text);
+
+writeVariant(target,text,source);
 NODE
 }
 make_contribution_ledger_variant(){
   local target="$1"
   mkdir -p "$target"
   cp -R "$root_dir/packages/git-adapter/src/." "$target/"
-  node - "$target/contribution-ledger.mjs" <<'NODE'
+  d1_variant_node - "$target/contribution-ledger.mjs" <<'NODE'
 const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
 const anchor='    if (actor.billing_mode === "subscription" && actor.metered !== null) { /* CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL */';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'    if (false /* CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL_REMOVED */) {');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_git_adapter_core_variant(){
   local target="$1"
   mkdir -p "$target"
   cp -R "$root_dir/packages/git-adapter/src/." "$target/"
-  node - "$target/event-core.mjs" <<'NODE'
+  d1_variant_node - "$target/event-core.mjs" <<'NODE'
 const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
 const anchor='  try { await writeFile(file, source, { flag: "wx" }); }';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'  try { await Promise.resolve(); /* GIT_ADAPTER_CORE_WRITE_REMOVED */ }');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_sdk_core_variant(){
@@ -507,12 +501,12 @@ make_sdk_core_variant(){
   cp -R "$root_dir/packages/git-adapter" "$target/packages/"
   cp -R "$root_dir/packages/port-watch" "$target/packages/"
   cp -R "$root_dir/packages/sdk" "$target/packages/"
-  node - "$target/packages/git-adapter/src/event-core.mjs" <<'NODE'
+  d1_variant_node - "$target/packages/git-adapter/src/event-core.mjs" <<'NODE'
 const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
 const anchor='  try { await writeFile(file, source, { flag: "wx" }); }';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'  try { await Promise.resolve(); /* SDK_CORE_WRITE_REMOVED */ }');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_sdk_package_variant(){
@@ -521,7 +515,7 @@ make_sdk_package_variant(){
   cp -R "$root_dir/packages/git-adapter" "$target/packages/"
   cp -R "$root_dir/packages/port-watch" "$target/packages/"
   cp -R "$root_dir/packages/sdk" "$target/packages/"
-  node - "$target/packages/sdk" <<'NODE'
+  d1_variant_node - "$target/packages/sdk" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root]=process.argv.slice(2);
 fs.rmSync(path.join(root,"dist"),{recursive:true,force:true});
 const file=path.join(root,"package.json"),manifest=JSON.parse(fs.readFileSync(file,"utf8"));
@@ -529,24 +523,24 @@ manifest.exports={".":"./src/index.mjs"};
 manifest.files=["src","README.md"];
 delete manifest.scripts.prepack;
 manifest.description += " SDK_PACKAGE_ISOLATION_REMOVED";
-fs.writeFileSync(file,`${JSON.stringify(manifest,null,2)}\n`);
+writeVariant(file,`${JSON.stringify(manifest,null,2)}\n`);
 NODE
 }
 make_sdk_published_surface_variant(){
   local target="$1"
   mkdir -p "$target/packages"
   cp -R "$root_dir/packages/sdk" "$target/packages/"
-  node - "$target/packages/sdk" <<'NODE'
+  d1_variant_node - "$target/packages/sdk" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root]=process.argv.slice(2);
 const dist=path.join(root,"dist/index.mjs");let text=fs.readFileSync(dist,"utf8");
 const anchor='\thandoff(input, options = {}) {\n\t\treturn this.append({\n\t\t\t...input,\n\t\t\ttype: "handoff"\n\t\t}, options);\n\t}';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 const replacement='\thandoff(input, options = {}) {\n\t\tconst id = options.id ?? "01a00000-0000-7000-8000-000000000000";\n\t\treturn Promise.resolve({ ok: true, errors: [], relative: "events/" + this.actor + "/phantom-" + id + ".md", event_id: id, reused: false }); /* SDK_PUBLISHED_SURFACE_WRITE_REMOVED */\n\t}';
-fs.writeFileSync(dist,text.replace(anchor,replacement));
+writeVariant(dist,text.replace(anchor,replacement));
 const manifestFile=path.join(root,"package.json"),manifest=JSON.parse(fs.readFileSync(manifestFile,"utf8"));
 delete manifest.scripts.prepack;
 manifest.description += " SDK_PUBLISHED_SURFACE_WRITE_REMOVED";
-fs.writeFileSync(manifestFile,`${JSON.stringify(manifest,null,2)}\n`);
+writeVariant(manifestFile,`${JSON.stringify(manifest,null,2)}\n`);
 NODE
 }
 make_second_builder_variant(){
@@ -555,38 +549,38 @@ make_second_builder_variant(){
   cp -R "$root_dir/packages/git-adapter" "$target/packages/"
   cp -R "$root_dir/packages/port-watch" "$target/packages/"
   cp -R "$root_dir/packages/sdk" "$target/packages/"
-  node - "$target/packages/sdk/src/index.mjs" <<'NODE'
+  d1_variant_node - "$target/packages/sdk/src/index.mjs" <<'NODE'
 const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
 const anchor='    return this.append({ ...input, type: "completion", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH */';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'    return this.append({ ...input, type: "reply", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH_REMOVED */');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_git_adapter_core_override_variant(){
   local target="$1"
   mkdir -p "$target"
   cp -R "$root_dir/packages/git-adapter/src/." "$target/"
-  node - "$target/cli.mjs" <<'NODE'
+  d1_variant_node - "$target/cli.mjs" <<'NODE'
 const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
 const anchor='import { appendEvent, listInbox, validateAppendInputs } from "./event-core.mjs";';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'const coreSpecifier = process.env.GIT_ADAPTER_CORE_MODULE ?? new URL("./event-core.mjs", import.meta.url).href;\nconst { appendEvent, listInbox, validateAppendInputs } = await import(coreSpecifier); /* GIT_ADAPTER_CORE_OVERRIDE_GUARD_REMOVED */');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_event_v1_variant(){
   local target="$1" mode="$2"
   mkdir -p "$target"
   cp -R "$root_dir/packages/git-adapter/src/." "$target/"
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const cliFile=path.join(root,"cli.mjs"),coreFile=path.join(root,"event-core.mjs"),verifyFile=path.join(root,"verify-log.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
-if(mode==="retry-match")mutate(coreFile,'    if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (false /* V1_RETRY_INTENT_MATCH_REMOVED */) return resultFor(existing.relative, id, true);');
-else if(mode==="retry-collision")mutate(coreFile,'    if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (existing.event.meta.schema_version === 1 /* V1_RETRY_COLLISION_REMOVED */) return resultFor(existing.relative, id, true);');
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
+if(mode==="retry-match")mutate(coreFile,'    if (existing.event.meta.schema_version === schemaVersion && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (false /* V1_RETRY_INTENT_MATCH_REMOVED */) return resultFor(existing.relative, id, true);');
+else if(mode==="retry-collision")mutate(coreFile,'    if (existing.event.meta.schema_version === schemaVersion && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (existing.event.meta.schema_version === 1 /* V1_RETRY_COLLISION_REMOVED */) return resultFor(existing.relative, id, true);');
 else if(mode==="criteria-coverage")mutate(verifyFile,'    if (missing.length) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`); /* V1_CRITERIA_EXACT_COVERAGE */','    if (false /* V1_CRITERIA_EXACT_COVERAGE_REMOVED */) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`);');
-else if(mode==="writer-cutover")mutate(coreFile,'  if (schemaVersion !== 1) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only"); /* V1_WRITER_CUTOVER */','  if (false /* V1_WRITER_CUTOVER_REMOVED */) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only");');
+else if(mode==="writer-cutover")mutate(coreFile,'  if (schemaVersion !== 1 && schemaVersion !== 2) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 or 2"); /* V1_WRITER_CUTOVER */','  if (false /* V1_WRITER_CUTOVER_REMOVED */) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only");');
 else if(mode==="terminal-next")mutate(cliFile,'    const next = options.next === "null" ? null : options.next; /* V1_CLI_TERMINAL_NEXT */','    const next = options.next; /* V1_CLI_TERMINAL_NEXT_REMOVED */');
 else throw new Error(`unknown event-v1 variant ${mode}`);
 NODE
@@ -596,11 +590,11 @@ make_port_watch_variant(){
   mkdir -p "$target/packages/git-adapter" "$target/packages/port-watch"
   cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
   cp -R "$root_dir/packages/port-watch/src" "$target/packages/port-watch/" || return 1
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const core=path.join(root,"packages/git-adapter/src/event-core.mjs"),watch=path.join(root,"packages/port-watch/src/index.mjs"),observation=path.join(root,"packages/port-watch/src/observation.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
-if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
+if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.type !== "correction" && event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.type !== "correction" && event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
 else if(mode==="position")mutate(watch,'    await this.claim_store.release(agent, project, { run_id });\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });','    await this.claim_store.release(agent, project, { run_id });\n    await this.store.transaction((state) => { state.agents[key(agent, project)].cursor = claim.event_id; return state; }); /* PORT_WATCH_LOG_DERIVED_POSITION_REMOVED */\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });');
 else if(mode==="cache")mutate(watch,'    if (cached?.log_state === log_state && Array.isArray(cached.deliveries)) {','    if (cached && Array.isArray(cached.deliveries) /* PORT_WATCH_CACHE_LOG_STATE_REMOVED */) {');
 else if(mode==="claim")mutate(watch,'    if (!reservation.acquired) {','    if (false && !reservation.acquired /* PORT_WATCH_ATOMIC_CLAIM_REMOVED */) {');
@@ -613,16 +607,16 @@ else throw new Error(`unknown Port Watch variant ${mode}`);
 NODE
 }
 make_site_event_types_variant(){
-  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 const anchor='for (const type of types) if (!TYPES.has(type)) throw new Error(`${surface}: unknown event type ${type}`);';
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,'for (const type of types) if (false /* SITE_EVENT_TYPE_LINK_REMOVED */) throw new Error(`${surface}: unknown event type ${type}`);');
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_site_install_claim_variant(){
-  node - "$root_dir/app/page.tsx" "$1" <<'NODE'
+  d1_variant_node - "$root_dir/app/page.tsx" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 const anchor=`          <div className="install-card">
             <div><span>$</span><code>npm install @engramport/sdk</code></div>
@@ -633,33 +627,33 @@ text=text.replace(anchor,`          <div className="install-card" data-mutation=
             <div><span>$</span><code>npm install @engramport/missing-sdk</code></div>
             <button onClick={() => navigator.clipboard.writeText("npm install @engramport/missing-sdk")}>Copy</button>
           </div>`);
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_actor_registry_variant(){
   local target="$1"
   mkdir -p "$target"
   cp "$root_dir"/actors/*.yaml "$target"/
-  node - "$target/agent-b.yaml" <<'NODE'
+  d1_variant_node - "$target/agent-b.yaml" <<'NODE'
 const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.readFileSync(target,"utf8");
 const anchor="artifact_prefix: artifacts/agent-b";
 if(text.split(anchor).length-1!==1)throw new Error("agent-b artifact prefix anchor must occur exactly once");
 text=text.replace(anchor,"artifact_prefix: artifacts # ACTOR_REGISTRY_PREFIX_TAKEOVER");
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_actor_registry_verifier_variant(){
-  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$2" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$2" <<'NODE'
 const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="slug")replace('    if (name !== `${slug}.yaml`) throw new Error(`actors/${name}: filename must match declared slug ${slug}`); /* ACTOR_SLUG_FILENAME_BINDING */','    if (false /* ACTOR_SLUG_FILENAME_BINDING_REMOVED */) throw new Error(`actors/${name}: filename must match declared slug ${slug}`);');
 else if(mode==="normalization")replace('export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION */\n  return value.normalize("NFKC").toLocaleLowerCase("en-US");\n}','export function normalizeActorSurfaceIdentity(value) { /* ACTOR_PREFIX_NORMALIZATION_REMOVED */\n  return value;\n}');
 else throw new Error(`unknown actor registry verifier variant ${mode}`);
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_pr_onboarding_variant(){
-  node - "$root_dir/tests/helpers/pr-onboarding-fixture.mjs" "$1" "$2" <<'NODE'
+  d1_variant_node - "$root_dir/tests/helpers/pr-onboarding-fixture.mjs" "$1" "$2" <<'NODE'
 const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="unmerged")replace(
@@ -671,46 +665,38 @@ else if(mode==="merged")replace(
   '  throw new Error("PR_ONBOARDING_MERGED_ACCEPTANCE_REMOVED");\n  const actor = actors.get(slug);'
 );
 else throw new Error(`unknown PR onboarding variant ${mode}`);
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_event_directory_completeness_variant(){
-  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 const anchor='  const discoveredEventFiles = await discoverEventFiles(path.resolve(root, "events")); /* EVENT_DIRECTORY_COMPLETENESS */';
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,'  const discoveredEventFiles = (await discoverEventFiles(path.resolve(root, "events"))).filter((file) => [...eventDirectoryActors.keys()].some((directory) => file.startsWith(`${directory}${path.sep}`))); /* EVENT_DIRECTORY_COMPLETENESS_REMOVED */');
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_event_enumeration_alignment_variant(){
-  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" <<'NODE'
 const fs=require("node:fs");const [source,target]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 const anchor='  const discoveredEventFiles = await discoverEventFiles(path.resolve(root, "events")); /* EVENT_DIRECTORY_COMPLETENESS */';
 if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 text=text.replace(anchor,'  const discoveredEventFiles = (await discoverEventFiles(path.resolve(root, "events"))).filter((file) => eventDirectoryActors.has(path.dirname(file))); /* EVENT_ENUMERATION_ALIGNMENT_REMOVED */');
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 make_event_extension_case_variant(){
-  node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$root_dir/packages/git-adapter/src/cli.mjs" "$2" "$root_dir/packages/git-adapter/src/event-core.mjs" "$3" "$root_dir" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/verify-log.mjs" "$1" "$root_dir/packages/git-adapter/src/cli.mjs" "$2" "$root_dir/packages/git-adapter/src/event-core.mjs" "$3" "$root_dir" <<'NODE'
 const fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url");
 const [verifySource,verifyTarget,cliSource,cliTarget,coreSource,coreTarget,root]=process.argv.slice(2);
 let verifier=fs.readFileSync(verifySource,"utf8");
 const anchor='export function isMarkdownEventFile(name) { /* EVENT_EXTENSION_CASE_INSENSITIVE */\n  return path.extname(name).toLowerCase() === ".md";\n}';
 if(!verifier.includes(anchor))throw new Error(`anchor absent: ${anchor}`);
 verifier=verifier.replace(anchor,'export function isMarkdownEventFile(name) { /* EVENT_EXTENSION_CASE_REMOVED */\n  return path.extname(name) === ".md";\n}');
-fs.writeFileSync(verifyTarget,verifier);
-let core=fs.readFileSync(coreSource,"utf8")
-  .replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(verifyTarget).href))
-  .replace('"./credential-boundary.mjs"',JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src/credential-boundary.mjs")).href));
-fs.writeFileSync(coreTarget,core);
-let cli=fs.readFileSync(cliSource,"utf8").replace('"./verify-log.mjs"',JSON.stringify(pathToFileURL(verifyTarget).href));
-for(const name of ["init.mjs","welcome-verify.mjs","workspace-setup.mjs","workspace-dry-run.mjs","credential-boundary.mjs"]){
-  cli=cli.replaceAll(`"./${name}"`,JSON.stringify(pathToFileURL(path.join(root,"packages/git-adapter/src",name)).href));
-}
-cli=cli.replaceAll('"./event-core.mjs"',JSON.stringify(pathToFileURL(coreTarget).href));
-fs.writeFileSync(cliTarget,cli);
+writeVariant(verifyTarget,verifier,verifySource);
+writeVariant(coreTarget,fs.readFileSync(coreSource,"utf8"),coreSource,{"./verify-log.mjs":verifyTarget});
+writeVariant(cliTarget,fs.readFileSync(cliSource,"utf8"),cliSource,{"./verify-log.mjs":verifyTarget,"./event-core.mjs":coreTarget});
 NODE
 }
 make_canary_variant(){
@@ -719,23 +705,23 @@ make_canary_variant(){
   cp -R "$root_dir/packages/git-adapter/src" "$target/packages/git-adapter/" || return 1
   cp -R "$root_dir/packages/port-watch/src" "$target/packages/port-watch/" || return 1
   cp -R "$root_dir/schemas/." "$target/schemas/" || return 1
-  node - "$target" "$mode" <<'NODE'
+  d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 if(mode==="detector_disabled"){
-  const file=path.join(root,"packages/git-adapter/src/credential-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="if (SECRET.test(v)) return \"CREDENTIAL_DETECTED\";";if(!text.includes(anchor))throw new Error("detector anchor absent");text=text.replace(anchor,"if (false /* D3_CANARY_DETECTOR_DISABLED */) return \"CREDENTIAL_DETECTED\";");fs.writeFileSync(file,text);
+  const file=path.join(root,"packages/git-adapter/src/credential-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="if (SECRET.test(v)) return \"CREDENTIAL_DETECTED\";";if(!text.includes(anchor))throw new Error("detector anchor absent");text=text.replace(anchor,"if (false /* D3_CANARY_DETECTOR_DISABLED */) return \"CREDENTIAL_DETECTED\";");writeVariant(file,text);
 }else if(mode==="observer_neutered"){
-  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink]";if(text.split(anchor).length-1!==2)throw new Error("observer anchors not exact");text=text.split(anchor).join("const dirty=false /* D3_CANARY_OBSERVER_NEUTERED */&&Boolean(await observers[sink]");fs.writeFileSync(file,text);
+  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink]";if(text.split(anchor).length-1!==2)throw new Error("observer anchors not exact");text=text.split(anchor).join("const dirty=false /* D3_CANARY_OBSERVER_NEUTERED */&&Boolean(await observers[sink]");writeVariant(file,text);
 }else if(mode==="operational_observer_neutered"){
-  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink].vulnerable(context));";if(text.split(anchor).length-1!==1)throw new Error("operational observer anchor not exact");text=text.replace(anchor,'const dirty=!(["logs","process_arguments","process_environment","core_dumps","backups","error_surfaces"].includes(sink)) /* D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED */&&Boolean(await observers[sink].vulnerable(context));');fs.writeFileSync(file,text);
+  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor="const dirty=Boolean(await observers[sink].vulnerable(context));";if(text.split(anchor).length-1!==1)throw new Error("operational observer anchor not exact");text=text.replace(anchor,'const dirty=!(["logs","process_arguments","process_environment","core_dumps","backups","error_surfaces"].includes(sink)) /* D3_CANARY_OPERATIONAL_OBSERVER_NEUTERED */&&Boolean(await observers[sink].vulnerable(context));');writeVariant(file,text);
 }else if(mode==="protected_operation_bypassed"){
-  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor='const operationSigned=typeof result?.signature==="string";';if(text.split(anchor).length-1!==1)throw new Error("protected operation anchor not exact");text=text.replace(anchor,'const operationSigned=false /* D3_CANARY_PROTECTED_OPERATION_BYPASSED */;');fs.writeFileSync(file,text);
+  const file=path.join(root,"packages/git-adapter/src/custody-service.mjs");let text=fs.readFileSync(file,"utf8");const anchor='const operationSigned=typeof result?.signature==="string";';if(text.split(anchor).length-1!==1)throw new Error("protected operation anchor not exact");text=text.replace(anchor,'const operationSigned=false /* D3_CANARY_PROTECTED_OPERATION_BYPASSED */;');writeVariant(file,text);
 }else if(mode==="report_incident_disabled"){
-  const file=path.join(root,"packages/git-adapter/src/report-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="      await incidentSink(incident);";if(text.split(anchor).length-1!==1)throw new Error("report incident anchor not exact");text=text.replace(anchor,"      void incident; /* D3_CANARY_REPORT_INCIDENT_DISABLED */");fs.writeFileSync(file,text);
+  const file=path.join(root,"packages/git-adapter/src/report-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="      await incidentSink(incident);";if(text.split(anchor).length-1!==1)throw new Error("report incident anchor not exact");text=text.replace(anchor,"      void incident; /* D3_CANARY_REPORT_INCIDENT_DISABLED */");writeVariant(file,text);
 }else throw new Error("unknown canary variant");
 NODE
 }
 make_w1_8_variant(){
-  node - "$root_dir/packages/git-adapter/src/credential-boundary.mjs" "$1" "$2" <<'NODE'
+  d1_variant_node - "$root_dir/packages/git-adapter/src/credential-boundary.mjs" "$1" "$2" <<'NODE'
 const fs=require("node:fs");const [source,target,mode]=process.argv.slice(2);let text=fs.readFileSync(source,"utf8");
 function replace(anchor,replacement){if(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);text=text.replace(anchor,replacement);}
 if(mode==="existence"){
@@ -764,7 +750,7 @@ else if(mode==="g10")replace('  if (!has(new Set(g.scopes), request.scopes ?? []
 else if(mode==="g13")replace('  if (request.session_id && !(await deps.store.sessionLive(request.session_id))) return fail("SESSION_REVOKED");','  if (false /* W1_8_G13_REMOVED */) return fail("SESSION_REVOKED");');
 else if(mode==="g14")replace('if (!row || row.revoked) return fail("CUSTODY_REVOKED");','if (false /* W1_8_G14_REMOVED */) return fail("CUSTODY_REVOKED");');
 else throw new Error(`unknown W1-8 variant ${mode}`);
-fs.writeFileSync(target,text);
+writeVariant(target,text,source);
 NODE
 }
 capture_d2(){ local module="$1" pattern="$2" log="$3"; run_d2 "$module" "$pattern" >"$log" 2>&1; return $?; }

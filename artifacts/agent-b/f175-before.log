@@ -1,0 +1,145 @@
+make_report_correspondent_variant:status-support load failure: node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/63/report-criteria.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/63/variant.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at resolve (file:///Users/an2b/an2b/products/EngramPORT-f175/tests/helpers/d1-drift-loader.mjs:4:10)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/63/report-criteria.mjs'
+}
+
+Node.js v26.5.0
+make_report_correspondent_variant:security-reference load failure: node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/64/report-criteria.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/64/variant.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at resolve (file:///Users/an2b/an2b/products/EngramPORT-f175/tests/helpers/d1-drift-loader.mjs:4:10)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/64/report-criteria.mjs'
+}
+
+Node.js v26.5.0
+make_report_correspondent_variant:unfixed load failure: node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/65/report-criteria.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/65/variant.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at resolve (file:///Users/an2b/an2b/products/EngramPORT-f175/tests/helpers/d1-drift-loader.mjs:4:10)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/65/report-criteria.mjs'
+}
+
+Node.js v26.5.0
+make_report_correspondent_variant:fixed-disposition load failure: node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/66/report-criteria.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/66/variant.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at resolve (file:///Users/an2b/an2b/products/EngramPORT-f175/tests/helpers/d1-drift-loader.mjs:4:10)
+    at nextResolve (node:internal/modules/esm/hooks:769:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-variant-drift-zRynMR/66/report-criteria.mjs'
+}
+
+Node.js v26.5.0
+make_event_v1_variant:retry-match anchor/build failure: [stdin]:3
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+                                                                                                                  ^
+
+Error: anchor not exact:     if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */
+    at mutate ([stdin]:3:121)
+    at [stdin]:4:25
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:483:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:481:60)
+    at evalFunction (node:internal/process/execution:315:30)
+    at evalTypeScript (node:internal/process/execution:327:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:237:5)
+
+Node.js v26.5.0
+make_event_v1_variant:retry-collision anchor/build failure: [stdin]:3
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+                                                                                                                  ^
+
+Error: anchor not exact:     if (existing.event.meta.schema_version === 1 && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */
+    at mutate ([stdin]:3:121)
+    at [stdin]:5:34
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:483:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:481:60)
+    at evalFunction (node:internal/process/execution:315:30)
+    at evalTypeScript (node:internal/process/execution:327:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:237:5)
+
+Node.js v26.5.0
+make_event_v1_variant:writer-cutover anchor/build failure: [stdin]:3
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+                                                                                                                  ^
+
+Error: anchor not exact:   if (schemaVersion !== 1) throw appendError("EVENT_VERSION_REFUSED", "live append accepts schema_version 1 only"); /* V1_WRITER_CUTOVER */
+    at mutate ([stdin]:3:121)
+    at [stdin]:7:33
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:483:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:481:60)
+    at evalFunction (node:internal/process/execution:315:30)
+    at evalTypeScript (node:internal/process/execution:327:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:237:5)
+
+Node.js v26.5.0
+make_port_watch_variant:shared PORT_WATCH_SHARED_ELIGIBILITY anchor/build failure: [stdin]:3
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+                                                                                                                  ^
+
+Error: anchor not exact: .filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.next === actor && !answered.has(event.meta.id))
+    at mutate ([stdin]:3:121)
+    at [stdin]:4:20
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:483:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:481:60)
+    at evalFunction (node:internal/process/execution:315:30)
+    at evalTypeScript (node:internal/process/execution:327:3)
+    at node:internal/main/eval_stdin:51:5
+    at Socket.<anonymous> (node:internal/process/execution:237:5)
+
+Node.js v26.5.0
+D1_VARIANT_DRIFT executed=125 loaded=127 synthetic_rewritten=0 failures=8
