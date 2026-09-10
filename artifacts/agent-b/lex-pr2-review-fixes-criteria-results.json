@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "bound-reachable",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-pr2-review-fixes-results.md#sha256=72e7fe745f2f3694de9bbe0d6e448f37f3a4cfcabaebc1150daf3aea28475a18"
+      }
+    ]
+  },
+  {
+    "criterion_id": "sandbox-restored",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-pr2-review-fixes-results.md#sha256=72e7fe745f2f3694de9bbe0d6e448f37f3a4cfcabaebc1150daf3aea28475a18"
+      }
+    ]
+  },
+  {
+    "criterion_id": "gate-still-green",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-pr2-review-fixes-results.md#sha256=72e7fe745f2f3694de9bbe0d6e448f37f3a4cfcabaebc1150daf3aea28475a18"
+      }
+    ]
+  },
+  {
+    "criterion_id": "carries-0-3-0",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-pr2-review-fixes-results.md#sha256=72e7fe745f2f3694de9bbe0d6e448f37f3a4cfcabaebc1150daf3aea28475a18"
+      }
+    ]
+  }
+]
