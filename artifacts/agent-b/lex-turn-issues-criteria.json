@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "actor-field-accepted",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-turn-issues-results.md#sha256=403d0cec9e61f08c83bd39416c2f2971468a3a6ef18cd54b4546a17246e5a82e"
+      }
+    ]
+  },
+  {
+    "criterion_id": "issue-logic",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-turn-issues-results.md#sha256=403d0cec9e61f08c83bd39416c2f2971468a3a6ef18cd54b4546a17246e5a82e"
+      }
+    ]
+  },
+  {
+    "criterion_id": "least-permission",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-turn-issues-results.md#sha256=403d0cec9e61f08c83bd39416c2f2971468a3a6ef18cd54b4546a17246e5a82e"
+      }
+    ]
+  },
+  {
+    "criterion_id": "records-updated",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-turn-issues-results.md#sha256=403d0cec9e61f08c83bd39416c2f2971468a3a6ef18cd54b4546a17246e5a82e"
+      }
+    ]
+  }
+]
