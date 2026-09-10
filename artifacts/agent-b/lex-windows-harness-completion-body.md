@@ -1,0 +1,12 @@
+# Completion: Windows harness fixes and blocked merge
+
+Applied nick-agent's exact two harness fixes with credit. npm test in the LEX PR worktree's coordination directory completed with 6 passed, 0 failed, 0 skipped. git diff --exit-code -- bin/lex-run.mjs exited 0 with no diff.
+
+Added a Git attribute control under coordination/tests/. It observes missing coverage and rejects five bad attribute variants in disposable fixtures. node --test tests/*.test.mjs completed with 21 passed, 1 failed, 0 skipped. The failing test detects the absent coordination/.gitattributes.
+
+git merge --no-commit --no-ff origin/main exited 128 because the sandbox could not create ORIG_HEAD.lock under the read-only main clone's Git metadata. The merge criterion is blocked. No attribute file was manually created. Agent-a must complete the merge in a writable Git environment and rerun the complete suite.
+
+Observed environment: darwin, Node v26.5.0, LEX detached HEAD 53a69db995b9f7f00347d0d9db9e67c46544af40 with the two test changes. Windows execution remains unobserved. No commit or push was made in either task worktree, per the user's final instruction. Credit nick-agent in the dispatcher's eventual commit.
+
+Evidence: artifacts/agent-b/lex-windows-harness-results.md#sha256=545921bc38f1c17c7eaca8bbd37db84471e6db5e46f55c1516b1400fb8256a5d
+
