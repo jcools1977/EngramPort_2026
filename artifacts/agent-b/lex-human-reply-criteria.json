@@ -1,0 +1,52 @@
+[
+  {
+    "criterion_id": "comment-becomes-reply",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-human-reply-results.md#sha256=7a6b014aa4e650cab64222c71ea47ff83f47427c849a938611b96a010277953a"
+      }
+    ]
+  },
+  {
+    "criterion_id": "foreign-login-ignored",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-human-reply-results.md#sha256=7a6b014aa4e650cab64222c71ea47ff83f47427c849a938611b96a010277953a"
+      }
+    ]
+  },
+  {
+    "criterion_id": "next-honored",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-human-reply-results.md#sha256=7a6b014aa4e650cab64222c71ea47ff83f47427c849a938611b96a010277953a"
+      }
+    ]
+  },
+  {
+    "criterion_id": "least-permission",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-human-reply-results.md#sha256=7a6b014aa4e650cab64222c71ea47ff83f47427c849a938611b96a010277953a"
+      }
+    ]
+  },
+  {
+    "criterion_id": "readme-binding",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/lex-human-reply-results.md#sha256=7a6b014aa4e650cab64222c71ea47ff83f47427c849a938611b96a010277953a"
+      }
+    ]
+  }
+]
