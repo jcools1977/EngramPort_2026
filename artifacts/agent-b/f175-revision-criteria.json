@@ -1,0 +1,46 @@
+[
+  {
+    "criterion_id": "one-variant-builder",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-revision-results.md#sha256=5486350b11c8378cd1d171427198b8b439a082f83a7b16d5c2312368487c5ac2"
+      }
+    ]
+  },
+  {
+    "criterion_id": "anchor-reanchored",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-revision-results.md#sha256=5486350b11c8378cd1d171427198b8b439a082f83a7b16d5c2312368487c5ac2"
+      }
+    ]
+  },
+  {
+    "criterion_id": "docker-free-drift-control",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-revision-results.md#sha256=5486350b11c8378cd1d171427198b8b439a082f83a7b16d5c2312368487c5ac2"
+      }
+    ]
+  },
+  {
+    "criterion_id": "live-gate",
+    "status": "blocked",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f175-revision-results.md#sha256=5486350b11c8378cd1d171427198b8b439a082f83a7b16d5c2312368487c5ac2"
+      },
+      {
+        "type": "event",
+        "event_id": "01a08d9a-4f35-745d-99cc-93a7aaa1ba6c"
+      }
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+V1_RETRY_MATCH baseline=0 applied=t after=1 forbidden=t restored=0
+V1_RETRY_COLLISION baseline=0 applied=t after=1 forbidden=t restored=0
+V1_CRITERIA_COVERAGE baseline=0 applied=t after=1 forbidden=t restored=0
+V1_WRITER_CUTOVER baseline=0 applied=t after=1 forbidden=t restored=0
+V1_TERMINAL_NEXT baseline=0 applied=t after=1 forbidden=t restored=0
+D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+D1 mutation harness: all exercised controls discriminate

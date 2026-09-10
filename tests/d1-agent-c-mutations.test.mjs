@@ -14,7 +14,7 @@ function fixture(operation) {
   try { return operation(directory); } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 function bash(script, args) {
-  const env = { ...process.env };
+  const env = { ...process.env, D1_VARIANT_HELPER: path.join(root, "tests/helpers/d1-variant.mjs") };
   delete env.NODE_TEST_CONTEXT;
   return spawnSync("bash", ["-c", script, "d1-agent-c-control", ...args], {
     cwd: root, env, encoding: "utf8", timeout: 90000, maxBuffer: 4 * 1024 * 1024,
@@ -69,12 +69,12 @@ test("agent-c builder derives adapter rewrites including a synthetic fourth impo
     }
   }
   assertRewritten(build(harness));
-  const rewrite = /let text=fs\.readFileSync\(source,"utf8"\)\.replace\([^]*?\n\}\);/;
-  assert.equal([...original.matchAll(new RegExp(rewrite, "g"))].length, 1);
+  const writer = 'writeVariant(target,text,source,{"../../git-adapter/src/credential-boundary.mjs":boundary});';
+  assert.equal(original.split(writer).length, 2);
   const oldBuilder = path.join(directory, "hand-kept-rewrites.bash");
-  writeFileSync(oldBuilder, original.replace(rewrite, `let text=fs.readFileSync(source,"utf8")
-  .replace("../../git-adapter/src/credential-boundary.mjs",pathToFileURL(boundary).href)
-  .replace("../../git-adapter/src/verify-log.mjs",pathToFileURL(path.join(root,"packages/git-adapter/src/verify-log.mjs")).href);`));
+  writeFileSync(oldBuilder, original.replace(writer, `fs.writeFileSync(target,text
+    .replace("../../git-adapter/src/credential-boundary.mjs",pathToFileURL(boundary).href)
+    .replace("../../git-adapter/src/verify-log.mjs",pathToFileURL(path.join(root,"packages/git-adapter/src/verify-log.mjs")).href));`));
   const oldText = build(oldBuilder);
   assert.match(oldText, /"\.\.\/\.\.\/git-adapter\/src\/bounded-context\.mjs"/);
   assert.throws(() => assertRewritten(oldText), { code: "ERR_ASSERTION" });
