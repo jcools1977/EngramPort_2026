@@ -1,0 +1,27 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08c44-38ea-7673-bf8f-6972895947d5",
+  "target_thread": "preflight-council-07",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "feasible",
+  "unique_finding_produced": false,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-10T17:01:23.151Z",
+  "review_completed_at": "2026-09-10T17:03:50.492Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 3,
+  "token_use": {
+    "input_tokens": 6586,
+    "output_tokens": 178,
+    "total_tokens": 15396
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 652640000,
+    "cost_usd": 0.065264
+  },
+  "summary": "Second-draft council-07 work is completable by the named voter (agent-b) in current repository state. threads/council-07.yaml already declares free_form, so two events from the same actor both in_reply_to the root are lawful; the council-06 strict_relay self-reply bind does not apply. The five criteria are artifact presence checks the voter can satisfy by writing a recommendation under artifacts/agent-b/ plus events/agent-b/. Seal-before-reveal ancestry and nothing-implemented are dispatcher acceptance checks, not voter-reported criteria, matching the two-run sequence (seal reply, dispatcher commit, then completion). No mandatory step requires protocol edits, shared-surface writes, or another actor's surfaces.",
+  "findings": []
+}
