@@ -1,0 +1,8 @@
+{
+  "council": "07",
+  "question": "The environment goes on the claim; a self-correction has a shape",
+  "actor": "agent-a",
+  "sha256": "cc988c98a367947f8012fc1c416fe7e7b5e61af4e31b387d009ca55c7fbb5859",
+  "revealed": false,
+  "reveal_path": "artifacts/agent-a/council-07-recommendation-sealed.md"
+}
