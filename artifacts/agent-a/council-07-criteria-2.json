@@ -1,0 +1,37 @@
+[
+ {
+  "id": "vote-first",
+  "statement": "The first sentence states the vote: the fields, required or optional, contested as status or derived, correction as type or rule, or nothing yet with the reason",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "counter-case",
+  "statement": "A section states the case against the chosen shape with at least one concrete scenario in which it fails or misleads",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "failing-observation",
+  "statement": "The controls that would show the shape failing are named, each with whether it is reachable through append, inbox, or the report",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "reversibility",
+  "statement": "A section states what retiring the chosen shape would cost",
+  "evidence_classes": [
+   "artifact"
+  ]
+ },
+ {
+  "id": "failure-class",
+  "statement": "A section names at least one disagreement the shape covers beyond today's instance and at least one it does not",
+  "evidence_classes": [
+   "artifact"
+  ]
+ }
+]

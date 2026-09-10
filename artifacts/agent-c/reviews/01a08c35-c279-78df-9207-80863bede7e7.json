@@ -1,0 +1,33 @@
+{
+  "schema_version": 0,
+  "target_event_id": "01a08c35-c279-78df-9207-80863bede7e7",
+  "target_thread": "preflight-council-07",
+  "review_mode": "dispatch",
+  "provider": "xai",
+  "model": "grok-4.6",
+  "dispatch_feasibility": "infeasible",
+  "unique_finding_produced": true,
+  "finding_disposition": "pending",
+  "review_started_at": "2026-09-10T16:56:35.985Z",
+  "review_completed_at": "2026-09-10T17:00:19.114Z",
+  "candidate_to_disposition_ms": null,
+  "relay_count": 1,
+  "token_use": {
+    "input_tokens": 8343,
+    "output_tokens": 741,
+    "total_tokens": 23231
+  },
+  "provider_cost": {
+    "currency": "USD",
+    "cost_in_usd_ticks": 1050540000,
+    "cost_usd": 0.105054
+  },
+  "summary": "Council-07 as written cannot be completed by agent-b. Two-run seal then reveal in this free_form thread (declared in threads/council-07.yaml before any root) is lawful under PROTOCOL.md: free_form allows any registered actor to append, does not inherit strict_relay’s self-reply or single-successor rules, and still has one root. Writes under artifacts/agent-b/ and events/agent-b/ match actor-owned surfaces; the vote itself is inside agent-b’s knowledge given the bound summaries; nothing-implemented does not conflict with a recommendation-only objective. Blocking: criterion nothing-implemented requires a run-two working-tree git status reported verbatim in the reveal, while run one freezes that reveal’s sha256 before those files exist. Council-06 findings are not in the bundle, so only the free_form fix from ADR 0052 is evidenced as applied.",
+  "findings": [
+    "nothing-implemented is unsatisfiable under the two-run seal. Run one writes the recommendation outside the tree and binds its digest; run two must publish that exact plaintext. The criterion demands a working-tree git status reported verbatim in the reveal, and its evidence_classes are artifact-only, so the completion body cannot carry the proof. A truthful run-two status includes the reveal path and completion event, which did not exist when the digest was taken. Predicting status, omitting it, or editing the sealed file all fail the criterion or the seal. This is a mandatory completion criterion, not a leftover prerequisite.",
+    "nothing-implemented still would not discriminate the bound. git status only snapshots uncommitted dirt. Shared-path implementation that is already committed, or implemented then reverted, is invisible. After a lawful publish the tree is clean, which is not “changes only under artifacts/agent-b and events/agent-b”. The bound “Nothing implemented” is therefore not a checkable property of repository state as specified.",
+    "The run-one reply to the root is an F172 hit on this dispatch itself. Inbox treats any in_reply_to parent as answered, so the seal reply hides the handoff. Run two’s completion, also in_reply_to the root, is then not inbox-discoverable and is a second child of an already-answered handoff. Free_form makes the append lawful; it does not make the shape inbox-reachable or turn-safe. Council-06’s evidenced fix was only thread mode, not parent/type shape.",
+    "seal-before-reveal cannot be closed by evidence available when agent-b must write criteria_results. Separate events, matching sha256, and “seal commit is an ancestor of reveal commit” are checkable later from git log and shasum, but at reveal-write time the reveal commit does not exist, so ancestry is a future git fact. The criterion mixes durable event/artifact evidence with a post-hoc working-copy git observation.",
+    "Council-06 pre-flight findings are not in this context bundle. ADR 0052 only records that the earlier infeasibility is why the thread is free_form; that part was applied. Agent-c cannot show where else those findings were or were not applied. Per ADR 0035 that gap is a context defect, not a vote on the envelope question. Unaddressed in the draft as supplied: sealed-artifact vs run-two observation, git status as a non-reproducible control, and the seal reply closing the root."
+  ]
+}
