@@ -1,0 +1,42 @@
+[
+  {
+    "criterion_id": "append-refuses-rewrite",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f176-results.md#sha256=f58de3d4596881c3cc5bf8a5aa899f6f10bc24033f04603b4776796e4fc0934d"
+      }
+    ]
+  },
+  {
+    "criterion_id": "verifier-both-directions",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f176-results.md#sha256=f58de3d4596881c3cc5bf8a5aa899f6f10bc24033f04603b4776796e4fc0934d"
+      }
+    ]
+  },
+  {
+    "criterion_id": "mutation-kills",
+    "status": "satisfied",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f176-results.md#sha256=f58de3d4596881c3cc5bf8a5aa899f6f10bc24033f04603b4776796e4fc0934d"
+      }
+    ]
+  },
+  {
+    "criterion_id": "f176-recorded",
+    "status": "unmet",
+    "evidence": [
+      {
+        "type": "artifact",
+        "ref": "artifacts/agent-b/f176-results.md#sha256=f58de3d4596881c3cc5bf8a5aa899f6f10bc24033f04603b4776796e4fc0934d"
+      }
+    ]
+  }
+]

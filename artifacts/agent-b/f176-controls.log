@@ -1,0 +1,27 @@
+F174_HELPER_MUTATION consumer=label control=failed
+F174_HELPER_MUTATION consumer=event.relative control=failed
+F174_HELPER_MUTATIONS executed=2 killed=2 restored=passed
+✔ F174 both digest consumers share one helper and restated comparisons are killed (2.590709ms)
+F174_VERIFY case=crlf errors=["events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: bounded_context[0]: CHECKOUT_ALTERED_BYTES for artifacts/builder/evidence.bin; use * -text in .gitattributes and restore the pinned artifact bytes","events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: CHECKOUT_ALTERED_BYTES for artifacts/builder/evidence.bin; use * -text in .gitattributes and restore the pinned artifact bytes"]
+F174_NORMALIZATION_MUTATION executed=1 killed=1 errors=["events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+F174_VERIFY case=edit errors=["events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+F174_VERIFY case=both errors=["events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+F174_VERIFY case=trailing-space errors=["events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: bounded_context[0]: artifact hash mismatch for artifacts/builder/evidence.bin","events/builder/20260910T232256Z_01a08da1-a4f3-7823-94bd-0352fd2a714c.md: artifact hash mismatch for artifacts/builder/evidence.bin"]
+✔ F174 verifyLog distinguishes CRLF only from edits in both consumers before a commit (28.676709ms)
+F176_APPEND no_attribute=ARTIFACT_CHECKOUT_REWRITE path=artifacts/builder/evidence.txt remedy=* -text in .gitattributes
+F176_APPEND attribute=present append=passed verify=passed
+F176_REVERSE crlf_pin=true autocrlf=input checkout=LF both_consumers=CHECKOUT_ALTERED_BYTES
+F176_EDIT both_consumers=artifact hash mismatch
+✔ F176 append refuses rewriting, attribute permits exact pin, reverse checkout and edits discriminate (368.124416ms)
+F176_MUTATION executed=1 killed=1 mutant_append=passed first_verify=passed second_checkout=CHECKOUT_ALTERED_BYTES restored=ARTIFACT_CHECKOUT_REWRITE
+✔ F176 removing append check admits doomed pin; second checkout detects drift; original restored (372.023666ms)
+F176_GIT_UNAVAILABLE synthetic_ENOENT=ARTIFACT_GIT_CHECK_REFUSED
+✔ F176 Git unavailable is a named refusal, never a skipped check (18.252833ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 795.191042
