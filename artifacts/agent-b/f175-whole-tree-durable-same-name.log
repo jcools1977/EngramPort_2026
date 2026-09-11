@@ -1,0 +1,63 @@
+v22.23.2
+TAP version 13
+# Subtest: route
+ok 1 - route # SKIP
+  ---
+  duration_ms: 0.448375
+  type: 'test'
+  ...
+# Subtest: same-name
+not ok 2 - same-name
+  ---
+  duration_ms: 6.470625
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-wt/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: restart
+ok 3 - restart # SKIP
+  ---
+  duration_ms: 0.404334
+  type: 'test'
+  ...
+# Subtest: atomic
+ok 4 - atomic # SKIP
+  ---
+  duration_ms: 0.03
+  type: 'test'
+  ...
+# Subtest: expiry
+ok 5 - expiry # SKIP
+  ---
+  duration_ms: 0.025666
+  type: 'test'
+  ...
+# Subtest: cleanup
+ok 6 - cleanup # SKIP
+  ---
+  duration_ms: 0.019333
+  type: 'test'
+  ...
+# Subtest: redaction
+ok 7 - redaction # SKIP
+  ---
+  duration_ms: 0.024375
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 6
+# todo 0
+# duration_ms 196.828958
+exit=1

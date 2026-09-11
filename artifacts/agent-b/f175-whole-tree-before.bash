@@ -266,9 +266,8 @@ assert_canary(){ local module_root="$1" out rc; out=$(mktemp); run_canary "$modu
 assert_truncate(){ local out rc; out=$(mktemp); psql_as postgres "$SDB" -f - < "$root_dir/tests/failure/canonical-truncate.sql" >"$out" 2>&1; rc=$?; [ "$rc" = 0 ] || cat "$out" >&2; rm -f "$out"; echo "$rc"; return 0; }
 assert(){ local first second third fourth; first=$(assert_file "$root_dir/tests/failure/d1-behavioural.sql"); if [ "$first" != 0 ]; then echo "$first"; return 0; fi; second=$(assert_file "$root_dir/tests/failure/d1f-controls.sql"); if [ "$second" != 0 ]; then echo "$second"; return 0; fi; third=$(assert_d2); if [ "$third" != 0 ]; then echo "$third"; return 0; fi; fourth=$(assert_truncate); echo "$fourth"; return 0; }
 plant_d1f_residue(){ psql_as postgres "$SDB" -c "INSERT INTO custody_rows(id,tenant_id,project_id,namespace,credential_class,custody_model,inventory_model,required_scope,key_locator,metadata,minted_by_principal_id,terminal_at,retention_policy) VALUES ('d1f00000-0000-4000-8000-000000000011','10000000-0000-0000-0000-000000000001','12000000-0000-0000-0000-000000000001','credential','3.3','B','B','custody:mint:credential:3.3:B','d1f-m11','{}','11000000-0000-0000-0000-000000000001',clock_timestamp(),'RET-AUDIT-400');" >/dev/null; }
-# Whole-tree builders write bytes plainly to preserve relative imports for
-# path-resolving consumers and relocation. Only detached files use writeVariant.
-# Tests using a partial source tree may supply the helper from the real checkout.
+# Shared import-derived writer for every variant builder. Tests using a
+# partial source tree may explicitly supply the helper from the real checkout.
 d1_variant_node(){ node --import "${D1_VARIANT_HELPER:-$root_dir/tests/helpers/d1-variant.mjs}" "$@"; }
 make_d2_variant(){
   d1_variant_node - "$root_dir/packages/git-adapter/src/d2-session-binding.mjs" "$1" "$2" <<'NODE'
@@ -296,8 +295,8 @@ make_w1_1_manager_variant(){
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const managerFile=path.join(root,"packages/git-adapter/src/workspace-session.mjs"),storeFile=path.join(root,"packages/git-adapter/src/workspace-session-store.mjs");
-function replace(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);fs.writeFileSync(file,text.replace(anchor,replacement));}
-function replaceLast(file,anchor,replacement){let text=fs.readFileSync(file,"utf8"),index=text.lastIndexOf(anchor);if(index<0)throw new Error(`anchor absent: ${anchor}`);text=text.slice(0,index)+replacement+text.slice(index+anchor.length);fs.writeFileSync(file,text);}
+function replace(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);writeVariant(file,text.replace(anchor,replacement));}
+function replaceLast(file,anchor,replacement){let text=fs.readFileSync(file,"utf8"),index=text.lastIndexOf(anchor);if(index<0)throw new Error(`anchor absent: ${anchor}`);text=text.slice(0,index)+replacement+text.slice(index+anchor.length);writeVariant(file,text);}
 const liveAnchor='      return {session:null,state:normalizeRow(inspected)};';
 const liveReplacement='      return {session:normalizeRow({...inspected,active:true,effective_state:"active"}),state:normalizeRow(inspected)}; /* W1_1_MANAGER_LIVENESS_REMOVED */';
 const known=["expired","expired_guard_only","liveness_only","revoked","revoked-execute","different","different_manager_only","different_store_only","replay","replay_guard_only","replay_retention_only"];
@@ -357,7 +356,7 @@ make_w1_1_oidc_client_variant(){
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const clientFile=path.join(root,"packages/git-adapter/src/oidc-client.mjs"),transactionFile=path.join(root,"packages/git-adapter/src/oidc-transaction-store.mjs"),compositionFile=path.join(root,"packages/git-adapter/src/founder-setup-composition.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
 if(mode==="auth-start")mutate(clientFile,'code_challenge:codeChallenge,code_challenge_method:"S256"','code_challenge:codeVerifier,code_challenge_method:"plain" /* W1_1_OIDC_CLIENT_AUTH_START_REMOVED */');
 else if(mode==="transaction-state"){
   mutate(clientFile,'if(transaction.expiresAt<=clock().getTime() /* W1_1_OIDC_CLIENT_EXPIRY_GUARD */)','if(false /* W1_1_OIDC_CLIENT_TRANSACTION_REMOVED */)');
@@ -378,7 +377,7 @@ make_w1_1_oidc_durable_variant(){
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const entryFile=path.join(root,"worker/entry.mjs"),runtimeFile=path.join(root,"worker/oidc-runtime.mjs"),objectFile=path.join(root,"worker/oidc-transaction-durable-object.mjs"),clientFile=path.join(root,"packages/git-adapter/src/oidc-client.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
 if(mode==="route")mutate(entryFile,'if(isOidcRoute(url))return routeOidcRequest(request,env,{boundary:await boundaryFor(env),...oidcOptions}); /* W1_1_OIDC_REAL_WORKER_ROUTE */','if(false /* W1_1_OIDC_DURABLE_ROUTE_REMOVED */)return routeOidcRequest(request,env,{boundary:await boundaryFor(env),...oidcOptions});');
 else if(mode==="same-name")mutate(runtimeFile,'this.#namespace.getByName(state).claim(consumer); /* W1_1_OIDC_DO_SAME_NAME_CLAIM */','this.#namespace.getByName(`${state}-callback`).claim(consumer); /* W1_1_OIDC_DURABLE_SAME_NAME_REMOVED */');
 else if(mode==="restart")mutate(objectFile,'await this.ctx.storage.put(RECORD_KEY,transaction); /* W1_1_OIDC_DO_PERSISTED_RECORD */','void transaction; /* W1_1_OIDC_DURABLE_RESTART_REMOVED */');
@@ -399,7 +398,7 @@ make_w1_1_oidc_provider_variant(){
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const providerFile=path.join(root,"packages/git-adapter/src/oidc-provider.mjs");
-function mutate(anchor,replacement){let text=fs.readFileSync(providerFile,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(providerFile,text);}
+function mutate(anchor,replacement){let text=fs.readFileSync(providerFile,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(providerFile,text);}
 if(mode==="discovery")mutate('authorizationEndpoint:httpsEndpoint(document.authorization_endpoint,"authorization_endpoint"), /* W1_1_PROVIDER_DISCOVERY_ENDPOINTS */','authorizationEndpoint:new URL("/authorize",configured).toString(), /* W1_1_PROVIDER_DISCOVERY_REMOVED */');
 else if(mode==="jwks-lifecycle")mutate('      this.#keys=replacement; /* W1_1_PROVIDER_JWKS_REPLACE */','      this.#keys=new Map([...this.#keys,...replacement]); /* W1_1_PROVIDER_JWKS_REPLACE_REMOVED */');
 else if(mode==="exchange")mutate('grant_type:"authorization_code",code_verifier:required(codeVerifier,"codeVerifier") /* W1_1_PROVIDER_EXCHANGE_PKCE */','grant_type:"authorization_code",omitted_code_verifier:required(codeVerifier,"codeVerifier") /* W1_1_PROVIDER_EXCHANGE_REMOVED */');
@@ -481,7 +480,7 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor='    if (actor.billing_mode === "subscription" && actor.metered !== null) { /* CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL */';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'    if (false /* CONTRIBUTION_SUBSCRIPTION_CURRENCY_REFUSAL_REMOVED */) {');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_git_adapter_core_variant(){
@@ -493,7 +492,7 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor='  try { await writeFile(file, source, { flag: "wx" }); }';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'  try { await Promise.resolve(); /* GIT_ADAPTER_CORE_WRITE_REMOVED */ }');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_sdk_core_variant(){
@@ -507,7 +506,7 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor='  try { await writeFile(file, source, { flag: "wx" }); }';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'  try { await Promise.resolve(); /* SDK_CORE_WRITE_REMOVED */ }');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_sdk_package_variant(){
@@ -524,7 +523,7 @@ manifest.exports={".":"./src/index.mjs"};
 manifest.files=["src","README.md"];
 delete manifest.scripts.prepack;
 manifest.description += " SDK_PACKAGE_ISOLATION_REMOVED";
-fs.writeFileSync(file,`${JSON.stringify(manifest,null,2)}\n`);
+writeVariant(file,`${JSON.stringify(manifest,null,2)}\n`);
 NODE
 }
 make_sdk_published_surface_variant(){
@@ -537,11 +536,11 @@ const dist=path.join(root,"dist/index.mjs");let text=fs.readFileSync(dist,"utf8"
 const anchor='\thandoff(input, options = {}) {\n\t\treturn this.append({\n\t\t\t...input,\n\t\t\ttype: "handoff"\n\t\t}, options);\n\t}';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 const replacement='\thandoff(input, options = {}) {\n\t\tconst id = options.id ?? "01a00000-0000-7000-8000-000000000000";\n\t\treturn Promise.resolve({ ok: true, errors: [], relative: "events/" + this.actor + "/phantom-" + id + ".md", event_id: id, reused: false }); /* SDK_PUBLISHED_SURFACE_WRITE_REMOVED */\n\t}';
-fs.writeFileSync(dist,text.replace(anchor,replacement));
+writeVariant(dist,text.replace(anchor,replacement));
 const manifestFile=path.join(root,"package.json"),manifest=JSON.parse(fs.readFileSync(manifestFile,"utf8"));
 delete manifest.scripts.prepack;
 manifest.description += " SDK_PUBLISHED_SURFACE_WRITE_REMOVED";
-fs.writeFileSync(manifestFile,`${JSON.stringify(manifest,null,2)}\n`);
+writeVariant(manifestFile,`${JSON.stringify(manifest,null,2)}\n`);
 NODE
 }
 make_second_builder_variant(){
@@ -555,7 +554,7 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor='    return this.append({ ...input, type: "completion", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH */';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'    return this.append({ ...input, type: "reply", reply: inReplyTo }, options); /* SECOND_BUILDER_COMPLETE_PATH_REMOVED */');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_git_adapter_core_override_variant(){
@@ -567,7 +566,7 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor='import { appendEvent, listInbox, validateAppendInputs } from "./event-core.mjs";';
 if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);
 text=text.replace(anchor,'const coreSpecifier = process.env.GIT_ADAPTER_CORE_MODULE ?? new URL("./event-core.mjs", import.meta.url).href;\nconst { appendEvent, listInbox, validateAppendInputs } = await import(coreSpecifier); /* GIT_ADAPTER_CORE_OVERRIDE_GUARD_REMOVED */');
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_event_v1_variant(){
@@ -577,7 +576,7 @@ make_event_v1_variant(){
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const cliFile=path.join(root,"cli.mjs"),coreFile=path.join(root,"event-core.mjs"),verifyFile=path.join(root,"verify-log.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
 if(mode==="retry-match")mutate(coreFile,'    if (existing.event.meta.schema_version === schemaVersion && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (false /* V1_RETRY_INTENT_MATCH_REMOVED */) return resultFor(existing.relative, id, true);');
 else if(mode==="retry-collision")mutate(coreFile,'    if (existing.event.meta.schema_version === schemaVersion && existing.event.meta.intent_sha256 === intentSha256) return resultFor(existing.relative, id, true); /* V1_RETRY_INTENT_MATCH */','    if (existing.event.meta.schema_version === 1 /* V1_RETRY_COLLISION_REMOVED */) return resultFor(existing.relative, id, true);');
 else if(mode==="criteria-coverage")mutate(verifyFile,'    if (missing.length) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`); /* V1_CRITERIA_EXACT_COVERAGE */','    if (false /* V1_CRITERIA_EXACT_COVERAGE_REMOVED */) errors.push(`${event.relative}: completion missing criterion ids ${missing.join(", ")}`);');
@@ -594,7 +593,7 @@ make_port_watch_variant(){
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
 const core=path.join(root,"packages/git-adapter/src/event-core.mjs"),watch=path.join(root,"packages/port-watch/src/index.mjs"),observation=path.join(root,"packages/port-watch/src/observation.mjs");
-function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);fs.writeFileSync(file,text);}
+function mutate(file,anchor,replacement){let text=fs.readFileSync(file,"utf8");if(text.split(anchor).length-1!==1)throw new Error(`anchor not exact: ${anchor}`);text=text.replace(anchor,replacement);writeVariant(file,text);}
 if(mode==="shared")mutate(core,'.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.type !== "correction" && event.meta.next === actor && !answered.has(event.meta.id))','.filter(({ event }) => event.meta.type !== "withdrawal" && event.meta.type !== "correction" && event.meta.next === actor /* PORT_WATCH_SHARED_ELIGIBILITY_REMOVED */)');
 else if(mode==="position")mutate(watch,'    await this.claim_store.release(agent, project, { run_id });\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });','    await this.claim_store.release(agent, project, { run_id });\n    await this.store.transaction((state) => { state.agents[key(agent, project)].cursor = claim.event_id; return state; }); /* PORT_WATCH_LOG_DERIVED_POSITION_REMOVED */\n    await this.record({ kind: `run.${status}`, agent, project, run_id, event_id: claim.event_id, disposition: "reply_in_port_log" });');
 else if(mode==="cache")mutate(watch,'    if (cached?.log_state === log_state && Array.isArray(cached.deliveries)) {','    if (cached && Array.isArray(cached.deliveries) /* PORT_WATCH_CACHE_LOG_STATE_REMOVED */) {');
@@ -640,7 +639,7 @@ const fs=require("node:fs");const [target]=process.argv.slice(2);let text=fs.rea
 const anchor="artifact_prefix: artifacts/agent-b";
 if(text.split(anchor).length-1!==1)throw new Error("agent-b artifact prefix anchor must occur exactly once");
 text=text.replace(anchor,"artifact_prefix: artifacts # ACTOR_REGISTRY_PREFIX_TAKEOVER");
-fs.writeFileSync(target,text);
+writeVariant(target,text);
 NODE
 }
 make_actor_registry_verifier_variant(){
@@ -708,6 +707,7 @@ make_canary_variant(){
   cp -R "$root_dir/schemas/." "$target/schemas/" || return 1
   d1_variant_node - "$target" "$mode" <<'NODE'
 const fs=require("node:fs"),path=require("node:path");const [root,mode]=process.argv.slice(2);
+// The canary test copies this whole tree again, so imports must stay relative.
 if(mode==="detector_disabled"){
   const file=path.join(root,"packages/git-adapter/src/credential-boundary.mjs");let text=fs.readFileSync(file,"utf8");const anchor="if (SECRET.test(v)) return \"CREDENTIAL_DETECTED\";";if(!text.includes(anchor))throw new Error("detector anchor absent");text=text.replace(anchor,"if (false /* D3_CANARY_DETECTOR_DISABLED */) return \"CREDENTIAL_DETECTED\";");fs.writeFileSync(file,text);
 }else if(mode==="observer_neutered"){

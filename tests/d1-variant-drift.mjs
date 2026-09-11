@@ -65,7 +65,7 @@ export function runDrift({root = path.resolve(import.meta.dirname, '..'), harnes
       for (const file of files.filter(file => file.endsWith('.mjs'))) {
         // The site variant changes TSX, not an ECMAScript module.
         if (builder.name === 'make_site_install_claim_variant') continue;
-        if (builder.name === 'make_canary_variant') {
+        if (builder.directory) {
           const text = readFileSync(file, 'utf8');
           const specifiers = [...text.matchAll(/["']((?:file:|\.{1,2}\/)[^"'\r\n]+\.mjs)["']/g)].map(match => match[1]);
           if (specifiers.some(specifier => specifier.startsWith('file:'))) failures.push(`${name} whole-tree import rewritten: ${file}`);
