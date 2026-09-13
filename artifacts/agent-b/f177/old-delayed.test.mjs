@@ -3,8 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test,{after} from "node:test";
-import { Miniflare, NoOpLog } from "miniflare";
-import { oidcRuntimeGate } from "./oidc-runtime-gate.mjs";
+import { Miniflare, NoOpLog } from "../../../node_modules/miniflare/dist/src/index.js";
+import { oidcRuntimeGate } from "../../../tests/oidc-runtime-gate.mjs";
 
 const runtimeAllowed=oidcRuntimeGate();
 
@@ -78,25 +78,12 @@ check("expiry",()=>temporary(async persist=>{
 }));
 
 check("cleanup",()=>temporary(async persist=>{
-  let mf=await runtime(persist,1000);const claimed=await start(mf),scheduled=JSON.parse((await inspect(mf,claimed.state)).body),completed=await callback(mf,claimed.state),claimedAfter=JSON.parse((await inspect(mf,claimed.state)).body);
-  // Observe scheduling on the long-lived runtime, separately from cleanup.
-  // Both timestamps come from one DO inspect response. A delayed observation
-  // may miss expiry; it must not turn into a false scheduling assertion.
-  // The label also covers inspect itself purging an expired record; it is
-  // an observation outcome, not proof that the automatic alarm ran.
-  const observation=await start(mf);
-  const inspectDelay=Number(process.env.W1_1_OIDC_CLEANUP_INSPECT_DELAY_MS??0);
-  assert.ok(Number.isFinite(inspectDelay)&&inspectDelay>=0);
-  await new Promise(resolve=>setTimeout(resolve,inspectDelay));
-  const before=JSON.parse((await inspect(mf,observation.state)).body);await mf.dispose();
+  let mf=await runtime(persist,1000);const claimed=await start(mf),scheduled=JSON.parse((await inspect(mf,claimed.state)).body),completed=await callback(mf,claimed.state),claimedAfter=JSON.parse((await inspect(mf,claimed.state)).body);await mf.dispose();
   mf=await runtime(persist,60);try{
-    const abandoned=await start(mf);await new Promise(resolve=>setTimeout(resolve,100));const alarmResponse=await mf.dispatchFetch(`http://localhost/__oidc/alarm?state=${encodeURIComponent(abandoned.state)}`),alarmText=await alarmResponse.text();if(alarmResponse.status!==200)throw new Error(`alarm control ${alarmResponse.status}: ${alarmText}`);const alarmAfter=JSON.parse(alarmText);
-    const schedulingOutcome=value=>value.alarmAt===null&&["absent","expired"].includes(value.status)?"fired-before-inspect":value.alarmAt>value.expiresAt;
-    const outcomes=[scheduled,before].map(schedulingOutcome);
-    const alarmScheduled=outcomes.includes(false)?false:outcomes.includes("fired-before-inspect")?"fired-before-inspect":true;
+    const abandoned=await start(mf);await new Promise(resolve=>setTimeout(resolve,Number(process.env.W1_1_OIDC_CLEANUP_INSPECT_DELAY_MS??0)));const before=JSON.parse((await inspect(mf,abandoned.state)).body);await new Promise(resolve=>setTimeout(resolve,100));const alarmResponse=await mf.dispatchFetch(`http://localhost/__oidc/alarm?state=${encodeURIComponent(abandoned.state)}`),alarmText=await alarmResponse.text();if(alarmResponse.status!==200)throw new Error(`alarm control ${alarmResponse.status}: ${alarmText}`);const alarmAfter=JSON.parse(alarmText);
+    const alarmScheduled=scheduled.alarmAt>scheduled.expiresAt&&before.alarmAt>before.expiresAt;
     console.log(`W1_1_OIDC_DURABLE cleanup scheduled=${alarmScheduled} claimed=${completed.status}/${claimedAfter.present} alarm=${alarmAfter.present}`);
-    assert.notEqual(alarmScheduled,false);
-    assert.deepEqual({claimed:completed.status,claimedClean:claimedAfter.present,alarmClean:alarmAfter.present},{claimed:204,claimedClean:false,alarmClean:false});
+    assert.deepEqual({scheduled:alarmScheduled,claimed:completed.status,claimedClean:claimedAfter.present,alarmClean:alarmAfter.present},{scheduled:true,claimed:204,claimedClean:false,alarmClean:false});
   }finally{await mf.dispose();}
 }));
 
