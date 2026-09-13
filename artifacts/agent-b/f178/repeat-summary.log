@@ -1,0 +1,100 @@
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=1 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=2 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=3 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=4 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=5 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=6 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=7 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=8 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=9 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2 mode=direct run=10 exit=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0

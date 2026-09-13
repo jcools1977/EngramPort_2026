@@ -1,0 +1,127 @@
+TAP version 13
+# D3_CANARY_DETECTOR baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_OPERATIONAL_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_PROTECTED_OPERATION baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_REPORT_INCIDENT baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+# D1_SYNTHETIC_TIMEOUT live_canary=blocked reason=no-Docker; only synthetic baselines ran
+# D3_CANARY_OPERATIONAL_OBSERVER baseline=1 applied=t after=1 forbidden=f restored=1
+# D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+# D1_TIMEOUT_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# Subtest: all five canary branches count real synthetic baseline timeouts and fail before mutation
+ok 1 - all five canary branches count real synthetic baseline timeouts and fail before mutation
+  ---
+  duration_ms: 1034.154125
+  type: 'test'
+  ...
+# Subtest: the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration
+ok 2 - the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration
+  ---
+  duration_ms: 998.374792
+  type: 'test'
+  ...
+# Subtest: ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout
+ok 3 - ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout
+  ---
+  duration_ms: 63.275708
+  type: 'test'
+  ...
+# Subtest: the canary declares and applies a larger budget and a short per-test timeout affects only its test
+not ok 4 - the canary declares and applies a larger budget and a short per-test timeout affects only its test
+  ---
+  duration_ms: 144.112792
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-f178/tests/d1-baseline-timeout.test.mjs:114:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /^# fail 1$/m. Input:
+    
+    'TAP version 13\n' +
+      '# Subtest: short per-test budget\n' +
+      'not ok 1 - short per-test budget\n' +
+      '  ---\n' +
+      '  duration_ms: 41.832375\n' +
+      "  type: 'test'\n" +
+      "  location: '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-timeout-f8nkFP/budget.test.mjs:3:1'\n" +
+      "  failureType: 'testTimeoutFailure'\n" +
+      "  error: 'test timed out after 40ms'\n" +
+      "  code: 'ERR_TEST_FAILURE'\n" +
+      '  ...\n' +
+      '# Subtest: ordinary test after timeout\n' +
+      'ok 2 - ordinary test after timeout\n' +
+      '  ---\n' +
+      '  duration_ms: 0.350625\n' +
+      "  type: 'test'\n" +
+      '  ...\n' +
+      '1..2\n' +
+      '# tests 2\n' +
+      '# suites 0\n' +
+      '# pass 1\n' +
+      '# fail 0\n' +
+      '# cancelled 1\n' +
+      '# skipped 0\n' +
+      '# todo 0\n' +
+      '# duration_ms 95.773208\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    TAP version 13
+    # Subtest: short per-test budget
+    not ok 1 - short per-test budget
+      ---
+      duration_ms: 41.832375
+      type: 'test'
+      location: '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-timeout-f8nkFP/budget.test.mjs:3:1'
+      failureType: 'testTimeoutFailure'
+      error: 'test timed out after 40ms'
+      code: 'ERR_TEST_FAILURE'
+      ...
+    # Subtest: ordinary test after timeout
+    ok 2 - ordinary test after timeout
+      ---
+      duration_ms: 0.350625
+      type: 'test'
+      ...
+    1..2
+    # tests 2
+    # suites 0
+    # pass 1
+    # fail 0
+    # cancelled 1
+    # skipped 0
+    # todo 0
+    # duration_ms 95.773208
+    
+  operator: 'match'
+  stack: |-
+    file:///Users/an2b/an2b/products/EngramPORT-f178/tests/d1-baseline-timeout.test.mjs:132:10
+    fixture (file:///Users/an2b/an2b/products/EngramPORT-f178/tests/d1-baseline-timeout.test.mjs:14:16)
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-f178/tests/d1-baseline-timeout.test.mjs:114:114)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: the budget control rejects copied wizard sources with missing or default canary timeouts
+ok 5 - the budget control rejects copied wizard sources with missing or default canary timeouts
+  ---
+  duration_ms: 2.709458
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2300.562083

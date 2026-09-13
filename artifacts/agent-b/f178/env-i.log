@@ -1,0 +1,110 @@
+++ dirname /opt/homebrew/opt/node@22/bin/node
++ env -i PATH=/opt/homebrew/opt/node@22/bin:/usr/bin:/bin /opt/homebrew/opt/node@22/bin/node --test --test-reporter=tap --test-timeout=100 --experimental-test-isolation=process /private/tmp/f178-probe/child.mjs
+TAP version 13
+# Subtest: /private/tmp/f178-probe/child.mjs
+not ok 1 - /private/tmp/f178-probe/child.mjs
+  ---
+  duration_ms: 101.606542
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:1:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 105.824042
++ set +x
+++ dirname /opt/homebrew/opt/node@22/bin/node
++ env -i PATH=/opt/homebrew/opt/node@22/bin:/usr/bin:/bin /opt/homebrew/opt/node@22/bin/node --test --test-reporter=tap --test-timeout=100 --experimental-test-isolation=none /private/tmp/f178-probe/child.mjs
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 150.727041
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 101.000792
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 259.155833
++ set +x
+++ dirname /opt/homebrew/bin/node
++ env -i PATH=/opt/homebrew/bin:/usr/bin:/bin /opt/homebrew/bin/node --test --test-reporter=tap --test-timeout=100 --experimental-test-isolation=process /private/tmp/f178-probe/child.mjs
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 151.140042
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 100.61075
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 286.263334
++ set +x
+++ dirname /opt/homebrew/bin/node
++ env -i PATH=/opt/homebrew/bin:/usr/bin:/bin /opt/homebrew/bin/node --test --test-reporter=tap --test-timeout=100 --experimental-test-isolation=none /private/tmp/f178-probe/child.mjs
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 151.433667
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 101.731292
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 257.209125
++ set +x

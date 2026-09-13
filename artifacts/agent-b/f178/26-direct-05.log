@@ -1,0 +1,30 @@
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D3_CANARY_DETECTOR baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_OPERATIONAL_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_PROTECTED_OPERATION baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D3_CANARY_REPORT_INCIDENT baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+D1_SYNTHETIC_TIMEOUT live_canary=blocked reason=no-Docker; only synthetic baselines ran
+D3_CANARY_OPERATIONAL_OBSERVER baseline=1 applied=t after=1 forbidden=f restored=1
+D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+D1_TIMEOUT_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+✔ all five canary branches count real synthetic baseline timeouts and fail before mutation (752.539667ms)
+✔ the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration (751.729042ms)
+✔ ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout (43.0415ms)
+✔ the canary declares and applies a larger budget and a short per-test timeout affects only its test (105.085958ms)
+✔ the budget control rejects copied wizard sources with missing or default canary timeouts (2.720417ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1688.476541

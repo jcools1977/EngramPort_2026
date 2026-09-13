@@ -1,0 +1,680 @@
+FILE=artifacts/agent-b/f178/22-direct-01.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2305.963167
+
+FILE=artifacts/agent-b/f178/22-direct-02.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2299.33225
+
+FILE=artifacts/agent-b/f178/22-direct-03.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2311.286625
+
+FILE=artifacts/agent-b/f178/22-direct-04.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2327.547791
+
+FILE=artifacts/agent-b/f178/22-direct-05.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2310.617417
+
+FILE=artifacts/agent-b/f178/22-direct-06.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2304.663875
+
+FILE=artifacts/agent-b/f178/22-direct-07.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2306.638542
+
+FILE=artifacts/agent-b/f178/22-direct-08.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2305.511875
+
+FILE=artifacts/agent-b/f178/22-direct-09.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2289.939208
+
+FILE=artifacts/agent-b/f178/22-direct-10.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2393.972166
+
+FILE=artifacts/agent-b/f178/22-npm-01.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 96792.626083
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-02.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 98304.396833
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-03.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 118558.876125
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-04.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 120990.993583
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-05.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 120606.682417
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-06.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 123606.688542
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-07.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 124384.45025
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-08.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 129097.066666
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-09.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 128612.699333
+EXIT=0
+
+FILE=artifacts/agent-b/f178/22-npm-10.log
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 113458.791959
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-direct-01.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1688.102167
+
+FILE=artifacts/agent-b/f178/26-direct-02.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1668.613
+
+FILE=artifacts/agent-b/f178/26-direct-03.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1669.885709
+
+FILE=artifacts/agent-b/f178/26-direct-04.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1686.673291
+
+FILE=artifacts/agent-b/f178/26-direct-05.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1688.476541
+
+FILE=artifacts/agent-b/f178/26-direct-06.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1672.873625
+
+FILE=artifacts/agent-b/f178/26-direct-07.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1667.17775
+
+FILE=artifacts/agent-b/f178/26-direct-08.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1683.097458
+
+FILE=artifacts/agent-b/f178/26-direct-09.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1686.039416
+
+FILE=artifacts/agent-b/f178/26-direct-10.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/node', '--test', 'tests/d1-baseline-timeout.test.mjs']
+EXIT=0
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1673.162542
+
+FILE=artifacts/agent-b/f178/26-npm-01.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 89014.283167
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-02.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 89717.880333
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-03.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 89571.102834
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-04.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 84567.162625
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-05.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 88715.372625
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-06.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 91514.791209
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-07.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 91690.885042
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-08.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 90394.433292
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-09.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 93957.169333
+EXIT=0
+
+FILE=artifacts/agent-b/f178/26-npm-10.log
+NODE=/opt/homebrew/bin/node v26.8.2
+COMMAND=['/opt/homebrew/bin/npm', 'run', 'd1:controls:test']
+D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+ℹ tests 25
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 78866.137333
+EXIT=0
+

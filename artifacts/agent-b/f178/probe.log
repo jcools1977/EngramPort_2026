@@ -1,0 +1,1086 @@
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=direct isolation=default
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: /private/tmp/f178-probe/child.mjs
+not ok 1 - /private/tmp/f178-probe/child.mjs
+  ---
+  duration_ms: 102.177125
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:1:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 107.811
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=direct isolation=process
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=9
+/opt/homebrew/opt/node@22/bin/node: bad option: --test-isolation=process
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=direct isolation=none
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=9
+/opt/homebrew/opt/node@22/bin/node: bad option: --test-isolation=none
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=parent-inherit isolation=default
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=0
+# (node:90328) Warning: node:test run() is being called recursively within a test file. skipping running files.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 47.016625
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 102.949042
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=parent-inherit isolation=process
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=process
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 13.046667
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.771083
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=parent-inherit isolation=none
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=none
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 12.859541
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 68.231708
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=parent-strip isolation=default
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: /private/tmp/f178-probe/child.mjs
+# not ok 1 - /private/tmp/f178-probe/child.mjs
+#   ---
+#   duration_ms: 102.795792
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:1:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..1
+# \# tests 1
+# \# suites 0
+# \# pass 0
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 106.659541
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 153.728958
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 209.20075
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=parent-strip isolation=process
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=process
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 12.887333
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.925666
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=False mode=parent-strip isolation=none
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=none
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 13.686208
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 72.505292
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=direct isolation=default
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: /private/tmp/f178-probe/child.mjs
+not ok 1 - /private/tmp/f178-probe/child.mjs
+  ---
+  duration_ms: 102.298958
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:1:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 106.190209
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=direct isolation=process
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=9
+/opt/homebrew/opt/node@22/bin/node: bad option: --test-isolation=process
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=direct isolation=none
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=9
+/opt/homebrew/opt/node@22/bin/node: bad option: --test-isolation=none
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=parent-inherit isolation=default
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=0
+# (node:90368) Warning: node:test run() is being called recursively within a test file. skipping running files.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 48.905917
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 102.350833
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=parent-inherit isolation=process
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=process
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 12.638084
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.009292
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=parent-inherit isolation=none
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=none
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 13.149542
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67.508333
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=parent-strip isolation=default
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: /private/tmp/f178-probe/child.mjs
+# not ok 1 - /private/tmp/f178-probe/child.mjs
+#   ---
+#   duration_ms: 102.191375
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:1:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..1
+# \# tests 1
+# \# suites 0
+# \# pass 0
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 106.099542
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 152.695416
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 206.153042
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=parent-strip isolation=process
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=process
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 12.616709
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.710875
+
+NODE=/opt/homebrew/opt/node@22/bin/node clean_env=True mode=parent-strip isolation=none
+COMMAND=["/opt/homebrew/opt/node@22/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=9
+# /opt/homebrew/Cellar/node@22/22.23.2_1/bin/node: bad option: --test-isolation=none
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 12.594959
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.413583
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=direct isolation=default
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 151.419958
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 102.301416
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 292.951333
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=direct isolation=process
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 152.011334
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 100.990791
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 295.738708
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=direct isolation=none
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 152.070333
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 100.705042
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 257.929417
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=parent-inherit isolation=default
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=0
+# (node:90394) Warning: node:test run() is being called recursively within a test file. skipping running files.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 31.804167
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 68.921
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=parent-inherit isolation=process
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=0
+# (node:90397) Warning: node:test run() is being called recursively within a test file. skipping running files.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 29.325292
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.532708
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=parent-inherit isolation=none
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# �   ��o"type"\\ftest:enqueue"datao"nestingI "name"canary budget override"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�   ��o"type"\\ftest:dequeue"datao"nestingI "name"canary budget override"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�   ��o"type"\\ftest:enqueue"datao"nestingI "name"ordinary default budget"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�   ��o"type"\\rtest:complete"datao"name"canary budget override"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msN��S9m�b@"type"test"passedT{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   ��o"type"
+# test:start"datao"nestingI "name"canary budget override"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\b{�   ��o"type"\\ttest:pass"datao"name"canary budget override"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msN��S9m�b@"type"test{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   ��o"type"\\ftest:dequeue"datao"nestingI "name"ordinary default budget"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�  �o"type"\\rtest:complete"datao"name"ordinary default budget"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msN��� �RY@"type"test"error\\
+# � �o"\\vconstructor"Error"
+# propertieso"nameo"value"Error"\\bwritableT"
+# enumerableF"\\fconfigurableT{"messageo"value"test timed out after 100ms"\\bwritableT"
+# enumerableF"\\fconfigurableT{"stacko"
+# enumerableF"\\fconfigurableT"value"4Error [ERR_TEST_FAILURE]: test timed out after 100ms{"codeo"value"ERR_TEST_FAILURE"\\bwritableT"
+# enumerableT"\\fconfigurableT{"\\vfailureTypeo"value"testTimeoutFailure"\\bwritableT"
+# enumerableT"\\fconfigurableT{"causeo"value\\
+# �"test timed out after 100ms"\\bwritableT"
+# enumerableT"\\fconfigurableT{{{"passedF{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   ��o"type"
+# test:start"datao"nestingI "name"ordinary default budget"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\b{�  �o"type"\\ttest:fail"datao"name"ordinary default budget"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msN��� �RY@"type"test"error\\
+# � �o"\\vconstructor"Error"
+# propertieso"nameo"value"Error"\\bwritableT"
+# enumerableF"\\fconfigurableT{"messageo"value"test timed out after 100ms"\\bwritableT"
+# enumerableF"\\fconfigurableT{"stacko"
+# enumerableF"\\fconfigurableT"value"4Error [ERR_TEST_FAILURE]: test timed out after 100ms{"codeo"value"ERR_TEST_FAILURE"\\bwritableT"
+# enumerableT"\\fconfigurableT{"\\vfailureTypeo"value"testTimeoutFailure"\\bwritableT"
+# enumerableT"\\fconfigurableT{"causeo"value\\
+# �"test timed out after 100ms"\\bwritableT"
+# enumerableT"\\fconfigurableT{{{{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   3�o"type"\\ttest:plan"datao"nestingI "countI{{�   O�o"type"test:diagnostic"datao"nestingI "message"tests 2"level"info{{�   P�o"type"test:diagnostic"datao"nestingI "message"\\bsuites 0"level"info{{�   N�o"type"test:diagnostic"datao"nestingI "message"pass 1"level"info{{�   N�o"type"test:diagnostic"datao"nestingI "message"fail 0"level"info{{�   S�o"type"test:diagnostic"datao"nestingI "message"\\vcancelled 1"level"info{{�   Q�o"type"test:diagnostic"datao"nestingI "message"\\tskipped 0"level"info{{�   N�o"type"test:diagnostic"datao"nestingI "message"todo 0"level"info{{�   ^�o"type"test:diagnostic"datao"nestingI "message"duration_ms 257.837292"level"info{{�   ��o"type"\\ftest:summary"datao"successF"countso"testsI"failedI "passedI"\\tcancelledI"skippedI "todoI "\\btopLevelI"suitesI {\\b"\\vduration_msN=�K�ep@"file_{{
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 288.968958
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 324.905917
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=parent-strip isolation=default
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: canary budget override
+# ok 1 - canary budget override
+#   ---
+#   duration_ms: 151.853625
+#   type: 'test'
+#   ...
+# \# Subtest: ordinary default budget
+# not ok 2 - ordinary default budget
+#   ---
+#   duration_ms: 101.363209
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:3:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..2
+# \# tests 2
+# \# suites 0
+# \# pass 1
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 291.9135
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 322.672666
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 361.696459
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=parent-strip isolation=process
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: canary budget override
+# ok 1 - canary budget override
+#   ---
+#   duration_ms: 151.832125
+#   type: 'test'
+#   ...
+# \# Subtest: ordinary default budget
+# not ok 2 - ordinary default budget
+#   ---
+#   duration_ms: 101.325917
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:3:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..2
+# \# tests 2
+# \# suites 0
+# \# pass 1
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 292.267125
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 323.202209
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 361.7105
+
+NODE=/opt/homebrew/bin/node clean_env=False mode=parent-strip isolation=none
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: canary budget override
+# ok 1 - canary budget override
+#   ---
+#   duration_ms: 151.590958
+#   type: 'test'
+#   ...
+# \# Subtest: ordinary default budget
+# not ok 2 - ordinary default budget
+#   ---
+#   duration_ms: 102.203459
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:3:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..2
+# \# tests 2
+# \# suites 0
+# \# pass 1
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 257.986375
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 287.371583
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 323.944125
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=direct isolation=default
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 151.691666
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 101.139459
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 290.244042
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=direct isolation=process
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 151.993041
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 102.497542
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 296.285958
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=direct isolation=none
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=1
+TAP version 13
+# Subtest: canary budget override
+ok 1 - canary budget override
+  ---
+  duration_ms: 152.067958
+  type: 'test'
+  ...
+# Subtest: ordinary default budget
+not ok 2 - ordinary default budget
+  ---
+  duration_ms: 102.078167
+  type: 'test'
+  location: '/private/tmp/f178-probe/child.mjs:3:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 100ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 260.310042
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=parent-inherit isolation=default
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=0
+# (node:90420) Warning: node:test run() is being called recursively within a test file. skipping running files.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 29.193125
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.358625
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=parent-inherit isolation=process
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=0
+# (node:90423) Warning: node:test run() is being called recursively within a test file. skipping running files.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 27.418333
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59.343083
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=parent-inherit isolation=none
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# �   ��o"type"\\ftest:enqueue"datao"nestingI "name"canary budget override"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�   ��o"type"\\ftest:dequeue"datao"nestingI "name"canary budget override"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�   ��o"type"\\ftest:enqueue"datao"nestingI "name"ordinary default budget"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�   ��o"type"\\rtest:complete"datao"name"canary budget override"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msN\#I���b@"type"test"passedT{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   ��o"type"
+# test:start"datao"nestingI "name"canary budget override"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\b{�   ��o"type"\\ttest:pass"datao"name"canary budget override"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msN\#I���b@"type"test{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   ��o"type"\\ftest:dequeue"datao"nestingI "name"ordinary default budget"type"test"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\t{�  �o"type"\\rtest:complete"datao"name"ordinary default budget"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msNA�vUY@"type"test"error\\
+# � �o"\\vconstructor"Error"
+# propertieso"nameo"value"Error"\\bwritableT"
+# enumerableF"\\fconfigurableT{"messageo"value"test timed out after 100ms"\\bwritableT"
+# enumerableF"\\fconfigurableT{"stacko"
+# enumerableF"\\fconfigurableT"value"4Error [ERR_TEST_FAILURE]: test timed out after 100ms{"codeo"value"ERR_TEST_FAILURE"\\bwritableT"
+# enumerableT"\\fconfigurableT{"\\vfailureTypeo"value"testTimeoutFailure"\\bwritableT"
+# enumerableT"\\fconfigurableT{"causeo"value\\
+# �"test timed out after 100ms"\\bwritableT"
+# enumerableT"\\fconfigurableT{{{"passedF{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   ��o"type"
+# test:start"datao"nestingI "name"ordinary default budget"testIdI"\\bparentIdI "tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{\\b{�  �o"type"\\ttest:fail"datao"name"ordinary default budget"nestingI "
+# testNumberI"testIdI"\\bparentIdI "detailso"\\vduration_msNA�vUY@"type"test"error\\
+# � �o"\\vconstructor"Error"
+# propertieso"nameo"value"Error"\\bwritableT"
+# enumerableF"\\fconfigurableT{"messageo"value"test timed out after 100ms"\\bwritableT"
+# enumerableF"\\fconfigurableT{"stacko"
+# enumerableF"\\fconfigurableT"value"4Error [ERR_TEST_FAILURE]: test timed out after 100ms{"codeo"value"ERR_TEST_FAILURE"\\bwritableT"
+# enumerableT"\\fconfigurableT{"\\vfailureTypeo"value"testTimeoutFailure"\\bwritableT"
+# enumerableT"\\fconfigurableT{"causeo"value\\
+# �"test timed out after 100ms"\\bwritableT"
+# enumerableT"\\fconfigurableT{{{{"tagsa @  "lineI"columnI"file"!/private/tmp/f178-probe/child.mjs{
+# {�   3�o"type"\\ttest:plan"datao"nestingI "countI{{�   O�o"type"test:diagnostic"datao"nestingI "message"tests 2"level"info{{�   P�o"type"test:diagnostic"datao"nestingI "message"\\bsuites 0"level"info{{�   N�o"type"test:diagnostic"datao"nestingI "message"pass 1"level"info{{�   N�o"type"test:diagnostic"datao"nestingI "message"fail 0"level"info{{�   S�o"type"test:diagnostic"datao"nestingI "message"\\vcancelled 1"level"info{{�   Q�o"type"test:diagnostic"datao"nestingI "message"\\tskipped 0"level"info{{�   N�o"type"test:diagnostic"datao"nestingI "message"todo 0"level"info{{�   ]�o"type"test:diagnostic"datao"nestingI "message"duration_ms 258.21175"level"info{{�   ��o"type"\\ftest:summary"datao"successF"countso"testsI"failedI "passedI"\\tcancelledI"skippedI "todoI "\\btopLevelI"suitesI {\\b"\\vduration_msN���Sc\#p@"file_{{
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 287.958375
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 326.780083
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=parent-strip isolation=default
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: canary budget override
+# ok 1 - canary budget override
+#   ---
+#   duration_ms: 151.080166
+#   type: 'test'
+#   ...
+# \# Subtest: ordinary default budget
+# not ok 2 - ordinary default budget
+#   ---
+#   duration_ms: 102.155459
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:3:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..2
+# \# tests 2
+# \# suites 0
+# \# pass 1
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 289.580375
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 317.929791
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 355.884625
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=parent-strip isolation=process
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=process", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: canary budget override
+# ok 1 - canary budget override
+#   ---
+#   duration_ms: 152.682208
+#   type: 'test'
+#   ...
+# \# Subtest: ordinary default budget
+# not ok 2 - ordinary default budget
+#   ---
+#   duration_ms: 101.175625
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:3:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..2
+# \# tests 2
+# \# suites 0
+# \# pass 1
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 290.359625
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 319.780916
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 357.764292
+
+NODE=/opt/homebrew/bin/node clean_env=True mode=parent-strip isolation=none
+COMMAND=["/opt/homebrew/bin/node", "--test", "--test-reporter=tap", "/private/tmp/f178-probe/parent.mjs"]
+CHILD_ARGS=["--test", "--test-reporter=tap", "--test-timeout=100", "--test-isolation=none", "/private/tmp/f178-probe/child.mjs"]
+EXIT=0
+TAP version 13
+# CONTEXT=child-v8
+# CHILD_EXIT=1
+# TAP version 13
+# \# Subtest: canary budget override
+# ok 1 - canary budget override
+#   ---
+#   duration_ms: 151.571542
+#   type: 'test'
+#   ...
+# \# Subtest: ordinary default budget
+# not ok 2 - ordinary default budget
+#   ---
+#   duration_ms: 101.143916
+#   type: 'test'
+#   location: '/private/tmp/f178-probe/child.mjs:3:1'
+#   failureType: 'testTimeoutFailure'
+#   error: 'test timed out after 100ms'
+#   code: 'ERR_TEST_FAILURE'
+#   ...
+# 1..2
+# \# tests 2
+# \# suites 0
+# \# pass 1
+# \# fail 0
+# \# cancelled 1
+# \# skipped 0
+# \# todo 0
+# \# duration_ms 257.260583
+# Subtest: parent
+ok 1 - parent
+  ---
+  duration_ms: 288.069167
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 325.794833

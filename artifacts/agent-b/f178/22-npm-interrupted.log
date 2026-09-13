@@ -1,0 +1,9 @@
+NODE=/opt/homebrew/opt/node@22/bin/node v22.23.2
+COMMAND=['/opt/homebrew/opt/node@22/bin/npm', 'run', 'd1:controls:test']
+
+> engramport@0.1.0 d1:controls:test
+> node --test tests/d1-oidc-classification.test.mjs
+
+TAP version 13
+# D1_VARIANT_DRIFT executed=125 loaded=131 synthetic_rewritten=72 failures=0
+# D1_DRIFT_NEGATIVE executed=125 failures=5 correspondent-load=detected port-watch-anchor=detected

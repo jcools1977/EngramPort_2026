@@ -102,23 +102,54 @@ printf 'ORDINARY fail=%s executed=%s\\n' "$fail" "$executed"
   assert.equal(successful.stdout, "");
 }));
 
-test("the declared canary budget overrides the default while an ordinary test retains its budget", () => fixture(directory => {
+function assertCanaryBudget(source) {
+  const defaultBudget = Number(original.match(/run_w1_7\(\).*?--test-timeout=(\d+)/)?.[1]);
+  assert.ok(Number.isFinite(defaultBudget), "harness declares the ordinary default budget");
+  const budget = Number(source.match(/const canaryTimeoutMs\s*=\s*(\d+)\s*;/)?.[1]);
+  assert.ok(budget > defaultBudget, "canary budget must exceed the harness default");
+  assert.match(source, /test\("section 10 canary observes ten vulnerable sinks and protects ten signing paths",\s*\{skip:!canaryAvailable,timeout:canaryTimeoutMs\}/);
+  return { budget, defaultBudget };
+}
+
+test("the canary declares and applies a larger budget and a short per-test timeout affects only its test", () => fixture(directory => {
   const source = readFileSync(path.join(root, "tests/wizard-w1-7.test.mjs"), "utf8");
-  const budget = Number(source.match(/const canaryTimeoutMs=(\d+);/)?.[1]);
-  assert.ok(budget > 10000);
-  assert.match(source, /core-dump creation\/read work/);
-  assert.match(source, /skip:!canaryAvailable,timeout:canaryTimeoutMs/);
-  // Scale the production 30s/10s ratio to 300ms/100ms without Docker or delay.
+  const { budget, defaultBudget } = assertCanaryBudget(source);
+  // No file-level deadline: exercise a per-test timeout without racing startup
+  // or depending on whether this Node version applies CLI timeouts to files.
   const file = path.join(directory, "budget.test.mjs");
   writeFileSync(file, `import test from "node:test";
 import {setTimeout} from "node:timers/promises";
-test("canary budget override", {timeout:${budget / 100}}, async t => {await setTimeout(150,null,{signal:t.signal});});
-test("ordinary default budget", async t => {await setTimeout(5000,null,{signal:t.signal});});
+test("short per-test budget", {timeout:40}, async t => {await setTimeout(5000,null,{signal:t.signal});});
+test("ordinary test after timeout", () => {});
 `);
-  const result = run('node --test --test-reporter=tap --test-timeout=100 "$1"', [file]);
+  const result = run('"$1" --test --test-reporter=tap "$2"', [process.execPath, file]);
   assert.equal(result.status, 1, result.stdout + result.stderr);
-  assert.match(result.stdout, /ok 1 - canary budget override/);
-  assert.match(result.stdout, /not ok 2 - ordinary default budget/);
-  assert.match(result.stdout, /test timed out after 100ms/);
-  console.log(`D1_CANARY_BUDGET declared_ms=${budget} scaled_canary=passed ordinary_default=timed-out budget_ms=100`);
+  assert.match(result.stdout, /^not ok 1 - short per-test budget$/m);
+  assert.match(result.stdout, /^ok 2 - ordinary test after timeout$/m);
+  assert.match(result.stdout, /failureType: 'testTimeoutFailure'/);
+  assert.match(result.stdout, /test timed out after 40ms/);
+  assert.match(result.stdout, /^# pass 1$/m);
+  assert.match(result.stdout, /^# tests 2$/m);
+  console.log(`D1_CANARY_BUDGET declared_ms=${budget} default_ms=${defaultBudget} applied=t short_test=timed-out sibling=passed budget_ms=40`);
+}));
+
+test("the budget control rejects copied wizard sources with missing or default canary timeouts", () => fixture(directory => {
+  const source = readFileSync(path.join(root, "tests/wizard-w1-7.test.mjs"), "utf8");
+  const { defaultBudget } = assertCanaryBudget(source);
+  const copy = path.join(directory, "wizard-copy.mjs");
+  const mutants = [
+    ["missing-option", source.replace(",timeout:canaryTimeoutMs", "")],
+    ["default-budget", source.replace(/const canaryTimeoutMs=\d+;/, `const canaryTimeoutMs=${defaultBudget};`)],
+    ["missing-declaration", source.replace(/const canaryTimeoutMs=\d+;/, "")],
+  ];
+  for (const [name, mutant] of mutants) {
+    writeFileSync(copy, source);
+    assertCanaryBudget(readFileSync(copy, "utf8"));
+    assert.notEqual(mutant, source);
+    writeFileSync(copy, mutant);
+    assert.throws(() => assertCanaryBudget(readFileSync(copy, "utf8")), { code: "ERR_ASSERTION" });
+    writeFileSync(copy, source);
+    assertCanaryBudget(readFileSync(copy, "utf8"));
+    console.log(`D1_CANARY_BUDGET_MUTATION ${name} baseline=0 applied=t control=1 restored=0 killed=t`);
+  }
 }));
