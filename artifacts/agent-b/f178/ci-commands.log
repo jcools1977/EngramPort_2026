@@ -1,0 +1,12 @@
+Source: GitHub connector fetch_workflow_job_logs repo_full_name=jcools1977/EngramPort_2026 job_id=103260079303 (run 34598579655).
+No d1:controls:test or D1_CANARY_BUDGET match in full job log. Selected command group headings and D1 summaries:
+2026-09-11T12:22:31.9033826Z ##[group]Run actions/checkout@v4
+2026-09-11T12:22:33.0709586Z ##[group]Run actions/setup-node@v4
+2026-09-11T12:22:34.8452788Z ##[group]Run npm ci --ignore-scripts
+2026-09-11T12:22:49.5193353Z ##[group]Run npm run proof
+2026-09-11T12:23:55.6575284Z ##[group]Run npm run session:test
+2026-09-11T12:23:57.7839843Z ##[group]Run npm run build --prefix packages/sdk
+2026-09-11T12:23:58.3632080Z ##[group]Run sudo sysctl -w kernel.core_pattern=core
+2026-09-11T12:23:58.3852577Z ##[group]Run npm run docker-gates:test && npm run docker:test
+2026-09-11T12:38:39.0334922Z D1 mutation harness: executed=156 not_exercised=0 negative_control=1 expected_total=157
+2026-09-11T12:38:39.0335840Z D1 mutation harness: all exercised controls discriminate

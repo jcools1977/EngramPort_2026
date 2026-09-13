@@ -1,0 +1,37 @@
+TAP version 13
+# ACTOR_REGISTRY_DRIFT_CHECK actors=3 scope=dirty-tree normalized=true disjoint=true
+# Subtest: actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint
+ok 1 - actor registry dirty-tree drift is detected and actor-owned prefixes are normalized and disjoint
+  ---
+  duration_ms: 26.043375
+  type: 'test'
+  ...
+# Subtest: registry drift check passes when a clean checkout committed materially wrong registry bytes
+ok 2 - registry drift check passes when a clean checkout committed materially wrong registry bytes
+  ---
+  duration_ms: 123.456542
+  type: 'test'
+  ...
+# Subtest: actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities
+ok 3 - actor prefix comparison resolves symlinks and case-folds Unicode-normalized identities
+  ---
+  duration_ms: 2.745667
+  type: 'test'
+  ...
+# F174_SURFACE attribute=accepted undeclared_root=refused
+# REPOSITORY_SURFACE_POLICY tracked=1626 actor_rule=true drift_rule=true shared_rule=true unaccounted=0
+# Subtest: tracked repository paths are covered only by explicit written surfaces
+ok 4 - tracked repository paths are covered only by explicit written surfaces
+  ---
+  duration_ms: 25.942458
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 243.352125

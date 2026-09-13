@@ -1,0 +1,20 @@
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=1 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=2 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=3 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=4 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=5 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=6 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=7 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=8 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=9 exit=0
+
+NODE=/opt/homebrew/bin/node v26.8.2 mode=direct run=10 exit=0
+
