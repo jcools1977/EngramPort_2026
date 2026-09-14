@@ -1,0 +1,89 @@
+name: EngramPort human replies
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: engram-reply-${{ github.event.comment.id }}
+  cancel-in-progress: false
+
+jobs:
+  reply:
+    if: github.event.issue.pull_request == null && github.event.comment.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.13.0'
+      - name: Install exact SDK version
+        working-directory: "."
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund --prefix . @engramport/sdk@0.6.0
+      - name: Bind comment and publish reply
+        working-directory: "."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          node --input-type=module <<'NODE'
+          // BEGIN REPLY LOGIC
+          import { readFileSync, existsSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          import { createClient } from '@engramport/sdk';
+          const run = (cmd, args) => execFileSync(process.env.ENGRAM_EXEC_SHIM ? process.execPath : cmd, process.env.ENGRAM_EXEC_SHIM ? [process.env.ENGRAM_EXEC_SHIM, cmd, ...args] : args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+          const gh = (...args) => run('gh', args);
+          const repo = process.env.GH_REPO;
+          if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo ?? '')) throw Error('Invalid repository');
+          const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+          const { issue, comment } = payload;
+          if (payload.action !== 'created' || issue?.pull_request || comment?.user?.type === 'Bot') process.exit(0);
+          const slug = issue?.title?.match(/^Your turn: ([a-z0-9][a-z0-9._-]{0,127})$/)?.[1];
+          if (!slug) process.exit(0);
+          if (!Number.isSafeInteger(issue.number) || issue.number < 1 || !Number.isSafeInteger(comment?.id) || comment.id < 1) throw Error('Invalid issue/comment id');
+          const refuse = reason => { gh('issue', 'comment', String(issue.number), '--repo', repo, '--body', `Reply refused for comment ${comment.id}: ${reason}`); process.exit(0); };
+          const actorPath = `actors/${slug}.yaml`;
+          if (!existsSync(actorPath)) refuse('unknown seat');
+          const actor = readFileSync(actorPath, 'utf8');
+          const logins = [...actor.matchAll(/^github:\s*([^\s]+)\s*$/gm)].map(m => m[1]);
+          const login = comment.user?.login;
+          if (!/^kind:\s*human\s*$/m.test(actor) || logins.length !== 1 || typeof login !== 'string' || logins[0].toLowerCase() !== login.toLowerCase()) refuse('commenter does not match the recorded human login');
+          try {
+            const refuse = reason => { throw new Error(reason); };
+            if (typeof comment.body !== 'string' || !comment.body.trim()) refuse('empty body');
+            const client = createClient({ actor: slug, cwd: process.cwd() });
+            const inbox = await client.inbox({ entries: true });
+            const named = [...(issue.body ?? '').matchAll(/`(events\/[a-z0-9._-]+\/[A-Za-z0-9._-]+\.md)`/g)].map(m => m[1]);
+            const replyLines = comment.body.split(/\r?\n/).filter(line => /^reply:/.test(line));
+            const nextLines = comment.body.split(/\r?\n/).filter(line => /^next:/.test(line));
+            if (replyLines.length > 1 || nextLines.length > 1) refuse('duplicate routing directives');
+            const replyId = replyLines[0]?.match(/^reply: ([0-9a-f-]{36})$/)?.[1];
+            const nextSlug = nextLines[0]?.match(/^next: ([a-z0-9][a-z0-9._-]{0,127})$/)?.[1];
+            if ((replyLines.length && !replyId) || (nextLines.length && !nextSlug)) refuse('malformed routing directive');
+            const candidates = inbox.filter(entry => named.includes(entry.relative) && (!replyId || entry.event_id === replyId));
+            if (candidates.length !== 1) refuse('name exactly one currently open issue turn with reply: EVENT_ID');
+            const parent = candidates[0];
+            const next = nextSlug ?? parent.from;
+            if (next === 'null' || !existsSync(`actors/${next}.yaml`)) refuse('next must name a registered actor');
+            const trailer = `GitHub authorship binding: ${repo}#${issue.number}; comment ${comment.id}; login ${login}.`;
+            const result = await client.append({ thread: parent.thread, type: 'reply', reply: parent.event_id, next, body: comment.body + '\n\n' + trailer });
+            if (!result.ok) refuse(`SDK rejected reply: ${(result.errors ?? []).join('; ')}`);
+            await client.inbox(); // Verify the appended log before publication.
+            run('git', ['add', '--', result.relative]);
+            run('git', ['-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-m', `coordination: reply to issue #${issue.number} comment ${comment.id}`]);
+            run('git', ['push', 'origin', 'HEAD:main']);
+            gh('issue', 'comment', String(issue.number), '--repo', repo, '--body', `Recorded comment ${comment.id} as ${result.relative}.`);
+          } catch (error) {
+            gh('issue', 'comment', String(issue.number), '--repo', repo, '--body', `Not recorded for comment ${comment.id}: ${error.message}. Comment again.`);
+            process.exitCode = 1;
+          }
+          // END REPLY LOGIC
+          NODE

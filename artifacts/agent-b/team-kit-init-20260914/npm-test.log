@@ -1,0 +1,4111 @@
+
+> engramport@0.1.0 test
+> npm run docker-gates:test && npm run d1:controls:test && npm run docker:test && npm run proof && npm run identity:test && npm run bctx:test && npm run turn:test && npm run completion:test && npm run withdrawal:test && npm run sdk:buildable && npm run blast:test && npm run scan:test && npm run scan:append:test && npm run counts:test && npm run onboarding:test && npm run ledger:test && npm run sdk:package:test && npm run sdk:test && npm run second-builder:test && npm run agent-c:test && npm run agent-c:spend-test && npm run d2:test && npm run w1-6:test && npm run report:test && npm run report:r2:test && npm run report:correspondent:test && npm run welcome:test && npm run setup:test && npm run watch:test && npm run session:test && npm run approval:test && npm run dry-run:test && npm run db:lock-test && npm run db:static-test && npm run dispatch:test && npm run build && node --test tests/rendered-html.test.mjs
+
+
+> engramport@0.1.0 docker-gates:test
+> node --test tests/docker-gates.test.mjs tests/oidc-runtime-gates.test.mjs
+
+TAP version 13
+# DB_SDK_PRECONDITION absent=one-line-refusal docker-calls=0 present=synthetic-compose-up removed-check=killed always-refuse=killed restored=passed
+# SDK_WORKFLOW_ORDER baseline=passed missing-build=killed late-build=killed restored=passed
+# DOCKER_SHIM_CONTRACT baseline=passed added-probe=killed changed-list=killed restored=passed
+# DOCKER_GATE_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+# DOCKER_SHIM_CONTINUATION core_pattern=answered inventory=execution-reached missing-answer=killed restored=passed scope=synthetic
+# Subtest: database runner refuses an absent SDK before Docker and continues with a present bundle
+ok 1 - database runner refuses an absent SDK before Docker and continues with a present bundle
+  ---
+  duration_ms: 457.04975
+  type: 'test'
+  ...
+# Subtest: Actions builds the SDK before requiring Docker gates
+ok 2 - Actions builds the SDK before requiring Docker gates
+  ---
+  duration_ms: 0.254416
+  type: 'test'
+  ...
+# Subtest: canary shim requires review when the fixture adds an unanswered precondition
+ok 3 - canary shim requires review when the fixture adds an unanswered precondition
+  ---
+  duration_ms: 0.929833
+  type: 'test'
+  ...
+# Subtest: every absent Docker gate emits exactly one named reason
+ok 4 - every absent Docker gate emits exactly one named reason
+  ---
+  duration_ms: 0.229916
+  type: 'test'
+  ...
+# Subtest: CI and required Docker refuse missing endpoints without successful skips
+ok 5 - CI and required Docker refuse missing endpoints without successful skips
+  ---
+  duration_ms: 0.436167
+  type: 'test'
+  ...
+# Subtest: reachable Docker continues without skip output even in required mode
+ok 6 - reachable Docker continues without skip output even in required mode
+  ---
+  duration_ms: 0.072333
+  type: 'test'
+  ...
+# Subtest: silent-skip mutation is killed by the same output control
+ok 7 - silent-skip mutation is killed by the same output control
+  ---
+  duration_ms: 1.764541
+  type: 'test'
+  ...
+# Subtest: Docker-free D1 controls run in the npm test chain before docker:test
+ok 8 - Docker-free D1 controls run in the npm test chain before docker:test
+  ---
+  duration_ms: 0.254541
+  type: 'test'
+  ...
+# Subtest: real entry points skip loudly locally, refuse in CI, and continue when Docker responds
+ok 9 - real entry points skip loudly locally, refuse in CI, and continue when Docker responds
+  ---
+  duration_ms: 1435.377375
+  type: 'test'
+  ...
+# OIDC_RUNTIME_MUTATIONS baseline=0 silent-skip=killed restored=0 executed=1
+# Subtest: known-bad OIDC runtime emits exactly one runtime and reason line
+ok 10 - known-bad OIDC runtime emits exactly one runtime and reason line
+  ---
+  duration_ms: 0.896542
+  type: 'test'
+  ...
+# Subtest: other runtimes continue without a skip
+ok 11 - other runtimes continue without a skip
+  ---
+  duration_ms: 0.048791
+  type: 'test'
+  ...
+# Subtest: silent OIDC skip mutation is killed by the output control
+ok 12 - silent OIDC skip mutation is killed by the output control
+  ---
+  duration_ms: 1.944167
+  type: 'test'
+  ...
+# Subtest: durable entry point exits zero with one loud skip on Node 26.5.0
+ok 13 - durable entry point exits zero with one loud skip on Node 26.5.0
+  ---
+  duration_ms: 0.171833
+  type: 'test'
+  ...
+# Subtest: Node 22 CI explicitly invokes session tests including the durable entry point
+ok 14 - Node 22 CI explicitly invokes session tests including the durable entry point
+  ---
+  duration_ms: 0.332916
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1965.374958
+
+> engramport@0.1.0 d1:controls:test
+> node --test tests/d1-oidc-classification.test.mjs
+
+TAP version 13
+# D1_VARIANT_DRIFT executed=125 loaded=131 synthetic_rewritten=72 failures=0
+# D1_DRIFT_NEGATIVE executed=125 failures=5 correspondent-load=detected port-watch-anchor=detected
+# D1_TREE_NEGATIVE executed=125 failures=116 whole-tree-rewrite=detected
+# D3_CANARY_DETECTOR baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_OPERATIONAL_OBSERVER baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_PROTECTED_OPERATION baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D3_CANARY_REPORT_INCIDENT baseline-timeout test="synthetic canary baseline exceeds its budget" budget_ms=40 exit=1
+# D1 mutation harness: executed=5 not_exercised=0 negative_control=0 expected_total=5
+# D1_SYNTHETIC_TIMEOUT live_canary=blocked reason=no-Docker; only synthetic baselines ran
+# D3_CANARY_OPERATIONAL_OBSERVER baseline=1 applied=t after=1 forbidden=f restored=1
+# D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+# D1_TIMEOUT_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET declared_ms=30000 default_ms=10000 applied=t short_test=timed-out sibling=passed budget_ms=40
+# D1_CANARY_BUDGET_MUTATION missing-option baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION default-budget baseline=0 applied=t control=1 restored=0 killed=t
+# D1_CANARY_BUDGET_MUTATION missing-declaration baseline=0 applied=t control=1 restored=0 killed=t
+# D1_REV3_REAL_FOUR
+# CLI_ARGUMENT_REFUSAL baseline=0 applied=t after=1 forbidden=t restored=0
+# EVENT_EXTENSION_CASE baseline=0 applied=t after=1 verifier_forbidden=t cli_forbidden=t restored=0
+# SITE_UNPUBLISHED_INSTALL_CLAIM baseline=0 applied=t after=1 forbidden=t restored=0
+# PORT_WATCH_SHARED_ELIGIBILITY baseline=0 applied=t after=1 forbidden=t restored=0
+# D1 mutation harness: executed=4 not_exercised=0 negative_control=0 expected_total=4
+# D1 mutation harness: all exercised controls discriminate
+# D1_REV3_ABSENT_ANCHOR baseline=0 applied=t control=1 restored=0 killed=t
+# CLI_ARGUMENT_REFUSAL applied=f mutation_error=$'[stdin]:4\\nif(!text.includes(anchor))throw new Error(`anchor absent: ${anchor}`);\\n                          ^\\n\\nError: anchor absent: D1_NONEXISTENT_ANCHOR_REV3\\n    at [stdin]:4:33\\n    at runScriptInThisContext (node:internal/vm:209:10)\\n    at node:internal/process/execution:446:12\\n    at [stdin]-wrapper:6:24\\n    at runScriptInContext (node:internal/process/execution:444:60)\\n    at evalFunction (node:internal/process/execution:279:30)\\n    at asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:11)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\\n\\nNode.js v22.23.2' helper=make_cli_variant exit=1
+# D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+# D1_REV3_PRINTF_BYPASS baseline=0 applied=t control=1 restored=0 killed=t
+# EVENT_EXTENSION_CASE baseline=0 applied=t after=1 verifier_forbidden=t cli_forbidden=t restored=0
+# D1 mutation harness: executed=0 not_exercised=0 negative_control=0 expected_total=1
+# D1 missing outcome: EVENT_EXTENSION_CASE
+# D1 mutation harness failed
+# D1_BOUND_INVENTORY source=artifacts/agent-a/d1-live-run-2-2026-09-09.md sha256=eb5ada7fa3ccd595064bf557aaefd367b15248414aebb7d97f45ec0e808b7337 names=156 exit=1
+# D1 mutation harness: executed=147 not_exercised=7 negative_control=1 expected_total=157
+# D1 unknown outcome: W1_1_MANAGER_RETENTION
+# D1 missing outcome: PORT_WATCH_SHARED_ELIGIBILITY
+# D1 missing outcome: SITE_UNPUBLISHED_INSTALL_CLAIM
+# D1 mutation harness failed
+# D1_BOUND_LIMIT inventory-only entries do not prove mutation success; no live db:test execution occurred
+# D1_DERIVED_ACCOUNTING baseline_total=157 extended_total=159 baseline=0 extended=0; inventory replay only
+# D1_ACCOUNTING_MUTATION drop-one-counter baseline=0 applied=t control=1 restored=0 killed=t
+# D1 mutation harness: executed=155 not_exercised=0 negative_control=1 expected_total=157
+# D1_ACCOUNTING_MUTATION drop-one-outcome baseline=0 applied=t control=1 restored=0 killed=t
+# D1 mutation harness: executed=155 not_exercised=0 negative_control=1 expected_total=157
+# D1_ACCOUNTING_MUTATION drop-noop-counter baseline=0 applied=t control=1 restored=0 killed=t
+# D1 mutation harness: executed=156 not_exercised=0 negative_control=0 expected_total=157
+# D1_ACCOUNTING_MUTATIONS executed=3 killed=3 survived=0
+# D1_ACTUAL_BRANCHES_FIXED
+# NOOP baseline=0 applied=f after=0 restored=0
+# NOOP_STATE executed=0 negative_control=1
+# D4_M8_ACTOR_CLASS baseline=1 applied=t after=0 forbidden=t restored=0
+# D4_STATE executed=1 negative_control=1 fail=0
+# D1_ACTUAL_BRANCHES_PRIOR
+# NOOP_STATE executed=0
+# D4_M8_ACTOR_CLASS baseline=1 applied=t after=0 forbidden=t restored=0
+# D4_STATE executed=1 fail=0
+# D1_AGENT_C_REWRITES fourth-import=rewritten pre-fix-bounded-context=unrewritten baseline=0 applied=t control=1 restored=0 killed=t
+# AGENT_C_CREDENTIAL_REFERENCE mutant-load-failed baseline=0 applied=t after=1 error={"code":"ERR_MODULE_NOT_FOUND","message":"Cannot find module '/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-agent-c-veNfnx/intentionally-missing-module.mjs' imported from /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/d1-agent-c-veNfnx/agent-c-credential-reference.mjs"}
+# D1 mutation harness: executed=1 not_exercised=0 negative_control=0 expected_total=1
+# D1_AGENT_C_LOAD_CLASSIFICATION baseline=0 applied=t control=1 restored=0 killed=t
+# AGENT_C_CREDENTIAL_REFERENCE not ok 1 - credential-reference
+# AGENT_C_CREDENTIAL_SHAPE not ok 2 - credential-shape
+# AGENT_C_CREDENTIAL_CONTEXT not ok 3 - credential-context
+# AGENT_C_WRITE_PREFIX not ok 11 - write-prefix
+# AGENT_C_TURN_ENFORCEMENT not ok 12 - turn-enforcement
+# AGENT_C_REPLY_TARGET not ok 13 - reply-target
+# AGENT_C_RESULT_REVIEW not ok 14 - result-review
+# AGENT_C_POLLER_SILENCE not ok 15 - inbox-poller
+# AGENT_C_CREDENTIAL_EGRESS not ok 16 - credential-egress
+# AGENT_C_PROVIDER_DIAGNOSIS not ok 19 - provider-diagnosis
+# AGENT_C_PROVIDER_ERROR_EGRESS not ok 20 - provider-error-egress
+# AGENT_C_SCHEDULED_SILENCE not ok 21 - scheduled-poller-silence
+# AGENT_C_CREDENTIAL_FAILURE_REPORT not ok 22 - credential-unavailable-reporting
+# AGENT_C_CREDENTIAL_REFERENCE baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_CREDENTIAL_SHAPE baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_CREDENTIAL_CONTEXT baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_WRITE_PREFIX baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_TURN_ENFORCEMENT baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_REPLY_TARGET baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_RESULT_REVIEW baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_POLLER_SILENCE baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_CREDENTIAL_EGRESS baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_PROVIDER_DIAGNOSIS baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_PROVIDER_ERROR_EGRESS baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_SCHEDULED_SILENCE baseline=0 applied=t after=1 forbidden=t restored=0
+# AGENT_C_CREDENTIAL_FAILURE_REPORT baseline=0 applied=t after=1 forbidden=t restored=0
+# D1 mutation harness: executed=13 not_exercised=0 negative_control=0 expected_total=13
+# D1 mutation harness: all exercised controls discriminate
+# W1_1_OIDC_DURABLE_ROUTE not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME route not-exercised
+# W1_1_OIDC_DURABLE_SAME-NAME not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME same-name not-exercised
+# W1_1_OIDC_DURABLE_RESTART not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME restart not-exercised
+# W1_1_OIDC_DURABLE_ATOMIC not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME atomic not-exercised
+# W1_1_OIDC_DURABLE_EXPIRY not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME expiry not-exercised
+# W1_1_OIDC_DURABLE_CLEANUP not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME cleanup not-exercised
+# W1_1_OIDC_DURABLE_REDACTION not-exercised runtime=v26.5.0 reason=OIDC_RUNTIME_VERSION_REFUSED: synthetic Miniflare startup refusal
+# OUTCOME redaction not-exercised
+# D1 mutation harness: executed=0 not_exercised=7 negative_control=0 expected_total=7
+# D1 mutation harness: all exercised controls discriminate
+# STATE executed=0 not_exercised=7 fail=0
+# W1_1_OIDC_DURABLE_ROUTE baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME route killed
+# W1_1_OIDC_DURABLE_SAME-NAME baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME same-name killed
+# W1_1_OIDC_DURABLE_RESTART baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME restart killed
+# W1_1_OIDC_DURABLE_ATOMIC baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME atomic killed
+# W1_1_OIDC_DURABLE_EXPIRY baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME expiry killed
+# W1_1_OIDC_DURABLE_CLEANUP baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME cleanup killed
+# W1_1_OIDC_DURABLE_REDACTION baseline=0 applied=t after=1 forbidden=t restored=0
+# OUTCOME redaction killed
+# D1 mutation harness: executed=7 not_exercised=0 negative_control=0 expected_total=7
+# D1 mutation harness: all exercised controls discriminate
+# STATE executed=7 not_exercised=0 fail=0
+# D1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-killed baseline=0 applied=t control=1 restored=0 killed=t
+# D1_OIDC_CLASSIFICATION_MUTATION skip-counted-as-executed baseline=0 applied=t control=1 restored=0 killed=t
+# D1_OIDC_CLASSIFICATION_MUTATION silent-skip baseline=0 applied=t control=1 restored=0 killed=t
+# D1_OIDC_CLASSIFICATION_MUTATION skip-sets-failure baseline=0 applied=t control=1 restored=0 killed=t
+# D1_OIDC_CLASSIFICATION_MUTATION executed-only-total baseline=0 applied=t control=1 restored=0 killed=t
+# D1_OIDC_CLASSIFICATION_MUTATIONS executed=5 killed=5
+# Subtest: D1 every source variant applies, loads, and preserves or rewrites imports by tree shape
+ok 1 - D1 every source variant applies, loads, and preserves or rewrites imports by tree shape
+  ---
+  duration_ms: 16355.889
+  type: 'test'
+  ...
+# Subtest: D1 drift control rejects a broken correspondent import and a missing Port Watch anchor
+ok 2 - D1 drift control rejects a broken correspondent import and a missing Port Watch anchor
+  ---
+  duration_ms: 15475.522
+  type: 'test'
+  ...
+# Subtest: D1 drift control rejects import rewriting in every whole-tree builder
+ok 3 - D1 drift control rejects import rewriting in every whole-tree builder
+  ---
+  duration_ms: 15161.955334
+  type: 'test'
+  ...
+# Subtest: all five canary branches count real synthetic baseline timeouts and fail before mutation
+ok 4 - all five canary branches count real synthetic baseline timeouts and fail before mutation
+  ---
+  duration_ms: 1027.955083
+  type: 'test'
+  ...
+# Subtest: the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration
+ok 5 - the timeout control kills reporting a timed-out baseline as baseline=1 and passes after restoration
+  ---
+  duration_ms: 1005.589083
+  type: 'test'
+  ...
+# Subtest: ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout
+ok 6 - ordinary failure and successful output mentioning a timeout are not classified as baseline-timeout
+  ---
+  duration_ms: 61.09475
+  type: 'test'
+  ...
+# Subtest: the canary declares and applies a larger budget and a short per-test timeout affects only its test
+ok 7 - the canary declares and applies a larger budget and a short per-test timeout affects only its test
+  ---
+  duration_ms: 149.368083
+  type: 'test'
+  ...
+# Subtest: the budget control rejects copied wizard sources with missing or default canary timeouts
+ok 8 - the budget control rejects copied wizard sources with missing or default canary timeouts
+  ---
+  duration_ms: 2.337083
+  type: 'test'
+  ...
+# Subtest: D1 real mutation paths kill all four and restore their actual baselines
+ok 9 - D1 real mutation paths kill all four and restore their actual baselines
+  ---
+  duration_ms: 10804.85825
+  type: 'test'
+  ...
+# Subtest: D1 nonexistent anchor is a named, counted failing outcome through the real helper
+ok 10 - D1 nonexistent anchor is a named, counted failing outcome through the real helper
+  ---
+  duration_ms: 6295.004375
+  type: 'test'
+  ...
+# Subtest: D1 control kills an outcome printf bypass in the actual extension branch
+ok 11 - D1 control kills an outcome printf bypass in the actual extension branch
+  ---
+  duration_ms: 13339.249709
+  type: 'test'
+  ...
+# Subtest: D1 failed helper names follow the expanded definition names
+ok 12 - D1 failed helper names follow the expanded definition names
+  ---
+  duration_ms: 8.572041
+  type: 'test'
+  ...
+# Subtest: D1 accounting derives its inventory and refuses the bound live inventory mismatch
+ok 13 - D1 accounting derives its inventory and refuses the bound live inventory mismatch
+  ---
+  duration_ms: 21.99425
+  type: 'test'
+  ...
+# Subtest: D1 accounting follows added definitions and property iterations without a literal total
+ok 14 - D1 accounting follows added definitions and property iterations without a literal total
+  ---
+  duration_ms: 49.736584
+  type: 'test'
+  ...
+# Subtest: D1 accounting kills skipped counters, omitted output accounting, NOOP omission, and duplicate masking
+ok 15 - D1 accounting kills skipped counters, omitted output accounting, NOOP omission, and duplicate masking
+  ---
+  duration_ms: 228.911
+  type: 'test'
+  ...
+# Subtest: D1 prior NOOP and D4 branches demonstrate one omitted count, not two
+ok 16 - D1 prior NOOP and D4 branches demonstrate one omitted count, not two
+  ---
+  duration_ms: 36.652791
+  type: 'test'
+  ...
+# Subtest: agent-c builder derives adapter rewrites including a synthetic fourth import
+ok 17 - agent-c builder derives adapter rewrites including a synthetic fourth import
+  ---
+  duration_ms: 164.163166
+  type: 'test'
+  ...
+# Subtest: agent-c missing module is named, counted, and fails the actual harness branch
+ok 18 - agent-c missing module is named, counted, and fails the actual harness branch
+  ---
+  duration_ms: 1417.950875
+  type: 'test'
+  ...
+# Subtest: all declared agent-c mutants apply and produce per-case failures through the harness
+ok 19 - all declared agent-c mutants apply and produce per-case failures through the harness
+  ---
+  duration_ms: 19149.37375
+  type: 'test'
+  ...
+# Subtest: selected skipped baselines are loud, separately counted, and do not fail the harness
+ok 20 - selected skipped baselines are loud, separately counted, and do not fail the harness
+  ---
+  duration_ms: 40.73275
+  type: 'test'
+  ...
+# Subtest: a running baseline retains all original kill requirements
+ok 21 - a running baseline retains all original kill requirements
+  ---
+  duration_ms: 209.722709
+  type: 'test'
+  ...
+# Subtest: skip classification preserves prior failures and refuses missing accounting
+ok 22 - skip classification preserves prior failures and refuses missing accounting
+  ---
+  duration_ms: 89.264292
+  type: 'test'
+  ...
+# Subtest: skip parsing uses the selected test's actual TAP reason, not unrelated skips
+ok 23 - skip parsing uses the selected test's actual TAP reason, not unrelated skips
+  ---
+  duration_ms: 119.464375
+  type: 'test'
+  ...
+# Subtest: real durable output crosses into the classifier and kills pre-fix and marker-drift readers
+ok 24 - real durable output crosses into the classifier and kills pre-fix and marker-drift readers # SKIP crossed runtime control requires actual Node 26.5.0
+  ---
+  duration_ms: 0.036958
+  type: 'test'
+  ...
+# Subtest: the control kills false execution, false kill, silent skip, and executed-only total mutations
+ok 25 - the control kills false execution, false kill, silent skip, and executed-only total mutations
+  ---
+  duration_ms: 589.607334
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 101874.97625
+
+> engramport@0.1.0 docker:test
+> npm run w1-7:test && npm run db:test && npm run kms:test
+
+
+> engramport@0.1.0 w1-7:test
+> node --test tests/wizard-w1-7.test.mjs
+
+TAP version 13
+# DOCKER_GATE_SKIP gate=w1-7:canary reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+# W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="|/usr/share/apport/apport %p %s %c %P"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+# W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="/var/lib/cores/core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+# W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core.%p"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+# W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="other-core"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+# W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern=""; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+# W1_7_CANARY_CORE_PATTERN: host kernel.core_pattern="core\\nsecond-line"; canary requires plain file pattern "core" in /dump (set kernel.core_pattern=core on the Docker host)
+# W1_7_CANARY_CORE_PATTERN synthetic=core precondition=passed continuation=reached scope=synthetic
+# Subtest: canary core pattern rejects incompatible synthetic host patterns before fixture work
+ok 1 - canary core pattern rejects incompatible synthetic host patterns before fixture work
+  ---
+  duration_ms: 1.764083
+  type: 'test'
+  ...
+# Subtest: canary core pattern accepts the synthetic plain core file and proceeds
+ok 2 - canary core pattern accepts the synthetic plain core file and proceeds
+  ---
+  duration_ms: 0.0755
+  type: 'test'
+  ...
+# Subtest: section 10 canary observes ten vulnerable sinks and protects ten signing paths
+ok 3 - section 10 canary observes ten vulnerable sinks and protects ten signing paths # SKIP
+  ---
+  duration_ms: 0.213083
+  type: 'test'
+  ...
+# Subtest: Vault boundary validates response, path, absence, token confinement
+ok 4 - Vault boundary validates response, path, absence, token confinement
+  ---
+  duration_ms: 0.425333
+  type: 'test'
+  ...
+# Subtest: retention clock starts
+ok 5 - retention clock starts
+  ---
+  duration_ms: 0.0965
+  type: 'test'
+  ...
+# Subtest: Vault token detector coverage and clean near matches
+ok 6 - Vault token detector coverage and clean near matches
+  ---
+  duration_ms: 1.352625
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 582.585792
+
+> engramport@0.1.0 db:test
+> bash scripts/run-db-tests
+
+DOCKER_GATE_SKIP gate=db:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 kms:test
+> bash scripts/run-kms-tests
+
+DOCKER_GATE_SKIP gate=kms:test reason=Docker endpoint unavailable: permission denied while trying to connect to the docker API at unix:///Users/an2b/.docker/run/docker.sock
+
+> engramport@0.1.0 proof
+> npm run proof:verify && npm run proof:test
+
+
+> engramport@0.1.0 proof:verify
+> node scripts/verify-log
+
+✓ verified 634 events across 139 thread(s) and 3 actors
+
+> engramport@0.1.0 proof:test
+> node --test tests/git-v0.test.mjs
+
+TAP version 13
+# Subtest: valid registered-actor relay verifies
+ok 1 - valid registered-actor relay verifies
+  ---
+  duration_ms: 125.380958
+  type: 'test'
+  ...
+# Subtest: actor record filename is bound to its declared slug
+ok 2 - actor record filename is bound to its declared slug
+  ---
+  duration_ms: 250.637125
+  type: 'test'
+  ...
+# Subtest: verification refuses unregistered Markdown event files while ignoring empty directories
+ok 3 - verification refuses unregistered Markdown event files while ignoring empty directories
+  ---
+  duration_ms: 683.239375
+  type: 'test'
+  ...
+# Subtest: verification aligns recursive Markdown discovery with validation and ignores non-events
+ok 4 - verification aligns recursive Markdown discovery with validation and ignores non-events
+  ---
+  duration_ms: 576.784375
+  type: 'test'
+  ...
+# Subtest: uppercase Markdown forgery is accounted for and fails by path
+ok 5 - uppercase Markdown forgery is accounted for and fails by path
+  ---
+  duration_ms: 397.498417
+  type: 'test'
+  ...
+# Subtest: event extension policy is shared by inbox while normal append stays lowercase
+ok 6 - event extension policy is shared by inbox while normal append stays lowercase
+  ---
+  duration_ms: 822.943417
+  type: 'test'
+  ...
+# events/agent-b/20260914T131331Z_01a0a00d-247a-7db3-b4e3-cac123fee567.md
+# Subtest: append with an empty artifacts flag preserves artifact-free append behavior
+ok 7 - append with an empty artifacts flag preserves artifact-free append behavior
+  ---
+  duration_ms: 727.85725
+  type: 'test'
+  ...
+# events/agent-b/20260914T131331Z_01a0a00d-274c-7786-97df-0a0152d2bcd2.md
+# events/agent-b/20260914T131332Z_01a0a00d-2925-74f2-9e68-a5407e5eca9b.md
+# Subtest: CLI terminal append normalizes --next null before hashing and preserves next validation
+ok 8 - CLI terminal append normalizes --next null before hashing and preserves next validation
+  ---
+  duration_ms: 1491.268334
+  type: 'test'
+  ...
+# events/agent-b/20260914T131333Z_01a0a00d-2d21-7ee9-a185-62205e2021bb.md
+# Subtest: append refuses an unrecognized flag before writing and preserves known-good behavior
+ok 9 - append refuses an unrecognized flag before writing and preserves known-good behavior
+  ---
+  duration_ms: 616.990333
+  type: 'test'
+  ...
+# events/agent-b/20260914T131333Z_01a0a00d-2f8e-7c6c-bd97-4bddf63e17ce.md
+# Subtest: append refuses a second thread root without writing an event
+ok 10 - append refuses a second thread root without writing an event
+  ---
+  duration_ms: 887.104667
+  type: 'test'
+  ...
+# Subtest: exported append and inbox core preserve the event wire surface
+ok 11 - exported append and inbox core preserve the event wire surface
+  ---
+  duration_ms: 730.233375
+  type: 'test'
+  ...
+# Subtest: CLI re-exports the same event-core binding the SDK must consume
+ok 12 - CLI re-exports the same event-core binding the SDK must consume
+  ---
+  duration_ms: 0.089959
+  type: 'test'
+  ...
+# Subtest: version-1 retry returns the existing event and preserves event count
+ok 13 - version-1 retry returns the existing event and preserves event count
+  ---
+  duration_ms: 743.327792
+  type: 'test'
+  ...
+# Subtest: version-1 retry identity collision raises a distinct error without writing
+ok 14 - version-1 retry identity collision raises a distinct error without writing
+  ---
+  duration_ms: 744.478542
+  type: 'test'
+  ...
+# Subtest: version-1 completion requires exact criterion evidence coverage
+ok 15 - version-1 completion requires exact criterion evidence coverage
+  ---
+  duration_ms: 1209.400709
+  type: 'test'
+  ...
+# Subtest: live writer refuses version-0 append after cutover while historical v0 verifies
+ok 16 - live writer refuses version-0 append after cutover while historical v0 verifies
+  ---
+  duration_ms: 355.251208
+  type: 'test'
+  ...
+# Subtest: listInbox and Port Watch consume the same answered-work resolver
+ok 17 - listInbox and Port Watch consume the same answered-work resolver
+  ---
+  duration_ms: 881.653583
+  type: 'test'
+  ...
+# Subtest: fresh copies reproduce the identical derived work-delivery set
+ok 18 - fresh copies reproduce the identical derived work-delivery set
+  ---
+  duration_ms: 744.425292
+  type: 'test'
+  ...
+# Subtest: pure work resolver excludes an answered event without project sequence fields
+ok 19 - pure work resolver excludes an answered event without project sequence fields
+  ---
+  duration_ms: 0.126125
+  type: 'test'
+  ...
+# Subtest: normal CLI execution cannot activate the harness core override
+ok 20 - normal CLI execution cannot activate the harness core override
+  ---
+  duration_ms: 421.253167
+  type: 'test'
+  ...
+# Subtest: CLI append and inbox delegate to the exported core
+ok 21 - CLI append and inbox delegate to the exported core
+  ---
+  duration_ms: 760.414417
+  type: 'test'
+  ...
+# Subtest: modified content is rejected
+ok 22 - modified content is rejected
+  ---
+  duration_ms: 355.394834
+  type: 'test'
+  ...
+# Subtest: unknown schema fields are rejected
+ok 23 - unknown schema fields are rejected
+  ---
+  duration_ms: 354.90075
+  type: 'test'
+  ...
+# Subtest: actor directory ownership is enforced
+ok 24 - actor directory ownership is enforced
+  ---
+  duration_ms: 359.668208
+  type: 'test'
+  ...
+# Subtest: unknown reply targets are rejected
+ok 25 - unknown reply targets are rejected
+  ---
+  duration_ms: 352.022458
+  type: 'test'
+  ...
+# Subtest: strict relay actor transitions are enforced
+ok 26 - strict relay actor transitions are enforced
+  ---
+  duration_ms: 359.69825
+  type: 'test'
+  ...
+# Subtest: reply cycles are rejected
+ok 27 - reply cycles are rejected
+  ---
+  duration_ms: 359.521792
+  type: 'test'
+  ...
+# Subtest: missing artifacts are rejected
+ok 28 - missing artifacts are rejected
+  ---
+  duration_ms: 353.072417
+  type: 'test'
+  ...
+# Subtest: artifact modification is rejected
+ok 29 - artifact modification is rejected
+  ---
+  duration_ms: 372.728083
+  type: 'test'
+  ...
+# Subtest: artifact references must remain in author prefix
+ok 30 - artifact references must remain in author prefix
+  ---
+  duration_ms: 352.19
+  type: 'test'
+  ...
+# Subtest: filename identity is enforced
+ok 31 - filename identity is enforced
+  ---
+  duration_ms: 350.394167
+  type: 'test'
+  ...
+# Subtest: free_form permits one actor to publish sequential events
+ok 32 - free_form permits one actor to publish sequential events
+  ---
+  duration_ms: 350.134625
+  type: 'test'
+  ...
+# Subtest: free_form permits sibling replies
+ok 33 - free_form permits sibling replies
+  ---
+  duration_ms: 355.825709
+  type: 'test'
+  ...
+# Subtest: coordinator_led permits coordinator followed by two worker replies
+ok 34 - coordinator_led permits coordinator followed by two worker replies
+  ---
+  duration_ms: 347.731042
+  type: 'test'
+  ...
+# Subtest: strict_relay refuses an actor replying to itself and names the mode
+ok 35 - strict_relay refuses an actor replying to itself and names the mode
+  ---
+  duration_ms: 356.80825
+  type: 'test'
+  ...
+# Subtest: strict_relay refuses a second reply and names the mode
+ok 36 - strict_relay refuses a second reply and names the mode
+  ---
+  duration_ms: 359.717541
+  type: 'test'
+  ...
+# Subtest: free_form refuses an unknown parent and names the mode
+ok 37 - free_form refuses an unknown parent and names the mode
+  ---
+  duration_ms: 362.478291
+  type: 'test'
+  ...
+# Subtest: free_form refuses a cycle
+ok 38 - free_form refuses a cycle
+  ---
+  duration_ms: 351.409958
+  type: 'test'
+  ...
+# Subtest: free_form refuses a second root with a precise mode error
+ok 39 - free_form refuses a second root with a precise mode error
+  ---
+  duration_ms: 363.932458
+  type: 'test'
+  ...
+# Subtest: coordinator_led refuses a worker root
+ok 40 - coordinator_led refuses a worker root
+  ---
+  duration_ms: 352.742583
+  type: 'test'
+  ...
+# Subtest: coordinator_led refuses a worker replying to a worker
+ok 41 - coordinator_led refuses a worker replying to a worker
+  ---
+  duration_ms: 354.489375
+  type: 'test'
+  ...
+# Subtest: unknown thread modes fail closed
+ok 42 - unknown thread modes fail closed
+  ---
+  duration_ms: 366.080167
+  type: 'test'
+  ...
+# Subtest: malformed thread mode declarations fail closed
+ok 43 - malformed thread mode declarations fail closed
+  ---
+  duration_ms: 354.404167
+  type: 'test'
+  ...
+# Subtest: a mode may be declared while a thread is empty
+ok 44 - a mode may be declared while a thread is empty
+  ---
+  duration_ms: 352.124834
+  type: 'test'
+  ...
+# Subtest: changing a declared mode after the first event violates its binding
+ok 45 - changing a declared mode after the first event violates its binding
+  ---
+  duration_ms: 348.302667
+  type: 'test'
+  ...
+# Subtest: a per-thread mode declaration cannot be added after the first event
+ok 46 - a per-thread mode declaration cannot be added after the first event
+  ---
+  duration_ms: 355.565958
+  type: 'test'
+  ...
+# Subtest: changing mode cannot retroactively legitimize an invalid strict_relay branch
+ok 47 - changing mode cannot retroactively legitimize an invalid strict_relay branch
+  ---
+  duration_ms: 350.380167
+  type: 'test'
+  ...
+# Subtest: coordinator_led requires a coordinator
+ok 48 - coordinator_led requires a coordinator
+  ---
+  duration_ms: 346.627292
+  type: 'test'
+  ...
+# Subtest: coordinator_led refuses an unknown coordinator
+ok 49 - coordinator_led refuses an unknown coordinator
+  ---
+  duration_ms: 353.755958
+  type: 'test'
+  ...
+# Subtest: free_form supports invitation issuance, accepted, and terminal closure without an invitee actor
+ok 50 - free_form supports invitation issuance, accepted, and terminal closure without an invitee actor
+  ---
+  duration_ms: 350.849875
+  type: 'test'
+  ...
+# Subtest: free_form supports invitation issuance, rejected, and terminal closure without an invitee actor
+ok 51 - free_form supports invitation issuance, rejected, and terminal closure without an invitee actor
+  ---
+  duration_ms: 355.995834
+  type: 'test'
+  ...
+# Subtest: free_form supports invitation issuance, expired, and terminal closure without an invitee actor
+ok 52 - free_form supports invitation issuance, expired, and terminal closure without an invitee actor
+  ---
+  duration_ms: 351.095416
+  type: 'test'
+  ...
+# Subtest: free_form supports invitation issuance, revoked, and terminal closure without an invitee actor
+ok 53 - free_form supports invitation issuance, revoked, and terminal closure without an invitee actor
+  ---
+  duration_ms: 348.747958
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 24601.597917
+
+> engramport@0.1.0 identity:test
+> node --test tests/commit-identity.test.mjs
+
+TAP version 13
+# ACCEPTED_IDENTITY_MISMATCH 2f033ec52f2b1cc28228b347f2945f851b86d4c0 author=agent-a@engramport.local signer=luke@covenantsystems.ai date=2026-09-08T15:15:52-04:00 finding=F160
+# ACCEPTED_IDENTITY_MISMATCH 502ab6f008f99ec52b07bb812e4d9f6745e88909 author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-08T15:56:34-04:00 finding=F160
+# ACCEPTED_IDENTITY_MISMATCH 9317124939f26d6af4bd5a3a1a0a596b2cfad257 author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-09T08:22:10-04:00 finding=F164
+# ACCEPTED_IDENTITY_MISMATCH d1fca740bacb2fd249077ee80dca766a37cebb6b author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-09T08:22:28-04:00 finding=F164
+# ACCEPTED_IDENTITY_MISMATCH dd73f52214b4aee364c05af323fe396a4b5a20bd author=agent-b@engramport.local signer=luke@covenantsystems.ai date=2026-09-09T08:36:41-04:00 finding=F164
+# IDENTITY_REFUSAL unrecorded
+# IDENTITY_REFUSAL nonexistent
+# IDENTITY_REFUSAL author
+# IDENTITY_REFUSAL signer
+# IDENTITY_REFUSAL date
+# IDENTITY_REFUSAL finding
+# IDENTITY_REFUSAL duplicate
+# IDENTITY_REFUSAL array
+# IDENTITY_REFUSAL fields
+# IDENTITY_REFUSAL full-sha
+# IDENTITY_REFUSAL finding-format
+# IDENTITY_REFUSAL unverified
+# IDENTITY_REFUSAL not-mismatch
+# IDENTITY_REFUSAL outside-history
+# agent-commit: signing key at /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-dEw60A/foreign.pub is not bound to agent-b@engramport.local in /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/identity-key-dEw60A/allowed_signers
+# agent-commit: refusing to commit under a foreign or unverified signing key
+# Subtest: repository signed mismatches require exact accepted records
+ok 1 - repository signed mismatches require exact accepted records
+  ---
+  duration_ms: 2078.356583
+  type: 'test'
+  ...
+# Subtest: record validates commits and each stated fact with paired refusals
+ok 2 - record validates commits and each stated fact with paired refusals
+  ---
+  duration_ms: 293.91625
+  type: 'test'
+  ...
+# Subtest: agent-commit permits the actor key and refuses a foreign resolved key before commit
+ok 3 - agent-commit permits the actor key and refuses a foreign resolved key before commit
+  ---
+  duration_ms: 120.81975
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2550.185959
+
+> engramport@0.1.0 bctx:test
+> node --test tests/bounded-context-roundtrip.test.mjs
+
+TAP version 13
+# Subtest: a reference in the format the validator accepts resolves to its content
+ok 1 - a reference in the format the validator accepts resolves to its content
+  ---
+  duration_ms: 3.322958
+  type: 'test'
+  ...
+# Subtest: the delimiter the resolver used to split on is now refused
+ok 2 - the delimiter the resolver used to split on is now refused
+  ---
+  duration_ms: 0.708583
+  type: 'test'
+  ...
+# Subtest: a bound digest that no longer describes the file refuses
+ok 3 - a bound digest that no longer describes the file refuses
+  ---
+  duration_ms: 1.609417
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62.963708
+
+> engramport@0.1.0 turn:test
+> node --test tests/turn-decision.test.mjs
+
+TAP version 13
+# Subtest: a healthy observation is allowed in both phases
+ok 1 - a healthy observation is allowed in both phases
+  ---
+  duration_ms: 0.534
+  type: 'test'
+  ...
+# Subtest: every declared refusal has a demonstration
+ok 2 - every declared refusal has a demonstration
+  ---
+  duration_ms: 0.480875
+  type: 'test'
+  ...
+# Subtest: every demonstration names a refusal the decision can actually produce
+ok 3 - every demonstration names a refusal the decision can actually produce
+  ---
+  duration_ms: 0.049292
+  type: 'test'
+  ...
+# Subtest: every guard field is reachable, so no guard is dead code
+ok 4 - every guard field is reachable, so no guard is dead code
+  ---
+  duration_ms: 0.09025
+  type: 'test'
+  ...
+# Subtest: the kill switch cannot be masked by any other condition
+ok 5 - the kill switch cannot be masked by any other condition
+  ---
+  duration_ms: 0.0415
+  type: 'test'
+  ...
+# Subtest: acting as a person outranks every condition except the stop
+ok 6 - acting as a person outranks every condition except the stop
+  ---
+  duration_ms: 0.032458
+  type: 'test'
+  ...
+# Subtest: an unreadable ledger refuses rather than counting as zero
+ok 7 - an unreadable ledger refuses rather than counting as zero
+  ---
+  duration_ms: 0.090625
+  type: 'test'
+  ...
+# Subtest: demonstrateBounds reports every bound firing, and notices when one does not
+ok 8 - demonstrateBounds reports every bound firing, and notices when one does not
+  ---
+  duration_ms: 0.089667
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 58.789292
+
+> engramport@0.1.0 completion:test
+> node --test tests/completion-status.test.mjs
+
+TAP version 13
+# F157_REAL event=events/agent-b/20260908T194830Z_01a08290-9b52-7002-b704-44c3576f959b.md current=accepted pre-fix=rejected keyword=const
+# Subtest: F157 real blocked completion validates against the published schema
+ok 1 - F157 real blocked completion validates against the published schema
+  ---
+  duration_ms: 39.612125
+  type: 'test'
+  ...
+# Subtest: F157 schema and verifier vocabularies agree
+ok 2 - F157 schema and verifier vocabularies agree
+  ---
+  duration_ms: 0.688333
+  type: 'test'
+  ...
+# F157_CONSUMERS status=satisfied accepted=true
+# F157_CONSUMERS status=unmet accepted=true
+# F157_CONSUMERS status=blocked accepted=true
+# F157_CONSUMERS status=probably-fine accepted=false
+# F157_MUTATIONS baseline=0
+# F157_MUTATION pre-fix-schema=killed control=F157 real blocked executed=1
+# F157_MUTATION schema-extra-status=killed control=F157 schema and verifier executed=2
+# F157_MUTATION verifier-missing-status=killed control=F157 schema and verifier executed=3
+# F157_MUTATION verifier-private-copy=killed control=F157 both consumers executed=4
+# F157_MUTATION verifier-guard-bypassed=killed control=F157 both consumers executed=5
+# F157_MUTATIONS executed=5 killed=5 survived=0 restored=0
+# Subtest: F157 both consumers accept every status and reject an invented status
+ok 3 - F157 both consumers accept every status and reject an invented status
+  ---
+  duration_ms: 47.648917
+  type: 'test'
+  ...
+# Subtest: F157 discriminating mutations
+ok 4 - F157 discriminating mutations
+  ---
+  duration_ms: 1157.008458
+  type: 'test'
+  ...
+# Subtest: a completion reporting unmet is accepted and written
+ok 5 - a completion reporting unmet is accepted and written
+  ---
+  duration_ms: 24.0605
+  type: 'test'
+  ...
+# Subtest: a completion reporting blocked is accepted and written
+ok 6 - a completion reporting blocked is accepted and written
+  ---
+  duration_ms: 21.603667
+  type: 'test'
+  ...
+# Subtest: satisfied still works, so widening did not break the success path
+ok 7 - satisfied still works, so widening did not break the success path
+  ---
+  duration_ms: 21.305417
+  type: 'test'
+  ...
+# Subtest: an invented status is still refused, so the vocabulary is closed
+ok 8 - an invented status is still refused, so the vocabulary is closed
+  ---
+  duration_ms: 12.134541
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1417.463333
+
+> engramport@0.1.0 withdrawal:test
+> node --test tests/withdrawal.test.mjs && node tests/run-withdrawal-mutations.mjs
+
+TAP version 13
+# ADR52_OBS f166-evidence ok=true errors=[]
+# ADR52_OBS f166-handoff ok=true errors=[]
+# ADR52_OBS f166-ordinary ok=true errors=[]
+# ADR52_OBS f166-withdrawal ok=true errors=[]
+# F166_INBOX original=false withdrawal=false ordinary=true
+# ADR52_OBS f166-late-completion ok=true errors=[]
+# ADR52_OBS f166-second-completion ok=false errors=["events/a/20260914T131357Z_01a0a00d-8b5f-75e3-9f29-c65355fda7bb.md: mode strict_relay violation; parent has 2 replies"]
+# ADR52_OBS f166-final-verify ok=true errors=[]
+# Subtest: ADR52 F166 withdrawal excluded while ordinary handoff remains
+ok 1 - ADR52 F166 withdrawal excluded while ordinary handoff remains
+  ---
+  duration_ms: 197.472958
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS sender-withdraws ok=true errors=[]
+# ADR52_INBOX original=absent withdrawal=absent
+# ADR52_OBS real-withdrawal-verify ok=true errors=[]
+# ADR52_SCHEMA real-withdrawal=accepted
+# Subtest: ADR52 sender withdraws and inbox retires original
+ok 2 - ADR52 sender withdraws and inbox retires original
+  ---
+  duration_ms: 33.662667
+  type: 'test'
+  ...
+# Subtest: ADR52 pre-fix unknown type
+ok 3 - ADR52 pre-fix unknown type # SKIP
+  ---
+  duration_ms: 0.046917
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS empty-reason ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c00-72a7-939f-ca122d9904de.md: withdrawal requires a non-empty reason"]
+# Subtest: ADR52 empty reason ""
+ok 4 - ADR52 empty reason ""
+  ---
+  duration_ms: 8.862834
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS empty-reason ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c08-78ee-800d-88427c5d9dd0.md: withdrawal requires a non-empty reason"]
+# Subtest: ADR52 empty reason " \\t\\n "
+ok 5 - ADR52 empty reason " \\t\\n "
+  ---
+  duration_ms: 8.174166
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS non-sender ok=false errors=["events/b/20260914T131357Z_01a0a00d-8c11-7011-820f-147206c21270.md: withdrawal requires the original sender"]
+# Subtest: ADR52 non-sender b
+ok 6 - ADR52 non-sender b
+  ---
+  duration_ms: 8.633667
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS non-sender ok=false errors=["events/c/20260914T131357Z_01a0a00d-8c19-7dca-b635-9a7a90d1491b.md: withdrawal requires the original sender"]
+# Subtest: ADR52 non-sender c
+ok 7 - ADR52 non-sender c
+  ---
+  duration_ms: 7.518791
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS first-successor ok=true errors=[]
+# ADR52_OBS second-successor ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c1d-7f85-9088-14d5a15ec2a9.md: mode strict_relay violation; parent has 2 replies"]
+# Subtest: ADR52 single successor reply first
+ok 8 - ADR52 single successor reply first
+  ---
+  duration_ms: 9.137416
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS first-successor ok=true errors=[]
+# ADR52_OBS second-successor ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c26-7e54-adac-3ecbfce5b5e5.md: mode strict_relay violation; parent has 2 replies"]
+# Subtest: ADR52 single successor withdrawal first
+ok 9 - ADR52 single successor withdrawal first
+  ---
+  duration_ms: 9.299875
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS fork-withdrawal ok=true errors=[]
+# ADR52_OBS fork-reply ok=true errors=[]
+# ADR52_OBS fork-verifier ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c30-7fdb-9f80-43dcbad3e033.md: mode strict_relay violation; parent has 2 replies"]
+# Subtest: ADR52 forked history verifier
+ok 10 - ADR52 forked history verifier
+  ---
+  duration_ms: 13.49425
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# F166_LATE_COMPLETION inbox=empty next=null
+# ADR52_OBS late-completion ok=true errors=[]
+# ADR52_OBS second-completion ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c40-72f3-bf82-2e8050303355.md: mode strict_relay violation; parent has 2 replies"]
+# Subtest: ADR52 late completion once next=null
+ok 11 - ADR52 late completion once next=null
+  ---
+  duration_ms: 13.493708
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# F166_LATE_COMPLETION inbox=empty next=a
+# ADR52_OBS late-completion ok=true errors=[]
+# ADR52_OBS second-completion ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c4e-7fed-b744-e7eca8f13108.md: mode strict_relay violation; parent has 2 replies"]
+# Subtest: ADR52 late completion once next=a
+ok 12 - ADR52 late completion once next=a
+  ---
+  duration_ms: 14.072833
+  type: 'test'
+  ...
+# ADR52_OBS evidence ok=true errors=[]
+# ADR52_OBS handoff ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS missing-criteria ok=false errors=["events/b/20260914T131357Z_01a0a00d-8c62-79c2-8576-ac579fb2a578.md: criteria_results is required for a version-1 handoff completion"]
+# ADR52_OBS wrong-criteria ok=false errors=["events/b/20260914T131357Z_01a0a00d-8c65-77ce-83e1-a9c2dd283d88.md: completion missing criterion ids c1"]
+# ADR52_OBS late-handoff-completion ok=true errors=[]
+# Subtest: ADR52 original handoff criteria preserved
+ok 13 - ADR52 original handoff criteria preserved
+  ---
+  duration_ms: 20.302875
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS non-handoff-criteria ok=false errors=["events/b/20260914T131357Z_01a0a00d-8c73-7cda-8929-1d3952500f72.md: criteria_results requires an original handoff"]
+# Subtest: ADR52 non-handoff criteria refused
+ok 14 - ADR52 non-handoff criteria refused
+  ---
+  duration_ms: 8.908708
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-message ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c79-758a-855f-44b215581542.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c79-758a-855f-44b215581542.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-handoff ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c7e-7ea0-99eb-70c43e9fa10f.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c7e-7ea0-99eb-70c43e9fa10f.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-reply ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c83-70d7-b346-b96690d4bf37.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c83-70d7-b346-b96690d4bf37.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-completion ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c89-7920-a2f5-60307e3c7b95.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c89-7920-a2f5-60307e3c7b95.md: mode strict_relay violation; an actor may not reply to itself","events/a/20260914T131357Z_01a0a00d-8c89-7920-a2f5-60307e3c7b95.md: completion must reply to a handoff"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-artifact ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c8e-7a1f-89b7-18725b4f869e.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c8e-7a1f-89b7-18725b4f869e.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-decision ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c93-7522-b494-00ac906d6ce2.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c93-7522-b494-00ac906d6ce2.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-task ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c98-7392-9b63-748cf07847cb.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c98-7392-9b63-748cf07847cb.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-acknowledgment ok=false errors=["events/a/20260914T131357Z_01a0a00d-8c9d-7ccd-a64a-3c41f37be16d.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8c9d-7ccd-a64a-3c41f37be16d.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 other self replies remain refused
+ok 15 - ADR52 other self replies remain refused
+  ---
+  duration_ms: 47.515291
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS non-strict ok=false errors=["events/a/20260914T131357Z_01a0a00d-8ca9-72aa-87a5-b71b6d4e65ef.md: withdrawal requires strict_relay"]
+# Subtest: ADR52 non-strict free_form
+ok 16 - ADR52 non-strict free_form
+  ---
+  duration_ms: 6.344625
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS non-strict ok=false errors=["events/a/20260914T131357Z_01a0a00d-8cae-7161-b784-b370848fcbc6.md: withdrawal requires strict_relay"]
+# Subtest: ADR52 non-strict coordinator_led
+ok 17 - ADR52 non-strict coordinator_led
+  ---
+  duration_ms: 5.697542
+  type: 'test'
+  ...
+# ADR52_OBS root-withdrawal ok=false errors=["events/a/20260914T131357Z_01a0a00d-8cb1-7cfd-8bf6-53fcc2d33a7c.md: withdrawal requires a parent"]
+# Subtest: ADR52 parent required
+ok 18 - ADR52 parent required
+  ---
+  duration_ms: 2.892709
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS wrong-addressee ok=false errors=["events/a/20260914T131357Z_01a0a00d-8cb8-74a8-816c-113b62654f09.md: withdrawal next must name the original addressee of an open turn"]
+# Subtest: ADR52 addressee binding null
+ok 19 - ADR52 addressee binding null
+  ---
+  duration_ms: 7.375583
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS wrong-addressee ok=false errors=["events/a/20260914T131357Z_01a0a00d-8cbe-7c23-b8de-6c2a14006643.md: withdrawal next must name the original addressee of an open turn"]
+# Subtest: ADR52 addressee binding c
+ok 20 - ADR52 addressee binding c
+  ---
+  duration_ms: 5.628916
+  type: 'test'
+  ...
+# ADR52_OBS terminal ok=true errors=[]
+# ADR52_OBS terminal-withdrawal ok=false errors=["events/a/20260914T131357Z_01a0a00d-8cc4-764e-9e48-85b5a6fd3713.md: withdrawal next must name the original addressee of an open turn"]
+# Subtest: ADR52 terminal turn cannot withdraw
+ok 21 - ADR52 terminal turn cannot withdraw
+  ---
+  duration_ms: 5.64725
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS duplicate-withdrawal ok=false errors=["events/a/20260914T131357Z_01a0a00d-8cc7-7211-b0ea-42326b04f775.md: mode strict_relay violation; parent has 2 replies"]
+# Subtest: ADR52 duplicate withdrawal refused
+ok 22 - ADR52 duplicate withdrawal refused
+  ---
+  duration_ms: 9.096625
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS non-completion ok=false errors=["events/b/20260914T131357Z_01a0a00d-8cd6-77eb-9281-8d3171b263ea.md: withdrawal successor must be a completion"]
+# Subtest: ADR52 withdrawal successor completion only
+ok 23 - ADR52 withdrawal successor completion only
+  ---
+  duration_ms: 9.584042
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS completion-routing ok=false errors=["events/b/20260914T131357Z_01a0a00d-8cdf-7d91-b540-dbc754776992.md: late completion next must name the sender or null"]
+# Subtest: ADR52 late completion routing
+ok 24 - ADR52 late completion routing
+  ---
+  duration_ms: 8.678875
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS wrong-completer ok=false errors=["events/a/20260914T131357Z_01a0a00d-8ce8-7c4d-96c2-d1f173ebf679.md: mode strict_relay violation; expected next actor b","events/a/20260914T131357Z_01a0a00d-8ce8-7c4d-96c2-d1f173ebf679.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS withdrawal ok=true errors=[]
+# ADR52_OBS wrong-completer ok=false errors=["events/c/20260914T131357Z_01a0a00d-8cf0-7dbb-939e-b3857f512d7d.md: mode strict_relay violation; expected next actor b"]
+# Subtest: ADR52 late completion only addressee
+ok 25 - ADR52 late completion only addressee
+  ---
+  duration_ms: 18.114292
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# events/a/20260914T131357Z_01a0a00d-8cf9-70e1-abfb-9ff4fa6f285f.md
+# Subtest: ADR52 CLI accepts withdrawal
+ok 26 - ADR52 CLI accepts withdrawal
+  ---
+  duration_ms: 9.14925
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 562.948542
+ADR52_MUTATIONS baseline=0
+ADR52_PRE_FIX commit=799d96e3fa772f1e4ac8a8feaff8e452ce3f1b93 append=refused class=unknown-event-type self-replies=refused
+TAP version 13
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS pre-fix ok=false errors=["events/a/20260914T131358Z_01a0a00d-9038-7a08-92c3-aa604306d455.md: unknown event type withdrawal","events/a/20260914T131358Z_01a0a00d-9038-7a08-92c3-aa604306d455.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-9038-7a08-92c3-aa604306d455.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 pre-fix unknown type
+ok 1 - ADR52 pre-fix unknown type
+  ---
+  duration_ms: 18.740292
+  type: 'test'
+  ...
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-message ok=false errors=["events/a/20260914T131358Z_01a0a00d-9046-7436-8c77-e1b6cb12bf5c.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-9046-7436-8c77-e1b6cb12bf5c.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-handoff ok=false errors=["events/a/20260914T131358Z_01a0a00d-904d-76a7-b32e-dc071e805d42.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-904d-76a7-b32e-dc071e805d42.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-reply ok=false errors=["events/a/20260914T131358Z_01a0a00d-9054-7ef9-8ff0-8961c605f23d.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-9054-7ef9-8ff0-8961c605f23d.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-completion ok=false errors=["events/a/20260914T131358Z_01a0a00d-905b-7256-a5d5-6c9273045272.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-905b-7256-a5d5-6c9273045272.md: mode strict_relay violation; an actor may not reply to itself","events/a/20260914T131358Z_01a0a00d-905b-7256-a5d5-6c9273045272.md: completion must reply to a handoff"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-artifact ok=false errors=["events/a/20260914T131358Z_01a0a00d-9061-7879-ad3f-768174afa102.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-9061-7879-ad3f-768174afa102.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-decision ok=false errors=["events/a/20260914T131358Z_01a0a00d-9069-7d71-bbc6-c3f62a40a684.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-9069-7d71-bbc6-c3f62a40a684.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-task ok=false errors=["events/a/20260914T131358Z_01a0a00d-906e-7c2d-a6db-88a1614098bb.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-906e-7c2d-a6db-88a1614098bb.md: mode strict_relay violation; an actor may not reply to itself"]
+# ADR52_OBS seed ok=true errors=[]
+# ADR52_OBS self-acknowledgment ok=false errors=["events/a/20260914T131358Z_01a0a00d-9074-7861-a210-3d3547ad27d5.md: mode strict_relay violation; expected next actor b","events/a/20260914T131358Z_01a0a00d-9074-7861-a210-3d3547ad27d5.md: mode strict_relay violation; an actor may not reply to itself"]
+# Subtest: ADR52 other self replies remain refused
+ok 2 - ADR52 other self replies remain refused
+  ---
+  duration_ms: 62.6895
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.829542
+
+ADR52_MUTATION name=sender-only removed=WITHDRAWAL_SENDER observation=non-sender:accepted control=failed executed=1
+ADR52_MUTATION name=non-empty-reason removed=WITHDRAWAL_REASON observation=empty-reason:accepted control=failed executed=2
+ADR52_MUTATION name=successor-reply-first removed=parent has ${count} replies observation=second-successor:accepted control=failed executed=3
+ADR52_MUTATION name=successor-withdrawal-first removed=parent has ${count} replies observation=second-successor:accepted control=failed executed=4
+ADR52_MUTATION name=forked-history-verifier removed=parent has ${count} replies observation=fork-verifier:accepted control=failed executed=5
+ADR52_MUTATION name=late-completion-once removed=parent has ${count} replies observation=second-completion:accepted control=failed executed=6
+ADR52_MUTATION name=strict-mode-only removed=WITHDRAWAL_MODE observation=non-strict:accepted control=failed executed=7
+ADR52_MUTATION name=parent-required removed=WITHDRAWAL_PARENT observation=root-withdrawal:accepted control=failed executed=8
+ADR52_MUTATION name=original-addressee removed=WITHDRAWAL_NEXT observation=wrong-addressee:accepted control=failed executed=9
+ADR52_MUTATION name=open-turn removed=WITHDRAWAL_NEXT observation=terminal-withdrawal:accepted control=failed executed=10
+ADR52_MUTATION name=completion-only removed=/* WITHDRAWAL_COMPLETION */ observation=non-completion:accepted control=failed executed=11
+ADR52_MUTATION name=completion-routing removed=WITHDRAWAL_COMPLETION_NEXT observation=completion-routing:accepted control=failed executed=12
+ADR52_MUTATION name=non-handoff-criteria removed=WITHDRAWAL_NO_CRITERIA observation=non-handoff-criteria:accepted control=failed executed=13
+ADR52_MUTATION name=schema-type-disagreement existing-one-definition-control=failed executed=14
+ADR52_MUTATION name=withdrawal-listed observation=original:false,withdrawal:true,ordinary:true control=failed executed=15
+ADR52_MUTATIONS executed=15 killed=15 survived=0 restored=0
+
+> engramport@0.1.0 sdk:buildable
+> node --test tests/sdk-buildable.test.mjs
+
+TAP version 13
+# Subtest: the SDK builds from source
+ok 1 - the SDK builds from source
+  ---
+  duration_ms: 329.758625
+  type: 'test'
+  ...
+# Subtest: the built package exports what deployments are told to import
+ok 2 - the built package exports what deployments are told to import
+  ---
+  duration_ms: 4.775166
+  type: 'test'
+  ...
+# Subtest: the built turn decision still refuses everything it should
+ok 3 - the built turn decision still refuses everything it should
+  ---
+  duration_ms: 0.73225
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 397.993916
+
+> engramport@0.1.0 blast:test
+> node --test tests/blast-radius.test.mjs
+
+TAP version 13
+# Subtest: exactly separates planted current, stale, and broken registrations without skipping later entries
+ok 1 - exactly separates planted current, stale, and broken registrations without skipping later entries
+  ---
+  duration_ms: 149.161416
+  type: 'test'
+  ...
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nCURRENT entry 1 "fresh" canonical="canonical.js" location="downstream-fresh:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nSTALE entry 2 "behind-a" canonical="canonical.js" location="downstream-behind-a:lib/shared.js" vendored_on=2026-09-08 recorded=131e1a10fd517c113c1458379cb41e666de12d485a197a74cdd88e11baf23971 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nBROKEN registration entry 3 "absent" canonical="missing.js" location="downstream-absent:lib/shared.js": canonical file absent\\nSTALE entry 4 "behind-b" canonical="canonical.js" location="downstream-behind-b:lib/shared.js" vendored_on=2026-09-08 recorded=aefae4c7adb7518f18dc6c5a22a2c361388a8f2414fc5b338945f7340bfe2719 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nCURRENT entry 5 "fresh-last" canonical="canonical.js" location="downstream-fresh-last:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nRegistered copies: 5; current=2; stale=2; broken=1
+# Subtest: all current passes; canonical mutation makes every dependent copy stale without registry changes
+ok 2 - all current passes; canonical mutation makes every dependent copy stale without registry changes
+  ---
+  duration_ms: 467.859417
+  type: 'test'
+  ...
+# npm run blast-radius; exit=0\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nCURRENT entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nCURRENT entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nCURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nRegistered copies: 3; current=3; stale=0; broken=0
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nSTALE entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6\\nSTALE entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6\\nCURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nRegistered copies: 3; current=1; stale=2; broken=0
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nSTALE entry 1 "alpha" canonical="canonical.js" location="downstream-alpha:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6\\nSTALE entry 2 "beta" canonical="canonical.js" location="downstream-beta:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=c2894b8d02f12c21175998bc5f257813c3e68d00be37e2f83e5faf25a55652f6\\nCURRENT entry 3 "other" canonical="unrelated.js" location="downstream-other:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nRegistered copies: 3; current=1; stale=2; broken=0
+# Subtest: an isolated absent canonical file is a broken registration and exits nonzero
+ok 3 - an isolated absent canonical file is a broken registration and exits nonzero
+  ---
+  duration_ms: 144.383292
+  type: 'test'
+  ...
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nBROKEN registration entry 1 "missing" canonical="absent.js" location="downstream-missing:lib/shared.js": canonical file absent\\nRegistered copies: 1; current=0; stale=0; broken=1
+# Subtest: an unregistered file is ignored and empty coverage is explicit
+ok 4 - an unregistered file is ignored and empty coverage is explicit
+  ---
+  duration_ms: 300.923458
+  type: 'test'
+  ...
+# npm run blast-radius; exit=0\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nCURRENT entry 1 "registered" canonical="canonical.js" location="downstream-registered:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nRegistered copies: 1; current=1; stale=0; broken=0
+# npm run blast-radius; exit=0\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nRegistered copies: 0; current=0; stale=0; broken=0\\nNo copies registered; this is not evidence of downstream currency.
+# Subtest: malformed entries fail without concealing valid entries
+ok 5 - malformed entries fail without concealing valid entries
+  ---
+  duration_ms: 155.787542
+  type: 'test'
+  ...
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nBROKEN registration entry 1 undefined canonical=undefined location=undefined: missing or duplicate registration id\\nBROKEN registration entry 2 "bad-digest" canonical="canonical.js" location="downstream-bad-digest:lib/shared.js": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)\\nBROKEN registration entry 3 "bad-date" canonical="canonical.js" location="downstream-bad-date:lib/shared.js": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)\\nBROKEN registration entry 4 "no-location" canonical="canonical.js" location=" ": invalid location, vendored_sha256, or vendored_on (YYYY-MM-DD)\\nCURRENT entry 5 "duplicate" canonical="canonical.js" location="downstream-duplicate:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nBROKEN registration entry 6 "duplicate" canonical="canonical.js" location="downstream-duplicate:lib/shared.js": missing or duplicate registration id\\nCURRENT entry 7 "last" canonical="canonical.js" location="downstream-last:lib/shared.js" vendored_on=2026-09-08 recorded=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9 canonical_sha256=dbcdb1f658e3f2220d1c09474ff99a91b2b19a0bf81e6cde1a3814d5bc35c6d9\\nRegistered copies: 7; current=2; stale=0; broken=5
+# Subtest: canonical paths cannot escape the repository directly or through a symlink
+ok 6 - canonical paths cannot escape the repository directly or through a symlink
+  ---
+  duration_ms: 155.929791
+  type: 'test'
+  ...
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nBROKEN registration entry 1 "traversal" canonical="../outside.js" location="downstream-traversal:lib/shared.js": canonical_path must be relative and inside this repository\\nBROKEN registration entry 2 "absolute" canonical="/outside.js" location="downstream-absolute:lib/shared.js": canonical_path must be relative and inside this repository\\nBROKEN registration entry 3 "symlink" canonical="escape.js" location="downstream-symlink:lib/shared.js": canonical_path resolves outside this repository\\nRegistered copies: 3; current=0; stale=0; broken=3
+# Subtest: missing and malformed registry fail closed while retaining the coverage statement
+ok 7 - missing and malformed registry fail closed while retaining the coverage statement
+  ---
+  duration_ms: 435.925166
+  type: 'test'
+  ...
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nRegistry check failed: ENOENT: no such file or directory, open '/Users/an2b/an2b/products/EngramPORT-kit/artifacts/agent-b/blast-radius-fixture-nPcmXC/registry/downstream-copies.json'
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nRegistry check failed: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+# npm run blast-radius; exit=1\\n> engramport@0.1.0 blast-radius\\n> node scripts/blast-radius\\n\\nCoverage: registered copies only; unregistered copies are unknown. Downstream locations are labels, not inspected installations.\\nRegistry check failed: Invalid registry schema or coverage declaration
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1870.150709
+
+> engramport@0.1.0 scan:test
+> node --test tests/scan-covers-policy-limit.test.mjs
+
+TAP version 13
+# Subtest: a clean prompt larger than the scanner default is scanned, not refused
+ok 1 - a clean prompt larger than the scanner default is scanned, not refused
+  ---
+  duration_ms: 3.097709
+  type: 'test'
+  ...
+# Subtest: a credential planted deep inside a large prompt is still caught
+ok 2 - a credential planted deep inside a large prompt is still caught
+  ---
+  duration_ms: 3.942
+  type: 'test'
+  ...
+# Subtest: beyond the policy limit it still fails closed
+ok 3 - beyond the policy limit it still fails closed
+  ---
+  duration_ms: 2.626833
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79.839708
+
+> engramport@0.1.0 scan:append:test
+> node --test tests/append-scan-policy.test.mjs && node tests/run-append-scan-mutations.mjs
+
+TAP version 13
+# OBSERVED append clean artifact bytes=96000 accepted=true
+# Subtest: clean-large-artifact
+ok 1 - clean-large-artifact
+  ---
+  duration_ms: 23.01625
+  type: 'test'
+  ...
+# OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+# Subtest: artifact-size
+ok 2 - artifact-size
+  ---
+  duration_ms: 29.874375
+  type: 'test'
+  ...
+# OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+# Subtest: artifact-credential
+ok 3 - artifact-credential
+  ---
+  duration_ms: 17.05075
+  type: 'test'
+  ...
+# OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000001 limit=1000000
+# Subtest: body-size
+ok 4 - body-size
+  ---
+  duration_ms: 26.230459
+  type: 'test'
+  ...
+# OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+# Subtest: body-credential
+ok 5 - body-credential
+  ---
+  duration_ms: 15.9475
+  type: 'test'
+  ...
+# OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000051 limit=1000000
+# Subtest: envelope-size
+ok 6 - envelope-size
+  ---
+  duration_ms: 10.28275
+  type: 'test'
+  ...
+# OBSERVED append code=CREDENTIAL_INPUT_REFUSED
+# Subtest: envelope-credential
+ok 7 - envelope-credential
+  ---
+  duration_ms: 5.509708
+  type: 'test'
+  ...
+# OBSERVED append code=SCAN_INPUT_TOO_LARGE bytes=1000002 limit=1000000
+# Subtest: utf8-and-escaping
+ok 8 - utf8-and-escaping
+  ---
+  duration_ms: 47.759958
+  type: 'test'
+  ...
+# Subtest: supervisor-shared-limit
+ok 9 - supervisor-shared-limit
+  ---
+  duration_ms: 7.229584
+  type: 'test'
+  ...
+# Subtest: supervisor-credential
+ok 10 - supervisor-credential
+  ---
+  duration_ms: 1.023666
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 250.458917
+CONTROL production=passed
+CONTROL shared-limit-lowered-to-100000=passed
+OBSERVED pre-fix event-core clean artifact refused=CREDENTIAL_INPUT_REFUSED
+F156_MUTATION old-default=killed control=clean-large-artifact executed=1
+F156_MUTATION size-as-credential=killed control=artifact-size executed=2
+F156_MUTATION missing-byte-count=killed control=artifact-size executed=3
+F156_MUTATION missing-limit=killed control=artifact-size executed=4
+F156_MUTATION artifact-scan-removed=killed control=artifact-credential executed=5
+F156_MUTATION body-scan-removed=killed control=body-credential executed=6
+F156_MUTATION envelope-scan-removed=killed control=envelope-credential executed=7
+F156_MUTATION scan-truncated=killed control=artifact-credential executed=8
+F156_MUTATION serialized-instead-of-utf8=killed control=utf8-and-escaping executed=9
+F156_MUTATION body-size-bypassed=killed control=body-size executed=10
+F156_MUTATION envelope-size-bypassed=killed control=envelope-size executed=11
+F156_MUTATION append-restates-limit=killed control=artifact-size executed=12
+F156_MUTATION supervisor-restates-limit=killed control=supervisor-shared-limit executed=13
+F156_MUTATION supervisor-truncated=killed control=supervisor-credential executed=14
+F156_MUTATION supervisor-size-details-lost=killed control=supervisor-shared-limit executed=15
+F156_MUTATIONS executed=15 killed=15 survived=0
+
+> engramport@0.1.0 counts:test
+> node --test tests/readme-counts.test.mjs
+
+TAP version 13
+# Subtest: README counts match the repository
+ok 1 - README counts match the repository
+  ---
+  duration_ms: 3.961917
+  type: 'test'
+  ...
+# Subtest: the check observes drift in each claim independently
+ok 2 - the check observes drift in each claim independently
+  ---
+  duration_ms: 1.703583
+  type: 'test'
+  ...
+# Subtest: the check fails loudly when a claim sentence is reworded away
+ok 3 - the check fails loudly when a claim sentence is reworded away
+  ---
+  duration_ms: 1.454125
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67.076792
+
+> engramport@0.1.0 onboarding:test
+> node --test tests/pr-onboarding.test.mjs
+
+TAP version 13
+# PR_ONBOARDING_UNMERGED_REFUSAL proposal=present head=absent refused=true
+# Subtest: documented PR onboarding refuses an unmerged local registration
+ok 1 - documented PR onboarding refuses an unmerged local registration
+  ---
+  duration_ms: 209.915042
+  type: 'test'
+  ...
+# PR_ONBOARDING_MERGED_ACCEPTANCE proposal=merged head=present accepted=true
+# Subtest: documented PR onboarding accepts the maintainer-merged registration
+ok 2 - documented PR onboarding accepts the maintainer-merged registration
+  ---
+  duration_ms: 407.61325
+  type: 'test'
+  ...
+# Subtest: the documented path has no prose-only or machine-only operation
+ok 3 - the documented path has no prose-only or machine-only operation
+  ---
+  duration_ms: 0.121625
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 680.3465
+
+> engramport@0.1.0 ledger:test
+> node --test tests/contribution-ledger.test.mjs
+
+TAP version 13
+# CONTRIBUTION_LEDGER actors=3 events=634 source=verified-engramport-log
+# Subtest: contribution ledger reports every registered actor from the verified log
+ok 1 - contribution ledger reports every registered actor from the verified log
+  ---
+  duration_ms: 246.500416
+  type: 'test'
+  ...
+# CONTRIBUTION_METERED actor=agent-c reviews=29 tokens=536866 usd_ticks=22660680000
+# Subtest: agent-c metered totals reconcile with every referenced review artifact
+ok 2 - agent-c metered totals reconcile with every referenced review artifact
+  ---
+  duration_ms: 140.214625
+  type: 'test'
+  ...
+# CONTRIBUTION_SUBSCRIPTION actor=agent-a work=observed currency=refused
+# Subtest: subscription contribution renders work without a fictional currency figure
+ok 3 - subscription contribution renders work without a fictional currency figure
+  ---
+  duration_ms: 129.732917
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 581.521625
+
+> engramport@0.1.0 sdk:package:test
+> node --test tests/sdk-package.test.mjs && node scripts/run-sdk-init-mutations
+
+TAP version 13
+# INIT sub=. workflows=2 login=verified contracts=passed
+# INIT sub=coordination workflows=2 login=verified contracts=passed
+# INIT sub=logs/team.v1 workflows=2 login=verified contracts=passed
+# Subtest: init opt-in, actor login, repository-root and nested paths, CRLF and ported workflow contracts
+ok 1 - init opt-in, actor login, repository-root and nested paths, CRLF and ported workflow contracts
+  ---
+  duration_ms: 349.76675
+  type: 'test'
+  ...
+# Subtest: standalone root, worktree marker and login-only scaffolds are supported
+ok 2 - standalone root, worktree marker and login-only scaffolds are supported
+  ---
+  duration_ms: 289.202333
+  type: 'test'
+  ...
+# Subtest: init refuses unsafe login, workflow collision and symlink without writing a log
+ok 3 - init refuses unsafe login, workflow collision and symlink without writing a log
+  ---
+  duration_ms: 284.023334
+  type: 'test'
+  ...
+# Subtest: written reply logic records a synthetic human event with literal payload, verifies and refuses replay
+ok 4 - written reply logic records a synthetic human event with literal payload, verifies and refuses replay
+  ---
+  duration_ms: 1231.308292
+  type: 'test'
+  ...
+# LOGIN_MUTATION baseline=exact-refusal mutant=recorded observer=failed killed=true
+# Subtest: foreign login exact refusal, nonhuman and duplicate login refusal; login-check mutation killed by same observer
+ok 5 - foreign login exact refusal, nonhuman and duplicate login refusal; login-check mutation killed by same observer
+  ---
+  duration_ms: 742.227875
+  type: 'test'
+  ...
+# TURN sub=. create=1 edit=1 close=1
+# TURN sub=coordination create=1 edit=1 close=1
+# Subtest: push failure produces visible Not recorded comment and nonzero status
+ok 6 - push failure produces visible Not recorded comment and nonzero status
+  ---
+  duration_ms: 270.997125
+  type: 'test'
+  ...
+# Subtest: written turn logic opens, updates, skips unchanged and closes issues through ENGRAM_EXEC_SHIM
+ok 7 - written turn logic opens, updates, skips unchanged and closes issues through ENGRAM_EXEC_SHIM
+  ---
+  duration_ms: 1276.4335
+  type: 'test'
+  ...
+# F167_HELP_MUTATION flag=bounded-context cli_exit=0 control=failed killed=true
+# F167_HELP_MUTATION flag=completion-criteria cli_exit=0 control=failed killed=true
+# F167_HELP_MUTATION flag=criteria-results cli_exit=0 control=failed killed=true
+# F167_HELP baseline=passed executed=3 killed=3 restored=passed
+# Subtest: F167 CLI help documents JSON filenames and shapes, and missing documentation is killed
+ok 8 - F167 CLI help documents JSON filenames and shapes, and missing documentation is killed
+  ---
+  duration_ms: 713.196166
+  type: 'test'
+  ...
+# F167_WALKTHROUGH blocks=3 unchanged=true offline=true events=2 threads=1 actors=2 packed_help=passed
+# Subtest: F167 README walkthrough executes unchanged against a packed tarball
+ok 9 - F167 README walkthrough executes unchanged against a packed tarball
+  ---
+  duration_ms: 1652.877958
+  type: 'test'
+  ...
+# Subtest: publishable SDK manifest exposes only the bundled artifact
+ok 10 - publishable SDK manifest exposes only the bundled artifact
+  ---
+  duration_ms: 493.174333
+  type: 'test'
+  ...
+# {"case":"success","kind":"agent","mode":"free_form","files":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},"zero":"✓ verified 0 events across 0 thread(s) and 1 actors","append":"events/clean-builder/20260914T131417Z_01a0a00d-dbaf-7269-894a-0df8a464307b.md","one":"✓ verified 1 events across 1 thread(s) and 1 actors"}
+# {"case":"success","kind":"human","mode":"strict_relay","files":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"9a0724de601f5ffcfdf2469caa1bbbb5ca0ce8f9242daf2a45699969af882b91","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"afe59e9c06f294c59441acad068aa603d9d12198532fe2173683585056007acf","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},"zero":"✓ verified 0 events across 0 thread(s) and 1 actors","append":"events/clean-builder/20260914T131418Z_01a0a00d-dc84-7438-962a-643c2b7da781.md","one":"✓ verified 1 events across 1 thread(s) and 1 actors"}
+# {"case":"existing-project","status":1,"stdout":"","stderr":"engram: INIT_PROJECT_EXISTS: joining an existing project requires the pull request process in CONTRIBUTING.md\\n","before":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"},"after":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"}}
+# {"case":"invalid-slug","status":1,"stdout":"","stderr":"engram: INIT_ACTOR_REFUSED: --actor must match the verifier's SLUG pattern\\n","before":{},"after":{}}
+# {"case":"missing-actor","status":1,"stdout":"","stderr":"engram: INIT_ACTOR_REFUSED: --actor must match the verifier's SLUG pattern\\n","before":{},"after":{}}
+# {"case":"missing-kind","status":1,"stdout":"","stderr":"engram: INIT_KIND_REQUIRED: --kind human|agent is required\\n","before":{},"after":{}}
+# {"case":"invalid-kind","status":1,"stdout":"","stderr":"engram: INIT_KIND_REFUSED: --kind must be human or agent\\n","before":{},"after":{}}
+# {"case":"invalid-mode","status":1,"stdout":"","stderr":"engram: INIT_MODE_REFUSED: --mode must be free_form or strict_relay\\n","before":{},"after":{}}
+# {"case":"invalid-project","status":1,"stdout":"","stderr":"engram: INIT_PROJECT_REFUSED: --project must match the verifier's SLUG pattern\\n","before":{},"after":{}}
+# {"case":"existing-actor","status":1,"stdout":"","stderr":"engram: INIT_PATH_EXISTS: actors/clean-builder.yaml already exists\\n","before":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"},"after":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"}}
+# {"case":"nonempty","status":1,"stdout":"","stderr":"engram: INIT_NOT_EMPTY: init requires an empty directory\\n","before":{"unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"},"after":{"unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"}}
+# {"case":"symlink-parent","status":1,"stdout":"","stderr":"engram: INIT_NOT_EMPTY: init requires an empty directory\\n","before":{"actors":"156c970fbd5b24fd44e8d0274939377541f362c50552eaddfa820f17ba9ac960"},"after":{"actors":"156c970fbd5b24fd44e8d0274939377541f362c50552eaddfa820f17ba9ac960"}}
+# {"case":"unknown-flag","status":1,"stdout":"","stderr":"engram: ARGUMENT_REFUSED: unrecognized flag --force\\n","before":{},"after":{}}
+# F174_PACKED_CHECKOUT attribute=present autocrlf=true exact_bytes=true verify=passed
+# F174_PACKED_MUTATION drop_attribute=true autocrlf=true CRLF=observed verification=refused executed=1 killed=1
+# Subtest: packed SDK installs outside repository, imports, and appends
+ok 11 - packed SDK installs outside repository, imports, and appends
+  ---
+  duration_ms: 3122.220709
+  type: 'test'
+  ...
+# Subtest: packed SDK exercises every client method and verifies promised writes
+ok 12 - packed SDK exercises every client method and verifies promised writes
+  ---
+  duration_ms: 795.346542
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11290.310167
+{"mutation":"existing-project","baseline":"passed","after":"killed","observation":{"case":"existing-project","status":1,"stdout":"","stderr":"engram: INIT_PATH_EXISTS: engramport.yaml already exists\n","before":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"},"after":{"engramport.yaml":"6fe1784fee7e98174b68dcea0ebbf08ca9cae257e5932bc7ff068cf0f2c839cc","nested/evidence.txt":"2e2d1f8fb246e5d2dc813ba4b00765fa19f2f0e3dec7ee95de4ffe08622093c0"}}}
+{"mutation":"invalid-slug","baseline":"passed","after":"killed","observation":{"case":"invalid-slug","status":0,"stdout":"engramport.yaml\nactors/Bad-slug.yaml\nevents/Bad-slug/.gitkeep\nartifacts/Bad-slug/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/Bad-slug.yaml":"8ec01c6fc08f9e38fd744f00720e0a4b2296629aa9e27b7b33b030dc8313e09a","artifacts/Bad-slug/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/Bad-slug/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"missing-kind","baseline":"passed","after":"killed","observation":{"case":"missing-kind","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"invalid-kind","baseline":"passed","after":"killed","observation":{"case":"invalid-kind","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"5eb56476a2a53cf02b9e22f4a1c14d7d5b8584156ad8fa44d2f5b1c196fb191e","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"invalid-mode","baseline":"passed","after":"killed","observation":{"case":"invalid-mode","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"4d1857a2866d2db8c25630734d26ee123f5b0290422bb470f4cfd54626450944","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"invalid-project","baseline":"passed","after":"killed","observation":{"case":"invalid-project","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"5ff0b92909e3036db1715f37640019284b75a221d438913062be1672c2f6bc88","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"existing-actor","baseline":"passed","after":"killed","observation":{"case":"existing-actor","status":1,"stdout":"","stderr":"engram: INIT_NOT_EMPTY: init requires an empty directory\n","before":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"},"after":{"actors/clean-builder.yaml":"ab868ce3e2bad79d0c35bb2863f5cbc0a57786d3b216926ece452b254e45ea1c"}}}
+{"mutation":"nonempty","baseline":"passed","after":"killed","observation":{"case":"nonempty","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{"unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","unrelated.txt":"d3de69c4019cb610b6253cbbe55686e189f035f67b51330e32dd755214159ac7"}}}
+{"mutation":"unknown-flag","baseline":"passed","after":"killed","observation":{"case":"unknown-flag","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","before":{},"after":{".gitattributes":"705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da","actors/clean-builder.yaml":"fd8e9047348920a3a3c1f29dce1fbb79caf7617d566d2b8f9b67cb7cb1798a17","artifacts/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","engramport.yaml":"a92428f764ea841827c68e67aec92e4f642b669bfc89256c0853fe3c9595b71a","events/clean-builder/.gitkeep":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}}
+{"mutation":"exclusive-write","baseline":"passed","after":"killed","observation":{"case":"exclusive-write","status":0,"stdout":"engramport.yaml\nactors/clean-builder.yaml\nevents/clean-builder/.gitkeep\nartifacts/clean-builder/.gitkeep\n.gitattributes\n","stderr":"","content":"protocol: engramport-git-v0\nproject: my-project\nmode: free_form\ndefault_thread_mode: free_form\nevent_root: events\nactor_root: actors\nartifact_root: artifacts\nhash_profile: engramport-git-body-v0\nschema_version: 0\n"}}
+SDK_INIT_MUTATIONS executed=10 killed=10 restored=10
+
+> engramport@0.1.0 sdk:test
+> npm run sdk:build && node --test tests/sdk.test.mjs
+
+
+> engramport@0.1.0 sdk:build
+> npm run build --workspace @engramport/sdk
+
+
+> @engramport/sdk@0.6.0 build
+> vite build --config vite.config.mjs
+
+vite v8.0.13 building client environment for production...
+[2Ktransforming...✓ 59 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/github-kit-C6QC5KH3.js  12.87 kB │ gzip:  4.11 kB
+dist/index.mjs               24.38 kB │ gzip:  6.69 kB
+dist/cli.mjs                 33.56 kB │ gzip:  9.92 kB
+dist/event-core-DHMXj_Jw.js  50.00 kB │ gzip: 12.78 kB
+
+✓ built in 49ms
+TAP version 13
+# Subtest: workspace resolves the advertised SDK manifest locally
+ok 1 - workspace resolves the advertised SDK manifest locally
+  ---
+  duration_ms: 2.110084
+  type: 'test'
+  ...
+# Subtest: SDK append delegates to event-core
+ok 2 - SDK append delegates to event-core
+  ---
+  duration_ms: 10.208666
+  type: 'test'
+  ...
+# Subtest: SDK exposes typed append, inbox, causal reply, bounded handoff, and intent retry
+ok 3 - SDK exposes typed append, inbox, causal reply, bounded handoff, and intent retry
+  ---
+  duration_ms: 16.860333
+  type: 'test'
+  ...
+# Subtest: SDK exposes the existing Port Watch delivery path without implementing another resolver
+ok 4 - SDK exposes the existing Port Watch delivery path without implementing another resolver
+  ---
+  duration_ms: 9.275458
+  type: 'test'
+  ...
+# Subtest: unregistered actor and out-of-prefix artifact are honestly refused without authorization claims
+ok 5 - unregistered actor and out-of-prefix artifact are honestly refused without authorization claims
+  ---
+  duration_ms: 4.48325
+  type: 'test'
+  ...
+# Subtest: SDK publishes four claim qualifiers with honest dependency coverage
+ok 6 - SDK publishes four claim qualifiers with honest dependency coverage
+  ---
+  duration_ms: 0.733208
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 105.182375
+
+> engramport@0.1.0 second-builder:test
+> node --test tests/second-builder.test.mjs
+
+TAP version 13
+# SECOND_BUILDER_SDK append=accepted inbox=discovered completion=accepted impersonation=accepted disposition_read=accepted disposition_write=accepted
+# Subtest: synthetic second builder completes the public SDK path and exposes the authorization gaps
+ok 1 - synthetic second builder completes the public SDK path and exposes the authorization gaps
+  ---
+  duration_ms: 27.757291
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.9475
+
+> engramport@0.1.0 agent-c:test
+> node --test tests/agent-c-supervisor.test.mjs && node scripts/run-agent-c-supervisor-mutations
+
+TAP version 13
+# Subtest: credential-reference
+ok 1 - credential-reference
+  ---
+  duration_ms: 0.699209
+  type: 'test'
+  ...
+# Subtest: credential-shape
+ok 2 - credential-shape
+  ---
+  duration_ms: 0.136458
+  type: 'test'
+  ...
+# Subtest: credential-context
+ok 3 - credential-context
+  ---
+  duration_ms: 433.271166
+  type: 'test'
+  ...
+# Subtest: bounded-context-delivery
+ok 4 - bounded-context-delivery
+  ---
+  duration_ms: 289.212042
+  type: 'test'
+  ...
+# Subtest: bounded-context-missing-event
+ok 5 - bounded-context-missing-event
+  ---
+  duration_ms: 289.30625
+  type: 'test'
+  ...
+# Subtest: bounded-context-event-digest
+ok 6 - bounded-context-event-digest
+  ---
+  duration_ms: 287.216083
+  type: 'test'
+  ...
+# Subtest: bounded-context-artifact-digest
+ok 7 - bounded-context-artifact-digest
+  ---
+  duration_ms: 245.058208
+  type: 'test'
+  ...
+# Subtest: legacy-artifact-digest
+ok 8 - legacy-artifact-digest
+  ---
+  duration_ms: 280.050291
+  type: 'test'
+  ...
+# Subtest: bounded-context-size
+ok 9 - bounded-context-size
+  ---
+  duration_ms: 246.294959
+  type: 'test'
+  ...
+# Subtest: bounded-context-deduplication
+ok 10 - bounded-context-deduplication
+  ---
+  duration_ms: 288.923667
+  type: 'test'
+  ...
+# Subtest: write-prefix
+ok 11 - write-prefix
+  ---
+  duration_ms: 258.929709
+  type: 'test'
+  ...
+# Subtest: turn-enforcement
+ok 12 - turn-enforcement
+  ---
+  duration_ms: 779.342291
+  type: 'test'
+  ...
+# Subtest: reply-target
+ok 13 - reply-target
+  ---
+  duration_ms: 275.85625
+  type: 'test'
+  ...
+# Subtest: result-review
+ok 14 - result-review
+  ---
+  duration_ms: 308.533084
+  type: 'test'
+  ...
+# Subtest: inbox-poller
+ok 15 - inbox-poller
+  ---
+  duration_ms: 789.877125
+  type: 'test'
+  ...
+# Subtest: credential-egress
+ok 16 - credential-egress
+  ---
+  duration_ms: 983.382167
+  type: 'test'
+  ...
+# Subtest: stubbed-review-appends-through-cli
+ok 17 - stubbed-review-appends-through-cli
+  ---
+  duration_ms: 1124.909958
+  type: 'test'
+  ...
+# Subtest: xai-client-metrics
+ok 18 - xai-client-metrics
+  ---
+  duration_ms: 0.330792
+  type: 'test'
+  ...
+# Subtest: provider-diagnosis
+ok 19 - provider-diagnosis
+  ---
+  duration_ms: 0.203667
+  type: 'test'
+  ...
+# Subtest: provider-error-egress
+ok 20 - provider-error-egress
+  ---
+  duration_ms: 0.1055
+  type: 'test'
+  ...
+# Subtest: scheduled-poller-silence
+ok 21 - scheduled-poller-silence
+  ---
+  duration_ms: 0.127708
+  type: 'test'
+  ...
+# Subtest: credential-unavailable-reporting
+ok 22 - credential-unavailable-reporting
+  ---
+  duration_ms: 0.099125
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6946.260917
+AGENT_C_MUTATION credential-reference=killed
+AGENT_C_MUTATION credential-shape=killed
+AGENT_C_MUTATION credential-context=killed
+AGENT_C_MUTATION write-prefix=killed
+AGENT_C_MUTATION turn-enforcement=killed
+AGENT_C_MUTATION reply-target=killed
+AGENT_C_MUTATION result-review=killed
+AGENT_C_MUTATION inbox-poller=killed
+AGENT_C_MUTATION credential-egress=killed
+AGENT_C_MUTATION provider-diagnosis=killed
+AGENT_C_MUTATION provider-error-egress=killed
+AGENT_C_MUTATION scheduled-poller-silence=killed
+AGENT_C_MUTATION credential-unavailable-reporting=killed
+AGENT_C_MUTATION bounded-context-delivery=killed
+AGENT_C_MUTATION bounded-context-missing-event=killed
+AGENT_C_MUTATION bounded-context-event-digest=killed
+AGENT_C_MUTATION bounded-context-artifact-digest=killed
+AGENT_C_MUTATION legacy-artifact-digest=killed
+AGENT_C_MUTATION bounded-context-size=killed
+AGENT_C_MUTATION bounded-context-deduplication=killed
+
+> engramport@0.1.0 agent-c:spend-test
+> node --test tests/agent-c-spend-gate.test.mjs tests/agent-c-spend-ledger.test.mjs && node tests/run-spend-ledger-mutations.mjs
+
+TAP version 13
+# Subtest: a run under the ceiling is allowed
+ok 1 - a run under the ceiling is allowed
+  ---
+  duration_ms: 0.590458
+  type: 'test'
+  ...
+# Subtest: the kill switch refuses, and its absence does not
+ok 2 - the kill switch refuses, and its absence does not
+  ---
+  duration_ms: 0.108834
+  type: 'test'
+  ...
+# Subtest: reaching the ceiling refuses; one tick short still runs
+ok 3 - reaching the ceiling refuses; one tick short still runs
+  ---
+  duration_ms: 0.043292
+  type: 'test'
+  ...
+# Subtest: a run that would cross the ceiling is refused before it spends
+ok 4 - a run that would cross the ceiling is refused before it spends
+  ---
+  duration_ms: 0.039417
+  type: 'test'
+  ...
+# Subtest: an unreadable spend total refuses rather than counting as zero
+ok 5 - an unreadable spend total refuses rather than counting as zero
+  ---
+  duration_ms: 0.17025
+  type: 'test'
+  ...
+# Subtest: a missing or nonsensical cap refuses rather than defaulting to unlimited
+ok 6 - a missing or nonsensical cap refuses rather than defaulting to unlimited
+  ---
+  duration_ms: 0.052875
+  type: 'test'
+  ...
+# Subtest: spend is summed only for the day in question
+ok 7 - spend is summed only for the day in question
+  ---
+  duration_ms: 0.738125
+  type: 'test'
+  ...
+# Subtest: a review with an unreadable cost throws instead of being skipped
+ok 8 - a review with an unreadable cost throws instead of being skipped
+  ---
+  duration_ms: 0.528167
+  type: 'test'
+  ...
+# Subtest: the shipped defaults are the ones ADR 0036 states
+ok 9 - the shipped defaults are the ones ADR 0036 states
+  ---
+  duration_ms: 0.263875
+  type: 'test'
+  ...
+# Subtest: day bucketing is UTC and does not drift with local time
+ok 10 - day bucketing is UTC and does not drift with local time
+  ---
+  duration_ms: 0.245833
+  type: 'test'
+  ...
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 11 - unreadable-root
+  ---
+  duration_ms: 55.028708
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 12 - missing-root
+  ---
+  duration_ms: 20.078417
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 13 - altered-bytes
+  ---
+  duration_ms: 21.985917
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 14 - unreferenced-file
+  ---
+  duration_ms: 22.076541
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 15 - invalid-event
+  ---
+  duration_ms: 24.010458
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 16 - valid-sum
+  ---
+  duration_ms: 36.628042
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 17 - file-read-failure
+  ---
+  duration_ms: 18.258209
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 18 - post-verification-edit
+  ---
+  duration_ms: 18.695125
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 19 - same-buffer-cost
+  ---
+  duration_ms: 17.895334
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 307.84525
+CONTROL production=passed
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 55.858416
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 18.876791
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 23.118125
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 22.181208
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 19.124375
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 36.08825
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 18.726291
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 19.119292
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 18.389458
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 298.999209
+
+CONTROL pre-fix-955a9b60f148430c3582ccbaa9123661d38cd302=passed
+TAP version 13
+# OBSERVED pre-fix permission=EACCES readableTicks=10000000000 {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 46.542
+  type: 'test'
+  ...
+# OBSERVED pre-fix missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED pre-fix missing-root-alone {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 16.914875
+  type: 'test'
+  ...
+# OBSERVED pre-fix altered-cost-to-zero {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 17.143875
+  type: 'test'
+  ...
+# OBSERVED pre-fix unreferenced-zero-cost {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 17.522833
+  type: 'test'
+  ...
+# OBSERVED pre-fix invalid-event {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 16.787667
+  type: 'test'
+  ...
+# OBSERVED pre-fix unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 32.004458
+  type: 'test'
+  ...
+# OBSERVED pre-fix file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 15.764667
+  type: 'test'
+  ...
+# OBSERVED pre-fix edit-after-verification {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 15.537417
+  type: 'test'
+  ...
+# OBSERVED pre-fix cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 15.317833
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 260.657417
+
+PRE_FIX new-unreadable-control=failed-as-expected
+KILLED hide-directory-failure case=unreadable-root exit=1
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreadable-root
+not ok 1 - unreadable-root
+  ---
+  duration_ms: 48.241084
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:52:17)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 112.101292
+
+KILLED refuse-missing-root case=missing-root exit=1
+TAP version 13
+# OBSERVED production missing-root-mixed {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: missing-root
+not ok 1 - missing-root
+  ---
+  duration_ms: 26.796833
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:63:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86.854292
+
+KILLED trust-unreferenced-file case=unreferenced-file exit=1
+TAP version 13
+# OBSERVED production unreferenced-zero-cost {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: unreferenced-file
+not ok 1 - unreferenced-file
+  ---
+  duration_ms: 30.079958
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:91:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 91.288916
+
+KILLED trust-altered-cost case=altered-bytes exit=1
+TAP version 13
+# OBSERVED production altered-cost-to-zero {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: altered-bytes
+not ok 1 - altered-bytes
+  ---
+  duration_ms: 28.578584
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:78:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 94.455791
+
+KILLED trust-unaccepted-event case=invalid-event exit=1
+TAP version 13
+# OBSERVED production invalid-event {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: invalid-event
+not ok 1 - invalid-event
+  ---
+  duration_ms: 29.261666
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:105:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.673667
+
+KILLED skip-buffer-digest case=post-verification-edit exit=1
+TAP version 13
+# OBSERVED production edit-after-verification {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: post-verification-edit
+not ok 1 - post-verification-edit
+  ---
+  duration_ms: 33.604125
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'SPEND_UNREADABLE'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'SPEND_UNREADABLE'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:150:42)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 101.832125
+
+KILLED reread-cost-after-hashing case=same-buffer-cost exit=1
+TAP version 13
+# OBSERVED production cost-buffer-interleaving {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: same-buffer-cost
+not ok 1 - same-buffer-cost
+  ---
+  duration_ms: 47.468167
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'DAILY_CAP_REACHED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'DAILY_CAP_REACHED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:169:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 130.374375
+
+KILLED drop-root-cost case=valid-sum exit=1
+TAP version 13
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# Subtest: valid-sum
+not ok 1 - valid-sum
+  ---
+  duration_ms: 49.931667
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:38:65'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 10000000000
+    - 30000000000
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 30000000000
+  actual: 10000000000
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/an2b/an2b/products/EngramPORT-kit/tests/agent-c-spend-ledger.test.mjs:116:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 121.433417
+
+CONTROL restoration=passed
+TAP version 13
+# OBSERVED production permission=EACCES readableTicks=10000000000 {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreadable-root
+ok 1 - unreadable-root
+  ---
+  duration_ms: 53.754333
+  type: 'test'
+  ...
+# OBSERVED production missing-root-mixed {"allowed":true,"spentTicks":10000000000,"capTicks":100000000000,"remainingTicks":90000000000}
+# OBSERVED production missing-root-alone {"allowed":true,"spentTicks":0,"capTicks":100000000000,"remainingTicks":100000000000}
+# Subtest: missing-root
+ok 2 - missing-root
+  ---
+  duration_ms: 18.413792
+  type: 'test'
+  ...
+# OBSERVED production altered-cost-to-zero {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: altered-bytes
+ok 3 - altered-bytes
+  ---
+  duration_ms: 19.809375
+  type: 'test'
+  ...
+# OBSERVED production unreferenced-zero-cost {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: unreferenced-file
+ok 4 - unreferenced-file
+  ---
+  duration_ms: 20.148584
+  type: 'test'
+  ...
+# OBSERVED production invalid-event {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: invalid-event
+ok 5 - invalid-event
+  ---
+  duration_ms: 18.825
+  type: 'test'
+  ...
+# OBSERVED production unaltered-two-roots {"allowed":true,"spentTicks":30000000000,"capTicks":100000000000,"remainingTicks":70000000000}
+# Subtest: valid-sum
+ok 6 - valid-sum
+  ---
+  duration_ms: 34.028583
+  type: 'test'
+  ...
+# OBSERVED production file-permission=EACCES {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: file-read-failure
+ok 7 - file-read-failure
+  ---
+  duration_ms: 18.025708
+  type: 'test'
+  ...
+# OBSERVED production edit-after-verification {"allowed":false,"code":"SPEND_UNREADABLE"}
+# Subtest: post-verification-edit
+ok 8 - post-verification-edit
+  ---
+  duration_ms: 18.298167
+  type: 'test'
+  ...
+# OBSERVED production cost-buffer-interleaving {"allowed":false,"code":"DAILY_CAP_REACHED","spentTicks":100000000000,"capTicks":100000000000}
+# Subtest: same-buffer-cost
+ok 9 - same-buffer-cost
+  ---
+  duration_ms: 18.086875
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 286.423167
+
+SPEND_LEDGER_MUTATIONS executed=8 killed=8
+
+> engramport@0.1.0 d2:test
+> node --test tests/d2-session-binding.test.mjs tests/d2-transaction-binding.test.mjs
+
+TAP version 13
+# Subtest: D2 refuses unbound sessions before acquiring a connection
+ok 1 - D2 refuses unbound sessions before acquiring a connection
+  ---
+  duration_ms: 0.741042
+  type: 'test'
+  ...
+# Subtest: D2 binds verified principal and session while ignoring caller identity fields
+ok 2 - D2 binds verified principal and session while ignoring caller identity fields
+  ---
+  duration_ms: 0.640625
+  type: 'test'
+  ...
+# D2_TRANSACTION_UNBOUND positive=accepted negative=SESSION_UNBOUND no_checkout=true
+# D2_TRANSACTION_ROLE positive=accepted negative=SESSION_ROLE_INVALID released=true
+# Subtest: D2 transaction guards: all
+ok 3 - D2 transaction guards: all
+  ---
+  duration_ms: 1.446041
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62.51025
+
+> engramport@0.1.0 w1-6:test
+> node --test tests/wizard-w1-6.test.mjs
+
+TAP version 13
+# Subtest: N1 nested secret and N2 future field are rejected without disclosure
+ok 1 - N1 nested secret and N2 future field are rejected without disclosure
+  ---
+  duration_ms: 2.156042
+  type: 'test'
+  ...
+# Subtest: F9 inline plan credential refused while reference form is accepted
+ok 2 - F9 inline plan credential refused while reference form is accepted
+  ---
+  duration_ms: 0.132708
+  type: 'test'
+  ...
+# Subtest: N3 unknown shape and N4 provider registration fail closed; clean positive
+ok 3 - N3 unknown shape and N4 provider registration fail closed; clean positive
+  ---
+  duration_ms: 0.0815
+  type: 'test'
+  ...
+# Subtest: N5 provider shape shadowing is refused and trusted shape wins
+ok 4 - N5 provider shape shadowing is refused and trusted shape wins
+  ---
+  duration_ms: 0.099083
+  type: 'test'
+  ...
+# Subtest: N6 detector and N7 registry errors refuse
+ok 5 - N6 detector and N7 registry errors refuse
+  ---
+  duration_ms: 0.117375
+  type: 'test'
+  ...
+# Subtest: N8 size and N9 depth limits refuse, clean positive remains
+ok 6 - N8 size and N9 depth limits refuse, clean positive remains
+  ---
+  duration_ms: 0.230083
+  type: 'test'
+  ...
+# Subtest: N10 unsafe URLs refuse while HTTPS without authority is accepted
+ok 7 - N10 unsafe URLs refuse while HTTPS without authority is accepted
+  ---
+  duration_ms: 0.132917
+  type: 'test'
+  ...
+# Subtest: N11 foreign and N12 revoked references refuse
+ok 8 - N11 foreign and N12 revoked references refuse
+  ---
+  duration_ms: 0.106791
+  type: 'test'
+  ...
+# Subtest: N13 refusal contains no record values
+ok 9 - N13 refusal contains no record values
+  ---
+  duration_ms: 0.183334
+  type: 'test'
+  ...
+# Subtest: N14 registry revision is pinned and mutation cannot alter accepted result
+ok 10 - N14 registry revision is pinned and mutation cannot alter accepted result
+  ---
+  duration_ms: 0.217708
+  type: 'test'
+  ...
+# Subtest: G1 forged, G2 expired, G3 revoked grants refuse; GP succeeds
+ok 11 - G1 forged, G2 expired, G3 revoked grants refuse; GP succeeds
+  ---
+  duration_ms: 0.421417
+  type: 'test'
+  ...
+# Subtest: G4/G5 tenant and project mismatch refuse
+ok 12 - G4/G5 tenant and project mismatch refuse
+  ---
+  duration_ms: 0.052333
+  type: 'test'
+  ...
+# Subtest: G6/G7 provider and capability mismatch refuse
+ok 13 - G6/G7 provider and capability mismatch refuse
+  ---
+  duration_ms: 0.047334
+  type: 'test'
+  ...
+# Subtest: G8/G9 principal and actor mismatch refuse
+ok 14 - G8/G9 principal and actor mismatch refuse
+  ---
+  duration_ms: 0.35475
+  type: 'test'
+  ...
+# Subtest: G10 scope superset refuses rather than narrows
+ok 15 - G10 scope superset refuses rather than narrows
+  ---
+  duration_ms: 0.034042
+  type: 'test'
+  ...
+# Subtest: G11 caller-supplied grantor cannot substitute resolver authority
+ok 16 - G11 caller-supplied grantor cannot substitute resolver authority
+  ---
+  duration_ms: 0.035333
+  type: 'test'
+  ...
+# Subtest: G12 revocation re-read and G13 session revocation refuse
+ok 17 - G12 revocation re-read and G13 session revocation refuse
+  ---
+  duration_ms: 0.046583
+  type: 'test'
+  ...
+# Subtest: G14 custody revocation refuses while GP live custody succeeds
+ok 18 - G14 custody revocation refuses while GP live custody succeeds
+  ---
+  duration_ms: 0.129208
+  type: 'test'
+  ...
+# Subtest: genuine guard-removal mutations accept fixtures and restore shipped modules
+ok 19 - genuine guard-removal mutations accept fixtures and restore shipped modules
+  ---
+  duration_ms: 16.90925
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83.933083
+
+> engramport@0.1.0 report:test
+> node --test tests/report-boundary.test.mjs
+
+TAP version 13
+# Subtest: normative report schemas are installed byte-for-byte
+ok 1 - normative report schemas are installed byte-for-byte
+  ---
+  duration_ms: 5.919667
+  type: 'test'
+  ...
+# Subtest: well-formed live_feed envelope validates
+ok 2 - well-formed live_feed envelope validates
+  ---
+  duration_ms: 0.522959
+  type: 'test'
+  ...
+# Subtest: well-formed terminal_ticker envelope validates
+ok 3 - well-formed terminal_ticker envelope validates
+  ---
+  duration_ms: 0.084167
+  type: 'test'
+  ...
+# Subtest: well-formed daily_briefing envelope validates
+ok 4 - well-formed daily_briefing envelope validates
+  ---
+  duration_ms: 0.0495
+  type: 'test'
+  ...
+# Subtest: well-formed executive_view envelope validates
+ok 5 - well-formed executive_view envelope validates
+  ---
+  duration_ms: 0.094792
+  type: 'test'
+  ...
+# Subtest: well-formed technical_view envelope validates
+ok 6 - well-formed technical_view envelope validates
+  ---
+  duration_ms: 0.042792
+  type: 'test'
+  ...
+# Subtest: well-formed public_view envelope validates
+ok 7 - well-formed public_view envelope validates
+  ---
+  duration_ms: 0.061167
+  type: 'test'
+  ...
+# Subtest: well-formed collaborator_briefing envelope validates
+ok 8 - well-formed collaborator_briefing envelope validates
+  ---
+  duration_ms: 0.042625
+  type: 'test'
+  ...
+# Subtest: well-formed progress.published payload validates
+ok 9 - well-formed progress.published payload validates
+  ---
+  duration_ms: 0.19075
+  type: 'test'
+  ...
+# Subtest: well-formed risk.raised payload validates
+ok 10 - well-formed risk.raised payload validates
+  ---
+  duration_ms: 0.19975
+  type: 'test'
+  ...
+# Subtest: well-formed risk.retired payload validates
+ok 11 - well-formed risk.retired payload validates
+  ---
+  duration_ms: 0.059125
+  type: 'test'
+  ...
+# Subtest: well-formed blocker.raised payload validates
+ok 12 - well-formed blocker.raised payload validates
+  ---
+  duration_ms: 0.024042
+  type: 'test'
+  ...
+# Subtest: well-formed blocker.cleared payload validates
+ok 13 - well-formed blocker.cleared payload validates
+  ---
+  duration_ms: 0.016542
+  type: 'test'
+  ...
+# Subtest: well-formed test.recorded payload validates
+ok 14 - well-formed test.recorded payload validates
+  ---
+  duration_ms: 0.020083
+  type: 'test'
+  ...
+# Subtest: well-formed incident.opened payload validates
+ok 15 - well-formed incident.opened payload validates
+  ---
+  duration_ms: 0.016417
+  type: 'test'
+  ...
+# Subtest: well-formed incident.resolved payload validates
+ok 16 - well-formed incident.resolved payload validates
+  ---
+  duration_ms: 0.015458
+  type: 'test'
+  ...
+# Subtest: well-formed report.generated payload validates
+ok 17 - well-formed report.generated payload validates
+  ---
+  duration_ms: 0.028125
+  type: 'test'
+  ...
+# Subtest: fact ids present in source_event_ids validate
+ok 18 - fact ids present in source_event_ids validate
+  ---
+  duration_ms: 0.112833
+  type: 'test'
+  ...
+# Subtest: generated evidence exclusion has an explicit opt-in positive control
+ok 19 - generated evidence exclusion has an explicit opt-in positive control
+  ---
+  duration_ms: 0.172167
+  type: 'test'
+  ...
+# Subtest: public input requires allowlisted evidence and human approval but performs no publication
+ok 20 - public input requires allowlisted evidence and human approval but performs no publication
+  ---
+  duration_ms: 1.408458
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: unknown envelope field
+ok 21 - malformed envelope refused: unknown envelope field
+  ---
+  duration_ms: 0.170667
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: missing generated label
+ok 22 - malformed envelope refused: missing generated label
+  ---
+  duration_ms: 0.0575
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: false generated label
+ok 23 - malformed envelope refused: false generated label
+  ---
+  duration_ms: 0.043875
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: empty fact event ids
+ok 24 - malformed envelope refused: empty fact event ids
+  ---
+  duration_ms: 0.046917
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: absent fact event ids
+ok 25 - malformed envelope refused: absent fact event ids
+  ---
+  duration_ms: 0.043708
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: fact id absent from sources
+ok 26 - malformed envelope refused: fact id absent from sources
+  ---
+  duration_ms: 0.077042
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: inference missing basis
+ok 27 - malformed envelope refused: inference missing basis
+  ---
+  duration_ms: 0.044083
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: inference missing confidence
+ok 28 - malformed envelope refused: inference missing confidence
+  ---
+  duration_ms: 0.066458
+  type: 'test'
+  ...
+# Subtest: malformed envelope refused: empty source event ids
+ok 29 - malformed envelope refused: empty source event ids
+  ---
+  duration_ms: 0.046667
+  type: 'test'
+  ...
+# Subtest: public_view without publication is refused
+ok 30 - public_view without publication is refused
+  ---
+  duration_ms: 0.047542
+  type: 'test'
+  ...
+# Subtest: public_view above public sensitivity is refused
+ok 31 - public_view above public sensitivity is refused
+  ---
+  duration_ms: 0.046958
+  type: 'test'
+  ...
+# Subtest: progress.published refuses free-form notes
+ok 32 - progress.published refuses free-form notes
+  ---
+  duration_ms: 0.040166
+  type: 'test'
+  ...
+# Subtest: progress.published refuses free-form reasoning
+ok 33 - progress.published refuses free-form reasoning
+  ---
+  duration_ms: 0.024791
+  type: 'test'
+  ...
+# Subtest: progress.published refuses free-form thoughts
+ok 34 - progress.published refuses free-form thoughts
+  ---
+  duration_ms: 0.023125
+  type: 'test'
+  ...
+# Subtest: progress.published refuses free-form scratchpad
+ok 35 - progress.published refuses free-form scratchpad
+  ---
+  duration_ms: 0.078625
+  type: 'test'
+  ...
+# Subtest: test.recorded requires negative_controls_ran
+ok 36 - test.recorded requires negative_controls_ran
+  ---
+  duration_ms: 0.036666
+  type: 'test'
+  ...
+# Subtest: authorization is validated before the authorized source is called
+ok 37 - authorization is validated before the authorized source is called
+  ---
+  duration_ms: 0.562584
+  type: 'test'
+  ...
+# Subtest: raw candidate sources are structurally refused
+ok 38 - raw candidate sources are structurally refused
+  ---
+  duration_ms: 0.07225
+  type: 'test'
+  ...
+# Subtest: unauthorized context input is refused
+ok 39 - unauthorized context input is refused
+  ---
+  duration_ms: 0.077041
+  type: 'test'
+  ...
+# Subtest: above sensitivity ceiling input is refused
+ok 40 - above sensitivity ceiling input is refused
+  ---
+  duration_ms: 0.061375
+  type: 'test'
+  ...
+# Subtest: unauthorized visibility input is refused
+ok 41 - unauthorized visibility input is refused
+  ---
+  duration_ms: 0.062291
+  type: 'test'
+  ...
+# Subtest: cross-project input is refused
+ok 42 - cross-project input is refused
+  ---
+  duration_ms: 0.127625
+  type: 'test'
+  ...
+# Subtest: post-as_of_seq input is refused
+ok 43 - post-as_of_seq input is refused
+  ---
+  duration_ms: 0.06
+  type: 'test'
+  ...
+# Subtest: generated-as-evidence input is refused
+ok 44 - generated-as-evidence input is refused
+  ---
+  duration_ms: 0.057208
+  type: 'test'
+  ...
+# Subtest: digest mismatch input is refused
+ok 45 - digest mismatch input is refused
+  ---
+  duration_ms: 0.056875
+  type: 'test'
+  ...
+# Subtest: evidence outside authorized history is refused
+ok 46 - evidence outside authorized history is refused
+  ---
+  duration_ms: 0.123125
+  type: 'test'
+  ...
+# Subtest: public_view refuses evidence not on the explicit publishable allowlist
+ok 47 - public_view refuses evidence not on the explicit publishable allowlist
+  ---
+  duration_ms: 0.082
+  type: 'test'
+  ...
+# Subtest: public_view refuses self-approval before retrieval
+ok 48 - public_view refuses self-approval before retrieval
+  ---
+  duration_ms: 0.042084
+  type: 'test'
+  ...
+# Subtest: public_view refuses missing human approval before retrieval
+ok 49 - public_view refuses missing human approval before retrieval
+  ---
+  duration_ms: 0.0365
+  type: 'test'
+  ...
+# Subtest: public approval digest is invalidated by an evidence-set change
+ok 50 - public approval digest is invalidated by an evidence-set change
+  ---
+  duration_ms: 0.119375
+  type: 'test'
+  ...
+# Subtest: authorized output is byte-identical whether restricted records exist or not
+ok 51 - authorized output is byte-identical whether restricted records exist or not
+  ---
+  duration_ms: 0.235167
+  type: 'test'
+  ...
+# Subtest: auditable input identity binds ids, digests, sequence, authorization, model, and reporter revision
+ok 52 - auditable input identity binds ids, digests, sequence, authorization, model, and reporter revision
+  ---
+  duration_ms: 0.322625
+  type: 'test'
+  ...
+# Subtest: envelope must match the authorized input exactly
+ok 53 - envelope must match the authorized input exactly
+  ---
+  duration_ms: 0.176125
+  type: 'test'
+  ...
+# Subtest: audit record binds inputs and labels output without reproducibility claim
+ok 54 - audit record binds inputs and labels output without reproducibility claim
+  ---
+  duration_ms: 0.178
+  type: 'test'
+  ...
+1..54
+# tests 54
+# suites 0
+# pass 54
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 82.486542
+
+> engramport@0.1.0 report:r2:test
+> node --test tests/report-r2.test.mjs
+
+TAP version 13
+# Subtest: identical authorized state is byte-identical with stable ordering and as_of_seq
+ok 1 - identical authorized state is byte-identical with stable ordering and as_of_seq
+  ---
+  duration_ms: 2.555583
+  type: 'test'
+  ...
+# Subtest: identical authorized state is byte-identical across processes
+ok 2 - identical authorized state is byte-identical across processes
+  ---
+  duration_ms: 55.475792
+  type: 'test'
+  ...
+# Subtest: a newly authorized event changes evidence and as_of_seq and wakes once
+ok 3 - a newly authorized event changes evidence and as_of_seq and wakes once
+  ---
+  duration_ms: 0.43075
+  type: 'test'
+  ...
+# Subtest: unchanged authorized state invokes the generator exactly zero times across 100 repetitions
+ok 4 - unchanged authorized state invokes the generator exactly zero times across 100 repetitions
+  ---
+  duration_ms: 3.991416
+  type: 'test'
+  ...
+# Subtest: unauthorized-only higher sequence changes neither evidence nor as_of_seq and invokes zero times
+ok 5 - unauthorized-only higher sequence changes neither evidence nor as_of_seq and invokes zero times
+  ---
+  duration_ms: 0.252417
+  type: 'test'
+  ...
+# Subtest: a source leak aborts with the R1 authorization error
+ok 6 - a source leak aborts with the R1 authorization error
+  ---
+  duration_ms: 0.290709
+  type: 'test'
+  ...
+# Subtest: report.generated cannot enter the R2 evidence set
+ok 7 - report.generated cannot enter the R2 evidence set
+  ---
+  duration_ms: 0.0945
+  type: 'test'
+  ...
+# Subtest: discriminating controls fail against naive all-visible max-sequence assembly
+ok 8 - discriminating controls fail against naive all-visible max-sequence assembly
+  ---
+  duration_ms: 0.087458
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.284583
+
+> engramport@0.1.0 report:correspondent:test
+> node --test tests/report-correspondent.test.mjs
+
+TAP version 13
+# Subtest: the checked-in claim manifest generates an inert, balanced lab-report draft
+ok 1 - the checked-in claim manifest generates an inert, balanced lab-report draft
+  ---
+  duration_ms: 189.367417
+  type: 'test'
+  ...
+# Subtest: a disclosed finding referenced in SECURITY.md is citable
+ok 2 - a disclosed finding referenced in SECURITY.md is citable
+  ---
+  duration_ms: 175.157625
+  type: 'test'
+  ...
+# Subtest: a disclosed finding absent from SECURITY.md is refused by finding id
+ok 3 - a disclosed finding absent from SECURITY.md is refused by finding id
+  ---
+  duration_ms: 156.042042
+  type: 'test'
+  ...
+# Subtest: an unfixed finding is refused and fixed status requires a canonical agent-a disposition
+ok 4 - an unfixed finding is refused and fixed status requires a canonical agent-a disposition
+  ---
+  duration_ms: 471.783625
+  type: 'test'
+  ...
+# Subtest: an untraceable event or artifact is refused
+ok 5 - an untraceable event or artifact is refused
+  ---
+  duration_ms: 293.860458
+  type: 'test'
+  ...
+# Subtest: a triumph-only report is a reporting defect
+ok 6 - a triumph-only report is a reporting defect
+  ---
+  duration_ms: 0.534458
+  type: 'test'
+  ...
+# Subtest: reviewer circulation is outside the manifest boundary
+ok 7 - reviewer circulation is outside the manifest boundary
+  ---
+  duration_ms: 0.280667
+  type: 'test'
+  ...
+# Subtest: publication preparation observes refusal without explicit digest-bound approval
+ok 8 - publication preparation observes refusal without explicit digest-bound approval
+  ---
+  duration_ms: 146.97575
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1504.225708
+
+> engramport@0.1.0 welcome:test
+> node --test tests/welcome-package.test.mjs
+
+TAP version 13
+# Subtest: valid package reports unchanged structural grant
+ok 1 - valid package reports unchanged structural grant
+  ---
+  duration_ms: 379.5805
+  type: 'test'
+  ...
+# Subtest: tampered part bytes
+ok 2 - tampered part bytes
+  ---
+  duration_ms: 496.457417
+  type: 'test'
+  ...
+# Subtest: missing part
+ok 3 - missing part
+  ---
+  duration_ms: 463.347875
+  type: 'test'
+  ...
+# Subtest: extra unlisted part
+ok 4 - extra unlisted part
+  ---
+  duration_ms: 464.085125
+  type: 'test'
+  ...
+# Subtest: unknown manifest field
+ok 5 - unknown manifest field
+  ---
+  duration_ms: 459.160958
+  type: 'test'
+  ...
+# Subtest: altered identity grant
+ok 6 - altered identity grant
+  ---
+  duration_ms: 460.031292
+  type: 'test'
+  ...
+# Subtest: valid signature over tampered part list
+ok 7 - valid signature over tampered part list
+  ---
+  duration_ms: 461.607083
+  type: 'test'
+  ...
+# Subtest: unknown signing key
+ok 8 - unknown signing key
+  ---
+  duration_ms: 456.4565
+  type: 'test'
+  ...
+# Subtest: revoked signing key
+ok 9 - revoked signing key
+  ---
+  duration_ms: 460.308125
+  type: 'test'
+  ...
+# Subtest: expired package
+ok 10 - expired package
+  ---
+  duration_ms: 471.027625
+  type: 'test'
+  ...
+# Subtest: revoked invitation
+ok 11 - revoked invitation
+  ---
+  duration_ms: 459.968125
+  type: 'test'
+  ...
+# Subtest: open invitation
+ok 12 - open invitation
+  ---
+  duration_ms: 461.17925
+  type: 'test'
+  ...
+# Subtest: invitation unknown field
+ok 13 - invitation unknown field
+  ---
+  duration_ms: 459.577708
+  type: 'test'
+  ...
+# Subtest: absent checkpoint
+ok 14 - absent checkpoint
+  ---
+  duration_ms: 473.893542
+  type: 'test'
+  ...
+# Subtest: inconsistent checkpoint chain
+ok 15 - inconsistent checkpoint chain
+  ---
+  duration_ms: 489.745292
+  type: 'test'
+  ...
+# Subtest: context role escalation
+ok 16 - context role escalation
+  ---
+  duration_ms: 386.390958
+  type: 'test'
+  ...
+# Subtest: operator impersonation
+ok 17 - operator impersonation
+  ---
+  duration_ms: 383.343875
+  type: 'test'
+  ...
+# Subtest: identity contradiction
+ok 18 - identity contradiction
+  ---
+  duration_ms: 376.276791
+  type: 'test'
+  ...
+# Subtest: welcome verify CLI reports grant and exits nonzero on violation
+ok 19 - welcome verify CLI reports grant and exits nonzero on violation
+  ---
+  duration_ms: 611.084542
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8741.459208
+
+> engramport@0.1.0 setup:test
+> node --test tests/workspace-setup*.test.mjs
+
+TAP version 13
+# Subtest: finite founder refuses non-expiring participant; both non-expiring is positive
+ok 1 - finite founder refuses non-expiring participant; both non-expiring is positive
+  ---
+  duration_ms: 2.343042
+  type: 'test'
+  ...
+# Subtest: finite owner refuses non-expiring agent; bounded agent is positive
+ok 2 - finite owner refuses non-expiring agent; bounded agent is positive
+  ---
+  duration_ms: 0.404917
+  type: 'test'
+  ...
+# Subtest: authorized founder assigns verified_human to human
+ok 3 - authorized founder assigns verified_human to human
+  ---
+  duration_ms: 0.237666
+  type: 'test'
+  ...
+# Subtest: participant cannot claim trust founder cannot assign
+ok 4 - participant cannot claim trust founder cannot assign
+  ---
+  duration_ms: 0.167625
+  type: 'test'
+  ...
+# Subtest: agent cannot receive verified_human even when founder can assign it
+ok 5 - agent cannot receive verified_human even when founder can assign it
+  ---
+  duration_ms: 0.515959
+  type: 'test'
+  ...
+# Subtest: unsupported trust elevation is refused
+ok 6 - unsupported trust elevation is refused
+  ---
+  duration_ms: 0.193125
+  type: 'test'
+  ...
+# Subtest: guest trust remains untrusted_agent
+ok 7 - guest trust remains untrusted_agent
+  ---
+  duration_ms: 0.249042
+  type: 'test'
+  ...
+# Subtest: schema rejects unknown fields with positive control
+ok 8 - schema rejects unknown fields with positive control
+  ---
+  duration_ms: 2.343375
+  type: 'test'
+  ...
+# Subtest: cyclic dependencies refused
+ok 9 - cyclic dependencies refused
+  ---
+  duration_ms: 0.460375
+  type: 'test'
+  ...
+# Subtest: unsatisfiable dependency refused
+ok 10 - unsatisfiable dependency refused
+  ---
+  duration_ms: 0.229667
+  type: 'test'
+  ...
+# Subtest: scope exceeding founder refused
+ok 11 - scope exceeding founder refused
+  ---
+  duration_ms: 0.187667
+  type: 'test'
+  ...
+# Subtest: grant outliving founder refused
+ok 12 - grant outliving founder refused
+  ---
+  duration_ms: 0.187584
+  type: 'test'
+  ...
+# Subtest: guest defaults enforced
+ok 13 - guest defaults enforced
+  ---
+  duration_ms: 0.32975
+  type: 'test'
+  ...
+# Subtest: agent scope exceeding owner refused
+ok 14 - agent scope exceeding owner refused
+  ---
+  duration_ms: 0.184125
+  type: 'test'
+  ...
+# Subtest: agent expiry exceeding owner refused
+ok 15 - agent expiry exceeding owner refused
+  ---
+  duration_ms: 0.165792
+  type: 'test'
+  ...
+# Subtest: unapproved GitHub permission refused
+ok 16 - unapproved GitHub permission refused
+  ---
+  duration_ms: 0.301917
+  type: 'test'
+  ...
+# Subtest: merge permission refused
+ok 17 - merge permission refused
+  ---
+  duration_ms: 0.4665
+  type: 'test'
+  ...
+# Subtest: self-asserted elevated trust refused
+ok 18 - self-asserted elevated trust refused
+  ---
+  duration_ms: 0.1835
+  type: 'test'
+  ...
+# Subtest: dependency order is stable and step digests are complete
+ok 19 - dependency order is stable and step digests are complete
+  ---
+  duration_ms: 0.971
+  type: 'test'
+  ...
+# Subtest: serialized plan reloads with stable portable identity
+ok 20 - serialized plan reloads with stable portable identity
+  ---
+  duration_ms: 0.303334
+  type: 'test'
+  ...
+# Subtest: comments and key order do not affect digests; material parameters do
+ok 21 - comments and key order do not affect digests; material parameters do
+  ---
+  duration_ms: 0.452958
+  type: 'test'
+  ...
+# Subtest: CLI compiles JSON-compatible workspace.setup.yaml
+ok 22 - CLI compiles JSON-compatible workspace.setup.yaml
+  ---
+  duration_ms: 54.745416
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 124.82325
+
+> engramport@0.1.0 watch:test
+> node --test tests/port-watch.test.mjs
+
+TAP version 13
+# Subtest: observation delivery cannot obtain a turn through the real consumer call site
+ok 1 - observation delivery cannot obtain a turn through the real consumer call site
+  ---
+  duration_ms: 1.650291
+  type: 'test'
+  ...
+# Subtest: checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected
+ok 2 - checkpoint range digest is recomputed from canonical bytes and poisoned state is rejected
+  ---
+  duration_ms: 0.403792
+  type: 'test'
+  ...
+# Subtest: checkpoint chain binds the prior checkpoint body digest
+ok 3 - checkpoint chain binds the prior checkpoint body digest
+  ---
+  duration_ms: 0.198375
+  type: 'test'
+  ...
+# Subtest: stable delivery id deduplicates the same canonical batch
+ok 4 - stable delivery id deduplicates the same canonical batch
+  ---
+  duration_ms: 0.102459
+  type: 'test'
+  ...
+# Subtest: unchanged authorized work set invokes runner exactly zero times across many ticks
+ok 5 - unchanged authorized work set invokes runner exactly zero times across many ticks
+  ---
+  duration_ms: 95.87825
+  type: 'test'
+  ...
+# Subtest: authorized addressed work wakes without project sequence or implementation-authority fields
+ok 6 - authorized addressed work wakes without project sequence or implementation-authority fields
+  ---
+  duration_ms: 2.843083
+  type: 'test'
+  ...
+# Subtest: waking grants exactly actor scopes and never supervisor scopes
+ok 7 - waking grants exactly actor scopes and never supervisor scopes
+  ---
+  duration_ms: 1.871333
+  type: 'test'
+  ...
+# Subtest: completion stores no position and an unanswered work item remains eligible at least once
+ok 8 - completion stores no position and an unanswered work item remains eligible at least once
+  ---
+  duration_ms: 4.309417
+  type: 'test'
+  ...
+# Subtest: reply-derived removal changes the set without a cursor mutation
+ok 9 - reply-derived removal changes the set without a cursor mutation
+  ---
+  duration_ms: 4.41725
+  type: 'test'
+  ...
+# Subtest: disposable cache is keyed to log state and deletion changes load count, never the set
+ok 10 - disposable cache is keyed to log state and deletion changes load count, never the set
+  ---
+  duration_ms: 1.722334
+  type: 'test'
+  ...
+# Subtest: changed log state cannot reuse a stale cached work set
+ok 11 - changed log state cannot reuse a stale cached work set
+  ---
+  duration_ms: 0.997583
+  type: 'test'
+  ...
+# Subtest: concurrent ticks reserve one invocation slot before either runner call
+ok 12 - concurrent ticks reserve one invocation slot before either runner call
+  ---
+  duration_ms: 2.2595
+  type: 'test'
+  ...
+# Subtest: separate PortWatch and store instances sharing a claim root still invoke once
+ok 13 - separate PortWatch and store instances sharing a claim root still invoke once
+  ---
+  duration_ms: 2.088041
+  type: 'test'
+  ...
+# Subtest: lease expiry permits explicit at-least-once redelivery
+ok 14 - lease expiry permits explicit at-least-once redelivery
+  ---
+  duration_ms: 3.937667
+  type: 'test'
+  ...
+# Subtest: legacy active run requires explicit expiry before log-derived migration
+ok 15 - legacy active run requires explicit expiry before log-derived migration
+  ---
+  duration_ms: 2.875166
+  type: 'test'
+  ...
+# Subtest: inactive legacy cursor is ignored and removed rather than imported
+ok 16 - inactive legacy cursor is ignored and removed rather than imported
+  ---
+  duration_ms: 1.66525
+  type: 'test'
+  ...
+# Subtest: rewind is unavailable because position is derived from the log
+ok 17 - rewind is unavailable because position is derived from the log
+  ---
+  duration_ms: 0.21925
+  type: 'test'
+  ...
+# Subtest: off by default, pause, and stop each block new wakes
+ok 18 - off by default, pause, and stop each block new wakes
+  ---
+  duration_ms: 4.15675
+  type: 'test'
+  ...
+# Subtest: stop revokes an active local claim
+ok 19 - stop revokes an active local claim
+  ---
+  duration_ms: 2.261458
+  type: 'test'
+  ...
+# Subtest: decision function is deterministic and has no cursor input
+ok 20 - decision function is deterministic and has no cursor input
+  ---
+  duration_ms: 0.08125
+  type: 'test'
+  ...
+# Subtest: cadence defaults to 240 and bounded jitter never skips tick
+ok 21 - cadence defaults to 240 and bounded jitter never skips tick
+  ---
+  duration_ms: 0.063292
+  type: 'test'
+  ...
+# Subtest: unbranded broad inbox source is structurally refused
+ok 22 - unbranded broad inbox source is structurally refused
+  ---
+  duration_ms: 0.295
+  type: 'test'
+  ...
+# Subtest: claim file contains only local WIP state, never a delivery position
+ok 23 - claim file contains only local WIP state, never a delivery position
+  ---
+  duration_ms: 1.5885
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 202.632959
+
+> engramport@0.1.0 session:test
+> node --test tests/workspace-session.test.mjs tests/workspace-oidc-verifier.test.mjs tests/workspace-oidc-client.test.mjs tests/workspace-oidc-durable.test.mjs tests/workspace-oidc-provider.test.mjs
+
+TAP version 13
+# W1_1_OIDC_CLIENT auth_start configured=true unique=true pkce=S256
+# W1_1_OIDC_CLIENT transaction positive=accepted expired=OIDC_TRANSACTION_EXPIRED retained=0
+# W1_1_OIDC_CLIENT callback positive=accepted mismatch=OIDC_STATE_REFUSED redirect=OIDC_REDIRECT_URI_REFUSED replay=OIDC_STATE_REFUSED retained=0/0/0/0
+# W1_1_OIDC_CLIENT composition status=active postgres_creates=1 asserted_ignored=true identity_absent=true
+# W1_1_OIDC_CLIENT binder surface=principal_id identity_absent=true
+# Subtest: auth-start
+ok 1 - auth-start
+  ---
+  duration_ms: 3.808792
+  type: 'test'
+  ...
+# Subtest: transaction-state
+ok 2 - transaction-state
+  ---
+  duration_ms: 0.770833
+  type: 'test'
+  ...
+# Subtest: callback
+ok 3 - callback
+  ---
+  duration_ms: 0.6445
+  type: 'test'
+  ...
+# Subtest: composition-store
+ok 4 - composition-store
+  ---
+  duration_ms: 0.982542
+  type: 'test'
+  ...
+# Subtest: binder
+ok 5 - binder
+  ---
+  duration_ms: 0.4875
+  type: 'test'
+  ...
+# Subtest: route
+not ok 6 - route
+  ---
+  duration_ms: 7.125125
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: same-name
+not ok 7 - same-name
+  ---
+  duration_ms: 2.44525
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: restart
+not ok 8 - restart
+  ---
+  duration_ms: 0.67875
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: atomic
+not ok 9 - atomic
+  ---
+  duration_ms: 0.524709
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: expiry
+not ok 10 - expiry
+  ---
+  duration_ms: 0.561708
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: cleanup
+not ok 11 - cleanup
+  ---
+  duration_ms: 0.472417
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# Subtest: redaction
+not ok 12 - redaction
+  ---
+  duration_ms: 0.467042
+  type: 'test'
+  location: '/Users/an2b/an2b/products/EngramPORT-kit/tests/workspace-oidc-durable.test.mjs:18:50'
+  failureType: 'uncaughtException'
+  error: 'listen EPERM: operation not permitted 127.0.0.1'
+  code: 'EPERM'
+  stack: |-
+    Server.setupListenHandle [as _listen2] (node:net:1919:21)
+    listenInCluster (node:net:1998:12)
+    node:net:2207:7
+    process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+  ...
+# W1_1_OIDC_PROVIDER discovery issuer=true hosts=accounts.google.com,oauth2.googleapis.com,www.googleapis.com auth_path=/o/oauth2/v2/auth mismatch=OIDC_DISCOVERY_ISSUER_REFUSED unresolved=OIDC_CLIENT_SECRET_UNRESOLVED before_fetch=true
+# W1_1_OIDC_PROVIDER jwks first=a overlap=b unknown=c disappeared=OIDC_KEY_NOT_FOUND expired_refresh=d kids=c,d
+# W1_1_OIDC_PROVIDER exchange id_only=id_token verifier=true client=true negative=OIDC_CLIENT_REFUSED retained=0/0
+# W1_1_OIDC_PROVIDER azp positive=accepted foreign=OIDC_AUTHORIZED_PARTY_REFUSED
+# W1_1_OIDC_PROVIDER subject surface=iss,sub issuer=true value=recorded-synthetic-sub
+# Subtest: discovery
+ok 13 - discovery
+  ---
+  duration_ms: 16.390625
+  type: 'test'
+  ...
+# Subtest: jwks-lifecycle
+ok 14 - jwks-lifecycle
+  ---
+  duration_ms: 98.923583
+  type: 'test'
+  ...
+# Subtest: exchange
+ok 15 - exchange
+  ---
+  duration_ms: 0.433709
+  type: 'test'
+  ...
+# Subtest: azp
+ok 16 - azp
+  ---
+  duration_ms: 20.881667
+  type: 'test'
+  ...
+# Subtest: subject
+ok 17 - subject
+  ---
+  duration_ms: 0.140333
+  type: 'test'
+  ...
+# W1_1_OIDC signature positive=accepted negative=OIDC_SIGNATURE_REFUSED
+# W1_1_OIDC rotation positive=accepted negative=OIDC_KEY_RETIRED
+# W1_1_OIDC alg-none positive=accepted negative=OIDC_ALGORITHM_NONE_REFUSED
+# W1_1_OIDC alg-hs256 positive=accepted negative=OIDC_ALGORITHM_CONFUSION_REFUSED
+# W1_1_OIDC issuer positive=accepted negative=OIDC_ISSUER_REFUSED
+# W1_1_OIDC audience positive=accepted negative=OIDC_AUDIENCE_REFUSED
+# W1_1_OIDC expiry positive=accepted negative=OIDC_EXPIRED
+# W1_1_OIDC nonce positive=accepted negative=OIDC_NONCE_REFUSED
+# W1_1_OIDC claims-surface positive=aud,exp,iss,nonce,sub negative=absent
+# W1_1_OIDC retention positive=cleared negative=cleared
+# Subtest: signature
+ok 18 - signature
+  ---
+  duration_ms: 2.444875
+  type: 'test'
+  ...
+# Subtest: rotation
+ok 19 - rotation
+  ---
+  duration_ms: 0.990583
+  type: 'test'
+  ...
+# Subtest: alg-none
+ok 20 - alg-none
+  ---
+  duration_ms: 0.453917
+  type: 'test'
+  ...
+# Subtest: alg-hs256
+ok 21 - alg-hs256
+  ---
+  duration_ms: 0.541792
+  type: 'test'
+  ...
+# Subtest: issuer
+ok 22 - issuer
+  ---
+  duration_ms: 0.967584
+  type: 'test'
+  ...
+# Subtest: audience
+ok 23 - audience
+  ---
+  duration_ms: 0.833334
+  type: 'test'
+  ...
+# Subtest: expiry
+ok 24 - expiry
+  ---
+  duration_ms: 0.798167
+  type: 'test'
+  ...
+# Subtest: nonce
+ok 25 - nonce
+  ---
+  duration_ms: 0.731125
+  type: 'test'
+  ...
+# Subtest: claims-surface
+ok 26 - claims-surface
+  ---
+  duration_ms: 1.16375
+  type: 'test'
+  ...
+# Subtest: retention
+ok 27 - retention
+  ---
+  duration_ms: 0.982875
+  type: 'test'
+  ...
+# Subtest: session binds authenticated founder with narrowed scopes and absolute expiry
+ok 28 - session binds authenticated founder with narrowed scopes and absolute expiry
+  ---
+  duration_ms: 1.240584
+  type: 'test'
+  ...
+# Subtest: approved step executes only within its live session
+ok 29 - approved step executes only within its live session
+  ---
+  duration_ms: 1.818541
+  type: 'test'
+  ...
+# Subtest: completion structurally removes identity, delegation, approval, and credential
+ok 30 - completion structurally removes identity, delegation, approval, and credential
+  ---
+  duration_ms: 0.509375
+  type: 'test'
+  ...
+# Subtest: expired session refuses approved execution and leaves no identity
+ok 31 - expired session refuses approved execution and leaves no identity
+  ---
+  duration_ms: 0.264958
+  type: 'test'
+  ...
+# Subtest: untouched expired delegation is swept while an untouched live session remains counted
+ok 32 - untouched expired delegation is swept while an untouched live session remains counted
+  ---
+  duration_ms: 0.6045
+  type: 'test'
+  ...
+# Subtest: torn-down session cannot authorize and replayed approval is refused
+ok 33 - torn-down session cannot authorize and replayed approval is refused
+  ---
+  duration_ms: 0.252417
+  type: 'test'
+  ...
+# Subtest: approval from session A cannot execute under session B
+ok 34 - approval from session A cannot execute under session B
+  ---
+  duration_ms: 0.288084
+  type: 'test'
+  ...
+# Subtest: scope and expiry ceilings reuse W0 predicates
+ok 35 - scope and expiry ceilings reuse W0 predicates
+  ---
+  duration_ms: 0.105458
+  type: 'test'
+  ...
+# Subtest: non-setup scope and unbounded session are refused
+ok 36 - non-setup scope and unbounded session are refused
+  ---
+  duration_ms: 0.353375
+  type: 'test'
+  ...
+# Subtest: abandonment leaves no partial authority
+ok 37 - abandonment leaves no partial authority
+  ---
+  duration_ms: 0.381791
+  type: 'test'
+  ...
+# Subtest: state machine is deterministic under injected clock and ids
+ok 38 - state machine is deterministic under injected clock and ids
+  ---
+  duration_ms: 0.4055
+  type: 'test'
+  ...
+# Subtest: authenticator returns identity only and fixture credential is never stored
+ok 39 - authenticator returns identity only and fixture credential is never stored
+  ---
+  duration_ms: 0.056625
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 32
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 237.516375
