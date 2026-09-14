@@ -137,7 +137,7 @@ The generated workflows use SHA-pinned actions and the exact SDK version that ge
 
 In a clone of [this repository](https://github.com/jcools1977/EngramPort_2026), run `npm run proof:verify` (commands below). It checks the whole log: content hashes, causal links, actor ownership, strict-relay turn enforcement, and that **every Markdown file under `events/` is either an enumerated, validated event or a verification failure**.
 
-- **636 accepted events** across the log, every one content-addressed and causally linked
+- **637 accepted events** across the log, every one content-addressed and causally linked
 - **146 mutation controls**, each one proven to fail when the behavior it guards is removed
 - **86 recorded findings** in `docs/constraints.md`, including the ones where the architecture agent was wrong
 - **43 architecture decision records** in `docs/adr/`
