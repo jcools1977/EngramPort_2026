@@ -1,0 +1,129 @@
+SELECT win32 {"cmd":"powershell.exe","args":["-NoProfile","-NonInteractive","-Command","Add-Type -AssemblyName System.Windows.Forms;$n=New-Object System.Windows.Forms.NotifyIcon;try {$n.Icon=[System.Drawing.SystemIcons]::Information;$n.Visible=$true;$n.ShowBalloonTip(10000,'LEX','untrusted $(touch nope) '' text','Info');Start-Sleep -Seconds 6} finally {$n.Dispose()}"]}
+SELECT darwin {"cmd":"osascript","args":["-e","display notification \"untrusted $(touch nope) ' text\" with title \"LEX\""]}
+SELECT linux {"cmd":"notify-send","args":["LEX","untrusted $(touch nope) ' text"]}
+NOTIFY_LOG_ONLY synthetic turn
+NO TURN: 2026-09-14T13:39:35.048Z QUIET no open turn
+✔ selectors execute each platform value and unsupported fallback logs (1.151334ms)
+TURN: execution shim called once across two passes; ["osascript","-e","display notification \"Turn for nick: synthetic from john\" with title \"LEX\""]
+READ ONLY git status --porcelain=v1 / git rev-parse HEAD: {"before":{"status":"?? coordination/uncommitted.txt\n","revision":"8145bd45afd99372b4cbfc82bd644df9eb94cf23\n"},"after":{"status":"?? coordination/uncommitted.txt\n","revision":"8145bd45afd99372b4cbfc82bd644df9eb94cf23\n"}}
+✔ SDK inbox, execution shim, deduplication, quiet pass, STOP, and unchanged dirty checkout (708.914333ms)
+MUTATION detected: duplicate notification count 2; fixed observer requires 1
+✔ discriminating mutation: removing seen filter causes duplicate stub calls (449.357375ms)
+2026-09-14T13:39:36.211Z NOTIFY_BANNER_UNAVAILABLE osascript: Turn for nick: failure from john
+2026-09-14T13:39:36.212Z PENDING 1 NEW 1
+LEX_REPO-only notifier: 2026-09-14T13:39:36.439Z QUIET no open turn
+✔ failing execution shim logs banner unavailable (280.905709ms)
+✔ notifier accepts LEX_REPO alone from filesystem root (222.171875ms)
+REPLY next=john, from=nick, parent=01a0a025-0137-7d5e-88f1-4ef3650c8428, verbatim+trailer=true, SDK verify=0; publication stubbed
+✔ recorded login becomes verified reply, defaults to sender, and replay refuses (364.873584ms)
+REPLY next=nick, from=nick, parent=01a0a025-029c-7b02-b9a2-7244905696b6, verbatim+trailer=true, SDK verify=0; publication stubbed
+✔ explicit next and explicit reply select the named open turn (266.694625ms)
+FOREIGN: original turn remains open, zero git calls, gh refusal=[{"cmd":"gh","args":["issue","comment","42","--repo","synthetic/private","--body","Reply refused for comment 991: commenter does not match the recorded human login"]}]
+✔ foreign login has no event and visible issue refusal (111.532875ms)
+MUTATION: identity bypass appended a reply; unchanged foreign-login observer rejected it.
+✔ identity bypass mutation is killed by the same foreign-login observer (217.527583ms)
+REFUSAL ambiguous: Reply refused for comment 991: name exactly one currently open issue turn with reply: EVENT_ID
+REFUSAL stale: Reply refused for comment 991: name exactly one currently open issue turn with reply: EVENT_ID
+REFUSAL next: Reply refused for comment 991: next must name a registered actor
+REFUSAL nonhuman: Reply refused for comment 991: commenter does not match the recorded human login
+CRLF extraction and contract passed: lex-replies
+✔ ambiguous, stale, invalid next and nonhuman cases refuse without publication (462.197166ms)
+✔ private authenticated checkout, permissions, pinned SDK, and payload isolation (1.214417ms)
+REPLY next=john, from=nick, parent=01a0a025-06c3-78ac-b973-38d92d133793, verbatim+trailer=true, SDK verify=0; publication stubbed
+DIRECTIVE CASE body="Reply: This is ordinary English.\nNext: Another paragraph.\n\nGitHub authorship binding: synthetic/private#42; comment 991; login nep1019.\n" trace=[{"cmd":"git","args":["add","--","events/nick/20260914T133936Z_01a0a025-06f2-7747-b038-77423c6fc7e6.md"]},{"cmd":"git","args":["-c","user.name=github-actions[bot]","-c","user.email=41898282+github-actions[bot]@users.noreply.github.com","commit","-m","coordination: reply to issue #42 comment 991"]},{"cmd":"git","args":["push","origin","HEAD:main"]},{"cmd":"gh","args":["issue","comment","42","--repo","synthetic/private","--body","Recorded comment 991 as coordination/events/nick/20260914T133936Z_01a0a025-06f2-7747-b038-77423c6fc7e6.md."]}]
+✔ ordinary Reply paragraph remains body text (252.841708ms)
+PUBLICATION fail=true exit=1 trace=[{"cmd":"git","args":["add","--","events/nick/20260914T133936Z_01a0a025-07dd-7d8d-a332-5709d3689607.md"]},{"cmd":"git","args":["-c","user.name=github-actions[bot]","-c","user.email=41898282+github-actions[bot]@users.noreply.github.com","commit","-m","coordination: reply to issue #42 comment 991"]},{"cmd":"git","args":["push","origin","HEAD:main"]},{"cmd":"gh","args":["issue","comment","42","--repo","synthetic/private","--body","Not recorded for comment 991: Command failed: /opt/homebrew/Cellar/node/26.8.2/bin/node /var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-replies-yzXVZZ/shim.cjs git push origin HEAD:main\nsynthetic push rejected\n. Comment again."]}]
+PUBLICATION fail=false exit=0 trace=[{"cmd":"git","args":["add","--","events/nick/20260914T133936Z_01a0a025-0893-76c6-b4e6-85b697ad3439.md"]},{"cmd":"git","args":["-c","user.name=github-actions[bot]","-c","user.email=41898282+github-actions[bot]@users.noreply.github.com","commit","-m","coordination: reply to issue #42 comment 991"]},{"cmd":"git","args":["push","origin","HEAD:main"]},{"cmd":"gh","args":["issue","comment","42","--repo","synthetic/private","--body","Recorded comment 991 as coordination/events/nick/20260914T133936Z_01a0a025-0893-76c6-b4e6-85b697ad3439.md."]}]
+✔ push failure comments Not recorded and exits nonzero; success comments Recorded (368.816708ms)
+repo: INBOX cwd=/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-VHkXp3/repo path=coordination/events
+REFUSED no-open-turn-for-actor
+location: INBOX cwd=/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-we4iRy/repo path=coordination/events
+REFUSED no-open-turn-for-actor
+override: INBOX cwd=/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-sA2pNY/repo path=coordination/events
+REFUSED no-open-turn-for-actor
+REFUSED no actor record for nick-agent at /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-6AgRpY/missing/actors/nick-agent.yaml
+MUTATION killed: cwd fallback fails repo-only and own-location observers
+DEFAULTS actor=nick-agent branch=main timeout=900 max_runs=6 max_thread=8 window=3600; Node-only prefixes and args match README
+✔ runner directory resolution from filesystem root: repo (54.077625ms)
+✔ runner directory resolution from filesystem root: location (47.364916ms)
+✔ runner directory resolution from filesystem root: override (46.556416ms)
+✔ LEX_DIR missing actor refuses with the resolved path despite valid LEX_REPO (46.642583ms)
+✔ original cwd fallback mutation fails the same observer (90.322292ms)
+✔ README shared defaults match values read from both runners; Node controls are explicit (1.175875ms)
+/bin/sh -n bin/lex-run-loop: exit 0
+/bin/bash -n bin/lex-run-loop: exit 0
+run Node trace: ["node:/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex loop AsW1CU/bin/lex-run.mjs","sleep:1"]; fallback trace: ["bash","sleep:1"]
+run: forced Bash mutation rejected; restored Node selection passed
+plutil -lint: /Users/an2b/an2b/products/lex-service-pr3/coordination/deploy/com.lex.run.plist.example: OK
+/bin/sh -n bin/lex-notify-loop: exit 0
+/bin/bash -n bin/lex-notify-loop: exit 0
+notify Node trace: ["node:/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex loop bH5Tqr/bin/lex-notify.mjs","sleep:1"]; fallback trace: ["bash","sleep:1"]
+notify: forced Bash mutation rejected; restored Node selection passed
+plutil -lint: /Users/an2b/an2b/products/lex-service-pr3/coordination/deploy/com.lex.notify.plist.example: OK
+/bin/bash -n bin/lex-run: exit 2
+bin/lex-run: line 149: unexpected EOF while looking for matching `)'
+bin/lex-run: line 243: syntax error: unexpected end of file
+✔ run loop parses in system sh and bash (14.440875ms)
+✔ run loop selects Node or Bash fallback and reaches sleep after failure (571.173ms)
+✔ run Node selection observer rejects forced Bash fallback mutation (504.127167ms)
+✔ run macOS plist has the launchd PATH and passes plutil (7.29875ms)
+✔ notify loop parses in system sh and bash (5.948708ms)
+✔ notify loop selects Node or Bash fallback and reaches sleep after failure (529.385083ms)
+✔ notify Node selection observer rejects forced Bash fallback mutation (499.59075ms)
+✔ notify macOS plist has the launchd PATH and passes plutil (6.545208ms)
+✔ macOS Bash 3.2 reproduces the Bash runner parse failure (4.007667ms)
+REPO      /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-pr2-OBYHdc/repo
+DIR       /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-pr2-OBYHdc/repo/coordination
+REL       "coordination/"
+PREFIXES  events/nick-agent, artifacts/nick-agent
+
+planted OUTSIDE coordination/: lexprov/REPRO_ROGUE_WRITE.txt
+planted INSIDE  coordination/: coordination/events/nick-agent/REPRO_EVENT.md
+
+git sees the rogue write: YES
+the check inspects:  ["events/nick-agent/REPRO_EVENT.md"]
+wroteOutsideAllowedPrefixes -> false
+publishedEvent              -> true
+
+decideTurnAfter -> {"allowed":true,"refusal":null}
+
+RESULT: the run proceeds to `git add -A` at the repository root.
+        The rogue write is committed and pushed. The bound never saw it.
+
+control, same decision with the honest input:
+  decideTurnAfter({wroteOutsideAllowedPrefixes:true}) -> {"allowed":false,"refusal":"write-outside-allowed-prefixes"}
+
+cleaned up 2 file(s); nothing staged, committed or pushed.
+
+FIXED wroteOutsideAllowedPrefixes -> true; decideTurnAfter -> {"allowed":false,"refusal":"write-outside-allowed-prefixes"}; rogue reverted=true; tree clean=true; no publication commands
+UNFIXED wroteOutsideAllowedPrefixes -> false; allowed=true; rogue retained; publication calls intercepted; mutation killed; restored source passed
+✔ Nick's unchanged reproduction observes the unfixed port's false input and allowed verdict (177.835875ms)
+✔ real runner reaches the bound, reverts Nick's rogue file, and restores the default sandbox (197.838209ms)
+✔ Nick's verbatim unfixed caller mutation is detected by the same runner observer (365.449583ms)
+✔ allowed event remains allowed and configurable arguments still work (171.481ms)
+✔ outside prefix lookalikes and unusual filenames are refused (780.828667ms)
+✔ a staged rename from outside into an allowed prefix retains its outside source (165.031708ms)
+ACTOR github=false: init=0 append.ok=true verify=0 ✓ verified 1 events across 1 thread(s) and 1 actors
+ACTOR github=true: init=0 append.ok=true verify=0 ✓ verified 1 events across 1 thread(s) and 1 actors
+GH RECORDED CALLS [["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","create","--repo","synthetic/repository","--title","Your turn: john","--body","Open EngramPort turns for @jcools1977:\n\n- `coordination/events/nick/turn-three.md`\n\nComment here to reply. If several turns are listed, include reply: EVENT_ID. Optional next: ACTOR_SLUG selects the next actor. This issue follows the open inbox on pushes to main.","--assignee","jcools1977"],["issue","create","--repo","synthetic/repository","--title","Your turn: nick","--body","Open EngramPort turns for @nep1019:\n\n- `coordination/events/john/turn-one.md`\n- `coordination/events/john/turn-two.md`\n\nComment here to reply. If several turns are listed, include reply: EVENT_ID. Optional next: ACTOR_SLUG selects the next actor. This issue follows the open inbox on pushes to main.","--assignee","nep1019"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","edit","2","--repo","synthetic/repository","--body","Open EngramPort turns for @nep1019:\n\n- `coordination/events/john/turn-two.md`\n\nComment here to reply. If several turns are listed, include reply: EVENT_ID. Optional next: ACTOR_SLUG selects the next actor. This issue follows the open inbox on pushes to main.","--add-assignee","nep1019"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","close","2","--repo","synthetic/repository"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","close","1","--repo","synthetic/repository"]]
+REFUSAL SYNTHETIC_INBOX_REFUSED nick
+REFUSAL Unexpected inbox output for nick
+REFUSAL Invalid github login in john.yaml
+MUTATION: 4 issues after two passes; fixed observer requires 2. Detected.
+CRLF extraction and contract passed: lex-turns
+✔ SDK scaffold verifies and appends both with and without github metadata (196.785292ms)
+✔ workflow logic creates per human seat, updates without duplicates, skips unchanged and closes clear seats (794.018959ms)
+✔ failed or malformed inbox refuses before gh; malformed github refuses (220.298375ms)
+✔ same observer detects mutation bypassing existing issue selection (369.93025ms)
+✔ workflow permission, trigger, token and locked install contract (1.579333ms)
+ATTRIBUTE CONTROL: 48 paths protected; removed, empty, events-only, text-enabled, and markdown-only mutations rejected; restored rule passes
+✔ coordination attributes protect every tracked event and artifact plus future nested files (28.223542ms)
+✔ same log observer rejects removed, narrowed, and text-enabled attribute mutations (125.646833ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2225.286333

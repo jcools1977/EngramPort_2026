@@ -1,0 +1,454 @@
+SELECT win32 {"cmd":"powershell.exe","args":["-NoProfile","-NonInteractive","-Command","Add-Type -AssemblyName System.Windows.Forms;$n=New-Object System.Windows.Forms.NotifyIcon;try {$n.Icon=[System.Drawing.SystemIcons]::Information;$n.Visible=$true;$n.ShowBalloonTip(10000,'LEX','untrusted $(touch nope) '' text','Info');Start-Sleep -Seconds 6} finally {$n.Dispose()}"]}
+SELECT darwin {"cmd":"osascript","args":["-e","display notification \"untrusted $(touch nope) ' text\" with title \"LEX\""]}
+SELECT linux {"cmd":"notify-send","args":["LEX","untrusted $(touch nope) ' text"]}
+NOTIFY_LOG_ONLY synthetic turn
+NO TURN: 2026-09-14T13:38:55.842Z QUIET no open turn
+✔ selectors execute each platform value and unsupported fallback logs (1.073709ms)
+TURN: execution shim called once across two passes; ["osascript","-e","display notification \"Turn for nick: synthetic from john\" with title \"LEX\""]
+READ ONLY git status --porcelain=v1 / git rev-parse HEAD: {"before":{"status":"?? coordination/uncommitted.txt\n","revision":"d747be6e029bb753f7b3bdc7c40455d5944e7557\n"},"after":{"status":"?? coordination/uncommitted.txt\n","revision":"d747be6e029bb753f7b3bdc7c40455d5944e7557\n"}}
+✔ SDK inbox, execution shim, deduplication, quiet pass, STOP, and unchanged dirty checkout (598.679833ms)
+MUTATION detected: duplicate notification count 2; fixed observer requires 1
+✔ discriminating mutation: removing seen filter causes duplicate stub calls (399.936ms)
+2026-09-14T13:38:56.872Z NOTIFY_BANNER_UNAVAILABLE osascript: Turn for nick: failure from john
+2026-09-14T13:38:56.876Z PENDING 1 NEW 1
+LEX_REPO-only notifier: 2026-09-14T13:38:57.091Z QUIET no open turn
+✔ failing execution shim logs banner unavailable (253.300417ms)
+✔ notifier accepts LEX_REPO alone from filesystem root (200.560417ms)
+✖ recorded login becomes verified reply, defaults to sender, and replay refuses (33.395375ms)
+✖ explicit next and explicit reply select the named open turn (29.993416ms)
+✖ foreign login has no event and visible issue refusal (30.54025ms)
+✖ identity bypass mutation is killed by the same foreign-login observer (29.119ms)
+✖ ambiguous, stale, invalid next and nonhuman cases refuse without publication (29.586583ms)
+✖ private authenticated checkout, permissions, pinned SDK, and payload isolation (0.989833ms)
+✖ ordinary Reply paragraph remains body text (30.561792ms)
+✖ push failure comments Not recorded and exits nonzero; success comments Recorded (27.439875ms)
+repo: INBOX cwd=/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-p0lMq5/repo path=coordination/events
+REFUSED no-open-turn-for-actor
+location: INBOX cwd=/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-W6KBqX/repo path=coordination/events
+REFUSED no-open-turn-for-actor
+override: INBOX cwd=/private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-99UqOY/repo path=coordination/events
+REFUSED no-open-turn-for-actor
+REFUSED no actor record for nick-agent at /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-env-8RkzdJ/missing/actors/nick-agent.yaml
+MUTATION killed: cwd fallback fails repo-only and own-location observers
+DEFAULTS actor=nick-agent branch=main timeout=900 max_runs=6 max_thread=8 window=3600; Node-only prefixes and args match README
+✔ runner directory resolution from filesystem root: repo (45.493791ms)
+✔ runner directory resolution from filesystem root: location (38.905792ms)
+✔ runner directory resolution from filesystem root: override (42.618542ms)
+✔ LEX_DIR missing actor refuses with the resolved path despite valid LEX_REPO (41.029791ms)
+✔ original cwd fallback mutation fails the same observer (75.349375ms)
+✔ README shared defaults match values read from both runners; Node controls are explicit (1.059833ms)
+/bin/sh -n bin/lex-run-loop: exit 0
+/bin/bash -n bin/lex-run-loop: exit 0
+run Node trace: ["node:/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex loop PCQ7Fe/bin/lex-run.mjs","sleep:1"]; fallback trace: ["bash","sleep:1"]
+run: forced Bash mutation rejected; restored Node selection passed
+plutil -lint: /Users/an2b/an2b/products/lex-service-pr3/coordination/deploy/com.lex.run.plist.example: OK
+/bin/sh -n bin/lex-notify-loop: exit 0
+/bin/bash -n bin/lex-notify-loop: exit 0
+notify Node trace: ["node:/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex loop LuTGzM/bin/lex-notify.mjs","sleep:1"]; fallback trace: ["bash","sleep:1"]
+notify: forced Bash mutation rejected; restored Node selection passed
+plutil -lint: /Users/an2b/an2b/products/lex-service-pr3/coordination/deploy/com.lex.notify.plist.example: OK
+/bin/bash -n bin/lex-run: exit 2
+bin/lex-run: line 149: unexpected EOF while looking for matching `)'
+bin/lex-run: line 243: syntax error: unexpected end of file
+✔ run loop parses in system sh and bash (8.513ms)
+✔ run loop selects Node or Bash fallback and reaches sleep after failure (650.444417ms)
+✔ run Node selection observer rejects forced Bash fallback mutation (517.021416ms)
+✔ run macOS plist has the launchd PATH and passes plutil (8.001875ms)
+✔ notify loop parses in system sh and bash (5.613708ms)
+✔ notify loop selects Node or Bash fallback and reaches sleep after failure (505.913584ms)
+✔ notify Node selection observer rejects forced Bash fallback mutation (538.561292ms)
+✔ notify macOS plist has the launchd PATH and passes plutil (13.924292ms)
+✔ macOS Bash 3.2 reproduces the Bash runner parse failure (7.521292ms)
+REPO      /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-pr2-RHW7nM/repo
+DIR       /private/var/folders/n_/dfsqwnt95498qcjqzznwvvhr0000gn/T/lex-pr2-RHW7nM/repo/coordination
+REL       "coordination/"
+PREFIXES  events/nick-agent, artifacts/nick-agent
+
+planted OUTSIDE coordination/: lexprov/REPRO_ROGUE_WRITE.txt
+planted INSIDE  coordination/: coordination/events/nick-agent/REPRO_EVENT.md
+
+git sees the rogue write: YES
+the check inspects:  ["events/nick-agent/REPRO_EVENT.md"]
+wroteOutsideAllowedPrefixes -> false
+publishedEvent              -> true
+
+decideTurnAfter -> {"allowed":true,"refusal":null}
+
+RESULT: the run proceeds to `git add -A` at the repository root.
+        The rogue write is committed and pushed. The bound never saw it.
+
+control, same decision with the honest input:
+  decideTurnAfter({wroteOutsideAllowedPrefixes:true}) -> {"allowed":false,"refusal":"write-outside-allowed-prefixes"}
+
+cleaned up 2 file(s); nothing staged, committed or pushed.
+
+FIXED wroteOutsideAllowedPrefixes -> true; decideTurnAfter -> {"allowed":false,"refusal":"write-outside-allowed-prefixes"}; rogue reverted=true; tree clean=true; no publication commands
+UNFIXED wroteOutsideAllowedPrefixes -> false; allowed=true; rogue retained; publication calls intercepted; mutation killed; restored source passed
+✔ Nick's unchanged reproduction observes the unfixed port's false input and allowed verdict (127.441334ms)
+✔ real runner reaches the bound, reverts Nick's rogue file, and restores the default sandbox (177.140791ms)
+✔ Nick's verbatim unfixed caller mutation is detected by the same runner observer (322.874292ms)
+✔ allowed event remains allowed and configurable arguments still work (151.278209ms)
+✔ outside prefix lookalikes and unusual filenames are refused (684.913167ms)
+✔ a staged rename from outside into an allowed prefix retains its outside source (143.277ms)
+GH RECORDED CALLS [["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","create","--repo","synthetic/repository","--title","Your turn: john","--body","Open EngramPort turns for @jcools1977:\n\n- `coordination/events/nick/turn-three.md`\n\nComment here to reply. If several turns are listed, include reply: EVENT_ID. Optional next: ACTOR_SLUG selects the next actor. This issue follows the open inbox on pushes to main.","--assignee","jcools1977"],["issue","create","--repo","synthetic/repository","--title","Your turn: nick","--body","Open EngramPort turns for @nep1019:\n\n- `coordination/events/john/turn-one.md`\n- `coordination/events/john/turn-two.md`\n\nComment here to reply. If several turns are listed, include reply: EVENT_ID. Optional next: ACTOR_SLUG selects the next actor. This issue follows the open inbox on pushes to main.","--assignee","nep1019"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","edit","2","--repo","synthetic/repository","--body","Open EngramPort turns for @nep1019:\n\n- `coordination/events/john/turn-two.md`\n\nComment here to reply. If several turns are listed, include reply: EVENT_ID. Optional next: ACTOR_SLUG selects the next actor. This issue follows the open inbox on pushes to main.","--add-assignee","nep1019"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","close","2","--repo","synthetic/repository"],["api","--method","GET","--paginate","--slurp","repos/synthetic/repository/issues?state=open&per_page=100"],["issue","close","1","--repo","synthetic/repository"]]
+REFUSAL SYNTHETIC_INBOX_REFUSED nick
+REFUSAL Unexpected inbox output for nick
+REFUSAL Invalid github login in john.yaml
+MUTATION: 4 issues after two passes; fixed observer requires 2. Detected.
+CRLF extraction and contract passed: lex-turns
+✖ SDK scaffold verifies and appends both with and without github metadata (30.390709ms)
+✔ workflow logic creates per human seat, updates without duplicates, skips unchanged and closes clear seats (724.524291ms)
+✔ failed or malformed inbox refuses before gh; malformed github refuses (198.793708ms)
+✔ same observer detects mutation bypassing existing issue selection (356.687375ms)
+✔ workflow permission, trigger, token and locked install contract (1.580792ms)
+ATTRIBUTE CONTROL: 48 paths protected; removed, empty, events-only, text-enabled, and markdown-only mutations rejected; restored rule passes
+✔ coordination attributes protect every tracked event and artifact plus future nested files (18.269375ms)
+✔ same log observer rejects removed, narrowed, and text-enabled attribute mutations (110.139667ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 32
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2304.703667
+
+✖ failing tests:
+
+test at tests/lex-replies.test.mjs:52:1
+✖ recorded login becomes verified reply, defaults to sender, and replay refuses (33.395375ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:52:99)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:58:1
+✖ explicit next and explicit reply select the named open turn (29.993416ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:58:81)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:70:1
+✖ foreign login has no event and visible issue refusal (30.54025ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:70:74)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:73:1
+✖ identity bypass mutation is killed by the same foreign-login observer (29.119ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:73:91)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:80:1
+✖ ambiguous, stale, invalid next and nonhuman cases refuse without publication (29.586583ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:81:76)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:95:1
+✖ private authenticated checkout, permissions, pinned SDK, and payload isolation (0.989833ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '0.2.0' !== '0.3.0'
+  
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:108:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '0.2.0',
+    expected: '0.3.0',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:118:1
+✖ ordinary Reply paragraph remains body text (30.561792ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:118:64)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-replies.test.mjs:124:1
+✖ push failure comments Not recorded and exits nonzero; success comments Recorded (27.439875ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at fixture (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:18:12)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-replies.test.mjs:125:43)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/lex-turns.test.mjs:20:1
+✖ SDK scaffold verifies and appends both with and without github metadata (30.390709ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1573
+    throw err;
+    ^
+  
+  Error: Cannot find module '/Users/an2b/an2b/products/lex-service-pr3/coordination/node_modules/@engramport/sdk/dist/cli.mjs'
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+      at Module._load (node:internal/modules/cjs/loader:1346:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: []
+  }
+  
+  Node.js v26.8.2
+  
+  
+  1 !== 0
+  
+      at file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-turns.test.mjs:23:12
+      at temporary (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-turns.test.mjs:17:15)
+      at TestContext.<anonymous> (file:///Users/an2b/an2b/products/lex-service-pr3/coordination/tests/lex-turns.test.mjs:21:45)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

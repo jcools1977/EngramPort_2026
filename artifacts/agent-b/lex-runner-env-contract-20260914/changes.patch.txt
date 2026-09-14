@@ -1,0 +1,219 @@
+diff --git a/coordination/README.md b/coordination/README.md
+index 66aca28..490ca2c 100644
+--- a/coordination/README.md
++++ b/coordination/README.md
+@@ -150,6 +150,28 @@ it.
+ To run it on a schedule, see `deploy/com.lex.run.plist.example`.
+ The Bash runner requires Bash 4 or newer; macOS ships Bash 3.2, so the macOS launchd loop runs the Node runner when `bin/lex-run.mjs` is present.
+ 
++The shared runner defaults below agree. The Node runner and notifier resolve
++`LEX_DIR`, then `LEX_REPO/coordination`, then their own `bin/..` directory;
++neither falls back to the working directory. Explicit paths should be absolute.
++The Bash runner uses `LEX_REPO` or its containing repository and does not read
++`LEX_DIR`. Node-only controls are identified explicitly; Bash's fixed write
++boundary is `coordination/`, while Node defaults to the acting seat's prefixes.
++
++| Variable | Meaning | Default |
++| --- | --- | --- |
++| `LEX_REPO` | Repository containing coordination (both runners) | Repository containing the script |
++| `LEX_DIR` | Coordination directory override (Node runner and notifier only) | `LEX_REPO/coordination`, else script's `bin/..` |
++| `LEX_ACTOR` | Acting seat (both runners) | `nick-agent` |
++| `LEX_BRANCH` | Publication branch (both runners) | `main` |
++| `LEX_TIMEOUT` | Agent timeout in seconds (both runners) | `900` |
++| `LEX_MAX_RUNS` | Turns per window (both runners) | `6` |
++| `LEX_MAX_THREAD` | Maximum events in a thread (both runners) | `8` |
++| `LEX_WINDOW` | Rate window in seconds (both runners) | `3600` |
++| `LEX_MODEL` | Model override (Bash only) | Unset; CLI default |
++| `LEX_PREFIXES` | Colon-separated writable paths (Node only) | `events/${ACTOR}:artifacts/${ACTOR}` |
++| `LEX_AGENT_CMD` | Agent executable (Node only; Bash invokes `claude`) | Unset; refuses an open turn until configured |
++| `LEX_AGENT_ARGS` | JSON argument array, substituting `{PROMPT}` (Node only) | `["-p","{PROMPT}","--restricted","--tools","Bash,Read,Write,Edit,Glob,Grep","--allowedTools","Bash(node bin/engram:*)","Read","Write","Edit","Glob","Grep"]` |
++
+ ## Point an agent at it
+ 
+ Open your agent in this directory and tell it: *you are `nick-agent`, read this README, then run
+diff --git a/coordination/bin/lex-notify.mjs b/coordination/bin/lex-notify.mjs
+index fe5becd..bab46f1 100755
+--- a/coordination/bin/lex-notify.mjs
++++ b/coordination/bin/lex-notify.mjs
+@@ -29,7 +29,7 @@ export function deliver(platform, message, log) {
+ }
+ 
+ export async function main() {
+-  const dir = realpathSync(resolve(process.env.LEX_DIR || join(import.meta.dirname, '..')));
++  const dir = realpathSync(resolve(process.env.LEX_DIR || (process.env.LEX_REPO ? join(process.env.LEX_REPO, 'coordination') : join(import.meta.dirname, '..'))));
+   const branch = process.env.LEX_BRANCH || 'main';
+   const actors = [...new Set((process.env.LEX_ACTORS || 'nick nick-agent').split(/\s+/).filter(Boolean))];
+   const state = join(homedir(), '.local', 'state', 'lex');
+diff --git a/coordination/bin/lex-run.mjs b/coordination/bin/lex-run.mjs
+index d475b1d..55fccfe 100755
+--- a/coordination/bin/lex-run.mjs
++++ b/coordination/bin/lex-run.mjs
+@@ -18,12 +18,12 @@
+ // rather than confirmed."
+ //
+ // Configure by environment:
+-//   LEX_ACTOR     the seat to act as        (required)
++//   LEX_ACTOR     the seat to act as        (default: nick-agent)
+ //   LEX_BRANCH    branch                    (default: main)
+ //   LEX_AGENT_CMD the agent to invoke       (e.g. "claude" or "codex")
+ //   LEX_AGENT_ARGS JSON array of args; {PROMPT} is substituted
+-//   LEX_TIMEOUT   seconds                   (default: 1500)
+-//   LEX_MAX_RUNS  turns per window          (default: 4)
++//   LEX_TIMEOUT   seconds                   (default: 900)
++//   LEX_MAX_RUNS  turns per window          (default: 6)
+ //   LEX_WINDOW    window seconds            (default: 3600)
+ //   LEX_PREFIXES  colon-separated writable paths
+ //
+@@ -51,16 +51,16 @@ import { notify } from "./notify.mjs";
+ // log, actors and artifacts live in DIR, while git must run at the repository
+ // root. Conflating them meant actors/ was never found in the only deployment
+ // that exists.
+-const DIR = resolve(process.env.LEX_DIR || process.cwd());
++const DIR = resolve(process.env.LEX_DIR || (process.env.LEX_REPO ? join(process.env.LEX_REPO, "coordination") : join(import.meta.dirname, "..")));
+ const REPO = (() => {
+   try { return execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: DIR, encoding: "utf8" }).trim(); }
+   catch { return DIR; }
+ })();
+ const REL = DIR === REPO ? "" : DIR.slice(REPO.length + 1).replace(/\\/g, "/") + "/";
+-const ACTOR = process.env.LEX_ACTOR || "";
++const ACTOR = process.env.LEX_ACTOR || "nick-agent";
+ const BRANCH = process.env.LEX_BRANCH || "main";
+-const TIMEOUT = Number(process.env.LEX_TIMEOUT || 1500);
+-const MAX_RUNS = Number(process.env.LEX_MAX_RUNS || 4);
++const TIMEOUT = Number(process.env.LEX_TIMEOUT || 900);
++const MAX_RUNS = Number(process.env.LEX_MAX_RUNS || 6);
+ const WINDOW = Number(process.env.LEX_WINDOW || 3600);
+ const PREFIXES = (process.env.LEX_PREFIXES || `events/${ACTOR}:artifacts/${ACTOR}`).split(":").filter(Boolean);
+ 
+@@ -108,7 +108,7 @@ if (existsSync(STOP)) done(`REFUSED ${REFUSALS.KILL_SWITCH}`, null);
+ let actorIsHuman = false;
+ try {
+   actorIsHuman = /^kind:\s*human\s*$/m.test(readFileSync(join(DIR, "actors", `${ACTOR}.yaml`), "utf8"));
+-} catch { done(`REFUSED no actor record for ${ACTOR}`, `no actor record for ${ACTOR}`, 1); }
++} catch { done(`REFUSED no actor record for ${ACTOR} at ${join(DIR, "actors", `${ACTOR}.yaml`)}`, `no actor record for ${ACTOR} at ${join(DIR, "actors", `${ACTOR}.yaml`)}`, 1); }
+ 
+ let runsInWindow = 0;
+ try {
+diff --git a/coordination/deploy/com.lex.run.plist.example b/coordination/deploy/com.lex.run.plist.example
+index 5e4caab..f5e7fa7 100644
+--- a/coordination/deploy/com.lex.run.plist.example
++++ b/coordination/deploy/com.lex.run.plist.example
+@@ -26,6 +26,7 @@
+   <array>
+     <string>/ABSOLUTE/PATH/TO/lex-service/coordination/bin/lex-run-loop</string>
+   </array>
++  <key>WorkingDirectory</key><string>/ABSOLUTE/PATH/TO/lex-service</string>
+   <key>EnvironmentVariables</key>
+   <dict>
+     <!-- launchd's default PATH has neither Node nor a modern Bash. -->
+diff --git a/coordination/tests/lex-notify.test.mjs b/coordination/tests/lex-notify.test.mjs
+index cf52e4c..44ca0b6 100644
+--- a/coordination/tests/lex-notify.test.mjs
++++ b/coordination/tests/lex-notify.test.mjs
+@@ -3,7 +3,7 @@ import { test } from 'node:test';
+ import { execFileSync, spawnSync } from 'node:child_process';
+ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+-import { join, resolve } from 'node:path';
++import { join, resolve, parse } from 'node:path';
+ import { pathToFileURL } from 'node:url';
+ import { createClient } from '@engramport/sdk';
+ import { notificationCommand, deliver } from '../bin/lex-notify.mjs';
+@@ -45,7 +45,7 @@ async function fixture(run) {
+     put(shim, `require('node:fs').appendFileSync(process.env.TOAST_TRACE, JSON.stringify(process.argv.slice(2))+'\\n');if(process.env.FAIL_TOAST==='1')process.exit(1);`);
+     const preload = join(temp, 'home.mjs');
+     put(preload, `import os from 'node:os';import {syncBuiltinESMExports} from 'node:module';os.homedir=()=>${JSON.stringify(home)};syncBuiltinESMExports();`);
+-    const pass = (script = source, extra = {}) => spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, script], { cwd: dir, encoding: 'utf8', env: { ...process.env, LEX_DIR: dir, LEX_BRANCH: 'main', LEX_ACTORS: 'nick', TOAST_TRACE: trace, LEX_EXEC_SHIM: shim, ...extra } });
++    const pass = (script = source, extra = {}, cwd = dir) => spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, script], { cwd, encoding: 'utf8', env: { ...process.env, LEX_DIR: dir, LEX_BRANCH: 'main', LEX_ACTORS: 'nick', TOAST_TRACE: trace, LEX_EXEC_SHIM: shim, ...extra } });
+     await run({ temp, repo, dir, home, put, git, commit, pass, trace });
+   } finally { rmSync(temp, { recursive: true, force: true }); }
+ }
+@@ -96,3 +96,10 @@ test('failing execution shim logs banner unavailable', async () => fixture(async
+   assert.equal(JSON.parse(readFileSync(trace, 'utf8').trim())[0], notificationCommand(process.platform, '').cmd);
+   console.log(result.stdout.trim());
+ }));
++
++ test('notifier accepts LEX_REPO alone from filesystem root', async () => fixture(async ({ repo, pass }) => {
++  const result = pass(source, { LEX_DIR: '', LEX_REPO: repo }, parse(repo).root);
++  assert.equal(result.status, 0, result.stdout + result.stderr);
++  assert.match(result.stdout, /QUIET no open turn/);
++  console.log('LEX_REPO-only notifier: ' + result.stdout.trim());
++}));
+
+--- New untracked test: coordination/tests/lex-run-env.test.mjs ---
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, realpathSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve, parse } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const dir = resolve(import.meta.dirname, '..');
+const source = readFileSync(join(dir, 'bin/lex-run.mjs'), 'utf8');
+
+// Execute the entry point with an isolated home and fail-closed Git double.
+// No agent, notification, commit, push, or production repository is invoked.
+function observe(candidate, mode) {
+  const temp = realpathSync(mkdtempSync(join(tmpdir(), 'lex-env-')));
+  const repo = join(temp, 'repo'), coordination = join(repo, 'coordination');
+  const put = (path, value) => { mkdirSync(resolve(path, '..'), { recursive: true }); writeFileSync(path, value); };
+  try {
+    put(join(coordination, 'actors/nick-agent.yaml'), 'kind: agent\n');
+    put(join(coordination, 'bin/notify.mjs'), 'export function notify() {}');
+    put(join(coordination, 'bin/lex-run.mjs'), candidate.replace('"@engramport/sdk"', JSON.stringify(import.meta.resolve('@engramport/sdk'))));
+    const preload = join(temp, 'preload.mjs');
+    put(preload, `import os from 'node:os';import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';
+os.homedir=()=>${JSON.stringify(join(temp, 'home'))};
+cp.execFileSync=(cmd,args,options)=>{
+ if(cmd!=='git') throw Error('unexpected command');
+ if(args[0]==='rev-parse') { if(options.cwd!==${JSON.stringify(coordination)}) throw Error('wrong directory');return ${JSON.stringify(repo)}; }
+ if(options.cwd!==${JSON.stringify(repo)}) throw Error('wrong repository');
+ if(args[0]==='ls-tree') { console.log('INBOX cwd='+options.cwd+' path='+args.at(-1)); return ''; }
+ if(args[0]==='status') return '';
+ throw Error('unexpected git '+args);
+};cp.spawn=()=>{throw Error('agent invocation forbidden')};syncBuiltinESMExports();`);
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('LEX_')));
+    if (mode === 'repo') env.LEX_REPO = repo;
+    if (mode === 'bad') { env.LEX_REPO = repo; env.LEX_DIR = join(temp, 'missing'); }
+    if (mode === 'override') { env.LEX_REPO = join(temp, 'wrong'); env.LEX_DIR = coordination; }
+    const result = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, join(coordination, 'bin/lex-run.mjs')], { cwd: parse(dir).root, env, encoding: 'utf8', timeout: 10000 });
+    assert.equal(result.error, undefined);
+    return { ...result, repo, coordination, missing: join(temp, 'missing') };
+  } finally { rmSync(temp, { recursive: true, force: true }); }
+}
+function assertInbox(result) {
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.ok(result.stdout.includes(`INBOX cwd=${result.repo} path=coordination/events`), result.stdout);
+  assert.match(result.stdout, /REFUSED no-open-turn/);
+}
+for (const mode of ['repo', 'location', 'override']) test(`runner directory resolution from filesystem root: ${mode}`, () => {
+  const result = observe(source, mode); assertInbox(result); console.log(`${mode}: ${result.stdout.trim()}`);
+});
+test('LEX_DIR missing actor refuses with the resolved path despite valid LEX_REPO', () => {
+  const result = observe(source, 'bad');
+  assert.equal(result.status, 1); assert.ok(result.stdout.includes(join(result.missing, 'actors/nick-agent.yaml')), result.stdout);
+  assert.ok(!result.stdout.includes('INBOX')); console.log(result.stdout.trim());
+});
+test('original cwd fallback mutation fails the same observer', () => {
+  const mutant = source.replace(/^const DIR = .*;$/m, 'const DIR = resolve(process.env.LEX_DIR || process.cwd());');
+  assert.notEqual(mutant, source);
+  for (const mode of ['repo', 'location']) assert.throws(() => assertInbox(observe(mutant, mode)), { code: 'ERR_ASSERTION' });
+  console.log('MUTATION killed: cwd fallback fails repo-only and own-location observers');
+});
+test('README shared defaults match values read from both runners; Node controls are explicit', () => {
+  const bash = readFileSync(join(dir, 'bin/lex-run'), 'utf8');
+  const readme = readFileSync(join(dir, 'README.md'), 'utf8');
+  for (const name of ['ACTOR', 'BRANCH', 'TIMEOUT', 'MAX_RUNS', 'MAX_THREAD', 'WINDOW']) {
+    const bashDefault = bash.match(new RegExp('\\$\\{LEX_' + name + ':-([^}]+)\\}'))?.[1];
+    const nodeDefault = source.match(new RegExp('process.env.LEX_' + name + ' \\|\\| (?:"([^"\\n]*)"|(\\d+))'));
+    assert.ok(bashDefault, name); assert.ok(nodeDefault, name);
+    assert.equal(nodeDefault[1] ?? nodeDefault[2], bashDefault, name);
+    assert.ok(readme.split('\n').some(line => line.startsWith('| `LEX_' + name + '` |') && line.endsWith('| `' + bashDefault + '` |')), name);
+  }
+  for (const name of ['PREFIXES', 'AGENT_ARGS']) {
+    const value = source.match(new RegExp('process.env.LEX_' + name + ' \\|\\| ([`\\\'])(.*?)\\1'))?.[2];
+    assert.ok(value, name); assert.ok(readme.includes('`' + value + '`'), name);
+    assert.ok(!bash.includes('LEX_' + name));
+  }
+  console.log('DEFAULTS actor=nick-agent branch=main timeout=900 max_runs=6 max_thread=8 window=3600; Node-only prefixes and args match README');
+});

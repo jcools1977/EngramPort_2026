@@ -1,0 +1,8 @@
+{
+  "coordination/bin/lex-run.mjs": "1033f865de0bfdf53349bb77db07d1d15eeefb1ccb7db4d32a3e89970e9b14a3",
+  "coordination/bin/lex-notify.mjs": "ad4abb940ed7f842e4e53f751e02dc09bf4b06a40f3b12ec525d0613e4cdf791",
+  "coordination/deploy/com.lex.run.plist.example": "2f6220f45807233e35b43bbd4767dfa257a57afe746abdc73a9c2f2075261c2c",
+  "coordination/README.md": "351a2b9d6d58e5a1b581663455af3b98d96a90c2739b78f61f935cd8a378c968",
+  "coordination/tests/lex-run-env.test.mjs": "763e6a5ef141ff3626a4e50e786e986ad29bc8b5a2727db40e93f51008db9c6a",
+  "coordination/tests/lex-notify.test.mjs": "6d807dbacb40ab2364bdd98e7aa7a49b6fcdaacedd3394abe09a9795862b20df"
+}
