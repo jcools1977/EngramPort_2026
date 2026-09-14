@@ -1,0 +1,469 @@
+REMAINING_BEGIN approval:test
+
+> engramport@0.1.0 approval:test
+> node --test tests/workspace-approval.test.mjs
+
+TAP version 13
+# Subtest: digests and portable plan identity survive serialization and another process
+ok 1 - digests and portable plan identity survive serialization and another process
+  ---
+  duration_ms: 49.856333
+  type: 'test'
+  ...
+# Subtest: compiled serialized reloaded plan executes under its genuine grouped approval
+ok 2 - compiled serialized reloaded plan executes under its genuine grouped approval
+  ---
+  duration_ms: 0.739791
+  type: 'test'
+  ...
+# Subtest: grouped approval authorizes all five steps in approved order
+ok 3 - grouped approval authorizes all five steps in approved order
+  ---
+  duration_ms: 0.300833
+  type: 'test'
+  ...
+# Subtest: diffing a plan against itself is empty
+ok 4 - diffing a plan against itself is empty
+  ---
+  duration_ms: 0.272125
+  type: 'test'
+  ...
+# Subtest: source dependency order is normalized only during compilation
+ok 5 - source dependency order is normalized only during compilation
+  ---
+  duration_ms: 0.470458
+  type: 'test'
+  ...
+# Subtest: reordered steps are refused with paired genuine-plan control
+ok 6 - reordered steps are refused with paired genuine-plan control
+  ---
+  duration_ms: 0.548292
+  type: 'test'
+  ...
+# Subtest: inserted step is refused with paired genuine-plan control
+ok 7 - inserted step is refused with paired genuine-plan control
+  ---
+  duration_ms: 0.762083
+  type: 'test'
+  ...
+# Subtest: removed step is refused with paired genuine-plan control
+ok 8 - removed step is refused with paired genuine-plan control
+  ---
+  duration_ms: 0.302125
+  type: 'test'
+  ...
+# Subtest: substituted step is refused with paired genuine-plan control
+ok 9 - substituted step is refused with paired genuine-plan control
+  ---
+  duration_ms: 0.454417
+  type: 'test'
+  ...
+# Subtest: modified parameters are refused with paired genuine-plan control
+ok 10 - modified parameters are refused with paired genuine-plan control
+  ---
+  duration_ms: 0.477
+  type: 'test'
+  ...
+# Subtest: forged but self-consistent plan is not authorized by a genuine approval
+ok 11 - forged but self-consistent plan is not authorized by a genuine approval
+  ---
+  duration_ms: 0.538458
+  type: 'test'
+  ...
+# Subtest: one consequential flag change is self-consistent but refused by genuine approval
+ok 12 - one consequential flag change is self-consistent but refused by genuine approval
+  ---
+  duration_ms: 0.596458
+  type: 'test'
+  ...
+# Subtest: all consequential flags changed is the refused F8 control
+ok 13 - all consequential flags changed is the refused F8 control
+  ---
+  duration_ms: 0.283792
+  type: 'test'
+  ...
+# Subtest: added dependency is self-consistent but refused by genuine approval
+ok 14 - added dependency is self-consistent but refused by genuine approval
+  ---
+  duration_ms: 0.34125
+  type: 'test'
+  ...
+# Subtest: removed dependency is self-consistent but refused by genuine approval
+ok 15 - removed dependency is self-consistent but refused by genuine approval
+  ---
+  duration_ms: 0.30675
+  type: 'test'
+  ...
+# Subtest: wire dependency order is verified verbatim and never normalized
+ok 16 - wire dependency order is verified verbatim and never normalized
+  ---
+  duration_ms: 0.332125
+  type: 'test'
+  ...
+# Subtest: cross-plan approval is refused with paired approved-plan control
+ok 17 - cross-plan approval is refused with paired approved-plan control
+  ---
+  duration_ms: 0.29475
+  type: 'test'
+  ...
+# Subtest: action v3 digest preserves step id and kind coverage
+ok 18 - action v3 digest preserves step id and kind coverage
+  ---
+  duration_ms: 0.050625
+  type: 'test'
+  ...
+# Subtest: action v3 coverage is deny-by-default with only its self digest excluded
+ok 19 - action v3 coverage is deny-by-default with only its self digest excluded
+  ---
+  duration_ms: 0.056167
+  type: 'test'
+  ...
+# Subtest: a future wire field is preserved, covered, diffed, and refused without an exclusion
+ok 20 - a future wire field is preserved, covered, diffed, and refused without an exclusion
+  ---
+  duration_ms: 0.317083
+  type: 'test'
+  ...
+# Subtest: v2 wire is refused with a specific profile error and differs from v3 plan identity
+ok 21 - v2 wire is refused with a specific profile error and differs from v3 plan identity
+  ---
+  duration_ms: 0.246417
+  type: 'test'
+  ...
+# Subtest: tampered serialized plan is refused on load with paired round trip
+ok 22 - tampered serialized plan is refused on load with paired round trip
+  ---
+  duration_ms: 0.193708
+  type: 'test'
+  ...
+# Subtest: verified plan parameters are deeply immutable
+ok 23 - verified plan parameters are deeply immutable
+  ---
+  duration_ms: 0.175833
+  type: 'test'
+  ...
+# Subtest: hand-built step list is refused at approval and execution
+ok 24 - hand-built step list is refused at approval and execution
+  ---
+  duration_ms: 0.191917
+  type: 'test'
+  ...
+# Subtest: structured diff reports all classes, covered fields, and parameter paths
+ok 25 - structured diff reports all classes, covered fields, and parameter paths
+  ---
+  duration_ms: 1.022417
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.567459
+
+
+REMAINING_END approval:test exit=0 error=none
+REMAINING_BEGIN dry-run:test
+
+> engramport@0.1.0 dry-run:test
+> node --test tests/workspace-dry-run.test.mjs
+
+TAP version 13
+# Subtest: valid plan transcript exactly covers compiled sequence and digests
+ok 1 - valid plan transcript exactly covers compiled sequence and digests
+  ---
+  duration_ms: 4.695458
+  type: 'test'
+  ...
+# Subtest: dry-run output is deterministic
+ok 2 - dry-run output is deterministic
+  ---
+  duration_ms: 0.861042
+  type: 'test'
+  ...
+# Subtest: headline: provisioning, pull-request, and import effects cause zero side effects
+ok 3 - headline: provisioning, pull-request, and import effects cause zero side effects
+  ---
+  duration_ms: 0.596583
+  type: 'test'
+  ...
+# Subtest: compiler-refused plan produces no transcript
+ok 4 - compiler-refused plan produces no transcript
+  ---
+  duration_ms: 0.467
+  type: 'test'
+  ...
+# Subtest: hand-built or cloned step list cannot bypass compiler
+ok 5 - hand-built or cloned step list cannot bypass compiler
+  ---
+  duration_ms: 0.53425
+  type: 'test'
+  ...
+# Subtest: temporary directory is required
+ok 6 - temporary directory is required
+  ---
+  duration_ms: 0.1325
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 85.457375
+
+
+REMAINING_END dry-run:test exit=0 error=none
+REMAINING_BEGIN db:lock-test
+
+> engramport@0.1.0 db:lock-test
+> node --test tests/db-test-lock.test.mjs
+
+TAP version 13
+# Subtest: both database entrypoints refuse a concurrent caller and leave the holder unaffected
+ok 1 - both database entrypoints refuse a concurrent caller and leave the holder unaffected
+  ---
+  duration_ms: 162.681375
+  type: 'test'
+  ...
+# Subtest: a SIGKILL-stale lock is recovered by the other entrypoint
+ok 2 - a SIGKILL-stale lock is recovered by the other entrypoint
+  ---
+  duration_ms: 102.3085
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 322.604167
+
+
+REMAINING_END db:lock-test exit=0 error=none
+REMAINING_BEGIN db:static-test
+
+> engramport@0.1.0 db:static-test
+> node --test tests/app-role-grants-static.test.mjs
+
+TAP version 13
+# Subtest: app role has no blanket all-table grant
+ok 1 - app role has no blanket all-table grant
+  ---
+  duration_ms: 0.54425
+  type: 'test'
+  ...
+# Subtest: app writes are limited to canonical append tables
+ok 2 - app writes are limited to canonical append tables
+  ---
+  duration_ms: 0.352083
+  type: 'test'
+  ...
+# Subtest: app retains explicit reads needed by RLS and delegation trigger
+ok 3 - app retains explicit reads needed by RLS and delegation trigger
+  ---
+  duration_ms: 0.143375
+  type: 'test'
+  ...
+# Subtest: maintenance remains separate authorization writer
+ok 4 - maintenance remains separate authorization writer
+  ---
+  duration_ms: 0.0705
+  type: 'test'
+  ...
+# Subtest: future database controls assert exact permission errors and positive paths
+ok 5 - future database controls assert exact permission errors and positive paths
+  ---
+  duration_ms: 0.049834
+  type: 'test'
+  ...
+# Subtest: database runner executes grant controls after postgres seed
+ok 6 - database runner executes grant controls after postgres seed
+  ---
+  duration_ms: 0.096667
+  type: 'test'
+  ...
+# Subtest: founding issuer is a dormant dedicated-role capability
+ok 7 - founding issuer is a dormant dedicated-role capability
+  ---
+  duration_ms: 0.318125
+  type: 'test'
+  ...
+# Subtest: founding issuer refusal has a live app-role proof
+ok 8 - founding issuer refusal has a live app-role proof
+  ---
+  duration_ms: 0.08275
+  type: 'test'
+  ...
+# Subtest: observation disposition is private, forced-RLS, append-only, and function mediated
+ok 9 - observation disposition is private, forced-RLS, append-only, and function mediated
+  ---
+  duration_ms: 0.234041
+  type: 'test'
+  ...
+# Subtest: portable work claims are private, function mediated, and database-exclusive
+ok 10 - portable work claims are private, function mediated, and database-exclusive
+  ---
+  duration_ms: 0.258958
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.178375
+
+
+REMAINING_END db:static-test exit=0 error=none
+REMAINING_BEGIN dispatch:test
+
+> engramport@0.1.0 dispatch:test
+> node --test tests/workspace-dispatch-gate.test.mjs
+
+TAP version 13
+# Subtest: exact current threat-model revision and digest permit only a complete Tier A registry
+ok 1 - exact current threat-model revision and digest permit only a complete Tier A registry
+  ---
+  duration_ms: 2.709667
+  type: 'test'
+  ...
+# Subtest: dispatch gate refuses missing evidence
+ok 2 - dispatch gate refuses missing evidence
+  ---
+  duration_ms: 0.54425
+  type: 'test'
+  ...
+# Subtest: dispatch gate refuses stale evidence
+ok 3 - dispatch gate refuses stale evidence
+  ---
+  duration_ms: 0.311959
+  type: 'test'
+  ...
+# Subtest: dispatch gate refuses wrong digest evidence
+ok 4 - dispatch gate refuses wrong digest evidence
+  ---
+  duration_ms: 0.295833
+  type: 'test'
+  ...
+# Subtest: dispatch gate refuses waiver evidence
+ok 5 - dispatch gate refuses waiver evidence
+  ---
+  duration_ms: 0.614375
+  type: 'test'
+  ...
+# Subtest: document binding is the canonical file digest
+ok 6 - document binding is the canonical file digest
+  ---
+  duration_ms: 0.3835
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.60525
+
+
+REMAINING_END dispatch:test exit=0 error=none
+REMAINING_BEGIN build
+
+> engramport@0.1.0 build
+> WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build
+
+
+  vinext build  (Vite 8.0.13)
+
+[1/5] analyze client references...
+[2Ktransforming...✓ 224 modules transformed.
+rendering chunks...
+✓ built in 608ms
+[2/5] analyze server references...
+[2Ktransforming...✓ 74 modules transformed.
+rendering chunks...
+✓ built in 54ms
+[3/5] build rsc environment...
+[2Ktransforming...✓ 222 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 249ms
+[4/5] build client environment...
+[2Ktransforming...✓ 115 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 234ms
+[5/5] build ssr environment...
+[2Ktransforming...✓ 80 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 175ms
+[0m
+  Route (app)
+  ─ ? /
+
+  ? Unknown
+
+  ? Some routes could not be classified. vinext currently uses static analysis
+    and cannot detect dynamic API usage (headers(), cookies(), etc.) at build time.
+    Automatic classification will be improved in a future release.
+
+  Build complete. Run `vinext start` to start the production server.
+
+
+
+REMAINING_END build exit=0 error=none
+TAP version 13
+# Subtest: server-renders the EngramPort product site
+ok 1 - server-renders the EngramPort product site
+  ---
+  duration_ms: 63.223208
+  type: 'test'
+  ...
+# Subtest: ships product metadata and removes the starter preview
+ok 2 - ships product metadata and removes the starter preview
+  ---
+  duration_ms: 1.714375
+  type: 'test'
+  ...
+# Subtest: site install claims require a publishable package manifest
+ok 3 - site install claims require a publishable package manifest
+  ---
+  duration_ms: 2.202292
+  type: 'test'
+  ...
+# SITE_EVENT_TYPES handoff,reply,artifact,completion=accepted
+# Subtest: site console event types remain linked to the verifier vocabulary
+ok 4 - site console event types remain linked to the verifier vocabulary
+  ---
+  duration_ms: 0.564875
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.212542
+
+
+REMAINING_END rendered-html exit=0
+REMAINING_SUMMARY commands=7 failed=0

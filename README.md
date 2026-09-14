@@ -13,7 +13,7 @@ npx @engramport/sdk init --actor me --kind human --project my-project --mode fre
 npx @engramport/sdk verify
 ```
 
-`--kind` is required and accepts `human` or `agent`. `--project` defaults to `my-project` and uses the same slug pattern as `--actor`. `--mode` defaults to `free_form`; `strict_relay` is also supported. Init writes exactly `engramport.yaml`, `actors/me.yaml`, `events/me/.gitkeep`, and `artifacts/me/.gitkeep`. It refuses existing projects and nonempty directories, never overwrites files, and does not run Git or access the network. A filesystem error during creation can leave a partial scaffold.
+`--kind` is required and accepts `human` or `agent`. `--project` defaults to `my-project` and uses the same slug pattern as `--actor`. `--mode` defaults to `free_form`; `strict_relay` is also supported. Init writes `engramport.yaml`, `actors/me.yaml`, `events/me/.gitkeep`, `artifacts/me/.gitkeep`, and `.gitattributes`. Optional `--github-login LOGIN` adds the actor’s `github:` field; `--github` also writes the two GitHub workflows described below. It refuses existing projects and nonempty directories, never overwrites files, and does not run Git or access the network. A filesystem error during creation can leave a partial scaffold.
 
 Init creates a new log with one actor and no grant. It is separate from Port Package, which onboards a participant into an existing log under a grant decided elsewhere. A scaffolded actor is a name in a file, not an authenticated identity, and init confers no authority.
 
@@ -114,6 +114,24 @@ engram inbox --actor builder
 <!-- second-builder:end -->
 
 The final verify should report two events, one thread, and two actors. `--next null` ends this strict relay, so builder's work inbox is empty. A status of `unmet` records work that did not meet a criterion; `blocked` records an external impediment. Neither is a successful work claim. `engram append --help` in the next release documents the file shapes as well; the complete JSON above also works with 0.3.0.
+
+### 3. Get told when it is your turn, and answer from your phone
+
+With SDK 0.6.0 (currently unpublished), add `--github --github-login YOUR_LOGIN` to the **initial init command** above when founding a GitHub-hosted project:
+
+```sh
+engram init --actor me --kind human --project my-project --mode strict_relay --github --github-login YOUR_LOGIN
+```
+
+Use your actual GitHub login. Run init once in an empty log directory; it refuses an existing log. If the log is a subdirectory, first initialize the enclosing Git repository so init can locate its root. Root logs may contain the `.git` marker with `--github`. Init writes `.github/workflows/engram-turns.yml` and `engram-replies.yml` at that root; commit those files alongside the log. Without `--github`, no workflows are written.
+
+After those files are on `main`, a push with an open turn addressed to `me` opens an assigned **Your turn: me** issue. Comment `I reviewed this. Please continue.` from the login recorded in `actors/me.yaml` to reply from your phone. With several listed turns, include `reply: EVENT_ID`; optionally include `next: ACTOR`. Without `next:`, the reply returns to the sender. Only a human seat with exactly one recorded login can use this route; matching ignores login case.
+
+A successful workflow comments `Recorded comment COMMENT_ID as EVENT_PATH.` Identity mismatch produces `Reply refused for comment COMMENT_ID: commenter does not match the recorded human login`. After identity matching, failures produce `Not recorded for comment COMMENT_ID: REASON. Comment again.`
+
+A reply the workflow could not record gets a comment saying so; no comment within a few minutes means it was not recorded.
+
+The generated workflows use SHA-pinned actions and the exact SDK version that generated them. They need GitHub Actions and Issues enabled, and permission for the reply workflow to push to `main`; branch protection or a racing update can refuse that push. Token-authored pushes do not trigger the turn workflow, so issues reconcile on the next ordinary push. Generated 0.6.0 workflows cannot install that version until it is published. The controls here use synthetic comments and GitHub/Git shims; hosted execution and notification delivery are unobserved.
 
 ## What is real and verifiable
 

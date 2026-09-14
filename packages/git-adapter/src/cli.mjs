@@ -12,7 +12,7 @@ import { initProject } from "./init.mjs";
 export { appendEvent, listInbox, validateAppendInputs };
 
 const ARGUMENT_PROFILES = new Map([
-  ["init", new Set(["actor", "kind", "project", "mode"])],
+  ["init", new Set(["actor", "kind", "project", "mode", "github", "github-login"])],
   ["welcome verify", new Set(["package"])],
   ["setup compile", new Set(["file"])],
   ["setup dry-run", new Set(["file", "temp-dir"])],
@@ -25,7 +25,7 @@ const ARGUMENT_PROFILES = new Map([
 const HELP = `EngramPort Git
 
 Commands (each accepts --help without reading or writing a project):
-  init --actor SLUG --kind human|agent [--project SLUG] [--mode free_form|strict_relay]
+  init --actor SLUG --kind human|agent [--project SLUG] [--mode free_form|strict_relay] [--github] [--github-login LOGIN]
   verify
   inbox --actor SLUG
   thread declare --thread SLUG --mode MODE [--coordinator SLUG]
@@ -59,6 +59,8 @@ function args(argv) {
   const out = { _: [] };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--help") out.help = true;
+    else if (argv[i] === "--github") out.github = true;
+    else if (argv[i] === "--github-login") out["github-login"] = argv[++i] ?? "";
     else if (argv[i].startsWith("--")) out[argv[i].slice(2)] = argv[++i];
     else out._.push(argv[i]);
   }
